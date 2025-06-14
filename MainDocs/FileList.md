@@ -1,0 +1,13 @@
+D:\Projects\C#.Net\MyDocs.DayTradingPlatform-P2N2P\MainDocs
+├─ Architect with holistic view.md [Size: 5218 bytes, Created: 2025-06-03 18:53, Modified: 2025-05-31 15:34]
+├─ Day Trading Stock Recommendation Platform - PRD.md [Size: 5778 bytes, Created: 2025-06-03 18:53, Modified: 2025-05-29 09:19]
+├─ Day Trading System Project Plan-20250606.md [Size: 9840 bytes, Created: 2025-06-06 15:46, Modified: 2025-06-06 15:46]
+├─ Day Trading System Project Plan-Initial.md [Size: 27688 bytes, Created: 2025-06-03 18:53, Modified: 2025-05-31 12:26]
+├─ DayTradingPlatform-Journal-2.md [Size: 1500957 bytes, Created: 2025-06-06 19:13, Modified: 2025-06-06 19:13]
+├─ FileList.md [Size: 677 bytes, Created: 2025-06-06 19:17, Modified: 2025-06-06 19:17]
+├─ FinancialCalculationStandards.md [Size: 7795 bytes, Created: 2025-06-03 18:53, Modified: 2025-05-31 20:07]
+├─ GoldenRules.md [Size: 3561 bytes, Created: 2025-06-03 18:53, Modified: 2025-05-31 12:01]
+├─ High Performance Stock Day Trading Platform_ Compr.docx [Size: 17903 bytes, Created: 2025-06-03 18:53, Modified: 2025-05-30 09:02]
+├─ mainfilelist.md [Size: 1068 bytes, Created: 2025-06-06 15:15, Modified: 2025-06-06 15:16]
+├─ Multi-Modal Self-Learning AI System for Enhanced S.docx [Size: 12609 bytes, Created: 2025-06-03 18:53, Modified: 2025-05-30 10:01]
+└─ Professional Multi-Screen Trading Systems_ Architecture.md [Size: 4737 bytes, Created: 2025-06-03 18:53, Modified: 2025-05-30 16:39]

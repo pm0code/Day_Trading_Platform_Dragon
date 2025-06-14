@@ -1,0 +1,617 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.dataingestion\\providers\\alphavantageprovider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|solutionrelative:tradingplatform.dataingestion\\providers\\alphavantageprovider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.dataingestion\\interfaces\\ialphavantageprovider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|solutionrelative:tradingplatform.dataingestion\\interfaces\\ialphavantageprovider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.dataingestion\\services\\dataingestionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|solutionrelative:tradingplatform.dataingestion\\services\\dataingestionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.dataingestion\\models\\apiresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|solutionrelative:tradingplatform.dataingestion\\models\\apiresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\services\\criteriaconfigurationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\services\\criteriaconfigurationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\models\\screeningrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\models\\screeningrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.dataingestion\\providers\\finnhubprovider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|solutionrelative:tradingplatform.dataingestion\\providers\\finnhubprovider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.dataingestion\\interfaces\\imarketdataaggregator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|solutionrelative:tradingplatform.dataingestion\\interfaces\\imarketdataaggregator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.dataingestion\\interfaces\\ifinnhubprovider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|solutionrelative:tradingplatform.dataingestion\\interfaces\\ifinnhubprovider.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{41537D28-DDFC-446A-B00E-E18A943A1D7C}|TradingPlatform.Utilities\\TradingPlatform.Utilities.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.utilities\\tradingplatform.utilities.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{41537D28-DDFC-446A-B00E-E18A943A1D7C}|TradingPlatform.Utilities\\TradingPlatform.Utilities.csproj|solutionrelative:tradingplatform.utilities\\tradingplatform.utilities.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\tradingplatform.screening.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\tradingplatform.screening.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.dataingestion\\tradingplatform.dataingestion.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|solutionrelative:tradingplatform.dataingestion\\tradingplatform.dataingestion.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{904D1302-AE9B-4C1F-8E7F-9844F7EEFED0}|TradingPlatform.Core\\TradingPlatform.Core.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.core\\tradingplatform.core.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{904D1302-AE9B-4C1F-8E7F-9844F7EEFED0}|TradingPlatform.Core\\TradingPlatform.Core.csproj|solutionrelative:tradingplatform.core\\tradingplatform.core.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\models\\screeningsummary.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\models\\screeningsummary.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.dataingestion\\interfaces\\idataingestionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|solutionrelative:tradingplatform.dataingestion\\interfaces\\idataingestionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.dataingestion\\ratelimiting\\apiratelimiter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|solutionrelative:tradingplatform.dataingestion\\ratelimiting\\apiratelimiter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.dataingestion\\providers\\marketdataaggregator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|solutionrelative:tradingplatform.dataingestion\\providers\\marketdataaggregator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.dataingestion\\interfaces\\iratelimiter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}|TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj|solutionrelative:tradingplatform.dataingestion\\interfaces\\iratelimiter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\interfaces\\ialertservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\interfaces\\ialertservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\interfaces\\iscreeningengine.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\interfaces\\iscreeningengine.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\interfaces\\icriteriaevaluator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\interfaces\\icriteriaevaluator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\alerts\\notificationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\alerts\\notificationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\alerts\\alertservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\alerts\\alertservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\engines\\screeningorchestrator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\engines\\screeningorchestrator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\services\\screeninghistoryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\services\\screeninghistoryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\engines\\realtimescreeningengine.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\engines\\realtimescreeningengine.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\indicators\\technicalindicators.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\indicators\\technicalindicators.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\indicators\\volumeindicators.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\indicators\\volumeindicators.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\criteria\\volumecriteria.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\criteria\\volumecriteria.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\criteria\\volatilitycriteria.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\criteria\\volatilitycriteria.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\criteria\\pricecriteria.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\criteria\\pricecriteria.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\criteria\\newscriteria.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\criteria\\newscriteria.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\criteria\\gapcriteria.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\criteria\\gapcriteria.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\models\\alertconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\models\\alertconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\models\\screeningresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\models\\screeningresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|d:\\projects\\c#.net\\daytradingplatform-p2n\\daytradinplatform\\tradingplatform.screening\\models\\criteriaresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F4E424B4-F049-48AC-AEEA-B5F427712FF8}|TradingPlatform.Screening\\TradingPlatform.Screening.csproj|solutionrelative:tradingplatform.screening\\models\\criteriaresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 5,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ApiResponse.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Models\\ApiResponse.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.DataIngestion\\Models\\ApiResponse.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Models\\ApiResponse.cs",
+              "RelativeToolTip": "TradingPlatform.DataIngestion\\Models\\ApiResponse.cs",
+              "ViewState": "AgIAAEwAAAAAAAAAAAAAwIQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-03T22:32:32.496Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "DataIngestionService.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Services\\DataIngestionService.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.DataIngestion\\Services\\DataIngestionService.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Services\\DataIngestionService.cs",
+              "RelativeToolTip": "TradingPlatform.DataIngestion\\Services\\DataIngestionService.cs",
+              "ViewState": "AgIAABkAAAAAAAAAAAAAAEkAAABnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T19:42:58.591Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "IAlphaVantageProvider.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Interfaces\\IAlphaVantageProvider.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.DataIngestion\\Interfaces\\IAlphaVantageProvider.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Interfaces\\IAlphaVantageProvider.cs",
+              "RelativeToolTip": "TradingPlatform.DataIngestion\\Interfaces\\IAlphaVantageProvider.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAuwBQAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T01:10:18.349Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "AlphaVantageProvider.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Providers\\AlphaVantageProvider.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.DataIngestion\\Providers\\AlphaVantageProvider.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Providers\\AlphaVantageProvider.cs",
+              "RelativeToolTip": "TradingPlatform.DataIngestion\\Providers\\AlphaVantageProvider.cs",
+              "ViewState": "AgIAAFsAAAAAAAAAAAAswGMAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T01:14:23.596Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "CriteriaConfigurationService.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Services\\CriteriaConfigurationService.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Services\\CriteriaConfigurationService.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Services\\CriteriaConfigurationService.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Services\\CriteriaConfigurationService.cs",
+              "ViewState": "AgIAACIAAAAAAAAAAAAYwEkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T22:07:18.427Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "ScreeningRequest.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Models\\ScreeningRequest.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Models\\ScreeningRequest.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Models\\ScreeningRequest.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Models\\ScreeningRequest.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAxwCkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T20:30:46.717Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "FinnhubProvider.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Providers\\FinnhubProvider.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.DataIngestion\\Providers\\FinnhubProvider.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Providers\\FinnhubProvider.cs",
+              "RelativeToolTip": "TradingPlatform.DataIngestion\\Providers\\FinnhubProvider.cs",
+              "ViewState": "AgIAADgAAAAAAAAAAAAAwG4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T01:15:11.563Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "IMarketDataAggregator.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Interfaces\\IMarketDataAggregator.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.DataIngestion\\Interfaces\\IMarketDataAggregator.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Interfaces\\IMarketDataAggregator.cs",
+              "RelativeToolTip": "TradingPlatform.DataIngestion\\Interfaces\\IMarketDataAggregator.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB4AAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-03T22:19:03.021Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "IFinnhubProvider.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Interfaces\\IFinnhubProvider.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.DataIngestion\\Interfaces\\IFinnhubProvider.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Interfaces\\IFinnhubProvider.cs",
+              "RelativeToolTip": "TradingPlatform.DataIngestion\\Interfaces\\IFinnhubProvider.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T01:10:48.177Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "TradingPlatform.Utilities.csproj",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Utilities\\TradingPlatform.Utilities.csproj",
+              "RelativeDocumentMoniker": "TradingPlatform.Utilities\\TradingPlatform.Utilities.csproj",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Utilities\\TradingPlatform.Utilities.csproj",
+              "RelativeToolTip": "TradingPlatform.Utilities\\TradingPlatform.Utilities.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-06-03T17:58:19.578Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "TradingPlatform.DataIngestion.csproj",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj",
+              "RelativeDocumentMoniker": "TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj",
+              "RelativeToolTip": "TradingPlatform.DataIngestion\\TradingPlatform.DataIngestion.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-06-03T19:27:07.142Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "TradingPlatform.Screening.csproj",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\TradingPlatform.Screening.csproj",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\TradingPlatform.Screening.csproj",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\TradingPlatform.Screening.csproj",
+              "RelativeToolTip": "TradingPlatform.Screening\\TradingPlatform.Screening.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAACAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-06-03T19:28:36.787Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "TradingPlatform.Core.csproj",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Core\\TradingPlatform.Core.csproj",
+              "RelativeDocumentMoniker": "TradingPlatform.Core\\TradingPlatform.Core.csproj",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Core\\TradingPlatform.Core.csproj",
+              "RelativeToolTip": "TradingPlatform.Core\\TradingPlatform.Core.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-06-03T19:52:35.381Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "ScreeningSummary.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Models\\ScreeningSummary.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Models\\ScreeningSummary.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Models\\ScreeningSummary.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Models\\ScreeningSummary.cs",
+              "ViewState": "AgIAAA4AAAAAAAAAAAAzwDMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T20:38:20.712Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "IDataIngestionService.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Interfaces\\IDataIngestionService.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.DataIngestion\\Interfaces\\IDataIngestionService.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Interfaces\\IDataIngestionService.cs",
+              "RelativeToolTip": "TradingPlatform.DataIngestion\\Interfaces\\IDataIngestionService.cs",
+              "ViewState": "AgIAAA4AAAAAAAAAAAAzwDMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T20:14:27.268Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "MarketDataAggregator.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Providers\\MarketDataAggregator.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.DataIngestion\\Providers\\MarketDataAggregator.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Providers\\MarketDataAggregator.cs",
+              "RelativeToolTip": "TradingPlatform.DataIngestion\\Providers\\MarketDataAggregator.cs",
+              "ViewState": "AgIAAFIAAAAAAAAAAAAwwG0AAAA4AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T01:15:39.755Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "ApiRateLimiter.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\RateLimiting\\ApiRateLimiter.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.DataIngestion\\RateLimiting\\ApiRateLimiter.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\RateLimiting\\ApiRateLimiter.cs",
+              "RelativeToolTip": "TradingPlatform.DataIngestion\\RateLimiting\\ApiRateLimiter.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAuwAkAAAAiAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T01:13:46.142Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "IRateLimiter.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Interfaces\\IRateLimiter.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.DataIngestion\\Interfaces\\IRateLimiter.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.DataIngestion\\Interfaces\\IRateLimiter.cs",
+              "RelativeToolTip": "TradingPlatform.DataIngestion\\Interfaces\\IRateLimiter.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T01:07:50.066Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "IAlertService.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Interfaces\\IAlertService.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Interfaces\\IAlertService.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Interfaces\\IAlertService.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Interfaces\\IAlertService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T23:59:00.402Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "IScreeningEngine.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Interfaces\\IScreeningEngine.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Interfaces\\IScreeningEngine.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Interfaces\\IScreeningEngine.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Interfaces\\IScreeningEngine.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T23:57:47.198Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "ICriteriaEvaluator.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Interfaces\\ICriteriaEvaluator.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Interfaces\\ICriteriaEvaluator.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Interfaces\\ICriteriaEvaluator.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Interfaces\\ICriteriaEvaluator.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T23:55:52.441Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "NotificationService.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Alerts\\NotificationService.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Alerts\\NotificationService.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Alerts\\NotificationService.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Alerts\\NotificationService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T00:33:25.226Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "AlertService.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Alerts\\AlertService.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Alerts\\AlertService.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Alerts\\AlertService.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Alerts\\AlertService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T00:32:37.376Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "ScreeningOrchestrator.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Engines\\ScreeningOrchestrator.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Engines\\ScreeningOrchestrator.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Engines\\ScreeningOrchestrator.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Engines\\ScreeningOrchestrator.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACEAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T22:11:32.612Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "RealTimeScreeningEngine.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Engines\\RealTimeScreeningEngine.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Engines\\RealTimeScreeningEngine.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Engines\\RealTimeScreeningEngine.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Engines\\RealTimeScreeningEngine.cs",
+              "ViewState": "AgIAAJwAAAAAAAAAAAAYwMAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T20:17:28.477Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "ScreeningHistoryService.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Services\\ScreeningHistoryService.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Services\\ScreeningHistoryService.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Services\\ScreeningHistoryService.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Services\\ScreeningHistoryService.cs",
+              "ViewState": "AgIAADIAAAAAAAAAAAAYwFcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T22:08:57.151Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "TechnicalIndicators.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Indicators\\TechnicalIndicators.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Indicators\\TechnicalIndicators.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Indicators\\TechnicalIndicators.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Indicators\\TechnicalIndicators.cs",
+              "ViewState": "AgIAALoAAAAAAAAAAAAAwO0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T20:09:32.132Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "VolumeIndicators.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Indicators\\VolumeIndicators.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Indicators\\VolumeIndicators.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Indicators\\VolumeIndicators.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Indicators\\VolumeIndicators.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAADwvzMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T22:05:59.702Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
+              "Title": "VolumeCriteria.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Criteria\\VolumeCriteria.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Criteria\\VolumeCriteria.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Criteria\\VolumeCriteria.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Criteria\\VolumeCriteria.cs",
+              "ViewState": "AgIAADwAAAAAAAAAAAAAwF8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T20:14:20.674Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 29,
+              "Title": "VolatilityCriteria.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Criteria\\VolatilityCriteria.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Criteria\\VolatilityCriteria.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Criteria\\VolatilityCriteria.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Criteria\\VolatilityCriteria.cs",
+              "ViewState": "AgIAABwAAAAAAAAAAAAAwE8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T21:50:12.807Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 30,
+              "Title": "PriceCriteria.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Criteria\\PriceCriteria.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Criteria\\PriceCriteria.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Criteria\\PriceCriteria.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Criteria\\PriceCriteria.cs",
+              "ViewState": "AgIAABsAAAAAAAAAAAAAwEsAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T21:56:59.131Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 31,
+              "Title": "NewsCriteria.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Criteria\\NewsCriteria.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Criteria\\NewsCriteria.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Criteria\\NewsCriteria.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Criteria\\NewsCriteria.cs",
+              "ViewState": "AgIAAB8AAAAAAAAAAAAAwFIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T21:57:54.906Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 32,
+              "Title": "GapCriteria.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Criteria\\GapCriteria.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Criteria\\GapCriteria.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Criteria\\GapCriteria.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Criteria\\GapCriteria.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAAAxwEcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T21:48:52.539Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 33,
+              "Title": "AlertConfiguration.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Models\\AlertConfiguration.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Models\\AlertConfiguration.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Models\\AlertConfiguration.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Models\\AlertConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T23:02:54.838Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 34,
+              "Title": "ScreeningResult.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Models\\ScreeningResult.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Models\\ScreeningResult.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Models\\ScreeningResult.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Models\\ScreeningResult.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T20:27:57.444Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 35,
+              "Title": "CriteriaResult.cs",
+              "DocumentMoniker": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Models\\CriteriaResult.cs",
+              "RelativeDocumentMoniker": "TradingPlatform.Screening\\Models\\CriteriaResult.cs",
+              "ToolTip": "D:\\Projects\\C#.Net\\DayTradingPlatform-P2N\\DayTradinPlatform\\TradingPlatform.Screening\\Models\\CriteriaResult.cs",
+              "RelativeToolTip": "TradingPlatform.Screening\\Models\\CriteriaResult.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-01T21:38:29.176Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
