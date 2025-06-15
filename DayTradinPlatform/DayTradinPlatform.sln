@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Tests", "Tr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.FixEngine", "TradingPlatform.FixEngine\TradingPlatform.FixEngine.csproj", "{11DDC959-1D77-4CE0-B309-7E7ABDAA970F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Database", "TradingPlatform.Database\TradingPlatform.Database.csproj", "{BDC3D723-2F94-4CB6-8ACE-A2E0A1D19A28}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -45,6 +47,10 @@ Global
 		{11DDC959-1D77-4CE0-B309-7E7ABDAA970F}.Debug|x64.Build.0 = Debug|Any CPU
 		{11DDC959-1D77-4CE0-B309-7E7ABDAA970F}.Release|x64.ActiveCfg = Release|Any CPU
 		{11DDC959-1D77-4CE0-B309-7E7ABDAA970F}.Release|x64.Build.0 = Release|Any CPU
+		{BDC3D723-2F94-4CB6-8ACE-A2E0A1D19A28}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BDC3D723-2F94-4CB6-8ACE-A2E0A1D19A28}.Debug|x64.Build.0 = Debug|Any CPU
+		{BDC3D723-2F94-4CB6-8ACE-A2E0A1D19A28}.Release|x64.ActiveCfg = Release|Any CPU
+		{BDC3D723-2F94-4CB6-8ACE-A2E0A1D19A28}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
