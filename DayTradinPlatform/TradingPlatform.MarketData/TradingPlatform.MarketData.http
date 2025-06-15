@@ -1,0 +1,6 @@
+@TradingPlatform.MarketData_HostAddress = http://localhost:5163
+
+GET {{TradingPlatform.MarketData_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

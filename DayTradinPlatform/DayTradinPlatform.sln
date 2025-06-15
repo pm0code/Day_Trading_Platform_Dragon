@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Messaging",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Gateway", "TradingPlatform.Gateway\TradingPlatform.Gateway.csproj", "{A20A6226-99E1-436D-8AFE-77076EE1253F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.MarketData", "TradingPlatform.MarketData\TradingPlatform.MarketData.csproj", "{3196A829-FF3A-4173-AB31-FA739D5E4407}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -63,6 +65,10 @@ Global
 		{A20A6226-99E1-436D-8AFE-77076EE1253F}.Debug|x64.Build.0 = Debug|Any CPU
 		{A20A6226-99E1-436D-8AFE-77076EE1253F}.Release|x64.ActiveCfg = Release|Any CPU
 		{A20A6226-99E1-436D-8AFE-77076EE1253F}.Release|x64.Build.0 = Release|Any CPU
+		{3196A829-FF3A-4173-AB31-FA739D5E4407}.Debug|x64.ActiveCfg = Debug|x64
+		{3196A829-FF3A-4173-AB31-FA739D5E4407}.Debug|x64.Build.0 = Debug|x64
+		{3196A829-FF3A-4173-AB31-FA739D5E4407}.Release|x64.ActiveCfg = Release|x64
+		{3196A829-FF3A-4173-AB31-FA739D5E4407}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
