@@ -1,0 +1,26 @@
+﻿<!-- File: TradingPlatform.Utilities\TradingPlatform.Utilities.csproj -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<Platforms>x64</Platforms>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<!-- Ensure DLLs are copied -->
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.14.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.14.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\TradingPlatform.Core\TradingPlatform.Core.csproj" />
+		<ProjectReference Include="..\TradingPlatform.DataIngestion\TradingPlatform.DataIngestion.csproj" />
+		<ProjectReference Include="..\TradingPlatform.Screening\TradingPlatform.Screening.csproj" />
+	</ItemGroup>
+
+</Project>
+<!-- Total Lines: 21 -->

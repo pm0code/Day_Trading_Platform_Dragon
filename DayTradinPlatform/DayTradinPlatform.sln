@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36127.28
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Core", "TradingPlatform.Core\TradingPlatform.Core.csproj", "{904D1302-AE9B-4C1F-8E7F-9844F7EEFED0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.DataIngestion", "TradingPlatform.DataIngestion\TradingPlatform.DataIngestion.csproj", "{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Screening", "TradingPlatform.Screening\TradingPlatform.Screening.csproj", "{F4E424B4-F049-48AC-AEEA-B5F427712FF8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Utilities", "TradingPlatform.Utilities\TradingPlatform.Utilities.csproj", "{41537D28-DDFC-446A-B00E-E18A943A1D7C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Tests", "TradingPlatform.Tests\TradingPlatform.Tests.csproj", "{5B4F8201-0A93-4766-8F33-6D26021FE5DF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.FixEngine", "TradingPlatform.FixEngine\TradingPlatform.FixEngine.csproj", "{11DDC959-1D77-4CE0-B309-7E7ABDAA970F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{904D1302-AE9B-4C1F-8E7F-9844F7EEFED0}.Debug|x64.ActiveCfg = Debug|x64
+		{904D1302-AE9B-4C1F-8E7F-9844F7EEFED0}.Debug|x64.Build.0 = Debug|x64
+		{904D1302-AE9B-4C1F-8E7F-9844F7EEFED0}.Release|x64.ActiveCfg = Release|x64
+		{904D1302-AE9B-4C1F-8E7F-9844F7EEFED0}.Release|x64.Build.0 = Release|x64
+		{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}.Debug|x64.ActiveCfg = Debug|x64
+		{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}.Debug|x64.Build.0 = Debug|x64
+		{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}.Release|x64.ActiveCfg = Release|x64
+		{C90324A0-4E8A-4905-AB74-CFC00C4C48FE}.Release|x64.Build.0 = Release|x64
+		{F4E424B4-F049-48AC-AEEA-B5F427712FF8}.Debug|x64.ActiveCfg = Debug|x64
+		{F4E424B4-F049-48AC-AEEA-B5F427712FF8}.Debug|x64.Build.0 = Debug|x64
+		{F4E424B4-F049-48AC-AEEA-B5F427712FF8}.Release|x64.ActiveCfg = Release|x64
+		{F4E424B4-F049-48AC-AEEA-B5F427712FF8}.Release|x64.Build.0 = Release|x64
+		{41537D28-DDFC-446A-B00E-E18A943A1D7C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{41537D28-DDFC-446A-B00E-E18A943A1D7C}.Debug|x64.Build.0 = Debug|Any CPU
+		{41537D28-DDFC-446A-B00E-E18A943A1D7C}.Release|x64.ActiveCfg = Release|x64
+		{41537D28-DDFC-446A-B00E-E18A943A1D7C}.Release|x64.Build.0 = Release|x64
+		{5B4F8201-0A93-4766-8F33-6D26021FE5DF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5B4F8201-0A93-4766-8F33-6D26021FE5DF}.Debug|x64.Build.0 = Debug|Any CPU
+		{5B4F8201-0A93-4766-8F33-6D26021FE5DF}.Release|x64.ActiveCfg = Release|Any CPU
+		{5B4F8201-0A93-4766-8F33-6D26021FE5DF}.Release|x64.Build.0 = Release|Any CPU
+		{11DDC959-1D77-4CE0-B309-7E7ABDAA970F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{11DDC959-1D77-4CE0-B309-7E7ABDAA970F}.Debug|x64.Build.0 = Debug|Any CPU
+		{11DDC959-1D77-4CE0-B309-7E7ABDAA970F}.Release|x64.ActiveCfg = Release|Any CPU
+		{11DDC959-1D77-4CE0-B309-7E7ABDAA970F}.Release|x64.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {37073726-EB11-46EC-AE73-8D7E24BA1845}
+	EndGlobalSection
+EndGlobal
