@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Database", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Messaging", "TradingPlatform.Messaging\TradingPlatform.Messaging.csproj", "{B20AAE2B-9A6A-4C66-8849-3989ECFAB92A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Gateway", "TradingPlatform.Gateway\TradingPlatform.Gateway.csproj", "{A20A6226-99E1-436D-8AFE-77076EE1253F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -57,6 +59,10 @@ Global
 		{B20AAE2B-9A6A-4C66-8849-3989ECFAB92A}.Debug|x64.Build.0 = Debug|Any CPU
 		{B20AAE2B-9A6A-4C66-8849-3989ECFAB92A}.Release|x64.ActiveCfg = Release|Any CPU
 		{B20AAE2B-9A6A-4C66-8849-3989ECFAB92A}.Release|x64.Build.0 = Release|Any CPU
+		{A20A6226-99E1-436D-8AFE-77076EE1253F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A20A6226-99E1-436D-8AFE-77076EE1253F}.Debug|x64.Build.0 = Debug|Any CPU
+		{A20A6226-99E1-436D-8AFE-77076EE1253F}.Release|x64.ActiveCfg = Release|Any CPU
+		{A20A6226-99E1-436D-8AFE-77076EE1253F}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

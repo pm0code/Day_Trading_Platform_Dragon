@@ -140,6 +140,50 @@ This is a modular, high-performance day trading system designed for single-user 
 
 ### Post-MVP Phase: Advanced Features (Months 8-12)
 
+#### Multi-CPU/GPU Enterprise Architecture
+**Objective**: Scale to enterprise-grade multi-processor trading workstation
+
+**Hardware Scaling (Enterprise Trading Setup):**
+- [ ] Multi-CPU support (2x AMD Ryzen 9 7950X - 32 cores, 64 threads total)
+- [ ] Multi-GPU implementation (2x NVIDIA RTX 4090 - 32GB VRAM total)
+- [ ] NUMA-aware process distribution and memory optimization
+- [ ] Advanced CPU core affinity management for workload isolation
+
+**Multi-CPU Process Distribution:**
+- [ ] CPU 1 (Cores 0-15): Real-time trading operations with REALTIME_PRIORITY_CLASS
+  - WinUI 3 UI + Rendering (Cores 0-1)
+  - API Gateway + FixEngine (Cores 2-5) 
+  - Risk + Trading + MarketData services (Cores 6-13)
+  - Redis + TimescaleDB (Cores 14-15)
+- [ ] CPU 2 (Cores 16-31): Computational workloads with HIGH_PRIORITY_CLASS
+  - GPU Management + CUDA Coordination (Cores 16-19)
+  - ML.NET Model Training/Inference (Cores 20-23)
+  - Historical Data Processing (Cores 24-27)
+  - Background Services (Cores 28-31)
+
+**Multi-GPU Computational Distribution:**
+- [ ] GPU 1 (Primary RTX 4090): Real-time analytics and pattern recognition
+  - Technical indicator calculations (RSI, MACD, Bollinger Bands)
+  - Real-time risk simulations (VaR, Monte Carlo)
+  - Market microstructure analysis and pattern recognition
+- [ ] GPU 2 (Secondary RTX 4090): ML training and backtesting acceleration
+  - ML.NET + TorchSharp model training pipelines
+  - GPU-accelerated backtesting (targeting 60-100x speedup)
+  - Deep learning inference for market prediction
+  - Large historical dataset processing
+
+**Performance Optimization:**
+- [ ] NUMA-aware memory allocation and process placement
+- [ ] PCIe bandwidth optimization with GPU distribution
+- [ ] Multi-channel memory configuration (128GB DDR5-5600 ECC)
+- [ ] Advanced Windows 11 scheduler optimization for trading workloads
+
+**Expected Performance Gains:**
+- [ ] Order latency reduction to <50μs with dedicated CPU cores
+- [ ] Market data processing: 100,000+ ticks/second per CPU
+- [ ] Parallel strategy evaluation: 4x throughput improvement
+- [ ] GPU acceleration: 60-100x speedup for computational workloads
+
 #### International Market Expansion
 **Objective**: Extend platform to global markets with regulatory compliance
 
