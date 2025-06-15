@@ -1,459 +1,299 @@
 # Day Trading Stock Recommendation Platform - Project Plan
-
-## 1. Project Overview
-
-This is a modular, real-time stock recommendation platform designed to identify, screen, and monitor stocks meeting rigorous day trading criteria. The platform incorporates industry-standard technical/fundamental filters, regulatory compliance, and risk management tools.
-
-**Current State**: Well-architected backend services with solid core functionality but missing critical user-facing components and production features.
-
-**Architecture**: .NET 8.0 solution with 4 main projects:
-- **TradingPlatform.Core**: Domain models, interfaces, financial mathematics
-- **TradingPlatform.DataIngestion**: Market data providers (AlphaVantage, Finnhub) with rate limiting
-- **TradingPlatform.Screening**: Stock screening engines, criteria evaluators, alerts
-- **TradingPlatform.Utilities**: Shared utilities and Roslyn scripting support
-
-## 2. Consolidated Requirements
-
-### Core Trading Features
-- ✅ Real-time stock screening with 12 core day trading criteria
-- ✅ Volume, volatility, price, and gap-based filtering
-- ✅ Technical indicators (RSI, MACD, moving averages, patterns)
-- ❌ Custom alert system with multi-channel delivery
-- ❌ Backtesting engine with performance metrics
-- ❌ Risk management tools (position sizing, FINRA compliance)
-
-### Data & Integration
-- ✅ Free data sources (Alpha Vantage, Finnhub)
-- ✅ Rate limiting and caching
-- ❌ Premium data source integration
-- ❌ Real-time news feed integration
-- ❌ TradingView charting integration
-
-### User Experience
-- ❌ Web-based dashboard and interface
-- ❌ Multi-screen trading system support
-- ❌ Real-time watchlists and alerts
-- ❌ User authentication and profiles
-- ❌ Configuration management UI
-
-### Compliance & Security
-- ❌ FINRA Pattern Day Trading rule enforcement
-- ❌ Risk disclosure and warnings
-- ❌ Data encryption and secure authentication
-- ❌ Audit logging and compliance reporting
-
-## 3. Implementation Status Matrix
-
-### ✅ Already Done
-| Requirement | Implementation | Files |
-|-------------|---------------|-------|
-| Core domain models | Complete with System.Decimal precision | `TradingPlatform.Core/Models/*` |
-| Market data ingestion | AlphaVantage & Finnhub providers with caching | `TradingPlatform.DataIngestion/Providers/*` |
-| Rate limiting | API throttling with configurable limits | `TradingPlatform.DataIngestion/RateLimiting/*` |
-| Stock screening engine | Real-time screening with criteria evaluation | `TradingPlatform.Screening/Engines/*` |
-| Volume criteria | Complete implementation with scoring | `TradingPlatform.Screening/Criteria/VolumeCriteria.cs` |
-| Technical indicators | RSI, MACD, Bollinger Bands, pattern detection | `TradingPlatform.Screening/Indicators/*` |
-| Alert framework | Service infrastructure for notifications | `TradingPlatform.Screening/Alerts/*` |
-| Financial mathematics | Decimal-based calculations with utilities | `TradingPlatform.Core/Mathematics/*` |
-
-### 🔄 In Progress / Partial
-| Requirement | Current State | Missing Components |
-|-------------|---------------|-------------------|
-| Criteria evaluation | Price, volatility, gap criteria exist | News criteria needs real feeds |
-| Data aggregation | Basic aggregation service | Advanced correlation analysis |
-| Logging framework | Basic console logging | Structured logging with Serilog |
-
-### 🛠️ Implemented but Needs Improvement / Refactor
-| Requirement | Issue | Recommended Action |
-|-------------|-------|-------------------|
-| DI container registration | Manual service registration in Program.cs | Implement auto-registration with reflection |
-| Configuration management | Hardcoded values | Move to appsettings.json with IOptions pattern |
-| Error handling | Basic try-catch | Implement global exception handling middleware |
-
-### ❌ Missing Entirely
-| Requirement | Priority | Impact |
-|-------------|----------|---------|
-| **User Interface** | Critical | No user interaction possible |
-| **Database persistence** | Critical | No data retention |
-| **Testing framework** | Critical | No quality assurance |
-| **Authentication/Authorization** | High | No security |
-| **REST API** | High | No external access |
-| **Real-time WebSocket feeds** | High | No live updates |
-| **Backtesting engine** | Medium | No strategy validation |
-| **Risk management tools** | Medium | No FINRA compliance |
-| **Email/SMS notifications** | Medium | No alert delivery |
-| **Docker deployment** | Low | No containerization |
-
-## 4. Phase-Based Roadmap
-
-### Phase 1 – Foundations & Infrastructure
-
-#### Testing Foundation
-- [ ] Create `TradingPlatform.Tests` project with xUnit framework
-  - Files: `TradingPlatform.Tests/TradingPlatform.Tests.csproj`
-  - Rationale: Critical for quality assurance and regression prevention
-  - Dependencies: None
-
-- [ ] Implement unit tests for core financial calculations
-  - Files: `TradingPlatform.Tests/Core/Mathematics/FinancialMathTests.cs`
-  - Rationale: Financial precision is critical - must be thoroughly tested
-  - Dependencies: Test project setup
-
-- [ ] Set up integration tests for data providers
-  - Files: `TradingPlatform.Tests/DataIngestion/ProvidersIntegrationTests.cs`
-  - Rationale: External API reliability needs automated verification
-  - Dependencies: Test project, API keys
-
-#### Configuration Management
-- [ ] Implement IOptions pattern configuration
-  - Files: `TradingPlatform.Core/Configuration/TradingPlatformOptions.cs`, `appsettings.json`
-  - Rationale: Remove hardcoded values for maintainability
-  - Dependencies: Microsoft.Extensions.Options
-
-- [ ] Create environment-specific configurations
-  - Files: `appsettings.Development.json`, `appsettings.Production.json`
-  - Rationale: Different settings for dev/prod environments
-  - Dependencies: Configuration setup
-
-#### Database Foundation
-- [ ] Add Entity Framework Core with PostgreSQL + TimescaleDB
-  - Files: `TradingPlatform.Data/TradingPlatformDbContext.cs`
-  - Rationale: PostgreSQL offers superior time-series performance (10x faster aggregates) and is free/OSS
-  - Scalability: TimescaleDB hypertables for efficient market data storage
-  - Dependencies: Npgsql.EntityFrameworkCore.PostgreSQL
-
-- [ ] Configure Azure Blob Storage for news content
-  - Files: `TradingPlatform.Infrastructure/Storage/BlobStorageService.cs`
-  - Rationale: Cost-efficient storage for raw news JSON ($0.01/GB/month Cool tier)
-  - Dependencies: Azure.Storage.Blobs
-
-- [ ] Create initial database migrations
-  - Files: `TradingPlatform.Data/Migrations/InitialCreate.cs`
-  - Rationale: Version-controlled database schema
-  - Dependencies: EF Core setup
-
-#### News & Sentiment Analysis Pipeline (Moved from Phase 2)
-- [ ] Implement StockGeist API integration
-  - Files: `TradingPlatform.DataIngestion/Providers/StockGeistProvider.cs`
-  - Rationale: Free news + sentiment API (1K calls/day) for catalyst detection
-  - Performance: Critical for day trading - news catalysts drive price movement
-  - Dependencies: StockGeist API key (free tier)
-
-- [ ] Create NewsIngestWorker background service
-  - Files: `TradingPlatform.DataIngestion/Workers/NewsIngestWorker.cs`
-  - Rationale: Continuous polling for <15 minute news freshness requirement
-  - Dependencies: News provider implementations
-
-- [ ] Implement ML.NET sentiment analysis
-  - Files: `TradingPlatform.Core/ML/SentimentAnalysisService.cs`
-  - Rationale: Free, on-premises sentiment scoring using existing NewsItem/SentimentData models
-  - Performance: Local processing avoids API costs and latency
-  - Dependencies: Microsoft.ML, Microsoft.ML.Tokenizers
-
-- [ ] Wire StockGeist to NewsItem table persistence
-  - Files: `TradingPlatform.Data/Repositories/NewsRepository.cs`
-  - Rationale: Bridge free API to existing domain models
-  - Dependencies: Database foundation, StockGeist provider
-
-- [ ] Enhance NewsCriteria with live sentiment feeds
-  - Files: `TradingPlatform.Screening/Criteria/NewsCriteria.cs` (update existing)
-  - Rationale: Replace hardcoded AAPL sentiment with real-time analysis
-  - Dependencies: News ingestion worker, sentiment analysis service
-
-- [ ] Add news-based alert triggers
-  - Files: `TradingPlatform.Screening/Engines/NewsAlertEngine.cs`
-  - Rationale: Immediate alerts on news catalyst detection
-  - Performance: Sub-500ms alert latency requirement
-  - Dependencies: Enhanced NewsCriteria, alert framework
-
-- [ ] Unit tests for news pipeline
-  - Files: `TradingPlatform.Tests/News/StockGeistProviderTests.cs`, `TradingPlatform.Tests/ML/SentimentAnalysisTests.cs`
-  - Rationale: News processing reliability is critical for trading decisions
-  - Dependencies: Test framework setup
-
-- [ ] Integration tests for news data flow
-  - Files: `TradingPlatform.Tests/Integration/NewsToScreeningIntegrationTests.cs`
-  - Rationale: Validate end-to-end news catalyst detection workflow
-  - Dependencies: News pipeline components
-
-### Phase 2 – Core Trading Logic & Calculations
-
-#### Enhanced Screening
-- [ ] Implement news criteria with live feeds
-  - Files: `TradingPlatform.Screening/Criteria/NewsCriteria.cs`
-  - Rationale: News catalysts are critical for day trading opportunities
-  - Dependencies: News API integration (Benzinga/NewsAPI)
-
-- [ ] Add FINRA compliance checking
-  - Files: `TradingPlatform.Core/Compliance/FINRAComplianceService.cs`
-  - Rationale: Legal requirement for trading platforms
-  - Dependencies: User account tracking
-
-#### Backtesting Engine
-- [ ] Create backtesting framework
-  - Files: `TradingPlatform.Backtesting/BacktestEngine.cs`
-  - Rationale: Strategy validation before live trading
-  - Performance: Optimize for large historical datasets
-  - Dependencies: Historical data storage
-
-- [ ] Implement performance metrics calculation
-  - Files: `TradingPlatform.Backtesting/Metrics/PerformanceAnalyzer.cs`
-  - Rationale: Quantify strategy effectiveness
-  - Dependencies: Backtesting framework
-
-#### Risk Management
-- [ ] Position sizing calculator
-  - Files: `TradingPlatform.Core/RiskManagement/PositionSizer.cs`
-  - Rationale: Implement 1% rule and other Golden Rules principles
-  - Dependencies: Account balance tracking
-
-- [ ] PDT rule enforcement
-  - Files: `TradingPlatform.Core/Compliance/PDTRuleService.cs`
-  - Rationale: Required for accounts under $25k
-  - Dependencies: Trade tracking, user accounts
-
-### Phase 3 – API & Multi-Screen UI
-
-#### REST API Layer
-- [ ] Create ASP.NET Core Web API project
-  - Files: `TradingPlatform.API/Controllers/ScreeningController.cs`
-  - Rationale: External access for web/mobile clients
-  - Scalability: Design for high-frequency requests
-  - Dependencies: Authentication framework
-
-- [ ] Implement JWT authentication
-  - Files: `TradingPlatform.API/Authentication/JwtService.cs`
-  - Rationale: Secure API access
-  - Dependencies: User management system
-
-- [ ] Add Swagger API documentation
-  - Files: `TradingPlatform.API/Swagger/ApiDocumentation.xml`
-  - Rationale: Developer-friendly API documentation
-  - Dependencies: Web API setup
-
-#### Real-time WebSocket Layer
-- [ ] Implement SignalR for real-time updates
-  - Files: `TradingPlatform.API/Hubs/TradingHub.cs`
-  - Rationale: Live data streaming to clients
-  - Performance: Optimize for high-frequency updates
-  - Dependencies: Web API project
-
-#### UI Foundation – Blazor MVP → WinUI 3 Production
-
-##### MVP Phase (Blazor Server - Validation Only)
-- [ ] Create Blazor Server MVP dashboard (quick validation)
-  - Files: `TradingPlatform.WebUI/Pages/Dashboard.razor`
-  - Rationale: Rapid proof-of-concept before building production WinUI 3 application
-  - Performance: ~50-100ms latency acceptable for feature validation only
-  - Modularity: Component-based architecture
-  - Dependencies: Authentication, API layer
-
-- [ ] Basic dashboard widgets for concept validation
-  - Files: `TradingPlatform.WebUI/Components/TradingScreens/`
-  - Rationale: Validate core functionality before WinUI 3 investment
-  - Performance: Target 1-second updates for MVP validation only
-  - Dependencies: Web UI foundation
-
-##### Production Phase (WinUI 3 - Maximum Performance)
-- [ ] Create WinUI 3 trading application foundation
-  - Files: `TradingPlatform.WinUI/MainWindow.xaml`, `TradingPlatform.WinUI/App.xaml`
-  - Rationale: Microsoft's latest framework for maximum Windows performance
-  - Performance: <3ms UI responsiveness, GPU-accelerated rendering
-  - Dependencies: Windows App SDK, .NET 8
-
-- [ ] Implement high-performance multi-monitor trading interface
-  - Files: `TradingPlatform.WinUI/Views/TradingScreens/`
-  - Rationale: Native Windows multi-monitor support for professional trading
-  - Performance: <20ms chart refresh, per-monitor DPI awareness
-  - Dependencies: WinUI 3 foundation
-
-- [ ] WinUI 3 real-time data binding with <1ms updates
-  - Files: `TradingPlatform.WinUI/Services/RealTimeDataService.cs`
-  - Rationale: Leverage WinUI 3's compiled bindings for maximum performance
-  - Performance: x:Bind compiled bindings, minimal GC pressure
-  - Dependencies: Real-time data pipeline
-
-- [ ] GPU-accelerated charting with WinUI 3 Canvas
-  - Files: `TradingPlatform.WinUI/Controls/HighPerformanceChart.xaml`
-  - Rationale: Hardware-accelerated rendering for smooth 60+ FPS charts
-  - Performance: Direct composition, Win2D integration
-  - Dependencies: Multi-monitor interface
-
-#### Charting Integration
-- [ ] TradingView integration (Blazor MVP validation)
-  - Files: `TradingPlatform.WebUI/Components/Charts/TradingViewChart.razor`
-  - Rationale: Quick charting validation in Blazor MVP
-  - Dependencies: TradingView API, Web UI
-
-- [ ] Native WinUI 3 charting with Win2D acceleration
-  - Files: `TradingPlatform.WinUI/Charting/Win2DChartEngine.cs`
-  - Rationale: Maximum performance charting for production trading
-  - Performance: Hardware-accelerated, <16ms frame time (60+ FPS)
-  - Dependencies: Win2D, WinUI 3 Canvas
-
-### Phase 4 – Performance / Scalability / Security Hardening
-
-#### Performance Optimization
-- [ ] Implement Redis caching
-  - Files: `TradingPlatform.Infrastructure/Caching/RedisCacheService.cs`
-  - Rationale: High-performance distributed caching
-  - Scalability: Support multiple application instances
-  - Dependencies: Redis server
-
-- [ ] Add database query optimization
-  - Files: `TradingPlatform.Data/Repositories/OptimizedScreeningRepository.cs`
-  - Rationale: Fast screening query performance
-  - Performance: Critical for real-time screening
-  - Dependencies: Database layer
-
-- [ ] WinUI 3 performance profiling and optimization
-  - Files: `TradingPlatform.WinUI/Performance/WinUIProfiler.cs`
-  - Rationale: Measure and optimize WinUI 3 specific performance metrics
-  - Performance: Target <1ms click-to-response, minimal memory allocation
-  - Dependencies: WinUI 3 application
-
-#### Security Hardening
-- [ ] Implement data encryption at rest
-  - Files: `TradingPlatform.Infrastructure/Security/EncryptionService.cs`
-  - Rationale: Protect sensitive financial data
-  - Dependencies: Encryption libraries
-
-- [ ] Add rate limiting middleware
-  - Files: `TradingPlatform.API/Middleware/RateLimitingMiddleware.cs`
-  - Rationale: Prevent API abuse
-  - Dependencies: Web API
-
-#### Monitoring & Observability
-- [ ] Integrate Serilog structured logging
-  - Files: `TradingPlatform.Infrastructure/Logging/SerilogConfiguration.cs`
-  - Rationale: Production-grade logging and monitoring
-  - Dependencies: Serilog packages
-
-- [ ] Add health checks
-  - Files: `TradingPlatform.API/HealthChecks/TradingPlatformHealthCheck.cs`
-  - Rationale: Monitor system health
-  - Dependencies: Health check packages
-
-### Phase 5 – Testing, CI/CD, Final QA
-
-#### Comprehensive Testing
-- [ ] Complete unit test coverage (>90%)
-  - Files: Across all `TradingPlatform.Tests/` subdirectories
-  - Rationale: Ensure code quality and prevent regressions
-  - Dependencies: All implemented features
-
-- [ ] End-to-end testing with Playwright
-  - Files: `TradingPlatform.E2ETests/TradingWorkflowTests.cs`
-  - Rationale: Validate complete user workflows
-  - Dependencies: Web UI, API
-
-#### CI/CD Pipeline
-- [ ] GitHub Actions build pipeline
-  - Files: `.github/workflows/build-and-test.yml`
-  - Rationale: Automated build and test execution
-  - Dependencies: Test suite
-
-- [ ] Docker containerization
-  - Files: `Dockerfile`, `docker-compose.yml`
-  - Rationale: Platform-independent deployment
-  - Dependencies: Complete application
-
-#### Production Deployment
-- [ ] Azure/AWS deployment configuration
-  - Files: `Infrastructure/terraform/` or `ARM templates/`
-  - Rationale: Scalable cloud deployment
-  - Dependencies: Containerization
-
-## 5. Risk & Open-Questions Log
-
-### Technical Risks
-- **API Rate Limits**: Free tier limitations may impact real-time performance
-  - Mitigation: Implement intelligent caching and consider premium upgrades
-- **Database Performance**: Large historical datasets may slow queries
-  - Mitigation: Implement proper indexing and consider data partitioning
-- **Real-time Data Accuracy**: Market data delays could impact trading decisions
-  - Mitigation: Display data timestamps and latency warnings
-
-### Business Risks
-- **Regulatory Compliance**: FINRA rules must be perfectly implemented
-  - Mitigation: Legal review of compliance features before production
-- **Data Vendor Dependencies**: Reliance on external data sources
-  - Mitigation: Multiple provider support and fallback mechanisms
-
-### Open Questions – WinUI 3 Performance
-
-**WinUI 3 Development Timeline**:
-- [x] **Blazor → WinUI 3 Transition**: Parallel development approved for faster time-to-production
-
-**Target Windows Hardware**:
-- [x] **Performance Baseline**: Windows 11 Pro, high-end workstation with RTX GPU and multiple monitors
-
-**WinUI 3 Specific Features**:
-- [x] **Advanced Performance**: All-in on WinUI 3 performance features
-  - Win2D for GPU-accelerated graphics
-  - Compiled x:Bind for zero-reflection data binding
-  - Custom renderers for ultra-low latency charts
-
-### Open Questions
-1. **Multi-tenant vs Single-tenant**: Should the platform support multiple users?
-2. **Data Retention Policy**: How long should historical data be stored?
-3. **Broker Integration**: Which brokers should be supported for live trading?
-4. **Deployment Model**: On-premises, cloud, or hybrid deployment?
-5. **Licensing**: Open source or commercial licensing model?
-
-### Performance Targets
-- **Screening Latency**: <1s for screening updates (Per PRD requirement)
-- **Data Accuracy**: 99.9% sync with exchange feeds (Per PRD requirement)
-- **Alert Latency**: <500ms for alert delivery (Per PRD requirement)
-- **Concurrent Users**: Support for 100+ concurrent users
-- **Database Query Time**: <100ms for standard screening queries
-
-## 6. Review Checklist
-
-### Phase 1 Completion Criteria
-- [ ] All unit tests passing with >80% code coverage
-- [ ] Configuration system implemented and documented
-- [ ] Database migrations completed and tested
-- [ ] All existing functionality preserved and tested
-
-### Phase 2 Completion Criteria
-- [ ] News integration functional with live feeds
-- [ ] Backtesting engine validates historical strategies within 5% accuracy (Per PRD)
-- [ ] Risk management tools implement Golden Rules principles
-- [ ] FINRA compliance features operational
-
-### Phase 3 Completion Criteria
-- [ ] REST API documented and tested
-- [ ] Web UI supports basic trading workflows
-- [ ] Real-time data streaming functional
-- [ ] Multi-screen layouts implemented
-
-### Phase 4 Completion Criteria
-- [ ] Performance targets met under load testing
-- [ ] Security audit passed
-- [ ] Production monitoring fully operational
-- [ ] Scalability tested with realistic user loads
-
-### Phase 5 Completion Criteria
-- [ ] All automated tests passing
-- [ ] CI/CD pipeline functional
-- [ ] Production deployment successful
-- [ ] User acceptance testing completed
-- [ ] Documentation complete and up-to-date
-
-### Golden Rules Compliance Checklist
-- [ ] All monetary calculations use System.Decimal (Rule: Financial Precision)
-- [ ] 1% risk rule implemented in position sizing (Rule 1: Capital Preservation)
-- [ ] Stop-loss functionality enforced (Rule 3: Cut Losses Quickly)
-- [ ] Systematic trading plan validation (Rule 2: Trading Discipline)
-- [ ] Trend analysis alignment features (Rule 5: Trade with Trend)
-- [ ] Risk-reward ratio calculations (Rule 6: High-Probability Setups)
-- [ ] Daily loss limit enforcement (Rule 8: Control Daily Losses)
-- [ ] Performance tracking and analysis (Rule 9: Continuous Learning)
-- [ ] Emotional control features (no revenge trading alerts) (Rule 10: Trading Psychology)
-- [ ] Market structure analysis tools (Rule 11: Understand Market Structure)
-- [ ] Work-life balance features (trading session limits) (Rule 12: Balance)
+## Modular High-Performance Implementation (PRD/EDD Compliant)
+
+**Document Version**: 2.0 (Updated for PRD/EDD Requirements)
+**Date**: June 15, 2025
+**Implementation Timeline**: 12 months (MVP→Beta→Post-MVP)
 
 ---
 
-**Next Steps**: Await approval of this project plan before beginning Phase 1 implementation.
+## 1. Project Overview
+
+This is a modular, high-performance day trading system designed for single-user operation on Windows 11 x64 platforms with ultra-low latency execution capabilities. The platform evolves through three distinct phases: MVP (U.S. markets only), Paper Trading Beta, and Post-MVP (global markets with advanced analytics).
+
+**Current State**: Well-architected backend services with solid core functionality but requiring transformation to meet high-performance microservices architecture.
+
+**Target Architecture**: Event-driven microservices with Redis Streams messaging, achieving sub-millisecond execution targets for order routing simulation and sub-second response times for strategy execution.
+
+### Core Technology Stack (PRD/EDD Validated)
+- **Runtime**: C#/.NET 8.0 with Native AOT compilation for ultra-low latency
+- **Architecture**: Event-driven microservices with Redis Streams messaging
+- **Database**: TimescaleDB for microsecond-precision time-series data
+- **GPU Acceleration**: CUDA 12.0+ with RTX 4090 for backtesting (30-60x speedup)
+- **ML Framework**: ML.NET + TorchSharp for comprehensive predictive analytics
+- **Message Bus**: Redis Streams for sub-millisecond message delivery
+- **OS Optimization**: Windows 11 with real-time process priorities and CPU core affinity
+
+## 2. Performance Targets (PRD/EDD Requirements)
+
+### Ultra-Low Latency Execution
+- **Order-to-wire latency**: <100 microseconds (per EDD specification)
+- **Market data processing**: <50ms for strategy evaluation
+- **Alert delivery**: <500ms for critical notifications
+- **Backtesting throughput**: 30-60x speedup with GPU acceleration
+- **System availability**: 99.9% uptime during market hours
+
+### Hardware Requirements (PRD Specification)
+- **CPU**: AMD Ryzen 9 7950X or Intel Core i9-13900K (16+ cores)
+- **Memory**: 64GB DDR5-5600 with ECC support
+- **GPU**: NVIDIA RTX 4090 (16GB VRAM) for CUDA acceleration
+- **Storage**: 2TB NVMe Gen4 primary + 4TB NVMe Gen4 data
+- **Network**: Dedicated gigabit with hardware timestamping
+
+## 3. 12-Month Implementation Roadmap
+
+### MVP Phase: Foundation Implementation (Months 1-4)
+
+#### Month 1-2: Core Infrastructure & Microservices Foundation
+**Objective**: Establish event-driven microservices architecture with Redis Streams messaging
+
+**Infrastructure Setup:**
+- [ ] Windows 11 development environment with Visual Studio 2022 optimization
+- [ ] Redis Streams implementation with consumer groups for parallel processing
+- [ ] TimescaleDB setup with hypertables for microsecond-precision market data
+- [ ] Docker containerization for microservices deployment
+- [ ] Automated CI/CD pipeline with GitHub Actions
+
+**Microservices Architecture:**
+- [ ] Create `TradingPlatform.Gateway` - API Gateway with ASP.NET Core Minimal APIs
+- [ ] Create `TradingPlatform.MarketData` - Market data ingestion microservice
+- [ ] Create `TradingPlatform.StrategyEngine` - Rule-based strategy execution service
+- [ ] Create `TradingPlatform.RiskManagement` - Real-time risk monitoring service
+- [ ] Create `TradingPlatform.PaperTrading` - Order execution simulation service
+
+**Performance Optimization:**
+- [ ] Implement Windows 11 real-time process priorities (REALTIME_PRIORITY_CLASS)
+- [ ] Configure CPU core affinity for critical trading processes
+- [ ] Memory page locking for ultra-low latency data access
+- [ ] Network stack optimization with TCP parameter tuning
+
+#### Month 3-4: Trading Engine & FIX Protocol Implementation
+**Objective**: Implement FIX protocol connectivity and rule-based trading strategies
+
+**FIX Protocol Implementation:**
+- [ ] Create `TradingPlatform.FixEngine` with FIX 4.2/4.4 support
+- [ ] Implement hardware timestamping for nanosecond precision
+- [ ] Order routing interfaces for NYSE, NASDAQ, BATS, IEX
+- [ ] Smart Order Routing (SOR) algorithms for optimal execution simulation
+
+**Strategy Implementation:**
+- [ ] Rule-based strategy engine implementing 12 Golden Rules of Day Trading
+- [ ] Real-time market data processing with async/await patterns
+- [ ] Pattern Day Trading (PDT) compliance automation
+- [ ] Risk management integration with position limits
+
+**MVP Success Criteria:**
+- [ ] Process live market data from 3+ exchanges simultaneously
+- [ ] Execute paper trades with sub-second response times
+- [ ] Demonstrate 99.9% uptime during 2-week testing period
+- [ ] Generate SEC-compliant audit trails and reports
+
+### Paper Trading Beta Phase (Months 5-7)
+
+#### Enhanced Analytics & ML Pipeline
+**Objective**: Implement comprehensive machine learning framework and advanced analytics
+
+**ML.NET + TorchSharp Integration:**
+- [ ] Feature engineering pipeline for market data and alternative datasets
+- [ ] Transformer-based models for multi-temporal market analysis
+- [ ] Real-time model inference with sub-second latency requirements
+- [ ] GPU-accelerated model training using CUDA acceleration
+- [ ] A/B testing framework for strategy comparison and optimization
+
+**Advanced Data Sources:**
+- [ ] News sentiment analysis using transformer models
+- [ ] Social media sentiment through API integration
+- [ ] Economic calendar and fundamental data feeds
+- [ ] Alternative data correlation analysis
+
+#### GPU Acceleration Implementation
+**Objective**: Implement CUDA acceleration for computationally intensive workloads
+
+**CUDA Integration (Months 5-6):**
+- [ ] CUDA Toolkit 12.0+ setup with Visual Studio integration
+- [ ] GPU-accelerated backtesting engine (targeting 30-60x speedup)
+- [ ] Monte Carlo risk simulations for portfolio optimization
+- [ ] Parallel technical indicator calculations across large datasets
+- [ ] Memory pool management minimizing host-device transfers
+
+**Performance Validation:**
+- [ ] Benchmark GPU vs CPU performance for backtesting workloads
+- [ ] Validate 30-60x speedup claims from PRD specification
+- [ ] Implement fallback to CPU processing for reliability
+- [ ] GPU memory optimization for 16GB VRAM constraints
+
+#### User Interface Development
+**Objective**: Create high-performance native Windows interface
+
+**WinUI 3 Implementation:**
+- [ ] Native WinUI 3 trading application with hardware acceleration
+- [ ] Multi-monitor support with per-monitor DPI awareness
+- [ ] Real-time data binding with <1ms updates using x:Bind
+- [ ] GPU-accelerated charting with Win2D integration
+- [ ] High-performance multi-screen trading layouts
+
+**Beta Success Criteria:**
+- [ ] Complete 30-day paper trading with detailed performance analytics
+- [ ] Demonstrate strategy profitability using GPU-accelerated backtesting
+- [ ] Achieve average order execution latency under 50ms
+- [ ] Successfully handle market volatility without system failures
+
+### Post-MVP Phase: Advanced Features (Months 8-12)
+
+#### International Market Expansion
+**Objective**: Extend platform to global markets with regulatory compliance
+
+**Global Market Integration:**
+- [ ] European market data with MiFID II compliance
+- [ ] Asian market support (TSE, HKEX, SGX) with timezone normalization
+- [ ] Multi-currency handling with real-time FX conversion
+- [ ] Regulatory framework adaptation for international requirements
+
+#### Advanced Predictive Analytics
+**Objective**: Implement state-of-the-art ML capabilities for market prediction
+
+**Deep Learning Implementation:**
+- [ ] Transformer architecture for market prediction
+- [ ] Multi-modal self-learning capabilities
+- [ ] Continuous learning with online model updates
+- [ ] Model drift detection and automated retraining
+
+**Alternative Data Integration:**
+- [ ] Real-time news sentiment processing
+- [ ] Social media sentiment analysis
+- [ ] Economic event impact modeling
+- [ ] Cross-asset correlation analysis
+
+#### Production Hardening
+**Objective**: Enterprise-grade security, monitoring, and scalability
+
+**Security & Compliance:**
+- [ ] Zero-trust security model implementation
+- [ ] Immutable audit trails with blockchain integration
+- [ ] Automated regulatory reporting for multiple jurisdictions
+- [ ] Advanced threat detection and response
+
+**Monitoring & Observability:**
+- [ ] Comprehensive latency measurement framework
+- [ ] Real-time performance dashboards with Grafana
+- [ ] Automated alerting for performance degradation
+- [ ] Distributed tracing for microservices debugging
+
+## 4. Testing Strategy (>90% Coverage Requirement)
+
+### Comprehensive Testing Framework
+**Objective**: Achieve >90% test coverage as specified in EDD
+
+**Unit Testing:**
+- [ ] xUnit.net framework with comprehensive financial math validation
+- [ ] Mock market data generators for reproducible scenarios
+- [ ] Performance regression testing preventing latency degradation
+- [ ] Memory leak detection for stable long-term operation
+
+**Integration Testing:**
+- [ ] End-to-end trading workflow validation
+- [ ] Cross-service communication testing with Redis Streams
+- [ ] Market data provider integration testing
+- [ ] Database performance testing with TimescaleDB
+
+**Performance Testing:**
+- [ ] Latency testing measuring end-to-end response times
+- [ ] Throughput testing validating peak market data processing
+- [ ] Stress testing under extreme volatility scenarios
+- [ ] GPU acceleration performance validation
+
+**Compliance Testing:**
+- [ ] Regulatory rule validation using historical scenarios
+- [ ] Pattern Day Trading rule enforcement testing
+- [ ] Audit trail completeness verification
+- [ ] Data integrity testing with checksum validation
+
+## 5. Architecture Transformation Plan
+
+### Current to Target Architecture Migration
+
+**Phase 1: Microservices Decomposition**
+- [ ] Extract market data ingestion from monolithic Core project
+- [ ] Separate screening engine into independent microservice
+- [ ] Implement Redis Streams messaging between services
+- [ ] Add circuit breaker patterns for fault tolerance
+
+**Phase 2: Performance Optimization**
+- [ ] Native AOT compilation for critical trading paths
+- [ ] SIMD intrinsics implementation for mathematical operations
+- [ ] Span<T> and Memory<T> for zero-allocation operations
+- [ ] Garbage collection optimization for trading hotpaths
+
+**Phase 3: Hardware Acceleration**
+- [ ] CUDA kernel development for parallel computations
+- [ ] GPU memory management for large dataset processing
+- [ ] Hybrid CPU-GPU processing pipelines
+- [ ] Hardware timestamping integration
+
+## 6. Risk Mitigation & Contingency Planning
+
+### Technical Risks
+- **GPU Acceleration Complexity**: Fallback to CPU-optimized algorithms if CUDA implementation delays
+- **Ultra-Low Latency Challenges**: Incremental optimization approach with measurable targets
+- **Microservices Overhead**: Monolithic deployment option for single-user scenarios
+- **TimescaleDB Learning Curve**: PostgreSQL expertise transfer and professional support
+
+### Business Risks
+- **Performance Target Achievement**: Phased performance validation with early optimization
+- **Regulatory Compliance**: Legal review checkpoints at each phase completion
+- **Hardware Dependency**: Cloud-based development environment as backup option
+- **Timeline Pressure**: Scope reduction prioritizing core trading functionality
+
+## 7. Success Metrics & Milestones
+
+### MVP Phase Completion Criteria
+- [ ] Sub-second paper trading execution consistently achieved
+- [ ] Real-time market data processing from 3+ exchanges
+- [ ] Pattern Day Trading compliance automation functional
+- [ ] 99.9% system availability during 2-week validation period
+
+### Beta Phase Completion Criteria
+- [ ] GPU acceleration delivering 30-60x backtesting speedup
+- [ ] ML.NET predictive models operational with sub-second inference
+- [ ] WinUI 3 interface responsive with <3ms UI latency
+- [ ] Comprehensive analytics demonstrating trading strategy effectiveness
+
+### Post-MVP Completion Criteria
+- [ ] International market support with regulatory compliance
+- [ ] Advanced ML pipeline with continuous learning capabilities
+- [ ] Production monitoring and alerting fully operational
+- [ ] >90% test coverage with automated CI/CD pipeline
+
+### Golden Rules Compliance Validation
+- [ ] All monetary calculations use System.Decimal (Financial Precision Rule)
+- [ ] 1% risk rule automated in position sizing (Rule 1: Capital Preservation)
+- [ ] Stop-loss functionality enforced (Rule 3: Cut Losses Quickly)
+- [ ] Systematic trading plan validation (Rule 2: Trading Discipline)
+- [ ] Comprehensive performance tracking (Rule 9: Continuous Learning)
+
+## 8. Resource Requirements & Investment
+
+### Development Team Structure
+- **Lead Developer**: C#/.NET and financial systems expertise (full-time)
+- **GPU Specialist**: CUDA and performance optimization (6 months)
+- **DevOps Engineer**: Infrastructure and deployment automation (part-time)
+- **QA Engineer**: Financial application testing specialist (part-time)
+- **Domain Expert**: Trading strategy validation (consulting)
+
+### Infrastructure Investment
+- **Development Hardware**: $15,000-20,000 (RTX 4090, 64GB DDR5, high-end CPU)
+- **Software Licensing**: $5,000-10,000 (development tools, databases, APIs)
+- **Premium Data Feeds**: $2,000-5,000/month (post-MVP professional data)
+- **Cloud Services**: $1,000-3,000/month (backup, disaster recovery, CI/CD)
+
+### Technology Licensing
+- **TimescaleDB**: Enterprise license for production deployment
+- **CUDA Toolkit**: Free for development, commercial license for distribution
+- **Redis Enterprise**: Production clustering and support
+- **Market Data APIs**: Professional tier subscriptions post-MVP
+
+---
+
+**Implementation Status**: Ready for MVP Phase initiation
+**Next Action**: Begin Month 1-2 infrastructure setup and microservices foundation
+**Review Cycle**: Monthly milestone reviews with performance validation
