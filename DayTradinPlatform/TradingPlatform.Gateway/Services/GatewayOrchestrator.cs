@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Messaging.Events;
 using TradingPlatform.Messaging.Interfaces;
+using TradingPlatform.Logging.Interfaces;
 
 namespace TradingPlatform.Gateway.Services;
 
@@ -17,16 +18,28 @@ public class GatewayOrchestrator : IGatewayOrchestrator
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<GatewayOrchestrator> _logger;
+    private readonly ITradingLogger _tradingLogger;
+    private readonly IPerformanceLogger _performanceLogger;
     private readonly Dictionary<string, WebSocket> _activeWebSockets;
     private readonly object _webSocketLock = new();
     private readonly CancellationTokenSource _cancellationTokenSource;
 
-    public GatewayOrchestrator(IMessageBus messageBus, ILogger<GatewayOrchestrator> logger)
+    public GatewayOrchestrator(IMessageBus messageBus, ILogger<GatewayOrchestrator> logger, 
+        ITradingLogger tradingLogger, IPerformanceLogger performanceLogger)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _tradingLogger = tradingLogger ?? throw new ArgumentNullException(nameof(tradingLogger));
+        _performanceLogger = performanceLogger ?? throw new ArgumentNullException(nameof(performanceLogger));
         _activeWebSockets = new Dictionary<string, WebSocket>();
         _cancellationTokenSource = new CancellationTokenSource();
+
+        _tradingLogger.LogConfiguration("GatewayOrchestrator", new Dictionary<string, object>
+        {
+            ["MessageBusType"] = _messageBus.GetType().Name,
+            ["MaxWebSocketConnections"] = 1000,
+            ["InitializedAt"] = DateTime.UtcNow
+        });
 
         // Subscribe to all event streams for real-time updates
         _ = Task.Run(SubscribeToEventStreamsAsync);
@@ -35,7 +48,12 @@ public class GatewayOrchestrator : IGatewayOrchestrator
     // Market Data Operations
     public async Task<MarketData?> GetMarketDataAsync(string symbol)
     {
-        var stopwatch = Stopwatch.StartNew();
+        var correlationId = _tradingLogger.GenerateCorrelationId();
+        
+        using var performanceScope = _performanceLogger.MeasureOperation("GetMarketData", correlationId);
+        using var tradingScope = _tradingLogger.BeginScope("GetMarketData", correlationId);
+        
+        _tradingLogger.LogMethodEntry("GetMarketDataAsync", new { symbol });
         
         try
         {
@@ -46,6 +64,13 @@ public class GatewayOrchestrator : IGatewayOrchestrator
                 RequestId = Guid.NewGuid().ToString(),
                 Source = "Gateway"
             };
+
+            _tradingLogger.LogDebugTrace($"Publishing market data request for symbol: {symbol}", new Dictionary<string, object>
+            {
+                ["symbol"] = symbol,
+                ["request_id"] = request.RequestId,
+                ["stream"] = "market-data-requests"
+            });
 
             await _messageBus.PublishAsync("market-data-requests", request);
             
@@ -61,30 +86,65 @@ public class GatewayOrchestrator : IGatewayOrchestrator
                 Timestamp = DateTime.UtcNow
             };
 
-            stopwatch.Stop();
-            _logger.LogDebug("Retrieved market data for {Symbol} in {ElapsedMicroseconds}μs", 
-                symbol, stopwatch.Elapsed.TotalMicroseconds);
+            _tradingLogger.LogMarketDataReceived(symbol, mockData.Price, mockData.Volume, 
+                mockData.Timestamp, TimeSpan.FromMilliseconds(5)); // Mock 5ms latency
 
             return mockData;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving market data for {Symbol}", symbol);
+            _tradingLogger.LogTradingError("GetMarketData", ex, correlationId, new Dictionary<string, object>
+            {
+                ["symbol"] = symbol,
+                ["operation"] = "GetMarketDataAsync"
+            });
             return null;
         }
     }
 
     public async Task SubscribeToMarketDataAsync(string[] symbols)
     {
-        var subscribeEvent = new MarketDataSubscriptionEvent
+        var correlationId = _tradingLogger.GenerateCorrelationId();
+        
+        using var performanceScope = _performanceLogger.MeasureOperation("SubscribeToMarketData", correlationId);
+        using var tradingScope = _tradingLogger.BeginScope("SubscribeToMarketData", correlationId);
+        
+        _tradingLogger.LogMethodEntry("SubscribeToMarketDataAsync", new { symbols, symbolCount = symbols.Length });
+        
+        try
         {
-            Symbols = symbols,
-            Action = "Subscribe",
-            Source = "Gateway"
-        };
+            var subscribeEvent = new MarketDataSubscriptionEvent
+            {
+                Symbols = symbols,
+                Action = "Subscribe",
+                Source = "Gateway"
+            };
 
-        await _messageBus.PublishAsync("market-data-subscriptions", subscribeEvent);
-        _logger.LogInformation("Subscribed to market data for symbols: {Symbols}", string.Join(", ", symbols));
+            _tradingLogger.LogDebugTrace($"Publishing market data subscription for {symbols.Length} symbols", new Dictionary<string, object>
+            {
+                ["symbols"] = symbols,
+                ["symbol_count"] = symbols.Length,
+                ["action"] = "Subscribe",
+                ["stream"] = "market-data-subscriptions"
+            });
+
+            await _messageBus.PublishAsync("market-data-subscriptions", subscribeEvent);
+            
+            _tradingLogger.LogPerformanceMetric("market_data.subscriptions", symbols.Length, "count", new Dictionary<string, object>
+            {
+                ["symbols"] = string.Join(",", symbols),
+                ["correlation_id"] = correlationId
+            });
+        }
+        catch (Exception ex)
+        {
+            _tradingLogger.LogTradingError("SubscribeToMarketData", ex, correlationId, new Dictionary<string, object>
+            {
+                ["symbols"] = symbols,
+                ["symbol_count"] = symbols.Length
+            });
+            throw;
+        }
     }
 
     public async Task UnsubscribeFromMarketDataAsync(string[] symbols)

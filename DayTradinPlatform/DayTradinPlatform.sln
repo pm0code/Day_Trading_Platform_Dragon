@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.PaperTradin
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.WindowsOptimization", "TradingPlatform.WindowsOptimization\TradingPlatform.WindowsOptimization.csproj", "{73324504-63C2-4E5B-A28B-838E778B5E77}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Logging", "TradingPlatform.Logging\TradingPlatform.Logging.csproj", "{D4E3F921-BA12-4A97-8B32-6F9A7D8C3E45}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -93,6 +95,10 @@ Global
 		{73324504-63C2-4E5B-A28B-838E778B5E77}.Debug|x64.Build.0 = Debug|Any CPU
 		{73324504-63C2-4E5B-A28B-838E778B5E77}.Release|x64.ActiveCfg = Release|Any CPU
 		{73324504-63C2-4E5B-A28B-838E778B5E77}.Release|x64.Build.0 = Release|Any CPU
+		{D4E3F921-BA12-4A97-8B32-6F9A7D8C3E45}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D4E3F921-BA12-4A97-8B32-6F9A7D8C3E45}.Debug|x64.Build.0 = Debug|Any CPU
+		{D4E3F921-BA12-4A97-8B32-6F9A7D8C3E45}.Release|x64.ActiveCfg = Release|Any CPU
+		{D4E3F921-BA12-4A97-8B32-6F9A7D8C3E45}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
