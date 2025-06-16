@@ -133,14 +133,14 @@ public sealed class FixMessage
             var tagStr = field.Substring(0, equalIndex);
             if (!int.TryParse(tagStr, out int tag)) continue;
             
-            // Extract value
+            // Extract value - ensure we create a new string instance
             var value = field.Substring(equalIndex + 1);
             
             // Handle standard header fields
             switch (tag)
             {
                 case 8: 
-                    message.BeginString = value; 
+                    message.BeginString = string.Copy(value); 
                     break;
                 case 35: 
                     message.MsgType = value; 
