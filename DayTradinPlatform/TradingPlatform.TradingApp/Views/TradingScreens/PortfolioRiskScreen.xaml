@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window x:Class="TradingPlatform.TradingApp.Views.TradingScreens.PortfolioRiskScreen"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Portfolio Risk - Trading Platform"
+        Width="800"
+        Height="1080">
+    
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header Bar -->
+        <Border Grid.Row="0" Background="{ThemeResource SystemControlAcrylicWindowBrush}" 
+                Padding="16,8">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon Glyph="&#xE8AB;" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                <TextBlock Text="Portfolio &amp; Risk Management" 
+                           Style="{StaticResource SubtitleTextBlockStyle}"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- Main Content -->
+        <ScrollViewer Grid.Row="1" Margin="8">
+            <StackPanel Spacing="12">
+                
+                <!-- P&L Summary -->
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" Padding="16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Daily P&L" Style="{StaticResource CaptionTextBlockStyle}"/>
+                            <TextBlock x:Name="DailyPnL" Text="+$1,245.67" 
+                                       Style="{StaticResource TitleTextBlockStyle}"
+                                       Foreground="Green"/>
+                        </StackPanel>
+                        
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock Text="Total P&L" Style="{StaticResource CaptionTextBlockStyle}"/>
+                            <TextBlock x:Name="TotalPnL" Text="+$12,345.89" 
+                                       Style="{StaticResource TitleTextBlockStyle}"
+                                       Foreground="Green"/>
+                        </StackPanel>
+                        
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="Win Rate" Style="{StaticResource CaptionTextBlockStyle}"/>
+                            <TextBlock x:Name="WinRate" Text="68.5%" 
+                                       Style="{StaticResource TitleTextBlockStyle}"/>
+                        </StackPanel>
+                        
+                        <StackPanel Grid.Column="3" Spacing="4">
+                            <TextBlock Text="Sharpe Ratio" Style="{StaticResource CaptionTextBlockStyle}"/>
+                            <TextBlock x:Name="SharpeRatio" Text="2.34" 
+                                       Style="{StaticResource TitleTextBlockStyle}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                
+                <!-- Account Summary -->
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Text="Account Summary" 
+                                   Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,12"/>
+                        
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0" Spacing="8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Account Value"/>
+                                    <TextBlock Grid.Column="1" x:Name="AccountValue" Text="$50,000.00" FontWeight="Bold"/>
+                                </Grid>
+                                
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Cash"/>
+                                    <TextBlock Grid.Column="1" x:Name="Cash" Text="$25,000.00"/>
+                                </Grid>
+                                
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Positions Value"/>
+                                    <TextBlock Grid.Column="1" x:Name="PositionsValue" Text="$25,000.00"/>
+                                </Grid>
+                            </StackPanel>
+                            
+                            <StackPanel Grid.Column="1" Spacing="8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Buying Power"/>
+                                    <TextBlock Grid.Column="1" x:Name="BuyingPower" Text="$100,000.00" Foreground="Green"/>
+                                </Grid>
+                                
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Day Trades Used"/>
+                                    <TextBlock Grid.Column="1" x:Name="DayTradesUsed" Text="2 / 3"/>
+                                </Grid>
+                                
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="PDT Status"/>
+                                    <TextBlock Grid.Column="1" x:Name="PDTStatus" Text="Active" Foreground="Green"/>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+                
+                <!-- Risk Metrics -->
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Text="Risk Metrics" 
+                                   Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,12"/>
+                        
+                        <StackPanel Grid.Row="1" Spacing="12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0" Text="Daily Loss Limit"/>
+                                <ProgressBar Grid.Column="1" x:Name="DailyLossProgress" 
+                                           Value="25" Maximum="100" Margin="8,0"/>
+                                <TextBlock Grid.Column="2" x:Name="DailyLossAmount" Text="$500 / $2,000"/>
+                            </Grid>
+                            
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0" Text="Position Size Risk"/>
+                                <ProgressBar Grid.Column="1" x:Name="PositionSizeProgress" 
+                                           Value="15" Maximum="100" Margin="8,0"/>
+                                <TextBlock Grid.Column="2" x:Name="PositionSizeRisk" Text="15%"/>
+                            </Grid>
+                            
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0" Text="Sector Concentration"/>
+                                <ProgressBar Grid.Column="1" x:Name="SectorConcentrationProgress" 
+                                           Value="35" Maximum="100" Margin="8,0"/>
+                                <TextBlock Grid.Column="2" x:Name="SectorConcentration" Text="35%"/>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                
+                <!-- Current Positions -->
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Text="Current Positions" 
+                                   Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,12"/>
+                        
+                        <ListView Grid.Row="1" x:Name="PositionsList" MaxHeight="300">
+                            <ListView.HeaderTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Symbol" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="1" Text="Shares" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="2" Text="Avg Price" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="3" Text="Last Price" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="4" Text="P&L" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="5" Text="% Change" FontWeight="Bold"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.HeaderTemplate>
+                            
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Symbol}" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Shares}"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding AvgPrice}"/>
+                                        <TextBlock Grid.Column="3" Text="{Binding LastPrice}"/>
+                                        <TextBlock Grid.Column="4" Text="{Binding PnL}" 
+                                                  Foreground="{Binding PnLColor}"/>
+                                        <TextBlock Grid.Column="5" Text="{Binding PercentChange}" 
+                                                  Foreground="{Binding PercentChangeColor}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+                </Border>
+                
+                <!-- Trading Rules Compliance -->
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Text="Golden Rules Compliance" 
+                                   Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,12"/>
+                        
+                        <StackPanel Grid.Row="1" Spacing="8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Risk per Trade ≤ 1% of Account"/>
+                                <FontIcon Grid.Column="1" Glyph="&#xE73E;" Foreground="Green"/>
+                            </Grid>
+                            
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Daily Loss Limit ≤ 2% of Account"/>
+                                <FontIcon Grid.Column="1" Glyph="&#xE73E;" Foreground="Green"/>
+                            </Grid>
+                            
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Position Size ≤ 20% of Account"/>
+                                <FontIcon Grid.Column="1" Glyph="&#xE73E;" Foreground="Green"/>
+                            </Grid>
+                            
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="No Trading Against Major Trend"/>
+                                <FontIcon Grid.Column="1" Glyph="&#xE7BA;" Foreground="Orange"/>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                
+            </StackPanel>
+        </ScrollViewer>
+        
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="{ThemeResource SystemControlAcrylicWindowBrush}" 
+                Padding="16,4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16">
+                    <TextBlock x:Name="LastRiskUpdate" 
+                               Text="Risk Updated: --:--:--"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="Risk Level: LOW" 
+                               Foreground="Green"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+                
+                <TextBlock Grid.Column="1" 
+                           Text="Screen 3: Portfolio Risk"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

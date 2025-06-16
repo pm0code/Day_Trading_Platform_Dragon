@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window x:Class="TradingPlatform.TradingApp.Views.TradingControlWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Trading Platform Control Center"
+        Width="600"
+        Height="800">
+    
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header -->
+        <Border Grid.Row="0" Background="{ThemeResource SystemControlAcrylicWindowBrush}" 
+                Padding="20">
+            <StackPanel Spacing="8">
+                <TextBlock Text="🐉 DRAGON Day Trading Platform" 
+                           Style="{StaticResource TitleTextBlockStyle}"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="4-Screen Professional Trading System" 
+                           Style="{StaticResource SubtitleTextBlockStyle}"
+                           HorizontalAlignment="Center"
+                           Opacity="0.8"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- Main Content -->
+        <ScrollViewer Grid.Row="1" Padding="20">
+            <StackPanel Spacing="20">
+                
+                <!-- Quick Actions -->
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Quick Actions" 
+                                   Style="{StaticResource SubtitleTextBlockStyle}"/>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <Button Grid.Row="0" Grid.Column="0" 
+                                    x:Name="OpenAllScreensButton"
+                                    Content="🚀 Open All Trading Screens"
+                                    Click="OpenAllScreensButton_Click"
+                                    HorizontalAlignment="Stretch"
+                                    Margin="0,0,8,8"/>
+                            
+                            <Button Grid.Row="0" Grid.Column="1" 
+                                    x:Name="CloseAllScreensButton"
+                                    Content="🛑 Close All Screens"
+                                    Click="CloseAllScreensButton_Click"
+                                    HorizontalAlignment="Stretch"
+                                    Margin="8,0,0,8"/>
+                            
+                            <Button Grid.Row="1" Grid.Column="0" 
+                                    x:Name="ArrangeScreensButton"
+                                    Content="📐 Arrange for Day Trading"
+                                    Click="ArrangeScreensButton_Click"
+                                    HorizontalAlignment="Stretch"
+                                    Margin="0,8,8,0"/>
+                            
+                            <Button Grid.Row="1" Grid.Column="1" 
+                                    x:Name="SavePositionsButton"
+                                    Content="💾 Save Window Positions"
+                                    Click="SavePositionsButton_Click"
+                                    HorizontalAlignment="Stretch"
+                                    Margin="8,8,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Individual Screen Controls -->
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Individual Screen Controls" 
+                                   Style="{StaticResource SubtitleTextBlockStyle}"/>
+                        
+                        <StackPanel Spacing="12">
+                            <!-- Primary Charting -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="📈 Primary Charting" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Technical analysis and real-time charts" 
+                                               Style="{StaticResource CaptionTextBlockStyle}" 
+                                               Opacity="0.7"/>
+                                </StackPanel>
+                                
+                                <Button Grid.Column="1" 
+                                        x:Name="OpenChartingButton"
+                                        Content="Open"
+                                        Click="OpenChartingButton_Click"
+                                        Margin="8,0"/>
+                                
+                                <Button Grid.Column="2" 
+                                        x:Name="CloseChartingButton"
+                                        Content="Close"
+                                        Click="CloseChartingButton_Click"/>
+                            </Grid>
+                            
+                            <!-- Order Execution -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="⚡ Order Execution" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Level II market depth and order entry" 
+                                               Style="{StaticResource CaptionTextBlockStyle}" 
+                                               Opacity="0.7"/>
+                                </StackPanel>
+                                
+                                <Button Grid.Column="1" 
+                                        x:Name="OpenExecutionButton"
+                                        Content="Open"
+                                        Click="OpenExecutionButton_Click"
+                                        Margin="8,0"/>
+                                
+                                <Button Grid.Column="2" 
+                                        x:Name="CloseExecutionButton"
+                                        Content="Close"
+                                        Click="CloseExecutionButton_Click"/>
+                            </Grid>
+                            
+                            <!-- Portfolio Risk -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="🛡️ Portfolio Risk" FontWeight="SemiBold"/>
+                                    <TextBlock Text="P&amp;L monitoring and risk management" 
+                                               Style="{StaticResource CaptionTextBlockStyle}" 
+                                               Opacity="0.7"/>
+                                </StackPanel>
+                                
+                                <Button Grid.Column="1" 
+                                        x:Name="OpenPortfolioButton"
+                                        Content="Open"
+                                        Click="OpenPortfolioButton_Click"
+                                        Margin="8,0"/>
+                                
+                                <Button Grid.Column="2" 
+                                        x:Name="ClosePortfolioButton"
+                                        Content="Close"
+                                        Click="ClosePortfolioButton_Click"/>
+                            </Grid>
+                            
+                            <!-- Market Scanner -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="🔍 Market Scanner" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Volume alerts and market opportunities" 
+                                               Style="{StaticResource CaptionTextBlockStyle}" 
+                                               Opacity="0.7"/>
+                                </StackPanel>
+                                
+                                <Button Grid.Column="1" 
+                                        x:Name="OpenScannerButton"
+                                        Content="Open"
+                                        Click="OpenScannerButton_Click"
+                                        Margin="8,0"/>
+                                
+                                <Button Grid.Column="2" 
+                                        x:Name="CloseScannerButton"
+                                        Content="Close"
+                                        Click="CloseScannerButton_Click"/>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Monitor Configuration -->
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Column="0" 
+                                       Text="Monitor Configuration" 
+                                       Style="{StaticResource SubtitleTextBlockStyle}"/>
+                            
+                            <Button Grid.Column="1" 
+                                    x:Name="RefreshMonitorsButton"
+                                    Content="🔄"
+                                    Click="RefreshMonitorsButton_Click"/>
+                        </Grid>
+                        
+                        <ListView x:Name="MonitorsList" MaxHeight="200">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding Resolution}" 
+                                                       Style="{StaticResource CaptionTextBlockStyle}"/>
+                                            <TextBlock Text="{Binding AssignedScreenText}" 
+                                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                                        </StackPanel>
+                                        
+                                        <ComboBox Grid.Column="1" 
+                                                  x:Name="ScreenAssignmentCombo"
+                                                  PlaceholderText="Assign Screen"
+                                                  MinWidth="150"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Border>
+                
+                <!-- System Status -->
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="System Status" 
+                                   Style="{StaticResource SubtitleTextBlockStyle}"/>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Detected Monitors:"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="MonitorCountText" Text="0"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Open Trading Screens:"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="OpenScreensText" Text="0"/>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Memory Usage:"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="MemoryUsageText" Text="--"/>
+                            
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Market Status:"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="MarketStatusText" 
+                                       Text="CLOSED" Foreground="Red"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+                
+            </StackPanel>
+        </ScrollViewer>
+        
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="{ThemeResource SystemControlAcrylicWindowBrush}" 
+                Padding="20,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBlock Grid.Column="0" x:Name="StatusText" 
+                           Text="Ready for day trading"
+                           VerticalAlignment="Center"/>
+                
+                <TextBlock Grid.Column="1" 
+                           Text="DRAGON Trading Platform v1.0"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
