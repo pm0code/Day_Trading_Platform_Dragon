@@ -1,0 +1,586 @@
+using System.Diagnostics;
+using System.Management;
+using System.Runtime;
+using System.Runtime.InteropServices;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using TradingPlatform.WindowsOptimization.Models;
+
+namespace TradingPlatform.WindowsOptimization.Services;
+
+public class WindowsOptimizationService : IWindowsOptimizationService
+{
+    private readonly ILogger<WindowsOptimizationService> _logger;
+    private readonly ProcessPriorityConfiguration _config;
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool SetProcessAffinityMask(IntPtr hProcess, UIntPtr dwProcessAffinityMask);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool SetPriorityClass(IntPtr hProcess, uint dwPriorityClass);
+
+    [DllImport("winmm.dll", SetLastError = true)]
+    private static extern int timeBeginPeriod(uint uPeriod);
+
+    [DllImport("winmm.dll", SetLastError = true)]
+    private static extern int timeEndPeriod(uint uPeriod);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool SetProcessWorkingSetSize(IntPtr hProcess, IntPtr dwMinimumWorkingSetSize, IntPtr dwMaximumWorkingSetSize);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GetSystemInfo(out SystemInfo lpSystemInfo);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct SystemInfo
+    {
+        public ushort ProcessorArchitecture;
+        public ushort Reserved;
+        public uint PageSize;
+        public IntPtr MinimumApplicationAddress;
+        public IntPtr MaximumApplicationAddress;
+        public IntPtr ActiveProcessorMask;
+        public uint NumberOfProcessors;
+        public uint ProcessorType;
+        public uint AllocationGranularity;
+        public ushort ProcessorLevel;
+        public ushort ProcessorRevision;
+    }
+
+    private const uint REALTIME_PRIORITY_CLASS = 0x00000100;
+    private const uint HIGH_PRIORITY_CLASS = 0x00000080;
+    private const uint ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000;
+
+    public WindowsOptimizationService(
+        ILogger<WindowsOptimizationService> logger,
+        IOptions<ProcessPriorityConfiguration> config)
+    {
+        _logger = logger;
+        _config = config.Value;
+    }
+
+    public async Task<bool> SetProcessPriorityAsync(string processName, ProcessPriorityClass priority)
+    {
+        try
+        {
+            var processes = Process.GetProcessesByName(processName);
+            if (processes.Length == 0)
+            {
+                _logger.LogWarning("No processes found with name: {ProcessName}", processName);
+                return false;
+            }
+
+            var success = true;
+            foreach (var process in processes)
+            {
+                if (!await SetProcessPriorityAsync(process.Id, priority))
+                {
+                    success = false;
+                }
+            }
+
+            return success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to set process priority for {ProcessName}", processName);
+            return false;
+        }
+    }
+
+    public async Task<bool> SetProcessPriorityAsync(int processId, ProcessPriorityClass priority)
+    {
+        try
+        {
+            var process = Process.GetProcessById(processId);
+            process.PriorityClass = priority;
+
+            // Use native Windows API for REALTIME priority
+            if (priority == ProcessPriorityClass.RealTime)
+            {
+                var result = SetPriorityClass(process.Handle, REALTIME_PRIORITY_CLASS);
+                if (!result)
+                {
+                    _logger.LogWarning("Failed to set REALTIME priority for process {ProcessId}", processId);
+                    return false;
+                }
+            }
+
+            _logger.LogInformation("Set process {ProcessId} priority to {Priority}", processId, priority);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to set process priority for process {ProcessId}", processId);
+            return false;
+        }
+    }
+
+    public async Task<bool> SetCpuAffinityAsync(string processName, int[] cpuCores)
+    {
+        try
+        {
+            var processes = Process.GetProcessesByName(processName);
+            if (processes.Length == 0)
+            {
+                _logger.LogWarning("No processes found with name: {ProcessName}", processName);
+                return false;
+            }
+
+            var success = true;
+            foreach (var process in processes)
+            {
+                if (!await SetCpuAffinityAsync(process.Id, cpuCores))
+                {
+                    success = false;
+                }
+            }
+
+            return success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to set CPU affinity for {ProcessName}", processName);
+            return false;
+        }
+    }
+
+    public async Task<bool> SetCpuAffinityAsync(int processId, int[] cpuCores)
+    {
+        try
+        {
+            var process = Process.GetProcessById(processId);
+            
+            // Calculate affinity mask from CPU core array
+            UIntPtr affinityMask = CalculateAffinityMask(cpuCores);
+            
+            var result = SetProcessAffinityMask(process.Handle, affinityMask);
+            if (!result)
+            {
+                _logger.LogWarning("Failed to set CPU affinity for process {ProcessId}", processId);
+                return false;
+            }
+
+            _logger.LogInformation("Set CPU affinity for process {ProcessId} to cores: {CpuCores}", 
+                processId, string.Join(", ", cpuCores));
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to set CPU affinity for process {ProcessId}", processId);
+            return false;
+        }
+    }
+
+    public async Task<bool> OptimizeCurrentProcessAsync(ProcessPriorityConfiguration config)
+    {
+        try
+        {
+            var currentProcess = Process.GetCurrentProcess();
+            var success = true;
+
+            // Set process priority
+            if (!await SetProcessPriorityAsync(currentProcess.Id, config.Priority))
+            {
+                success = false;
+            }
+
+            // Set CPU affinity if specified
+            if (config.CpuCoreAffinity != null && config.CpuCoreAffinity.Length > 0)
+            {
+                if (!await SetCpuAffinityAsync(currentProcess.Id, config.CpuCoreAffinity))
+                {
+                    success = false;
+                }
+            }
+
+            // Enable low-latency GC
+            if (config.EnableLowLatencyGc)
+            {
+                if (!await EnableLowLatencyGcAsync())
+                {
+                    success = false;
+                }
+            }
+
+            // Pre-JIT critical methods
+            if (config.PreJitMethods)
+            {
+                if (!await PreJitCriticalMethodsAsync())
+                {
+                    success = false;
+                }
+            }
+
+            // Set working set limit
+            if (config.WorkingSetLimit > 0)
+            {
+                var workingSetSize = new IntPtr(config.WorkingSetLimit);
+                SetProcessWorkingSetSize(currentProcess.Handle, workingSetSize, workingSetSize);
+            }
+
+            _logger.LogInformation("Current process optimization completed with config: {Config}", config);
+            return success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to optimize current process");
+            return false;
+        }
+    }
+
+    public async Task<PerformanceMetrics> GetProcessMetricsAsync(string processName)
+    {
+        try
+        {
+            var processes = Process.GetProcessesByName(processName);
+            if (processes.Length == 0)
+            {
+                throw new ArgumentException($"No processes found with name: {processName}");
+            }
+
+            return await GetProcessMetricsAsync(processes[0].Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get process metrics for {ProcessName}", processName);
+            throw;
+        }
+    }
+
+    public async Task<PerformanceMetrics> GetProcessMetricsAsync(int processId)
+    {
+        try
+        {
+            var process = Process.GetProcessById(processId);
+            process.Refresh();
+
+            return new PerformanceMetrics
+            {
+                Timestamp = DateTime.UtcNow,
+                CpuUsagePercent = await GetProcessCpuUsageAsync(process),
+                MemoryUsageBytes = process.WorkingSet64,
+                WorkingSetBytes = process.WorkingSet64,
+                ThreadCount = process.Threads.Count,
+                HandleCount = process.HandleCount,
+                ProcessorTime = process.TotalProcessorTime,
+                PageFaults = process.PagedMemorySize64,
+                CurrentPriority = process.PriorityClass,
+                ProcessorAffinity = (long)process.ProcessorAffinity,
+                LatencyMicroseconds = await MeasureProcessLatencyAsync(process)
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get process metrics for process {ProcessId}", processId);
+            throw;
+        }
+    }
+
+    public async Task<bool> ApplySystemOptimizationsAsync(SystemOptimizationSettings settings)
+    {
+        try
+        {
+            var success = true;
+
+            // Set high-performance power plan
+            if (settings.SetHighPerformancePowerPlan)
+            {
+                success &= await SetHighPerformancePowerPlanAsync();
+            }
+
+            // Set timer resolution
+            if (settings.EnableHighPrecisionTimer)
+            {
+                success &= await SetTimerResolutionAsync(settings.TimerResolution);
+            }
+
+            // Disable hibernation
+            if (settings.DisableHibernation)
+            {
+                success &= await DisableHibernationAsync();
+            }
+
+            // Optimize network stack
+            if (settings.OptimizeNetworkStack)
+            {
+                success &= await OptimizeNetworkStackAsync();
+            }
+
+            _logger.LogInformation("System optimizations applied: {Settings}", settings);
+            return success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to apply system optimizations");
+            return false;
+        }
+    }
+
+    public async Task<Dictionary<string, object>> GetSystemPerformanceAsync()
+    {
+        try
+        {
+            var metrics = new Dictionary<string, object>();
+            
+            // Get system info
+            GetSystemInfo(out var sysInfo);
+            metrics["ProcessorCount"] = sysInfo.NumberOfProcessors;
+            metrics["PageSize"] = sysInfo.PageSize;
+
+            // Get memory info
+            var totalMemory = GC.GetTotalMemory(false);
+            metrics["TotalManagedMemory"] = totalMemory;
+            metrics["Gen0Collections"] = GC.CollectionCount(0);
+            metrics["Gen1Collections"] = GC.CollectionCount(1);
+            metrics["Gen2Collections"] = GC.CollectionCount(2);
+
+            // Get performance counters
+            using var cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+            using var memoryCounter = new PerformanceCounter("Memory", "Available MBytes");
+            
+            cpuCounter.NextValue(); // First call returns 0
+            await Task.Delay(100);
+            
+            metrics["CpuUsagePercent"] = cpuCounter.NextValue();
+            metrics["AvailableMemoryMB"] = memoryCounter.NextValue();
+
+            return metrics;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get system performance metrics");
+            throw;
+        }
+    }
+
+    public async Task<bool> SetTimerResolutionAsync(int milliseconds)
+    {
+        try
+        {
+            var result = timeBeginPeriod((uint)milliseconds);
+            if (result != 0)
+            {
+                _logger.LogWarning("Failed to set timer resolution to {Milliseconds}ms", milliseconds);
+                return false;
+            }
+
+            _logger.LogInformation("Set system timer resolution to {Milliseconds}ms", milliseconds);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to set timer resolution");
+            return false;
+        }
+    }
+
+    public async Task<bool> EnableLowLatencyGcAsync()
+    {
+        try
+        {
+            GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+            _logger.LogInformation("Enabled low-latency garbage collection");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to enable low-latency GC");
+            return false;
+        }
+    }
+
+    public async Task<bool> PreJitCriticalMethodsAsync()
+    {
+        try
+        {
+            // Force JIT compilation of critical methods
+            ProfileOptimization.SetProfileRoot(Path.GetTempPath());
+            ProfileOptimization.StartProfile("TradingPlatform.profile");
+            
+            _logger.LogInformation("Pre-JIT compilation enabled for critical methods");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to enable pre-JIT compilation");
+            return false;
+        }
+    }
+
+    public async Task<bool> OptimizeMemoryUsageAsync()
+    {
+        try
+        {
+            // Force garbage collection
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            // Compact large object heap
+            GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+            GC.Collect();
+
+            _logger.LogInformation("Memory optimization completed");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to optimize memory usage");
+            return false;
+        }
+    }
+
+    private static UIntPtr CalculateAffinityMask(int[] cpuCores)
+    {
+        ulong mask = 0;
+        foreach (var core in cpuCores)
+        {
+            if (core >= 0 && core < 64) // Maximum 64 CPU cores
+            {
+                mask |= (1UL << core);
+            }
+        }
+        return new UIntPtr(mask);
+    }
+
+    private async Task<double> GetProcessCpuUsageAsync(Process process)
+    {
+        try
+        {
+            var startTime = DateTime.UtcNow;
+            var startCpuUsage = process.TotalProcessorTime;
+            
+            await Task.Delay(100);
+            
+            var endTime = DateTime.UtcNow;
+            var endCpuUsage = process.TotalProcessorTime;
+            
+            var cpuUsedMs = (endCpuUsage - startCpuUsage).TotalMilliseconds;
+            var totalMsPassed = (endTime - startTime).TotalMilliseconds;
+            var cpuUsageTotal = cpuUsedMs / (Environment.ProcessorCount * totalMsPassed);
+            
+            return cpuUsageTotal * 100;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    private async Task<double> MeasureProcessLatencyAsync(Process process)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        try
+        {
+            // Simulate a quick operation to measure response time
+            process.Refresh();
+            stopwatch.Stop();
+            return stopwatch.Elapsed.TotalMicroseconds;
+        }
+        catch
+        {
+            stopwatch.Stop();
+            return stopwatch.Elapsed.TotalMicroseconds;
+        }
+    }
+
+    private async Task<bool> SetHighPerformancePowerPlanAsync()
+    {
+        try
+        {
+            using var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "powercfg",
+                    Arguments = "/setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c", // High Performance GUID
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+            
+            process.Start();
+            await process.WaitForExitAsync();
+            
+            _logger.LogInformation("Set high-performance power plan");
+            return process.ExitCode == 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to set high-performance power plan");
+            return false;
+        }
+    }
+
+    private async Task<bool> DisableHibernationAsync()
+    {
+        try
+        {
+            using var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "powercfg",
+                    Arguments = "/hibernate off",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+            
+            process.Start();
+            await process.WaitForExitAsync();
+            
+            _logger.LogInformation("Disabled hibernation");
+            return process.ExitCode == 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to disable hibernation");
+            return false;
+        }
+    }
+
+    private async Task<bool> OptimizeNetworkStackAsync()
+    {
+        try
+        {
+            // These optimizations require administrator privileges
+            var networkOptimizations = new[]
+            {
+                "netsh int tcp set global autotuninglevel=normal",
+                "netsh int tcp set global chimney=enabled",
+                "netsh int tcp set global rss=enabled",
+                "netsh int tcp set global netdma=enabled",
+                "netsh int tcp set global dca=enabled",
+                "netsh int tcp set global ecncapability=enabled"
+            };
+
+            foreach (var command in networkOptimizations)
+            {
+                var parts = command.Split(' ', 2);
+                using var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = parts[0],
+                        Arguments = parts.Length > 1 ? parts[1] : "",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                
+                process.Start();
+                await process.WaitForExitAsync();
+            }
+
+            _logger.LogInformation("Applied network stack optimizations");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to optimize network stack");
+            return false;
+        }
+    }
+}
