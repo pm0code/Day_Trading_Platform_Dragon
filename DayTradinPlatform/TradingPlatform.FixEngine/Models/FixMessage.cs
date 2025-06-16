@@ -119,41 +119,56 @@ public sealed class FixMessage
     {
         var message = new FixMessage();
         
-        // Handle potential encoding issues with SOH character (only if corruption detected)
-        var normalizedFixString = fixString;
-        if (fixString.Contains("Œ") || fixString.Contains("đ"))
-        {
-            normalizedFixString = fixString.Replace("Œ", "\x01").Replace("đ", "\x01");
-        }
-        var fields = normalizedFixString.Split('\x01', StringSplitOptions.RemoveEmptyEntries);
+        // Simple and robust parsing - split by SOH character
+        var fields = fixString.Split('\x01', StringSplitOptions.RemoveEmptyEntries);
         
         foreach (var field in fields)
         {
+            if (string.IsNullOrEmpty(field)) continue;
+            
             var equalIndex = field.IndexOf('=');
-            if (equalIndex == -1) continue;
+            if (equalIndex == -1 || equalIndex == 0) continue;
             
-            // Robust tag parsing with error handling
-            var tagSpan = field.AsSpan(0, equalIndex);
-            if (!int.TryParse(tagSpan, out int tag)) continue;
+            // Parse tag number
+            var tagStr = field.Substring(0, equalIndex);
+            if (!int.TryParse(tagStr, out int tag)) continue;
             
+            // Extract value
             var value = field.Substring(equalIndex + 1);
             
             // Handle standard header fields
             switch (tag)
             {
-                case 8: message.BeginString = value; break;
-                case 35: message.MsgType = value; break;
-                case 49: message.SenderCompID = value; break;
-                case 56: message.TargetCompID = value; break;
+                case 8: 
+                    message.BeginString = value; 
+                    break;
+                case 35: 
+                    message.MsgType = value; 
+                    break;
+                case 49: 
+                    message.SenderCompID = value; 
+                    break;
+                case 56: 
+                    message.TargetCompID = value; 
+                    break;
                 case 34: 
                     if (int.TryParse(value, out int seqNum)) 
                         message.MsgSeqNum = seqNum; 
                     break;
-                case 52: message.SendingTime = ParseSendingTime(value); break;
-                case 43: message.PossDupFlag = value; break;
-                case 122: message.OrigSendingTime = value; break;
-                case 10: break; // Skip checksum in parsing
-                default: message._fields[tag] = value; break;
+                case 52: 
+                    message.SendingTime = ParseSendingTime(value); 
+                    break;
+                case 43: 
+                    message.PossDupFlag = value; 
+                    break;
+                case 122: 
+                    message.OrigSendingTime = value; 
+                    break;
+                case 10: 
+                    break; // Skip checksum in parsing
+                default: 
+                    message._fields[tag] = value; 
+                    break;
             }
         }
         
