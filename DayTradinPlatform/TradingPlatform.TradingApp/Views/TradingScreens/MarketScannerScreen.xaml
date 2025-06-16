@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window x:Class="TradingPlatform.TradingApp.Views.TradingScreens.MarketScannerScreen"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Market Scanner - Trading Platform"
+        Width="1200"
+        Height="1080">
+    
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header Bar -->
+        <Border Grid.Row="0" Background="{ThemeResource SystemControlAcrylicWindowBrush}" 
+                Padding="16,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE8CB;" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                    <TextBlock Text="Market Scanner &amp; News" 
+                               Style="{StaticResource SubtitleTextBlockStyle}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" 
+                           HorizontalAlignment="Center" Spacing="12">
+                    <ComboBox x:Name="ScanTypeSelector" 
+                              PlaceholderText="Scan Type"
+                              MinWidth="150">
+                        <ComboBoxItem Content="Volume Spikes" IsSelected="True"/>
+                        <ComboBoxItem Content="Gap Ups"/>
+                        <ComboBoxItem Content="Gap Downs"/>
+                        <ComboBoxItem Content="Breakouts"/>
+                        <ComboBoxItem Content="Unusual Options"/>
+                    </ComboBox>
+                    <NumberBox x:Name="MinVolumeFilter" 
+                               Header="Min Volume" 
+                               Value="500000" 
+                               Minimum="0"
+                               Width="120"/>
+                    <Button x:Name="RefreshScanButton" 
+                            Content="🔄 Refresh"
+                            Click="RefreshScanButton_Click"/>
+                </StackPanel>
+                
+                <ToggleButton Grid.Column="2" 
+                              x:Name="AutoScanToggle" 
+                              Content="Auto Scan"
+                              IsChecked="True"/>
+            </Grid>
+        </Border>
+        
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Margin="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Scanner Results -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="8"/>
+                    <RowDefinition Height="200"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Market Heatmap -->
+                <Border Grid.Row="0" 
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" 
+                        Padding="16"
+                        Margin="0,0,0,8">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Text="Sector Performance" 
+                                   Style="{StaticResource SubtitleTextBlockStyle}" 
+                                   Margin="0,0,0,8"/>
+                        
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Technology -->
+                            <Border Grid.Row="0" Grid.Column="0" 
+                                    Background="Green" Opacity="0.8" 
+                                    CornerRadius="4" Margin="2" Padding="8">
+                                <StackPanel>
+                                    <TextBlock Text="Technology" Foreground="White" FontWeight="Bold"/>
+                                    <TextBlock Text="+1.25%" Foreground="White"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- Healthcare -->
+                            <Border Grid.Row="0" Grid.Column="1" 
+                                    Background="LightGreen" Opacity="0.8" 
+                                    CornerRadius="4" Margin="2" Padding="8">
+                                <StackPanel>
+                                    <TextBlock Text="Healthcare" FontWeight="Bold"/>
+                                    <TextBlock Text="+0.35%"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- Financials -->
+                            <Border Grid.Row="0" Grid.Column="2" 
+                                    Background="LightCoral" Opacity="0.8" 
+                                    CornerRadius="4" Margin="2" Padding="8">
+                                <StackPanel>
+                                    <TextBlock Text="Financials" Foreground="White" FontWeight="Bold"/>
+                                    <TextBlock Text="-0.45%" Foreground="White"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- Energy -->
+                            <Border Grid.Row="0" Grid.Column="3" 
+                                    Background="Red" Opacity="0.8" 
+                                    CornerRadius="4" Margin="2" Padding="8">
+                                <StackPanel>
+                                    <TextBlock Text="Energy" Foreground="White" FontWeight="Bold"/>
+                                    <TextBlock Text="-1.15%" Foreground="White"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+                
+                <!-- Scanner Results List -->
+                <Border Grid.Row="1" 
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" 
+                        Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Text="Volume Spike Alerts" 
+                                   Style="{StaticResource SubtitleTextBlockStyle}" 
+                                   Margin="0,0,0,8"/>
+                        
+                        <ListView Grid.Row="1" x:Name="ScannerResults">
+                            <ListView.HeaderTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Symbol" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="1" Text="Price" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="2" Text="Change" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="3" Text="Volume" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="4" Text="Avg Volume" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="5" Text="Vol Ratio" FontWeight="Bold"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.HeaderTemplate>
+                            
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Symbol}" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Price}"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Change}" 
+                                                  Foreground="{Binding ChangeColor}"/>
+                                        <TextBlock Grid.Column="3" Text="{Binding Volume}"/>
+                                        <TextBlock Grid.Column="4" Text="{Binding AvgVolume}"/>
+                                        <TextBlock Grid.Column="5" Text="{Binding VolumeRatio}" 
+                                                  Foreground="{Binding VolumeRatioColor}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+                </Border>
+                
+                <!-- Economic Calendar -->
+                <Border Grid.Row="3" 
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" 
+                        Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Text="Economic Calendar - Today" 
+                                   Style="{StaticResource SubtitleTextBlockStyle}" 
+                                   Margin="0,0,0,8"/>
+                        
+                        <ListView Grid.Row="1" x:Name="EconomicEvents">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Time}" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Event}"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Impact}" 
+                                                  Foreground="{Binding ImpactColor}" Margin="8,0"/>
+                                        <TextBlock Grid.Column="3" Text="{Binding Status}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+                </Border>
+            </Grid>
+            
+            <!-- Splitter -->
+            <Border Grid.Column="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+            
+            <!-- News Feed -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                
+                <TextBlock Grid.Row="0" Text="Market News" 
+                           Style="{StaticResource SubtitleTextBlockStyle}" 
+                           Margin="0,0,0,8"/>
+                
+                <ScrollViewer Grid.Row="1">
+                    <StackPanel x:Name="NewsPanel" Spacing="8">
+                        <!-- News items will be populated here -->
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+        
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="{ThemeResource SystemControlAcrylicWindowBrush}" 
+                Padding="16,4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16">
+                    <TextBlock x:Name="LastScanTime" 
+                               Text="Last Scan: --:--:--"
+                               VerticalAlignment="Center"/>
+                    <TextBlock x:Name="AlertCount" 
+                               Text="Alerts: 0"
+                               VerticalAlignment="Center"/>
+                    <TextBlock x:Name="MarketStatus" 
+                               Text="Market: OPEN"
+                               Foreground="Green"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+                
+                <TextBlock Grid.Column="1" 
+                           Text="Screen 4: Market Scanner"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

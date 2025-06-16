@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window x:Class="TradingPlatform.TradingApp.Views.TradingScreens.OrderExecutionScreen"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Order Execution - Trading Platform"
+        Width="800"
+        Height="1080">
+    
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header Bar -->
+        <Border Grid.Row="0" Background="{ThemeResource SystemControlAcrylicWindowBrush}" 
+                Padding="16,8">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon Glyph="&#xE8A7;" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                <TextBlock Text="Order Execution &amp; Level II" 
+                           Style="{StaticResource SubtitleTextBlockStyle}"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Margin="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="8"/>
+                <RowDefinition Height="300"/>
+                <RowDefinition Height="8"/>
+                <RowDefinition Height="200"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Level II Market Depth -->
+            <Border Grid.Row="0" 
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Bid Side -->
+                    <StackPanel Grid.Column="0" Margin="8">
+                        <TextBlock Text="Bids" Style="{StaticResource SubtitleTextBlockStyle}" 
+                                   Foreground="Green" HorizontalAlignment="Center"/>
+                        <ListView ItemsSource="{x:Bind BidLevels}">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Size}" Foreground="Green"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Price}" Foreground="Green"/>
+                                        <Rectangle Grid.Column="2" Fill="Green" Opacity="0.3" 
+                                                  Width="{Binding DepthBarWidth}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                    
+                    <!-- Ask Side -->
+                    <StackPanel Grid.Column="1" Margin="8">
+                        <TextBlock Text="Asks" Style="{StaticResource SubtitleTextBlockStyle}" 
+                                   Foreground="Red" HorizontalAlignment="Center"/>
+                        <ListView ItemsSource="{x:Bind AskLevels}">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="80"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Rectangle Grid.Column="0" Fill="Red" Opacity="0.3" 
+                                                  Width="{Binding DepthBarWidth}"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Price}" Foreground="Red"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Size}" Foreground="Red"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            
+            <!-- Order Entry -->
+            <Border Grid.Row="2" 
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8"
+                    Padding="16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Buy Orders -->
+                    <StackPanel Grid.Column="0" Spacing="8" Margin="0,0,8,0">
+                        <TextBlock Text="BUY ORDER" Style="{StaticResource SubtitleTextBlockStyle}" 
+                                   Foreground="Green" HorizontalAlignment="Center"/>
+                        <TextBox x:Name="BuySymbol" Header="Symbol" Text="SPY"/>
+                        <NumberBox x:Name="BuyQuantity" Header="Quantity" Value="100"/>
+                        <ComboBox x:Name="BuyOrderType" Header="Order Type" SelectedIndex="0">
+                            <ComboBoxItem Content="Market"/>
+                            <ComboBoxItem Content="Limit"/>
+                            <ComboBoxItem Content="Stop"/>
+                            <ComboBoxItem Content="Stop Limit"/>
+                        </ComboBox>
+                        <NumberBox x:Name="BuyPrice" Header="Price" Value="125.50"/>
+                        <Button x:Name="BuyButton" Content="BUY" 
+                                Background="Green" Foreground="White"
+                                HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                    
+                    <!-- Sell Orders -->
+                    <StackPanel Grid.Column="1" Spacing="8" Margin="8,0,0,0">
+                        <TextBlock Text="SELL ORDER" Style="{StaticResource SubtitleTextBlockStyle}" 
+                                   Foreground="Red" HorizontalAlignment="Center"/>
+                        <TextBox x:Name="SellSymbol" Header="Symbol" Text="SPY"/>
+                        <NumberBox x:Name="SellQuantity" Header="Quantity" Value="100"/>
+                        <ComboBox x:Name="SellOrderType" Header="Order Type" SelectedIndex="0">
+                            <ComboBoxItem Content="Market"/>
+                            <ComboBoxItem Content="Limit"/>
+                            <ComboBoxItem Content="Stop"/>
+                            <ComboBoxItem Content="Stop Limit"/>
+                        </ComboBox>
+                        <NumberBox x:Name="SellPrice" Header="Price" Value="125.50"/>
+                        <Button x:Name="SellButton" Content="SELL" 
+                                Background="Red" Foreground="White"
+                                HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            
+            <!-- Time & Sales -->
+            <Border Grid.Row="4" 
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8"
+                    Padding="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Grid.Row="0" Text="Time &amp; Sales" 
+                               Style="{StaticResource SubtitleTextBlockStyle}"/>
+                    
+                    <ListView Grid.Row="1" x:Name="TimeAndSales" Margin="0,8,0,0">
+                        <ListView.HeaderTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Time" FontWeight="Bold"/>
+                                    <TextBlock Grid.Column="1" Text="Price" FontWeight="Bold"/>
+                                    <TextBlock Grid.Column="2" Text="Size" FontWeight="Bold"/>
+                                    <TextBlock Grid.Column="3" Text="Side" FontWeight="Bold"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.HeaderTemplate>
+                    </ListView>
+                </Grid>
+            </Border>
+        </Grid>
+        
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="{ThemeResource SystemControlAcrylicWindowBrush}" 
+                Padding="16,4">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <TextBlock Text="Buying Power: $25,000" VerticalAlignment="Center"/>
+                <TextBlock Text="Screen 2: Order Execution" 
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

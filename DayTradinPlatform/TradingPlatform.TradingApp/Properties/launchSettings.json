@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "TradingPlatform.TradingApp (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "TradingPlatform.TradingApp (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
