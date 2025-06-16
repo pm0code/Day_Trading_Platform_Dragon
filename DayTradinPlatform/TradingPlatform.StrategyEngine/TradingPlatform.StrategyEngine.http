@@ -1,0 +1,6 @@
+@TradingPlatform.StrategyEngine_HostAddress = http://localhost:5183
+
+GET {{TradingPlatform.StrategyEngine_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
