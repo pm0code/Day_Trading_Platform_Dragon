@@ -47,13 +47,54 @@ public class FixMessageTests
         Assert.Contains("10=", fixString); // Contains checksum
     }
     
+    [Fact] 
+    public void Parse_SimpleBeginString_WorksCorrectly()
+    {
+        // Very simple test to isolate the issue
+        var soh = (char)1;
+        var fixString = "8=FIX.4.2" + soh;
+        var message = FixMessage.Parse(fixString);
+        Assert.Equal("FIX.4.2", message.BeginString);
+    }
+    
+    [Fact]
+    public void Parse_TwoFields_WorksCorrectly()
+    {
+        // Test with two fields to see where corruption starts
+        var soh = (char)1;
+        var fixString = "8=FIX.4.2" + soh + "9=154" + soh;
+        var message = FixMessage.Parse(fixString);
+        Assert.Equal("FIX.4.2", message.BeginString);
+        Assert.Equal("154", message.GetField(9));
+    }
+    
+    [Fact]
+    public void Debug_SplitTest()
+    {
+        // Test the split operation manually with proper SOH character
+        var soh = (char)1; // SOH character
+        var fixString = "8=FIX.4.2" + soh + "9=154" + soh;
+        var fields = fixString.Split(soh, StringSplitOptions.RemoveEmptyEntries);
+        
+        Assert.Equal(2, fields.Length);
+        Assert.Equal("8=FIX.4.2", fields[0]);
+        Assert.Equal("9=154", fields[1]);
+        
+        // Test first field parsing
+        var field1 = fields[0];
+        var equalIndex1 = field1.IndexOf('=');
+        var value1 = field1.Substring(equalIndex1 + 1);
+        Assert.Equal("FIX.4.2", value1);
+    }
+    
     [Fact]
     public void Parse_ValidFixMessage_ParsesCorrectly()
     {
-        // Arrange
-        var fixString = "8=FIX.4.2\x019=154\x0135=D\x0149=DAYTRADER\x0156=NYSE\x01" +
-                       "34=1\x0152=20231215-14:30:00.123\x0111=DT1234567890\x01" +
-                       "55=AAPL\x0154=1\x0138=100\x0140=2\x0144=150.25\x0159=0\x0110=123\x01";
+        // Arrange - Use proper SOH character construction
+        var soh = (char)1;
+        var fixString = "8=FIX.4.2" + soh + "9=154" + soh + "35=D" + soh + "49=DAYTRADER" + soh + "56=NYSE" + soh +
+                       "34=1" + soh + "52=20231215-14:30:00.123" + soh + "11=DT1234567890" + soh +
+                       "55=AAPL" + soh + "54=1" + soh + "38=100" + soh + "40=2" + soh + "44=150.25" + soh + "59=0" + soh + "10=123" + soh;
         
         // Act
         var message = FixMessage.Parse(fixString);
