@@ -1,0 +1,70 @@
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+*.md
+MainDocs/
+Journals/
+
+# Build outputs
+**/bin/
+**/obj/
+**/out/
+
+# NuGet packages
+*.nupkg
+**/packages/*
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.cache
+project.lock.json
+
+# IDEs
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Tests
+**/TestResults/
+**/*.trx
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Node modules (if any)
+node_modules/
+
+# Coverage reports
+coverage/
+*.coverage
+*.coveragexml

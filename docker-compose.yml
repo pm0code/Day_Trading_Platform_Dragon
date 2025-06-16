@@ -1,0 +1,238 @@
+version: '3.8'
+
+services:
+  # Redis for messaging and caching
+  redis:
+    image: redis:7-alpine
+    container_name: trading-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    networks:
+      - trading-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # TimescaleDB for time-series data
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: trading-timescaledb
+    environment:
+      POSTGRES_DB: trading_platform
+      POSTGRES_USER: trading_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-TradingPlatform2025!}
+      TIMESCALEDB_TELEMETRY: off
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - trading-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trading_user -d trading_platform"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # API Gateway
+  gateway:
+    build:
+      context: ./DayTradinPlatform
+      dockerfile: TradingPlatform.Gateway/Dockerfile
+    container_name: trading-gateway
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - REDIS_CONNECTION_STRING=redis:6379
+      - DB_CONNECTION_STRING=Server=timescaledb;Port=5432;Database=trading_platform;User Id=trading_user;Password=${DB_PASSWORD:-TradingPlatform2025!};
+      - DRAGON_PLATFORM_ENABLED=true
+    depends_on:
+      redis:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - trading-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+
+  # Market Data Service
+  marketdata:
+    build:
+      context: ./DayTradinPlatform
+      dockerfile: TradingPlatform.MarketData/Dockerfile
+    container_name: trading-marketdata
+    ports:
+      - "5002:5002"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - REDIS_CONNECTION_STRING=redis:6379
+      - ALPHAVANTAGE_API_KEY=${ALPHAVANTAGE_API_KEY}
+      - FINNHUB_API_KEY=${FINNHUB_API_KEY}
+      - MARKET_DATA_CACHE_ENABLED=true
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - trading-network
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4G
+        reservations:
+          cpus: '2.0'
+          memory: 2G
+
+  # Strategy Engine Service
+  strategy:
+    build:
+      context: ./DayTradinPlatform
+      dockerfile: TradingPlatform.StrategyEngine/Dockerfile
+    container_name: trading-strategy
+    ports:
+      - "5003:5003"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - REDIS_CONNECTION_STRING=redis:6379
+      - STRATEGY_EXECUTION_MODE=Simulation
+      - GOLDEN_RULES_COMPLIANCE_REQUIRED=true
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - trading-network
+    deploy:
+      resources:
+        limits:
+          cpus: '3.0'
+          memory: 3G
+        reservations:
+          cpus: '1.5'
+          memory: 1.5G
+
+  # Risk Management Service
+  risk:
+    build:
+      context: ./DayTradinPlatform
+      dockerfile: TradingPlatform.RiskManagement/Dockerfile
+    container_name: trading-risk
+    ports:
+      - "5004:5004"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - REDIS_CONNECTION_STRING=redis:6379
+      - DB_CONNECTION_STRING=Server=timescaledb;Port=5432;Database=trading_platform;User Id=trading_user;Password=${DB_PASSWORD:-TradingPlatform2025!};
+      - RISK_MONITORING_ENABLED=true
+      - PDT_COMPLIANCE_ENABLED=true
+    depends_on:
+      redis:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - trading-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+
+  # Paper Trading Service
+  papertrading:
+    build:
+      context: ./DayTradinPlatform
+      dockerfile: TradingPlatform.PaperTrading/Dockerfile
+    container_name: trading-papertrading
+    ports:
+      - "5005:5005"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - REDIS_CONNECTION_STRING=redis:6379
+      - DB_CONNECTION_STRING=Server=timescaledb;Port=5432;Database=trading_platform;User Id=trading_user;Password=${DB_PASSWORD:-TradingPlatform2025!};
+      - PAPER_TRADING_ENABLED=true
+      - INITIAL_CAPITAL=100000
+    depends_on:
+      redis:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - trading-network
+    deploy:
+      resources:
+        limits:
+          cpus: '3.0'
+          memory: 3G
+        reservations:
+          cpus: '1.5'
+          memory: 1.5G
+
+  # Monitoring and Health Dashboard (optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: trading-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - trading-network
+    profiles:
+      - monitoring
+
+  # Prometheus for metrics collection (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: trading-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: unless-stopped
+    networks:
+      - trading-network
+    profiles:
+      - monitoring
+
+volumes:
+  redis_data:
+    driver: local
+  timescale_data:
+    driver: local
+  grafana_data:
+    driver: local
+  prometheus_data:
+    driver: local
+
+networks:
+  trading-network:
+    driver: bridge
+    name: trading-platform
