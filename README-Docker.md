@@ -40,6 +40,12 @@ docker-compose up -d
 
 ## DRAGON Platform Optimizations
 
+### Hardware Configuration
+- **CPU**: Intel Core i9-14900K (24 cores: 8 P-Cores + 16 E-Cores)
+- **Memory**: 32GB DDR5-3200 (3733.3 MHz max)
+- **GPU**: Dual NVIDIA RTX (Primary + RTX 3060 Ti)
+- **Network**: **Mellanox 10 Gigabit Ethernet** (ultra-low latency)
+
 ### Resource Allocation
 ```yaml
 Gateway:      2-4 CPU cores, 2-4GB RAM
@@ -55,9 +61,11 @@ TimescaleDB:  4-8 CPU cores, 8-12GB RAM
 - **Low-latency GC**: SustainedLowLatency mode
 - **High-performance Redis**: 8 I/O threads, optimized memory
 - **TimescaleDB tuning**: 8GB shared buffers, 24GB cache
-- **Network optimization**: 9000 MTU, TCP tuning
+- **Mellanox 10GbE optimization**: Ultra-low latency network stack
+- **Network features**: 9000 MTU jumbo frames, TCP BBR, disabled offloading
 - **CPU governor**: Performance mode
-- **Kernel parameters**: Optimized for trading
+- **Kernel parameters**: Optimized for 10Gb/s trading
+- **Interrupt affinity**: E-cores for network processing
 
 ## Environment Configuration
 
@@ -163,9 +171,12 @@ sudo mount -o noatime,discard /dev/nvme0n1p1 /mnt/dragon-ssd
 ## Network Configuration
 
 ### DRAGON Network Settings
-- **MTU**: 9000 (jumbo frames)
+- **Primary**: Mellanox 10 Gigabit Ethernet
+- **MTU**: 9000 (jumbo frames for maximum throughput)
 - **Bridge**: dragon-trading-platform
 - **Ports**: 5000-5005, 6379, 5432
+- **Latency target**: <50μs for market data feeds
+- **TCP optimization**: BBR congestion control, disabled timestamps
 
 ### Firewall Rules
 ```bash
@@ -241,6 +252,25 @@ dmidecode --type 17 | grep -E '(Size|Speed|Type:|Manufacturer)'
 
 # GPU status
 nvidia-smi --query-gpu=name,memory.total,temperature.gpu --format=csv
+
+# Mellanox 10GbE network status
+ethtool enp5s0 | grep -E '(Speed|Duplex|Link)'
+ip -s link show enp5s0
+cat /proc/interrupts | grep enp5s0
+```
+
+### Mellanox 10GbE Optimization
+```bash
+# Run dedicated Mellanox optimization
+sudo ./scripts/optimize-mellanox-10gbe.sh
+
+# Verify network performance
+ping -c 10 -i 0.1 [market_data_server]
+iperf3 -c [market_data_server] -t 30
+
+# Monitor network performance
+watch 'cat /proc/net/dev'
+watch 'cat /proc/interrupts | grep enp'
 ```
 
 ## Scaling
@@ -324,6 +354,13 @@ For DRAGON platform-specific issues, ensure:
 2. 32GB DDR5 memory properly configured
 3. NVIDIA drivers installed and updated
 4. High-performance storage (NVMe SSD) mounted correctly
-5. Network optimization parameters applied
+5. **Mellanox 10GbE optimization script executed**
+6. Network interrupt affinity configured (E-cores 8-11)
+7. Jumbo frames (9000 MTU) enabled
+8. TCP offloading disabled for predictable latency
 
-**Performance Target**: Sub-millisecond order execution (<100μs order-to-wire)
+**Performance Targets**: 
+- Order execution: <100μs order-to-wire
+- Network latency: <50μs for market data feeds  
+- Throughput: Up to 10Gbps sustained
+- Packet rate: >1M packets/second
