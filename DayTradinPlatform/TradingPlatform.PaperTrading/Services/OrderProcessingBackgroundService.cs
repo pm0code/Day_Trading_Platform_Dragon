@@ -1,0 +1,240 @@
+using TradingPlatform.PaperTrading.Models;
+using TradingPlatform.Messaging.Interfaces;
+using TradingPlatform.Messaging.Events;
+using System.Collections.Concurrent;
+
+namespace TradingPlatform.PaperTrading.Services;
+
+public class OrderProcessingBackgroundService : BackgroundService
+{
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<OrderProcessingBackgroundService> _logger;
+    private readonly TimeSpan _processingInterval = TimeSpan.FromMilliseconds(10); // 100Hz processing
+    private readonly ConcurrentQueue<Order> _orderQueue = new();
+
+    public OrderProcessingBackgroundService(
+        IServiceProvider serviceProvider,
+        ILogger<OrderProcessingBackgroundService> logger)
+    {
+        _serviceProvider = serviceProvider;
+        _logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Order Processing Background Service started");
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                var startTime = DateTime.UtcNow;
+
+                using var scope = _serviceProvider.CreateScope();
+                await ProcessPendingOrdersAsync(scope.ServiceProvider);
+                await UpdateMarketDataAsync(scope.ServiceProvider);
+
+                var elapsed = DateTime.UtcNow - startTime;
+                _logger.LogTrace("Order processing cycle completed in {ElapsedMs}ms", elapsed.TotalMilliseconds);
+
+                // Maintain consistent processing frequency
+                var remainingTime = _processingInterval - elapsed;
+                if (remainingTime > TimeSpan.Zero)
+                {
+                    await Task.Delay(remainingTime, stoppingToken);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation("Order processing service is stopping");
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in order processing cycle");
+                await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken); // Brief delay before retry
+            }
+        }
+
+        _logger.LogInformation("Order Processing Background Service stopped");
+    }
+
+    private async Task ProcessPendingOrdersAsync(IServiceProvider serviceProvider)
+    {
+        try
+        {
+            var paperTradingService = serviceProvider.GetRequiredService<IPaperTradingService>();
+            var executionEngine = serviceProvider.GetRequiredService<IOrderExecutionEngine>();
+            var portfolioManager = serviceProvider.GetRequiredService<IPortfolioManager>();
+            var orderBookSimulator = serviceProvider.GetRequiredService<IOrderBookSimulator>();
+            var analytics = serviceProvider.GetRequiredService<IExecutionAnalytics>();
+            var messageBus = serviceProvider.GetRequiredService<IMessageBus>();
+
+            // Get all pending orders
+            var orders = await paperTradingService.GetOrdersAsync();
+            var pendingOrders = orders.Where(o => o.Status == OrderStatus.New || o.Status == OrderStatus.PartiallyFilled);
+
+            foreach (var order in pendingOrders)
+            {
+                await ProcessOrderAsync(order, executionEngine, portfolioManager, orderBookSimulator, analytics, messageBus);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing pending orders");
+        }
+    }
+
+    private async Task ProcessOrderAsync(
+        Order order,
+        IOrderExecutionEngine executionEngine,
+        IPortfolioManager portfolioManager,
+        IOrderBookSimulator orderBookSimulator,
+        IExecutionAnalytics analytics,
+        IMessageBus messageBus)
+    {
+        try
+        {
+            // Check if order should be expired
+            if (ShouldExpireOrder(order))
+            {
+                await ExpireOrderAsync(order, messageBus);
+                return;
+            }
+
+            // Get current market price
+            var currentPrice = await orderBookSimulator.GetCurrentPriceAsync(order.Symbol);
+
+            // Check if order should execute
+            var shouldExecute = await executionEngine.ShouldExecuteOrderAsync(order, currentPrice);
+            if (!shouldExecute)
+            {
+                return;
+            }
+
+            // Execute the order
+            var execution = await executionEngine.ExecuteOrderAsync(order, currentPrice);
+            if (execution == null)
+            {
+                return;
+            }
+
+            // Update portfolio
+            await portfolioManager.UpdatePositionAsync(order.Symbol, execution);
+
+            // Record execution analytics
+            await analytics.RecordExecutionAsync(execution);
+
+            // Publish execution event
+            await messageBus.PublishAsync("orders.executed", new OrderEvent
+            {
+                OrderId = order.OrderId,
+                Symbol = order.Symbol,
+                OrderType = order.Type.ToString(),
+                Side = order.Side.ToString(),
+                Quantity = execution.Quantity,
+                Price = execution.Price,
+                Status = "Filled",
+                ExecutionTime = execution.ExecutionTime
+            });
+
+            _logger.LogInformation("Order {OrderId} executed: {Quantity}@{Price} on {Venue}", 
+                order.OrderId, execution.Quantity, execution.Price, execution.VenueId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing order {OrderId}", order.OrderId);
+        }
+    }
+
+    private async Task UpdateMarketDataAsync(IServiceProvider serviceProvider)
+    {
+        try
+        {
+            var orderBookSimulator = serviceProvider.GetRequiredService<IOrderBookSimulator>();
+            var messageBus = serviceProvider.GetRequiredService<IMessageBus>();
+
+            // Update market data for active symbols
+            var activeSymbols = GetActiveSymbols();
+            
+            foreach (var symbol in activeSymbols)
+            {
+                var currentPrice = await orderBookSimulator.GetCurrentPriceAsync(symbol);
+                
+                // Publish market data update
+                await messageBus.PublishAsync("marketdata.price.updated", new MarketDataEvent
+                {
+                    Symbol = symbol,
+                    Price = currentPrice,
+                    Volume = GenerateSimulatedVolume(),
+                    Bid = currentPrice * 0.9995m,
+                    Ask = currentPrice * 1.0005m,
+                    MarketTimestamp = DateTimeOffset.UtcNow,
+                    Exchange = "SIMULATED"
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating market data");
+        }
+    }
+
+    private bool ShouldExpireOrder(Order order)
+    {
+        return order.TimeInForce switch
+        {
+            TimeInForce.Day => IsAfterMarketClose(order.CreatedAt),
+            TimeInForce.IOC => DateTime.UtcNow > order.CreatedAt.AddSeconds(1), // 1 second for IOC
+            TimeInForce.FOK => DateTime.UtcNow > order.CreatedAt.AddMilliseconds(100), // 100ms for FOK
+            TimeInForce.GTC => false, // Good till cancelled
+            _ => false
+        };
+    }
+
+    private bool IsAfterMarketClose(DateTime orderTime)
+    {
+        var marketClose = DateTime.Today.AddHours(16); // 4 PM ET
+        return DateTime.Now > marketClose && orderTime.Date == DateTime.Today;
+    }
+
+    private async Task ExpireOrderAsync(Order order, IMessageBus messageBus)
+    {
+        try
+        {
+            await messageBus.PublishAsync("orders.expired", new OrderEvent
+            {
+                OrderId = order.OrderId,
+                Symbol = order.Symbol,
+                OrderType = order.Type.ToString(),
+                Side = order.Side.ToString(),
+                Quantity = order.RemainingQuantity,
+                Price = order.LimitPrice,
+                Status = "Expired",
+                ExecutionTime = DateTime.UtcNow
+            });
+
+            _logger.LogInformation("Order {OrderId} expired for {Symbol}", order.OrderId, order.Symbol);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error expiring order {OrderId}", order.OrderId);
+        }
+    }
+
+    private string[] GetActiveSymbols()
+    {
+        // Return commonly traded symbols for market data simulation
+        return new[]
+        {
+            "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "BRK.B",
+            "SPY", "QQQ", "IWM", "VTI", "VOO", "EFA", "EEM"
+        };
+    }
+
+    private decimal GenerateSimulatedVolume()
+    {
+        var random = new Random();
+        return random.Next(1000, 50000); // Simulate volume between 1K-50K shares
+    }
+}
