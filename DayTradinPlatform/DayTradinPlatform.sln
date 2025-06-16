@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.StrategyEng
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.RiskManagement", "TradingPlatform.RiskManagement\TradingPlatform.RiskManagement.csproj", "{C47682CE-EF70-416B-84A7-6049855D4219}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.PaperTrading", "TradingPlatform.PaperTrading\TradingPlatform.PaperTrading.csproj", "{86C8BB00-6C8B-4488-804D-AF1B2809CE1B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -81,6 +83,10 @@ Global
 		{C47682CE-EF70-416B-84A7-6049855D4219}.Debug|x64.Build.0 = Debug|Any CPU
 		{C47682CE-EF70-416B-84A7-6049855D4219}.Release|x64.ActiveCfg = Release|Any CPU
 		{C47682CE-EF70-416B-84A7-6049855D4219}.Release|x64.Build.0 = Release|Any CPU
+		{86C8BB00-6C8B-4488-804D-AF1B2809CE1B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{86C8BB00-6C8B-4488-804D-AF1B2809CE1B}.Debug|x64.Build.0 = Debug|Any CPU
+		{86C8BB00-6C8B-4488-804D-AF1B2809CE1B}.Release|x64.ActiveCfg = Release|Any CPU
+		{86C8BB00-6C8B-4488-804D-AF1B2809CE1B}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
