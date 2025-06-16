@@ -1,0 +1,283 @@
+# DRAGON Platform Optimized Docker Compose
+# Specifically configured for Intel i9-14900K + 32GB DDR5 + Dual NVIDIA RTX
+version: '3.8'
+
+services:
+  # Redis with DRAGON platform optimization
+  redis:
+    image: redis:7-alpine
+    container_name: dragon-trading-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: >
+      redis-server 
+      --appendonly yes 
+      --maxmemory 4gb 
+      --maxmemory-policy allkeys-lru
+      --tcp-keepalive 60
+      --tcp-backlog 511
+      --save ""
+      --io-threads 8
+      --io-threads-do-reads yes
+    restart: unless-stopped
+    networks:
+      - dragon-trading-network
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 5G
+        reservations:
+          cpus: '2.0'
+          memory: 4G
+      placement:
+        constraints:
+          - node.role == manager
+
+  # TimescaleDB optimized for high-frequency trading data
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: dragon-trading-timescaledb
+    environment:
+      POSTGRES_DB: trading_platform
+      POSTGRES_USER: trading_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-TradingPlatform2025!}
+      TIMESCALEDB_TELEMETRY: off
+      # Performance optimizations for DRAGON platform
+      POSTGRES_SHARED_BUFFERS: 8GB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 24GB
+      POSTGRES_WORK_MEM: 256MB
+      POSTGRES_MAINTENANCE_WORK_MEM: 2GB
+      POSTGRES_CHECKPOINT_COMPLETION_TARGET: 0.9
+      POSTGRES_WAL_BUFFERS: 64MB
+      POSTGRES_MAX_CONNECTIONS: 200
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - dragon-trading-network
+    deploy:
+      resources:
+        limits:
+          cpus: '8.0'
+          memory: 12G
+        reservations:
+          cpus: '4.0'
+          memory: 8G
+
+  # API Gateway with DRAGON optimization
+  gateway:
+    build:
+      context: ./DayTradinPlatform
+      dockerfile: TradingPlatform.Gateway/Dockerfile
+    container_name: dragon-trading-gateway
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - REDIS_CONNECTION_STRING=redis:6379
+      - DB_CONNECTION_STRING=Server=timescaledb;Port=5432;Database=trading_platform;User Id=trading_user;Password=${DB_PASSWORD:-TradingPlatform2025!};
+      - DRAGON_PLATFORM_ENABLED=true
+      - DOTNET_GCServer=true
+      - DOTNET_GCConcurrent=true
+      - DOTNET_GCLatencyMode=SustainedLowLatency
+      - DOTNET_ThreadPool_MinWorkerThreads=32
+      - DOTNET_ThreadPool_MinCompletionPortThreads=32
+    depends_on:
+      redis:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - dragon-trading-network
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4G
+        reservations:
+          cpus: '2.0'
+          memory: 2G
+
+  # Market Data Service - optimized for high-frequency data ingestion
+  marketdata:
+    build:
+      context: ./DayTradinPlatform
+      dockerfile: TradingPlatform.MarketData/Dockerfile
+    container_name: dragon-trading-marketdata
+    ports:
+      - "5002:5002"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - REDIS_CONNECTION_STRING=redis:6379
+      - ALPHAVANTAGE_API_KEY=${ALPHAVANTAGE_API_KEY}
+      - FINNHUB_API_KEY=${FINNHUB_API_KEY}
+      - MARKET_DATA_CACHE_ENABLED=true
+      - DOTNET_GCServer=true
+      - DOTNET_GCLatencyMode=SustainedLowLatency
+      - MARKET_DATA_CACHE_SIZE=2000000
+      - MARKET_DATA_BATCH_SIZE=500
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - dragon-trading-network
+    deploy:
+      resources:
+        limits:
+          cpus: '6.0'
+          memory: 6G
+        reservations:
+          cpus: '3.0'
+          memory: 4G
+
+  # Strategy Engine - high-performance strategy execution
+  strategy:
+    build:
+      context: ./DayTradinPlatform
+      dockerfile: TradingPlatform.StrategyEngine/Dockerfile
+    container_name: dragon-trading-strategy
+    ports:
+      - "5003:5003"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - REDIS_CONNECTION_STRING=redis:6379
+      - STRATEGY_EXECUTION_MODE=Simulation
+      - GOLDEN_RULES_COMPLIANCE_REQUIRED=true
+      - DOTNET_GCServer=true
+      - DOTNET_GCLatencyMode=SustainedLowLatency
+      - STRATEGY_EXECUTION_TIMEOUT=30000
+      - MAX_CONCURRENT_STRATEGIES=20
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - dragon-trading-network
+    deploy:
+      resources:
+        limits:
+          cpus: '8.0'
+          memory: 8G
+        reservations:
+          cpus: '4.0'
+          memory: 4G
+
+  # Risk Management - real-time risk monitoring
+  risk:
+    build:
+      context: ./DayTradinPlatform
+      dockerfile: TradingPlatform.RiskManagement/Dockerfile
+    container_name: dragon-trading-risk
+    ports:
+      - "5004:5004"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - REDIS_CONNECTION_STRING=redis:6379
+      - DB_CONNECTION_STRING=Server=timescaledb;Port=5432;Database=trading_platform;User Id=trading_user;Password=${DB_PASSWORD:-TradingPlatform2025!};
+      - RISK_MONITORING_ENABLED=true
+      - PDT_COMPLIANCE_ENABLED=true
+      - DOTNET_GCServer=true
+      - DOTNET_GCLatencyMode=SustainedLowLatency
+      - RISK_CHECK_INTERVAL=500
+      - MAX_POSITION_SIZE=2000000
+    depends_on:
+      redis:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - dragon-trading-network
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4G
+        reservations:
+          cpus: '2.0'
+          memory: 2G
+
+  # Paper Trading - high-performance simulation
+  papertrading:
+    build:
+      context: ./DayTradinPlatform
+      dockerfile: TradingPlatform.PaperTrading/Dockerfile
+    container_name: dragon-trading-papertrading
+    ports:
+      - "5005:5005"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - REDIS_CONNECTION_STRING=redis:6379
+      - DB_CONNECTION_STRING=Server=timescaledb;Port=5432;Database=trading_platform;User Id=trading_user;Password=${DB_PASSWORD:-TradingPlatform2025!};
+      - PAPER_TRADING_ENABLED=true
+      - INITIAL_CAPITAL=1000000
+      - DOTNET_GCServer=true
+      - DOTNET_GCLatencyMode=SustainedLowLatency
+      - ORDER_BOOK_DEPTH=20
+      - EXECUTION_DELAY_MS=2
+    depends_on:
+      redis:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - dragon-trading-network
+    deploy:
+      resources:
+        limits:
+          cpus: '6.0'
+          memory: 6G
+        reservations:
+          cpus: '3.0'
+          memory: 3G
+
+  # Performance monitoring for DRAGON platform
+  dragon-monitor:
+    image: prom/node-exporter:latest
+    container_name: dragon-system-monitor
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+    networks:
+      - dragon-trading-network
+    profiles:
+      - monitoring
+
+volumes:
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /mnt/dragon-ssd/redis-data
+      o: bind
+  timescale_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /mnt/dragon-ssd/timescale-data
+      o: bind
+
+networks:
+  dragon-trading-network:
+    driver: bridge
+    name: dragon-trading-platform
+    driver_opts:
+      com.docker.network.driver.mtu: 9000
