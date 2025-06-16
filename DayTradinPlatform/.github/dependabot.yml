@@ -1,0 +1,76 @@
+# Dependabot configuration for automated dependency updates
+version: 2
+updates:
+  # .NET/NuGet dependencies
+  - package-ecosystem: "nuget"
+    directory: "/DayTradinPlatform"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "@trading-team"
+    assignees:
+      - "@trading-team"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "automated"
+    target-branch: "develop"
+    
+    # Group related dependencies
+    groups:
+      microsoft-extensions:
+        patterns:
+          - "Microsoft.Extensions.*"
+      serilog:
+        patterns:
+          - "Serilog*"
+      testing:
+        patterns:
+          - "Microsoft.NET.Test.Sdk"
+          - "xunit*"
+          - "coverlet*"
+          - "Moq*"
+      
+    # Ignore major version updates for critical dependencies
+    ignore:
+      - dependency-name: "Microsoft.Extensions.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Serilog*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Newtonsoft.Json"
+        update-types: ["version-update:semver-major"]
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/DayTradinPlatform"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+    reviewers:
+      - "@devops-team"
+    commit-message:
+      prefix: "docker"
+    labels:
+      - "docker"
+      - "infrastructure"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+    reviewers:
+      - "@devops-team"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "github-actions"
+      - "ci-cd"

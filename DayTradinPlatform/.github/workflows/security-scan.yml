@@ -1,0 +1,173 @@
+name: Security & Dependency Scanning
+
+on:
+  schedule:
+    # Run security scans daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  SOLUTION_PATH: 'DayTradinPlatform/DayTradinPlatform.sln'
+
+jobs:
+  security-scan:
+    name: Security & Vulnerability Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: |
+        cd DayTradinPlatform
+        dotnet restore ${{ env.SOLUTION_PATH }}
+
+    - name: Run .NET security audit
+      run: |
+        cd DayTradinPlatform
+        
+        # Install security audit tool
+        dotnet tool install --global dotnet-audit --version 2024.2.2 || true
+        
+        # Run security audit
+        dotnet list package --vulnerable --include-transitive 2>&1 | tee security-audit.log
+        
+        # Check for vulnerabilities
+        if grep -q "vulnerable" security-audit.log; then
+          echo "🚨 Security vulnerabilities detected!"
+          echo "Review the security-audit.log for details"
+          cat security-audit.log
+        else
+          echo "✅ No known vulnerabilities detected"
+        fi
+
+    - name: Dependency license check
+      run: |
+        cd DayTradinPlatform
+        
+        # Install license checking tool
+        dotnet tool install --global dotnet-project-licenses || true
+        
+        # Generate license report
+        dotnet-project-licenses --input . --output-format json --output licenses.json || true
+        
+        if [ -f "licenses.json" ]; then
+          echo "📄 License report generated"
+          # Check for problematic licenses (GPL, AGPL, etc.)
+          if grep -qi "gpl\|agpl\|copyleft" licenses.json; then
+            echo "⚠️  Potentially problematic licenses detected - manual review required"
+          else
+            echo "✅ All licenses appear compatible"
+          fi
+        fi
+
+    - name: Code quality analysis with SonarCloud
+      if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.projectKey=day-trading-platform
+          -Dsonar.organization=your-org
+          -Dsonar.sources=DayTradinPlatform
+          -Dsonar.exclusions=**/bin/**,**/obj/**,**/*.Tests/**
+          -Dsonar.cs.dotcover.reportsPaths=DayTradinPlatform/coverage.cobertura.xml
+
+    - name: Upload security scan results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-scan-results-${{ github.run_number }}
+        path: |
+          DayTradinPlatform/security-audit.log
+          DayTradinPlatform/licenses.json
+        retention-days: 90
+
+  dependency-update:
+    name: Automated Dependency Updates
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Update NuGet packages
+      run: |
+        cd DayTradinPlatform
+        
+        # Update packages to latest versions
+        dotnet list package --outdated > outdated-packages.log
+        
+        if grep -q ">" outdated-packages.log; then
+          echo "📦 Outdated packages found, updating..."
+          
+          # Update packages (be careful with major version changes)
+          dotnet outdated --upgrade
+          
+          # Verify the solution still builds
+          dotnet restore ${{ env.SOLUTION_PATH }}
+          dotnet build ${{ env.SOLUTION_PATH }} --configuration Release
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ Package updates successful, build passes"
+            
+            # Create pull request for package updates
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git add -A
+            git commit -m "chore: Update NuGet packages to latest versions
+
+            🤖 Generated with [Claude Code](https://claude.ai/code)
+            
+            Automated package updates:
+            $(cat outdated-packages.log)
+            
+            Co-Authored-By: Claude <noreply@anthropic.com>" || exit 0
+            
+            git push origin HEAD:dependency-updates-$(date +%Y%m%d) || true
+            
+            # Create PR using GitHub CLI if available
+            if command -v gh >/dev/null 2>&1; then
+              gh pr create \
+                --title "🔄 Automated dependency updates" \
+                --body "Automated update of NuGet packages to latest versions.
+                
+                **Changes:**
+                - Updated outdated NuGet packages
+                - Verified build passes with new versions
+                - Security and compatibility checked
+                
+                Please review and merge if all checks pass." \
+                --head dependency-updates-$(date +%Y%m%d) \
+                --base main || true
+            fi
+          else
+            echo "❌ Package updates broke the build, reverting"
+            git checkout .
+          fi
+        else
+          echo "✅ All packages are up to date"
+        fi

@@ -1,0 +1,214 @@
+# Multi-stage Dockerfile for Trading Platform - Ultra-Low Latency Optimized
+# Supports multiple microservices with optimized builds for high-performance trading
+
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy solution and project files for optimal caching
+COPY DayTradinPlatform.sln ./
+COPY TradingPlatform.Core/TradingPlatform.Core.csproj TradingPlatform.Core/
+COPY TradingPlatform.Logging/TradingPlatform.Logging.csproj TradingPlatform.Logging/
+COPY TradingPlatform.Messaging/TradingPlatform.Messaging.csproj TradingPlatform.Messaging/
+COPY TradingPlatform.Database/TradingPlatform.Database.csproj TradingPlatform.Database/
+COPY TradingPlatform.FixEngine/TradingPlatform.FixEngine.csproj TradingPlatform.FixEngine/
+COPY TradingPlatform.Gateway/TradingPlatform.Gateway.csproj TradingPlatform.Gateway/
+COPY TradingPlatform.MarketData/TradingPlatform.MarketData.csproj TradingPlatform.MarketData/
+COPY TradingPlatform.StrategyEngine/TradingPlatform.StrategyEngine.csproj TradingPlatform.StrategyEngine/
+COPY TradingPlatform.RiskManagement/TradingPlatform.RiskManagement.csproj TradingPlatform.RiskManagement/
+COPY TradingPlatform.PaperTrading/TradingPlatform.PaperTrading.csproj TradingPlatform.PaperTrading/
+COPY TradingPlatform.WindowsOptimization/TradingPlatform.WindowsOptimization.csproj TradingPlatform.WindowsOptimization/
+
+# Restore dependencies (cached layer)
+RUN dotnet restore DayTradinPlatform.sln
+
+# Copy source code
+COPY . .
+
+# Build arguments
+ARG BUILD_CONFIGURATION=Release
+ARG BUILD_VERSION=latest
+
+# Build solution with optimizations
+RUN dotnet build DayTradinPlatform.sln \
+    --configuration $BUILD_CONFIGURATION \
+    --no-restore \
+    --verbosity minimal
+
+# Test stage (optional, can be skipped in production builds)
+FROM build AS test
+RUN dotnet test DayTradinPlatform.sln \
+    --configuration $BUILD_CONFIGURATION \
+    --no-build \
+    --verbosity minimal \
+    --collect:"XPlat Code Coverage" \
+    --logger trx \
+    --results-directory /src/TestResults
+
+# Publish stage for each microservice
+FROM build AS publish-gateway
+RUN dotnet publish TradingPlatform.Gateway/TradingPlatform.Gateway.csproj \
+    --configuration $BUILD_CONFIGURATION \
+    --no-restore \
+    --output /app/gateway \
+    --runtime linux-x64 \
+    --self-contained false
+
+FROM build AS publish-marketdata
+RUN dotnet publish TradingPlatform.MarketData/TradingPlatform.MarketData.csproj \
+    --configuration $BUILD_CONFIGURATION \
+    --no-restore \
+    --output /app/marketdata \
+    --runtime linux-x64 \
+    --self-contained false
+
+FROM build AS publish-strategy
+RUN dotnet publish TradingPlatform.StrategyEngine/TradingPlatform.StrategyEngine.csproj \
+    --configuration $BUILD_CONFIGURATION \
+    --no-restore \
+    --output /app/strategy \
+    --runtime linux-x64 \
+    --self-contained false
+
+FROM build AS publish-risk
+RUN dotnet publish TradingPlatform.RiskManagement/TradingPlatform.RiskManagement.csproj \
+    --configuration $BUILD_CONFIGURATION \
+    --no-restore \
+    --output /app/risk \
+    --runtime linux-x64 \
+    --self-contained false
+
+FROM build AS publish-papertrading
+RUN dotnet publish TradingPlatform.PaperTrading/TradingPlatform.PaperTrading.csproj \
+    --configuration $BUILD_CONFIGURATION \
+    --no-restore \
+    --output /app/papertrading \
+    --runtime linux-x64 \
+    --self-contained false
+
+# Runtime stage - optimized for ultra-low latency
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime-base
+
+# Install additional packages for performance monitoring and debugging
+RUN apt-get update && apt-get install -y \
+    curl \
+    htop \
+    iotop \
+    net-tools \
+    tcpdump \
+    strace \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for security
+RUN groupadd -r trading && useradd -r -g trading trading
+
+# Set up logging directory
+RUN mkdir -p /app/logs && chown trading:trading /app/logs
+
+# Configure environment for optimal performance
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 \
+    DOTNET_USE_POLLING_FILE_WATCHER=1 \
+    DOTNET_RUNNING_IN_CONTAINER=true \
+    DOTNET_EnableDiagnostics=0 \
+    ASPNETCORE_URLS=http://+:5000 \
+    COMPlus_ThreadPool_ForceMinWorkerThreads=50 \
+    COMPlus_ThreadPool_ForceMaxWorkerThreads=200
+
+# Gateway runtime image
+FROM runtime-base AS gateway
+WORKDIR /app
+COPY --from=publish-gateway /app/gateway .
+COPY --from=publish-marketdata /app/marketdata ./microservices/marketdata/
+COPY --from=publish-strategy /app/strategy ./microservices/strategy/
+COPY --from=publish-risk /app/risk ./microservices/risk/
+COPY --from=publish-papertrading /app/papertrading ./microservices/papertrading/
+
+# Create startup script for service selection
+COPY <<EOF /app/start.sh
+#!/bin/bash
+set -e
+
+SERVICE=\${SERVICE_NAME:-gateway}
+
+case "\$SERVICE" in
+    "gateway")
+        echo "Starting Trading Platform Gateway..."
+        exec dotnet TradingPlatform.Gateway.dll
+        ;;
+    "marketdata")
+        echo "Starting Market Data Service..."
+        cd /app/microservices/marketdata
+        exec dotnet TradingPlatform.MarketData.dll
+        ;;
+    "strategy")
+        echo "Starting Strategy Engine..."
+        cd /app/microservices/strategy
+        exec dotnet TradingPlatform.StrategyEngine.dll
+        ;;
+    "risk")
+        echo "Starting Risk Management Service..."
+        cd /app/microservices/risk
+        exec dotnet TradingPlatform.RiskManagement.dll
+        ;;
+    "papertrading")
+        echo "Starting Paper Trading Service..."
+        cd /app/microservices/papertrading
+        exec dotnet TradingPlatform.PaperTrading.dll
+        ;;
+    *)
+        echo "Unknown service: \$SERVICE"
+        echo "Available services: gateway, marketdata, strategy, risk, papertrading"
+        exit 1
+        ;;
+esac
+EOF
+
+RUN chmod +x /app/start.sh && chown trading:trading /app/start.sh
+
+# Set up health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
+# Expose ports
+EXPOSE 5000 5001
+
+# Switch to non-root user
+USER trading
+
+# Set entry point
+ENTRYPOINT ["/app/start.sh"]
+
+# MarketData service image
+FROM runtime-base AS marketdata
+WORKDIR /app
+COPY --from=publish-marketdata /app/marketdata .
+EXPOSE 5002
+USER trading
+ENTRYPOINT ["dotnet", "TradingPlatform.MarketData.dll"]
+
+# Strategy Engine service image  
+FROM runtime-base AS strategy
+WORKDIR /app
+COPY --from=publish-strategy /app/strategy .
+EXPOSE 5003
+USER trading
+ENTRYPOINT ["dotnet", "TradingPlatform.StrategyEngine.dll"]
+
+# Risk Management service image
+FROM runtime-base AS risk
+WORKDIR /app
+COPY --from=publish-risk /app/risk .
+EXPOSE 5004
+USER trading
+ENTRYPOINT ["dotnet", "TradingPlatform.RiskManagement.dll"]
+
+# Paper Trading service image
+FROM runtime-base AS papertrading
+WORKDIR /app
+COPY --from=publish-papertrading /app/papertrading .
+EXPOSE 5005
+USER trading
+ENTRYPOINT ["dotnet", "TradingPlatform.PaperTrading.dll"]
+
+# Default to gateway (all-in-one) image
+FROM gateway AS final
