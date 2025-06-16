@@ -88,12 +88,19 @@ public class FixSessionTests : IDisposable
         FixMessage? receivedMessage = null;
         _fixSession.MessageReceived += (sender, message) => receivedMessage = message;
         
-        // Act - Simulate message reception by invoking event
+        // Act - Use internal test trigger method
         var testMessage = new FixMessage { MsgType = FixMessageTypes.ExecutionReport };
+        
+#if DEBUG || TEST
+        // Use internal test method to trigger event
+        ((dynamic)_fixSession).TriggerMessageReceived(testMessage);
+#else
+        // Fallback for non-test builds
         _fixSession.GetType()
             .GetEvent("MessageReceived")?
             .GetRaiseMethod(true)?
             .Invoke(_fixSession, new object[] { _fixSession, testMessage });
+#endif
         
         // Assert
         Assert.NotNull(receivedMessage);
@@ -107,11 +114,17 @@ public class FixSessionTests : IDisposable
         string? stateChange = null;
         _fixSession.SessionStateChanged += (sender, state) => stateChange = state;
         
-        // Act - Simulate state change by invoking event
+        // Act - Use internal test trigger method
+#if DEBUG || TEST
+        // Use internal test method to trigger event
+        ((dynamic)_fixSession).TriggerSessionStateChanged("Connected");
+#else
+        // Fallback for non-test builds
         _fixSession.GetType()
             .GetEvent("SessionStateChanged")?
             .GetRaiseMethod(true)?
             .Invoke(_fixSession, new object[] { _fixSession, "Connected" });
+#endif
         
         // Assert
         Assert.Equal("Connected", stateChange);

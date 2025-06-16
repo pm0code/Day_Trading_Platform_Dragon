@@ -45,8 +45,8 @@ public sealed class FixSession : IDisposable
     
 #if DEBUG || TEST
     // Test-only methods for event simulation
-    internal void TriggerSessionStateChanged(string state) => SessionStateChanged?.Invoke(this, state);
-    internal void TriggerMessageReceived(FixMessage message) => MessageReceived?.Invoke(this, message);
+    public void TriggerSessionStateChanged(string state) => SessionStateChanged?.Invoke(this, state);
+    public void TriggerMessageReceived(FixMessage message) => MessageReceived?.Invoke(this, message);
 #endif
     
     public bool IsConnected => _tcpClient?.Connected == true && _isLoggedOn;
