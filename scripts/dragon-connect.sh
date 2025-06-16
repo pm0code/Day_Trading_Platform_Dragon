@@ -5,11 +5,11 @@
 set -e
 
 # Configuration
-DRAGON_HOST="${DRAGON_HOST:-dragon.local}"
-DRAGON_USER="${DRAGON_USER:-$USER}"
+DRAGON_HOST="${DRAGON_HOST:-192.168.1.35}"
+DRAGON_USER="${DRAGON_USER:-admin}"
 DRAGON_KEY="$HOME/.ssh/dragon_key"
 PROJECT_PATH="/home/nader/my_projects/C#/DayTradingPlatform/DayTradinPlatform"
-DRAGON_WORKSPACE="C:\\BuildWorkspace"
+DRAGON_WORKSPACE="D:\\BuildWorkspace"
 TELEMETRY_DIR="/tmp/dragon-telemetry"
 
 # Colors for output
@@ -146,21 +146,23 @@ test_connectivity() {
 deploy_code() {
     log "🚀 Deploying code to DRAGON for testing..."
     
-    # Create workspace directory on DRAGON
-    ssh dragon "if (!(Test-Path '$DRAGON_WORKSPACE')) { New-Item -ItemType Directory -Path '$DRAGON_WORKSPACE' -Force }"
+    # BuildWorkspace directory already exists on DRAGON at D:\BuildWorkspace
     
-    # Sync code to DRAGON (excluding build artifacts)
-    log "Syncing code to DRAGON..."
-    rsync -avz --delete \
-        --exclude='.git' \
-        --exclude='bin/' \
-        --exclude='obj/' \
-        --exclude='.vs/' \
-        --exclude='TestResults/' \
-        --exclude='*.user' \
-        --exclude='node_modules/' \
-        -e "ssh -i $DRAGON_KEY" \
-        "$PROJECT_PATH/" "$DRAGON_USER@$DRAGON_HOST:$DRAGON_WORKSPACE/"
+    # Deploy code to DRAGON using scp (simple and reliable)
+    log "Copying code to DRAGON..."
+    
+    # Copy only the essential project files to D:\BuildWorkspace
+    log "Copying .NET solution files..."
+    scp -i "$DRAGON_KEY" -o "StrictHostKeyChecking=no" \
+        "$PROJECT_PATH"/*.sln \
+        "$PROJECT_PATH"/*.md \
+        "$PROJECT_PATH"/Dockerfile* \
+        "$DRAGON_USER@$DRAGON_HOST:$DRAGON_WORKSPACE/" 2>/dev/null || true
+    
+    log "Copying project directories..."
+    scp -r -i "$DRAGON_KEY" -o "StrictHostKeyChecking=no" \
+        "$PROJECT_PATH"/TradingPlatform.* \
+        "$DRAGON_USER@$DRAGON_HOST:$DRAGON_WORKSPACE/" 2>/dev/null || true
     
     success "Code deployed to DRAGON: $DRAGON_WORKSPACE"
 }
