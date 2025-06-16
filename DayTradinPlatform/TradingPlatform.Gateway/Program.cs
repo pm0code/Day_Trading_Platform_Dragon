@@ -1,23 +1,20 @@
 using Serilog;
 using TradingPlatform.Gateway.Services;
 using TradingPlatform.Messaging.Extensions;
+using TradingPlatform.Logging.Configuration;
+using TradingPlatform.Logging.Interfaces;
 
-// High-performance trading gateway startup with optimized configuration
+// High-performance trading gateway startup with comprehensive logging infrastructure
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Serilog for structured logging with performance monitoring
-builder.Host.UseSerilog((context, configuration) =>
-    configuration
-        .ReadFrom.Configuration(context.Configuration)
-        .Enrich.FromLogContext()
-        .Enrich.WithProperty("Service", "TradingPlatform.Gateway")
-        .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss.fff} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
-        .WriteTo.File("logs/gateway-.log", 
-            rollingInterval: RollingInterval.Day,
-            outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}"));
+// Configure comprehensive trading platform logging
+builder.Host.ConfigureTradingLogging("Gateway");
 
 // Add Redis Streams messaging for microservices communication
 builder.Services.AddRedisMessageBusForDevelopment();
+
+// Add comprehensive trading logging services
+builder.Services.AddTradingLogging("Gateway");
 
 // Add Gateway services
 builder.Services.AddSingleton<IGatewayOrchestrator, GatewayOrchestrator>();
