@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.MarketData"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.StrategyEngine", "TradingPlatform.StrategyEngine\TradingPlatform.StrategyEngine.csproj", "{8ACD0A9C-7B35-4394-A653-0FEC7770F687}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.RiskManagement", "TradingPlatform.RiskManagement\TradingPlatform.RiskManagement.csproj", "{C47682CE-EF70-416B-84A7-6049855D4219}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -75,6 +77,10 @@ Global
 		{8ACD0A9C-7B35-4394-A653-0FEC7770F687}.Debug|x64.Build.0 = Debug|x64
 		{8ACD0A9C-7B35-4394-A653-0FEC7770F687}.Release|x64.ActiveCfg = Release|x64
 		{8ACD0A9C-7B35-4394-A653-0FEC7770F687}.Release|x64.Build.0 = Release|x64
+		{C47682CE-EF70-416B-84A7-6049855D4219}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C47682CE-EF70-416B-84A7-6049855D4219}.Debug|x64.Build.0 = Debug|Any CPU
+		{C47682CE-EF70-416B-84A7-6049855D4219}.Release|x64.ActiveCfg = Release|Any CPU
+		{C47682CE-EF70-416B-84A7-6049855D4219}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
