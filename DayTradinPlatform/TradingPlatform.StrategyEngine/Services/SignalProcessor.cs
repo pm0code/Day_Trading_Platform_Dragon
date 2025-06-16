@@ -1,0 +1,344 @@
+using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
+using TradingPlatform.StrategyEngine.Models;
+using TradingPlatform.StrategyEngine.Strategies;
+
+namespace TradingPlatform.StrategyEngine.Services;
+
+/// <summary>
+/// Signal processing service for real-time trading signal generation and validation
+/// Integrates multiple trading strategies with risk management
+/// </summary>
+public class SignalProcessor : ISignalProcessor
+{
+    private readonly IGoldenRulesStrategy _goldenRulesStrategy;
+    private readonly IMomentumStrategy _momentumStrategy;
+    private readonly IGapStrategy _gapStrategy;
+    private readonly ILogger<SignalProcessor> _logger;
+    private readonly ConcurrentDictionary<string, List<TradingSignal>> _recentSignals;
+    private readonly Timer _cleanupTimer;
+
+    public SignalProcessor(
+        IGoldenRulesStrategy goldenRulesStrategy,
+        IMomentumStrategy momentumStrategy,
+        IGapStrategy gapStrategy,
+        ILogger<SignalProcessor> logger)
+    {
+        _goldenRulesStrategy = goldenRulesStrategy ?? throw new ArgumentNullException(nameof(goldenRulesStrategy));
+        _momentumStrategy = momentumStrategy ?? throw new ArgumentNullException(nameof(momentumStrategy));
+        _gapStrategy = gapStrategy ?? throw new ArgumentNullException(nameof(gapStrategy));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _recentSignals = new ConcurrentDictionary<string, List<TradingSignal>>();
+        
+        // Clean up old signals every 5 minutes
+        _cleanupTimer = new Timer(CleanupOldSignals, null, 
+            TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
+    }
+
+    public async Task<TradingSignal[]> ProcessMarketDataAsync(string symbol, MarketConditions conditions)
+    {
+        var signals = new List<TradingSignal>();
+
+        try
+        {
+            _logger.LogDebug("Processing market data for {Symbol}: Price={Price}, Volume={Volume}, Volatility={Volatility}", 
+                symbol, conditions.Volatility, conditions.Volume, conditions.Volatility);
+
+            // Process through all available strategies
+            var strategyTasks = new List<Task<TradingSignal[]>>
+            {
+                _goldenRulesStrategy.GenerateSignalsAsync(symbol, conditions),
+                _momentumStrategy.GenerateSignalsAsync(symbol, conditions),
+                _gapStrategy.GenerateSignalsAsync(symbol, conditions)
+            };
+
+            var strategyResults = await Task.WhenAll(strategyTasks);
+
+            // Combine signals from all strategies
+            foreach (var strategySignals in strategyResults)
+            {
+                signals.AddRange(strategySignals);
+            }
+
+            // Filter and prioritize signals
+            var filteredSignals = FilterConflictingSignals(signals.ToArray());
+
+            // Store recent signals for tracking
+            foreach (var signal in filteredSignals)
+            {
+                AddToRecentSignals(signal);
+            }
+
+            _logger.LogInformation("Generated {SignalCount} signals for {Symbol} from {StrategyCount} strategies", 
+                filteredSignals.Length, symbol, strategyTasks.Count);
+
+            return filteredSignals;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing market data for {Symbol}", symbol);
+            return Array.Empty<TradingSignal>();
+        }
+    }
+
+    public async Task<StrategyResult> ProcessManualSignalAsync(SignalRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Processing manual signal: {SignalType} {Quantity} {Symbol} at {Price}", 
+                request.SignalType, request.Quantity, request.Symbol, request.Price);
+
+            // Create trading signal from manual request
+            var signal = new TradingSignal(
+                Guid.NewGuid().ToString(),
+                request.StrategyId,
+                request.Symbol,
+                request.SignalType,
+                request.Price,
+                request.Quantity,
+                1.0m, // Maximum confidence for manual signals
+                $"Manual: {request.Reason}",
+                DateTimeOffset.UtcNow,
+                request.Metadata);
+
+            // Validate against risk parameters
+            var riskAssessment = await ValidateSignalAsync(signal);
+            
+            if (!riskAssessment.IsAcceptable)
+            {
+                return new StrategyResult(false, "Signal rejected by risk management", "RISK_REJECTED");
+            }
+
+            // Add to recent signals
+            AddToRecentSignals(signal);
+
+            _logger.LogInformation("Manual signal processed successfully for {Symbol}", request.Symbol);
+
+            await Task.CompletedTask;
+            return new StrategyResult(true, "Manual signal processed successfully", 
+                null, new Dictionary<string, object> { ["SignalId"] = signal.Id });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing manual signal for {Symbol}", request.Symbol);
+            return new StrategyResult(false, ex.Message, "MANUAL_SIGNAL_ERROR");
+        }
+    }
+
+    public async Task<TradingSignal[]> GetRecentSignalsAsync(string strategyId)
+    {
+        await Task.CompletedTask;
+        
+        var allSignals = _recentSignals.Values.SelectMany(signals => signals).ToArray();
+        
+        if (!string.IsNullOrEmpty(strategyId))
+        {
+            return allSignals.Where(s => s.StrategyId == strategyId).ToArray();
+        }
+
+        return allSignals;
+    }
+
+    public async Task<RiskAssessment> ValidateSignalAsync(TradingSignal signal)
+    {
+        try
+        {
+            // Calculate position size based on signal
+            var positionValue = signal.Price * signal.Quantity;
+            
+            // Basic risk assessment logic
+            var maxPositionSize = 10000.0m; // $10k max position
+            var maxPortfolioRisk = 0.02m; // 2% max portfolio risk
+            
+            // Calculate stop loss and take profit levels
+            var stopLossPercent = 0.02m; // 2% stop loss
+            var takeProfitPercent = 0.04m; // 4% take profit (2:1 risk/reward)
+            
+            var stopLoss = signal.SignalType == SignalType.Buy ? 
+                signal.Price * (1 - stopLossPercent) : 
+                signal.Price * (1 + stopLossPercent);
+                
+            var takeProfit = signal.SignalType == SignalType.Buy ? 
+                signal.Price * (1 + takeProfitPercent) : 
+                signal.Price * (1 - takeProfitPercent);
+
+            var riskReward = takeProfitPercent / stopLossPercent;
+
+            // Validate position size
+            var isAcceptable = positionValue <= maxPositionSize && 
+                              signal.Confidence >= 0.6m && // Minimum 60% confidence
+                              riskReward >= 1.5m; // Minimum 1.5:1 risk/reward
+
+            var assessment = new RiskAssessment(
+                Math.Min(positionValue, maxPositionSize),
+                stopLoss,
+                takeProfit,
+                riskReward,
+                maxPortfolioRisk,
+                isAcceptable);
+
+            if (!isAcceptable)
+            {
+                _logger.LogWarning("Signal risk assessment failed for {Symbol}: PositionValue={PositionValue}, Confidence={Confidence}, RiskReward={RiskReward}", 
+                    signal.Symbol, positionValue, signal.Confidence, riskReward);
+            }
+
+            await Task.CompletedTask;
+            return assessment;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating signal for {Symbol}", signal.Symbol);
+            return new RiskAssessment(0, 0, 0, 0, 0, false);
+        }
+    }
+
+    // Additional signal processing methods
+
+    /// <summary>
+    /// Get signal statistics for analysis
+    /// </summary>
+    public async Task<SignalStatistics> GetSignalStatisticsAsync(string? strategyId = null)
+    {
+        await Task.CompletedTask;
+        
+        var signals = await GetRecentSignalsAsync(strategyId ?? string.Empty);
+        var now = DateTimeOffset.UtcNow;
+        var last24Hours = signals.Where(s => now - s.CreatedAt < TimeSpan.FromHours(24)).ToArray();
+        
+        var buySignals = last24Hours.Count(s => s.SignalType == SignalType.Buy);
+        var sellSignals = last24Hours.Count(s => s.SignalType == SignalType.Sell);
+        var avgConfidence = last24Hours.Length > 0 ? last24Hours.Average(s => (double)s.Confidence) : 0;
+
+        return new SignalStatistics(
+            last24Hours.Length,
+            buySignals,
+            sellSignals,
+            (decimal)avgConfidence,
+            last24Hours.Length > 0 ? last24Hours.Max(s => s.CreatedAt) : DateTimeOffset.MinValue);
+    }
+
+    /// <summary>
+    /// Cancel pending signals for a symbol
+    /// </summary>
+    public async Task CancelSignalsAsync(string symbol, string? strategyId = null)
+    {
+        try
+        {
+            if (_recentSignals.TryGetValue(symbol, out var signals))
+            {
+                var signalsToRemove = signals.Where(s => 
+                    string.IsNullOrEmpty(strategyId) || s.StrategyId == strategyId).ToArray();
+
+                foreach (var signal in signalsToRemove)
+                {
+                    signals.Remove(signal);
+                }
+
+                _logger.LogInformation("Cancelled {CancelledCount} signals for {Symbol}", 
+                    signalsToRemove.Length, symbol);
+            }
+
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cancelling signals for {Symbol}", symbol);
+        }
+    }
+
+    // Private helper methods
+    private TradingSignal[] FilterConflictingSignals(TradingSignal[] signals)
+    {
+        if (signals.Length <= 1) return signals;
+
+        // Group signals by symbol
+        var signalGroups = signals.GroupBy(s => s.Symbol);
+        var filteredSignals = new List<TradingSignal>();
+
+        foreach (var group in signalGroups)
+        {
+            var symbolSignals = group.ToArray();
+            
+            // If we have conflicting signals (buy and sell), choose highest confidence
+            var buySignals = symbolSignals.Where(s => s.SignalType == SignalType.Buy).ToArray();
+            var sellSignals = symbolSignals.Where(s => s.SignalType == SignalType.Sell).ToArray();
+
+            if (buySignals.Length > 0 && sellSignals.Length > 0)
+            {
+                // Conflicting signals - choose highest confidence
+                var bestBuy = buySignals.OrderByDescending(s => s.Confidence).First();
+                var bestSell = sellSignals.OrderByDescending(s => s.Confidence).First();
+
+                filteredSignals.Add(bestBuy.Confidence >= bestSell.Confidence ? bestBuy : bestSell);
+            }
+            else
+            {
+                // No conflicts - add highest confidence signal of each type
+                if (buySignals.Length > 0)
+                    filteredSignals.Add(buySignals.OrderByDescending(s => s.Confidence).First());
+                if (sellSignals.Length > 0)
+                    filteredSignals.Add(sellSignals.OrderByDescending(s => s.Confidence).First());
+            }
+        }
+
+        return filteredSignals.ToArray();
+    }
+
+    private void AddToRecentSignals(TradingSignal signal)
+    {
+        _recentSignals.AddOrUpdate(signal.Symbol, 
+            new List<TradingSignal> { signal },
+            (key, existing) =>
+            {
+                existing.Add(signal);
+                return existing;
+            });
+    }
+
+    private void CleanupOldSignals(object? state)
+    {
+        try
+        {
+            var cutoffTime = DateTimeOffset.UtcNow.AddHours(-24); // Keep signals for 24 hours
+            var totalRemoved = 0;
+
+            foreach (var kvp in _recentSignals.ToArray())
+            {
+                var symbol = kvp.Key;
+                var signals = kvp.Value;
+
+                var oldSignals = signals.Where(s => s.CreatedAt < cutoffTime).ToArray();
+                
+                foreach (var oldSignal in oldSignals)
+                {
+                    signals.Remove(oldSignal);
+                    totalRemoved++;
+                }
+
+                // Remove empty lists
+                if (signals.Count == 0)
+                {
+                    _recentSignals.TryRemove(symbol, out _);
+                }
+            }
+
+            if (totalRemoved > 0)
+            {
+                _logger.LogDebug("Cleaned up {RemovedCount} old signals", totalRemoved);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during signal cleanup");
+        }
+    }
+}
+
+// Supporting data models
+public record SignalStatistics(
+    int TotalSignals,
+    int BuySignals,
+    int SellSignals,
+    decimal AverageConfidence,
+    DateTimeOffset LastSignalTime);
