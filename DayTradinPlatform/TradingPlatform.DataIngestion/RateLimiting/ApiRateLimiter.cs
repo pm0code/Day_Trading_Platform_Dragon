@@ -102,19 +102,66 @@ namespace TradingPlatform.DataIngestion.RateLimiting
             return canMakeRequest && waitTime == TimeSpan.Zero;
         }
 
-        public Task WaitForPermitAsync()
+        public async Task WaitForPermitAsync()
         {
-            throw new NotImplementedException();
+            // Wait until a permit is available
+            while (!TryAcquirePermit())
+            {
+                await Task.Delay(100); // Wait 100ms before trying again
+            }
         }
 
-        public bool TryAcquire()
+        public bool TryAcquirePermit()
         {
-            throw new NotImplementedException();
+            // Use the default provider for generic permit requests
+            return TryAcquirePermit("default");
+        }
+
+        public async Task<bool> TryAcquirePermit(string provider)
+        {
+            return await CanMakeRequestAsync(provider);
+        }
+
+        public void RecordRequest()
+        {
+            // Record request for default provider
+            RecordRequestAsync("default").Wait();
+        }
+
+        public void RecordFailure(Exception exception)
+        {
+            _logger.LogWarning($"API request failed: {exception.Message}");
+            // For now, just log the failure. Could implement backoff logic here.
+        }
+
+        public bool IsLimitReached()
+        {
+            return IsLimitReached("default");
+        }
+
+        public bool IsLimitReached(string provider)
+        {
+            return !CanMakeRequestAsync(provider).Result;
+        }
+
+        public int GetRemainingCalls()
+        {
+            return GetRemainingCalls("default");
+        }
+
+        public int GetRemainingCalls(string provider)
+        {
+            return GetRemainingRequestsAsync(provider).Result;
         }
 
         public TimeSpan GetTimeUntilNextPermit()
         {
-            throw new NotImplementedException();
+            return GetRequestWindowAsync("default").Result;
+        }
+
+        public async Task<TimeSpan> GetRequestWindowAsync(string provider)
+        {
+            return await GetWaitTimeAsync(provider);
         }
     }
 }

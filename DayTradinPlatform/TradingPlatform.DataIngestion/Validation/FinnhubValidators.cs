@@ -2,7 +2,6 @@
 
 using FluentValidation;
 using TradingPlatform.Core.Models;
-using TradingPlatform.DataIngestion.Models;
 
 namespace TradingPlatform.DataIngestion.Validation
 {

@@ -383,7 +383,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
         // ========== PRIVATE HELPER METHODS ==========
 
-        private MarketData MapToMarketData(string symbol, FinnhubQuoteResponse quote)
+        private MarketData MapToMarketData(string symbol, TradingPlatform.Core.Models.FinnhubQuoteResponse quote)
         {
             return new MarketData(_logger)
             {
