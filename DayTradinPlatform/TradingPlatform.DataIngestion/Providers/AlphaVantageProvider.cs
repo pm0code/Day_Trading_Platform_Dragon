@@ -9,6 +9,7 @@ using Microsoft.Extensions.Caching.Memory;
 using RestSharp;
 using TradingPlatform.Core.Models;
 using TradingPlatform.DataIngestion.Interfaces;
+using TradingPlatform.DataIngestion.Models;
 using System.Text.Json;
 
 namespace TradingPlatform.DataIngestion.Providers

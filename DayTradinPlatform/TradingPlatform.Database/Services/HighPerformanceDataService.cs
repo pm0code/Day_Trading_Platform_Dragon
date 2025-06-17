@@ -74,7 +74,8 @@ public class HighPerformanceDataService : IDisposable
             record.HardwareTimestampNs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1_000_000L;
             record.InsertedAt = DateTime.UtcNow;
             
-            return await _marketDataWriter.WriteAsync(record, _cancellationTokenSource.Token);
+            await _marketDataWriter.WriteAsync(record, _cancellationTokenSource.Token);
+            return true;
         }
         catch (Exception ex)
         {
@@ -93,7 +94,8 @@ public class HighPerformanceDataService : IDisposable
             record.HardwareTimestampNs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1_000_000L;
             record.InsertedAt = DateTime.UtcNow;
             
-            return await _executionWriter.WriteAsync(record, _cancellationTokenSource.Token);
+            await _executionWriter.WriteAsync(record, _cancellationTokenSource.Token);
+            return true;
         }
         catch (Exception ex)
         {
@@ -112,7 +114,8 @@ public class HighPerformanceDataService : IDisposable
             metric.HardwareTimestampNs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1_000_000L;
             metric.InsertedAt = DateTime.UtcNow;
             
-            return await _performanceWriter.WriteAsync(metric, _cancellationTokenSource.Token);
+            await _performanceWriter.WriteAsync(metric, _cancellationTokenSource.Token);
+            return true;
         }
         catch (Exception ex)
         {
