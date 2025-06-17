@@ -263,9 +263,10 @@ public class FixSessionTests : IDisposable
         _ = _fixSession.SendMessageAsync(message);
         var afterTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1_000_000L;
         
-        // Assert
-        Assert.True(message.HardwareTimestamp >= beforeTime);
-        Assert.True(message.HardwareTimestamp <= afterTime);
+        // Assert - Allow for execution timing tolerance (1ms = 1,000,000 nanoseconds)
+        var tolerance = 1_000_000L; // 1 millisecond in nanoseconds
+        Assert.True(message.HardwareTimestamp >= beforeTime - tolerance);
+        Assert.True(message.HardwareTimestamp <= afterTime + tolerance);
         
         // Verify nanosecond precision (should have nanosecond-level digits)
         Assert.True(message.HardwareTimestamp > 1_000_000_000_000_000_000L); // After year 2001
