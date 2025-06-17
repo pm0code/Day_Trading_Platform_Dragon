@@ -32,7 +32,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Add Redis Streams messaging
-builder.Services.AddRedisMessaging(builder.Configuration);
+builder.Services.AddRedisMessageBusForDevelopment();
 
 // Register StrategyEngine services
 builder.Services.AddSingleton<IStrategyExecutionService, StrategyExecutionService>();

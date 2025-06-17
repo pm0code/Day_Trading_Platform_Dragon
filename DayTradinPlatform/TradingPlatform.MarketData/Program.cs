@@ -38,7 +38,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Add Redis Streams messaging
-builder.Services.AddRedisMessaging(builder.Configuration);
+builder.Services.AddRedisMessageBusForDevelopment();
 
 // Add market data providers and services
 builder.Services.Configure<DataIngestionConfig>(builder.Configuration.GetSection("DataIngestion"));

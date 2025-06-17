@@ -40,7 +40,7 @@ builder.Services.AddScoped<IPaperTradingService, PaperTradingService>();
 builder.Services.AddScoped<IOrderExecutionEngine, OrderExecutionEngine>();
 builder.Services.AddScoped<IPortfolioManager, PortfolioManager>();
 builder.Services.AddScoped<IOrderBookSimulator, OrderBookSimulator>();
-builder.Services.AddScoped<IExecutionAnalytics, Services.ExecutionAnalytics>();
+builder.Services.AddScoped<IExecutionAnalytics, TradingPlatform.PaperTrading.Services.ExecutionAnalytics>();
 builder.Services.AddScoped<ISlippageCalculator, SlippageCalculator>();
 
 // Add background services
