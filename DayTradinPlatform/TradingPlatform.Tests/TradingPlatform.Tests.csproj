@@ -26,7 +26,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TradingPlatform.Core\TradingPlatform.Core.csproj" />
-    <ProjectReference Include="..\TradingPlatform.FixEngine\TradingPlatform.FixEngine.csproj" />
+    <!-- Temporarily disabled until all FixEngine logging interface conflicts are resolved -->
+    <!-- <ProjectReference Include="..\TradingPlatform.FixEngine\TradingPlatform.FixEngine.csproj" /> -->
   </ItemGroup>
 
 </Project>

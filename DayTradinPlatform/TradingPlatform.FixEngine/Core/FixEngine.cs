@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using Microsoft.Extensions.Logging;
 using TradingPlatform.FixEngine.Interfaces;
 using TradingPlatform.FixEngine.Models;
 using TradingPlatform.FixEngine.Trading;
@@ -51,8 +50,7 @@ public sealed class FixEngine : IFixEngine
         
         try
         {
-            _logger.LogInformation("Initializing FIX Engine with {VenueCount} venues", 
-                config.VenueConfigs.Count);
+            _logger.LogInfo($"Initializing FIX Engine with {config.VenueConfigs.Count} venues");
             
             // Initialize sessions for each venue
             foreach (var (venueName, venueConfig) in config.VenueConfigs)
@@ -61,12 +59,12 @@ public sealed class FixEngine : IFixEngine
             }
             
             _isInitialized = true;
-            _logger.LogInformation("FIX Engine initialization completed successfully");
+            _logger.LogInfo("FIX Engine initialization completed successfully");
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to initialize FIX Engine");
+            _logger.LogError("Failed to initialize FIX Engine", ex);
             return false;
         }
     }
@@ -107,14 +105,13 @@ public sealed class FixEngine : IFixEngine
             stopwatch.Stop();
             _performanceMonitor.RecordOrderLatency(stopwatch.Elapsed.TotalMicroseconds);
             
-            _logger.LogInformation("Order submitted: {OrderId} -> {ClOrdId} via {Venue} in {Latency}μs", 
-                orderId, clOrdId, optimalVenue, stopwatch.Elapsed.TotalMicroseconds);
+            _logger.LogInfo($"Order submitted: {orderId} -> {clOrdId} via {optimalVenue} in {stopwatch.Elapsed.TotalMicroseconds}μs");
             
             return clOrdId;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to submit order: {OrderId}", orderId);
+            _logger.LogError($"Failed to submit order: {orderId}", ex);
             throw;
         }
     }
@@ -135,12 +132,12 @@ public sealed class FixEngine : IFixEngine
                 }
             }
             
-            _logger.LogWarning("Order not found for cancellation: {OrderId}", orderId);
+            _logger.LogWarning($"Order not found for cancellation: {orderId}");
             return false;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to cancel order: {OrderId}", orderId);
+            _logger.LogError($"Failed to cancel order: {orderId}", ex);
             return false;
         }
     }
@@ -170,12 +167,12 @@ public sealed class FixEngine : IFixEngine
                 }
             }
             
-            _logger.LogWarning("Order not found for modification: {OrderId}", orderId);
+            _logger.LogWarning($"Order not found for modification: {orderId}");
             return false;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to modify order: {OrderId}", orderId);
+            _logger.LogError($"Failed to modify order: {orderId}", ex);
             return false;
         }
     }
@@ -201,15 +198,13 @@ public sealed class FixEngine : IFixEngine
             var results = await Task.WhenAll(tasks);
             var successCount = results.Count(r => r);
             
-            _logger.LogInformation("Market data subscriptions: {Success}/{Total} for {Symbols}", 
-                successCount, results.Length, string.Join(",", symbols));
+            _logger.LogInfo($"Market data subscriptions: {successCount}/{results.Length} for {string.Join(",", symbols)}");
             
             return successCount > 0;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to subscribe to market data for symbols: {Symbols}", 
-                string.Join(",", symbols));
+            _logger.LogError($"Failed to subscribe to market data for symbols: {string.Join(",", symbols)}", ex);
             return false;
         }
     }
@@ -233,15 +228,13 @@ public sealed class FixEngine : IFixEngine
             var results = await Task.WhenAll(tasks);
             var successCount = results.Count(r => r);
             
-            _logger.LogInformation("Market data unsubscriptions: {Success}/{Total} for {Symbols}", 
-                successCount, results.Length, string.Join(",", symbols));
+            _logger.LogInfo($"Market data unsubscriptions: {successCount}/{results.Length} for {string.Join(",", symbols)}");
             
             return successCount > 0;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to unsubscribe from market data for symbols: {Symbols}", 
-                string.Join(",", symbols));
+            _logger.LogError($"Failed to unsubscribe from market data for symbols: {string.Join(",", symbols)}", ex);
             return false;
         }
     }
@@ -278,8 +271,7 @@ public sealed class FixEngine : IFixEngine
     {
         try
         {
-            _logger.LogInformation("Initializing venue: {Venue} at {Host}:{Port}", 
-                venueName, config.Host, config.Port);
+            _logger.LogInfo($"Initializing venue: {venueName} at {config.Host}:{config.Port}");
             
             // Create FIX session
             var session = new FixSession(_config!.SenderCompId, config.TargetCompId, _logger);
@@ -305,10 +297,10 @@ public sealed class FixEngine : IFixEngine
             _orderManagers[venueName] = orderManager;
             
             // Connect to venue
-            var connected = await session.ConnectAsync(config.Host, config.Port);
+            var connected = await session.ConnectAsync(config.Host, config.Port, TimeSpan.FromSeconds(30));
             if (connected)
             {
-                _logger.LogInformation("Successfully connected to venue: {Venue}", venueName);
+                _logger.LogInfo($"Successfully connected to venue: {venueName}");
                 VenueStatusChanged?.Invoke(this, new VenueStatusUpdate
                 {
                     Venue = venueName,
@@ -319,12 +311,12 @@ public sealed class FixEngine : IFixEngine
             }
             else
             {
-                _logger.LogError("Failed to connect to venue: {Venue}", venueName);
+                _logger.LogError($"Failed to connect to venue: {venueName}");
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to initialize venue: {Venue}", venueName);
+            _logger.LogError($"Failed to initialize venue: {venueName}", ex);
             throw;
         }
     }
@@ -372,23 +364,22 @@ public sealed class FixEngine : IFixEngine
     
     private void OnOrderStatusChanged(object? sender, Core.Order order)
     {
-        _logger.LogDebug("Order status changed: {ClOrdId} -> {Status}", order.ClOrdId, order.Status);
+        _logger.LogDebug($"Order status changed: {order.ClOrdId} -> {order.Status}");
     }
     
     private void OnOrderRejected(object? sender, Core.OrderReject reject)
     {
-        _logger.LogWarning("Order rejected: {ClOrdId} - {Reason}: {Text}", 
-            reject.ClOrdId, reject.RejectReason, reject.RejectText);
+        _logger.LogWarning($"Order rejected: {reject.ClOrdId} - {reject.RejectReason}: {reject.RejectText}");
     }
     
     private void OnSubscriptionStatusChanged(object? sender, string status)
     {
-        _logger.LogDebug("Subscription status changed: {Status}", status);
+        _logger.LogDebug($"Subscription status changed: {status}");
     }
     
     private void OnVenueStatusChanged(string venue, string status)
     {
-        _logger.LogInformation("Venue {Venue} status changed: {Status}", venue, status);
+        _logger.LogInfo($"Venue {venue} status changed: {status}");
         
         var isConnected = status.Contains("connected", StringComparison.OrdinalIgnoreCase);
         VenueStatusChanged?.Invoke(this, new VenueStatusUpdate
@@ -408,14 +399,14 @@ public sealed class FixEngine : IFixEngine
             {
                 if (!session.IsConnected)
                 {
-                    _logger.LogWarning("Venue {Venue} is disconnected, attempting reconnection", venue);
+                    _logger.LogWarning($"Venue {venue} is disconnected, attempting reconnection");
                     // Could add auto-reconnection logic here
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during health check");
+            _logger.LogError("Error during health check", ex);
         }
     }
     
