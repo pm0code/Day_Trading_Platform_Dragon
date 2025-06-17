@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 using TradingPlatform.FixEngine.Interfaces;
 using TradingPlatform.FixEngine.Models;
 using TradingPlatform.FixEngine.Trading;

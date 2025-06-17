@@ -265,7 +265,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
         // ========== PRIVATE HELPER METHODS ==========
 
-        private MarketData MapToMarketData(AlphaVantageQuote quote)
+        private MarketData MapToMarketData(TradingPlatform.Core.Models.AlphaVantageQuote quote)
         {
             try
             {
