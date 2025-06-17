@@ -1,0 +1,780 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>TradingPlatform.Common</name>
+    </assembly>
+    <members>
+        <member name="T:TradingPlatform.Common.Constants.TradingConstants">
+            <summary>
+            Trading platform constants including error codes, configuration keys, and business rules.
+            Centralizes all constant values to ensure consistency across the platform.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Common.Constants.TradingConstants.ErrorCodes">
+            <summary>
+            Standardized error codes for trading operations.
+            Used for consistent error handling and monitoring across all services.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Common.Constants.TradingConstants.ConfigurationKeys">
+            <summary>
+            Configuration keys used throughout the trading platform.
+            Ensures consistent configuration access across all services.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Common.Constants.TradingConstants.BusinessRules">
+            <summary>
+            Business rules and limits for trading operations.
+            These values should be configurable but have sensible defaults.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Common.Constants.TradingConstants.PerformanceThresholds">
+            <summary>
+            Performance thresholds for monitoring and alerting.
+            Used for SLA monitoring and performance optimization.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Common.Constants.TradingConstants.CacheKeys">
+            <summary>
+            Cache key templates for consistent caching across the platform.
+            Includes TTL recommendations for different data types.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Common.Constants.TradingConstants.MessageTypes">
+            <summary>
+            Message types for inter-service communication.
+            Used for consistent messaging across the platform.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Common.Constants.TradingConstants.MetricNames">
+            <summary>
+            Standardized metric names for monitoring and observability.
+            Used for consistent metrics collection across all services.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Common.Constants.TradingConstants.TradingSessions">
+            <summary>
+            Trading session definitions and market hours.
+            Used for session-aware trading logic and market data handling.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Common.Constants.TradingConstants.Defaults">
+            <summary>
+            Default values for various trading operations.
+            Provides sensible defaults when explicit values are not provided.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Common.Extensions.DateTimeExtensions">
+            <summary>
+            Extension methods for DateTime and DateTimeOffset to support trading-specific operations.
+            Includes market hours, trading session management, and time zone handling.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.IsMarketHours(System.DateTime,System.TimeZoneInfo)">
+            <summary>
+            Checks if the given time falls within regular US market hours (9:30 AM - 4:00 PM ET).
+            </summary>
+            <param name="dateTime">DateTime to check</param>
+            <param name="timeZone">Target timezone (defaults to Eastern Time)</param>
+            <returns>True if within regular market hours</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.IsPreMarketHours(System.DateTime,System.TimeZoneInfo)">
+            <summary>
+            Checks if the given time falls within pre-market hours (4:00 AM - 9:30 AM ET).
+            </summary>
+            <param name="dateTime">DateTime to check</param>
+            <param name="timeZone">Target timezone (defaults to Eastern Time)</param>
+            <returns>True if within pre-market hours</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.IsAfterHours(System.DateTime,System.TimeZoneInfo)">
+            <summary>
+            Checks if the given time falls within after-hours trading (4:00 PM - 8:00 PM ET).
+            </summary>
+            <param name="dateTime">DateTime to check</param>
+            <param name="timeZone">Target timezone (defaults to Eastern Time)</param>
+            <returns>True if within after-hours trading</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.IsTradingDay(System.DateTime)">
+            <summary>
+            Checks if the given date is a trading day (weekday, excluding known holidays).
+            </summary>
+            <param name="date">Date to check</param>
+            <returns>True if it's a trading day</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.GetNextTradingDay(System.DateTime)">
+            <summary>
+            Gets the next trading day from the given date.
+            </summary>
+            <param name="date">Starting date</param>
+            <returns>Next trading day</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.GetPreviousTradingDay(System.DateTime)">
+            <summary>
+            Gets the previous trading day from the given date.
+            </summary>
+            <param name="date">Starting date</param>
+            <returns>Previous trading day</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.GetMarketOpen(System.DateTime)">
+            <summary>
+            Gets the market open time for the given date in Eastern Time.
+            </summary>
+            <param name="date">Date to get market open for</param>
+            <returns>Market open DateTime in Eastern Time</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.GetMarketClose(System.DateTime)">
+            <summary>
+            Gets the market close time for the given date in Eastern Time.
+            </summary>
+            <param name="date">Date to get market close for</param>
+            <returns>Market close DateTime in Eastern Time</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.TimeUntilMarketOpen(System.DateTime)">
+            <summary>
+            Gets the time remaining until market open.
+            </summary>
+            <param name="currentTime">Current time</param>
+            <returns>TimeSpan until market open, or TimeSpan.Zero if market is open</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.TimeUntilMarketClose(System.DateTime)">
+            <summary>
+            Gets the time remaining until market close.
+            </summary>
+            <param name="currentTime">Current time</param>
+            <returns>TimeSpan until market close, or TimeSpan.Zero if market is closed</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.ToEasternTime(System.DateTime,System.TimeZoneInfo)">
+            <summary>
+            Converts DateTime to Eastern Time Zone.
+            </summary>
+            <param name="dateTime">DateTime to convert</param>
+            <param name="sourceTimeZone">Source timezone (defaults to local)</param>
+            <returns>DateTime in Eastern Time</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.ToUtc(System.DateTime,System.TimeZoneInfo)">
+            <summary>
+            Converts DateTime to UTC.
+            </summary>
+            <param name="dateTime">DateTime to convert</param>
+            <param name="sourceTimeZone">Source timezone (defaults to local)</param>
+            <returns>DateTime in UTC</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.ToUnixTimestamp(System.DateTime)">
+            <summary>
+            Gets Unix timestamp (seconds since epoch) for the DateTime.
+            </summary>
+            <param name="dateTime">DateTime to convert</param>
+            <returns>Unix timestamp</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.ToUnixTimestampMs(System.DateTime)">
+            <summary>
+            Gets Unix timestamp in milliseconds for the DateTime.
+            </summary>
+            <param name="dateTime">DateTime to convert</param>
+            <returns>Unix timestamp in milliseconds</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.TradingDaysBetween(System.DateTime,System.DateTime)">
+            <summary>
+            Calculates the number of trading days between two dates.
+            </summary>
+            <param name="startDate">Start date</param>
+            <param name="endDate">End date</param>
+            <returns>Number of trading days</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.TradingDaysInRange(System.DateTime,System.DateTime)">
+            <summary>
+            Gets all trading days between two dates.
+            </summary>
+            <param name="startDate">Start date</param>
+            <param name="endDate">End date</param>
+            <returns>Enumerable of trading days</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.IsNearMarketClose(System.DateTime,System.Int32)">
+            <summary>
+            Checks if the given time is within the last N minutes of the trading day.
+            Useful for end-of-day position management.
+            </summary>
+            <param name="dateTime">DateTime to check</param>
+            <param name="minutes">Number of minutes before close (default 30)</param>
+            <returns>True if within the specified minutes of market close</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.IsNearMarketOpen(System.DateTime,System.Int32)">
+            <summary>
+            Checks if the given time is within the first N minutes of the trading day.
+            Useful for market open strategies and volatility management.
+            </summary>
+            <param name="dateTime">DateTime to check</param>
+            <param name="minutes">Number of minutes after open (default 30)</param>
+            <returns>True if within the specified minutes of market open</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.ToTradingLogFormat(System.DateTime,System.Boolean)">
+            <summary>
+            Formats DateTime for trading logs with timezone information.
+            </summary>
+            <param name="dateTime">DateTime to format</param>
+            <param name="includeMilliseconds">Whether to include milliseconds</param>
+            <returns>Formatted string for trading logs</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.ToMarketDataFormat(System.DateTime)">
+            <summary>
+            Formats DateTime for market data timestamps.
+            </summary>
+            <param name="dateTime">DateTime to format</param>
+            <returns>Formatted string for market data</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.GetMarketStatusDescription(System.DateTime)">
+            <summary>
+            Gets a human-readable description of when the market opens/closes relative to the given time.
+            </summary>
+            <param name="dateTime">Current time</param>
+            <returns>Human-readable market status description</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.GetEasternTimeZone">
+            <summary>
+            Gets the Eastern Time Zone (handles both EST and EDT).
+            </summary>
+            <returns>Eastern Time Zone info</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.IsMarketHoliday(System.DateTime)">
+            <summary>
+            Checks if the given date is a US market holiday.
+            </summary>
+            <param name="date">Date to check</param>
+            <returns>True if it's a market holiday</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DateTimeExtensions.GetEasterDate(System.Int32)">
+            <summary>
+            Calculates Easter date for a given year.
+            </summary>
+            <param name="year">Year to calculate Easter for</param>
+            <returns>Easter date</returns>
+        </member>
+        <member name="T:TradingPlatform.Common.Extensions.DecimalExtensions">
+            <summary>
+            Extension methods for decimal type to support trading-specific operations.
+            All methods maintain financial precision using System.Decimal arithmetic.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.ToFinancialPrecision(System.Decimal,System.Int32)">
+            <summary>
+            Rounds decimal to financial precision (default 2 decimal places).
+            Uses banker's rounding for consistent financial calculations.
+            </summary>
+            <param name="value">Value to round</param>
+            <param name="decimals">Number of decimal places (default 2)</param>
+            <returns>Rounded value with financial precision</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.PercentageOf(System.Decimal,System.Decimal,System.Int32)">
+            <summary>
+            Calculates percentage of total with financial precision.
+            </summary>
+            <param name="value">Part value</param>
+            <param name="total">Total value</param>
+            <param name="decimals">Precision for percentage (default 4)</param>
+            <returns>Percentage (e.g., 25.5 for 25.5%)</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.PercentageChangeTo(System.Decimal,System.Decimal,System.Int32)">
+            <summary>
+            Calculates percentage change from this value to target value.
+            </summary>
+            <param name="oldValue">Original value</param>
+            <param name="newValue">New value</param>
+            <param name="decimals">Precision for percentage (default 4)</param>
+            <returns>Percentage change (positive for increase, negative for decrease)</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.LongPnL(System.Decimal,System.Decimal,System.Decimal,System.Decimal)">
+            <summary>
+            Calculates PnL for a long position from this entry price.
+            </summary>
+            <param name="entryPrice">Entry price</param>
+            <param name="exitPrice">Exit price</param>
+            <param name="quantity">Position size</param>
+            <param name="commission">Commission per share (default 0)</param>
+            <returns>Net PnL after commissions</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.ShortPnL(System.Decimal,System.Decimal,System.Decimal,System.Decimal)">
+            <summary>
+            Calculates PnL for a short position from this entry price.
+            </summary>
+            <param name="entryPrice">Entry price</param>
+            <param name="exitPrice">Exit price</param>
+            <param name="quantity">Position size</param>
+            <param name="commission">Commission per share (default 0)</param>
+            <returns>Net PnL after commissions</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.LongReturn(System.Decimal,System.Decimal)">
+            <summary>
+            Calculates return percentage for a long position from this entry price.
+            </summary>
+            <param name="entryPrice">Entry price</param>
+            <param name="exitPrice">Exit price</param>
+            <returns>Return percentage</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.ShortReturn(System.Decimal,System.Decimal)">
+            <summary>
+            Calculates return percentage for a short position from this entry price.
+            </summary>
+            <param name="entryPrice">Entry price</param>
+            <param name="exitPrice">Exit price</param>
+            <returns>Return percentage</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.Clamp(System.Decimal,System.Decimal,System.Decimal)">
+            <summary>
+            Clamps value between minimum and maximum bounds.
+            Useful for position sizing and risk limits.
+            </summary>
+            <param name="value">Value to clamp</param>
+            <param name="min">Minimum allowed value</param>
+            <param name="max">Maximum allowed value</param>
+            <returns>Clamped value within bounds</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.CalculatePositionSize(System.Decimal,System.Decimal,System.Decimal,System.Decimal)">
+            <summary>
+            Calculates position size based on risk percentage of account.
+            </summary>
+            <param name="accountValue">Total account value</param>
+            <param name="riskPercent">Risk percentage as decimal (e.g., 0.02 for 2%)</param>
+            <param name="entryPrice">Entry price per share</param>
+            <param name="stopPrice">Stop loss price per share</param>
+            <returns>Number of shares to buy based on risk management</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.IsNearlyEqual(System.Decimal,System.Decimal,System.Decimal)">
+            <summary>
+            Checks if value is within specified tolerance of target value.
+            Useful for price level comparisons with floating-point precision issues.
+            </summary>
+            <param name="value">Value to check</param>
+            <param name="target">Target value</param>
+            <param name="tolerance">Tolerance for comparison (default 0.01)</param>
+            <returns>True if within tolerance</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.IsValidPrice(System.Decimal,System.Decimal)">
+            <summary>
+            Checks if value represents a valid price (positive and reasonable).
+            </summary>
+            <param name="value">Price value to validate</param>
+            <param name="maxPrice">Maximum reasonable price (default 100,000)</param>
+            <returns>True if valid price</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.IsValidQuantity(System.Decimal,System.Boolean)">
+            <summary>
+            Checks if value represents a valid quantity (positive integer or fractional).
+            </summary>
+            <param name="value">Quantity value to validate</param>
+            <param name="allowFractional">Whether fractional quantities are allowed</param>
+            <returns>True if valid quantity</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.ToCurrency(System.Decimal,System.String,System.Boolean)">
+            <summary>
+            Formats decimal as currency string with appropriate precision.
+            </summary>
+            <param name="value">Value to format</param>
+            <param name="currencySymbol">Currency symbol (default $)</param>
+            <param name="includeSign">Whether to include + for positive values</param>
+            <returns>Formatted currency string</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.ToPercentage(System.Decimal,System.Int32,System.Boolean)">
+            <summary>
+            Formats decimal as percentage string.
+            </summary>
+            <param name="value">Percentage value (e.g., 5.25 for 5.25%)</param>
+            <param name="decimals">Number of decimal places (default 2)</param>
+            <param name="includeSign">Whether to include + for positive values</param>
+            <returns>Formatted percentage string</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.ToThousands(System.Decimal,System.Int32)">
+            <summary>
+            Formats decimal with thousands separators for display.
+            </summary>
+            <param name="value">Value to format</param>
+            <param name="decimals">Number of decimal places (default 2)</param>
+            <returns>Formatted string with thousands separators</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.Sqrt(System.Decimal)">
+            <summary>
+            Calculates square root of decimal value.
+            </summary>
+            <param name="value">Value to calculate square root for</param>
+            <returns>Square root with decimal precision</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.Power(System.Decimal,System.Int32)">
+            <summary>
+            Raises decimal to specified power using repeated multiplication.
+            Limited to reasonable integer powers for performance.
+            </summary>
+            <param name="value">Base value</param>
+            <param name="power">Integer power (limited to -10 to 10)</param>
+            <returns>Value raised to power</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.Abs(System.Decimal)">
+            <summary>
+            Calculates absolute value.
+            </summary>
+            <param name="value">Value to get absolute value for</param>
+            <returns>Absolute value</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.Range(System.Collections.Generic.IEnumerable{System.Decimal})">
+            <summary>
+            Calculates the range (difference between max and min) of values.
+            </summary>
+            <param name="values">Collection of decimal values</param>
+            <returns>Range (max - min)</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Extensions.DecimalExtensions.Percentile(System.Collections.Generic.IEnumerable{System.Decimal},System.Decimal)">
+            <summary>
+            Calculates percentile value from sorted collection.
+            </summary>
+            <param name="values">Collection of decimal values</param>
+            <param name="percentile">Percentile to calculate (0-100)</param>
+            <returns>Percentile value</returns>
+        </member>
+        <member name="T:TradingPlatform.Common.Mathematics.TradingMath">
+            <summary>
+            Enhanced financial mathematics library specifically designed for day trading operations.
+            All calculations use System.Decimal to ensure financial precision compliance.
+            Extends the basic FinancialMath from Core with trading-specific calculations.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.Sqrt(System.Decimal)">
+            <summary>
+            Calculates square root using Newton's method with decimal precision.
+            Replaces System.Math.Sqrt which returns double.
+            </summary>
+            <param name="value">Value to calculate square root for</param>
+            <returns>Square root with decimal precision</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.Ln(System.Decimal)">
+            <summary>
+            Calculates natural logarithm using decimal precision.
+            Uses Taylor series expansion for decimal calculations.
+            </summary>
+            <param name="value">Value to calculate natural log for</param>
+            <returns>Natural logarithm with decimal precision</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.CalculatePnL(System.Decimal,System.Decimal,System.Decimal,System.Boolean,System.Decimal)">
+            <summary>
+            Calculates Profit and Loss (PnL) for a trading position.
+            Handles both long and short positions with commission costs.
+            </summary>
+            <param name="entryPrice">Price at position entry</param>
+            <param name="exitPrice">Price at position exit</param>
+            <param name="quantity">Number of shares/contracts</param>
+            <param name="isLong">True for long position, false for short</param>
+            <param name="commissionPerShare">Commission cost per share</param>
+            <returns>Net PnL after commissions</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.CalculateReturn(System.Decimal,System.Decimal,System.Boolean)">
+            <summary>
+            Calculates percentage return on a trading position.
+            Essential for comparing performance across different position sizes.
+            </summary>
+            <param name="entryPrice">Price at position entry</param>
+            <param name="exitPrice">Price at position exit</param>
+            <param name="isLong">True for long position, false for short</param>
+            <returns>Percentage return (e.g., 5.25 for 5.25%)</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.CalculateMaxDrawdown(System.Collections.Generic.IEnumerable{System.Decimal},System.Boolean)">
+            <summary>
+            Calculates maximum drawdown from a series of PnL values.
+            Critical metric for risk assessment and strategy evaluation.
+            </summary>
+            <param name="pnlValues">Sequential PnL values (cumulative or individual)</param>
+            <param name="isCumulative">Whether PnL values are cumulative or individual</param>
+            <returns>Maximum drawdown as a positive percentage</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.CalculateSharpeRatio(System.Collections.Generic.IEnumerable{System.Decimal},System.Decimal,System.Int32)">
+            <summary>
+            Calculates Sharpe ratio for a trading strategy.
+            Measures risk-adjusted return performance.
+            </summary>
+            <param name="returns">Series of returns (as percentages)</param>
+            <param name="riskFreeRate">Annual risk-free rate (as percentage)</param>
+            <param name="tradingDaysPerYear">Number of trading days per year</param>
+            <returns>Annualized Sharpe ratio</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.CalculateVaR(System.Collections.Generic.IEnumerable{System.Decimal},System.Decimal,System.Decimal)">
+            <summary>
+            Calculates Value at Risk (VaR) for a given confidence level.
+            Estimates potential loss over a specific time period.
+            </summary>
+            <param name="returns">Historical returns (as percentages)</param>
+            <param name="confidenceLevel">Confidence level (e.g., 0.95 for 95%)</param>
+            <param name="portfolioValue">Current portfolio value</param>
+            <returns>VaR amount (positive value representing potential loss)</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.CalculateVWAP(System.Collections.Generic.IEnumerable{System.ValueTuple{System.Decimal,System.Decimal}})">
+            <summary>
+            Calculates Volume Weighted Average Price (VWAP) for intraday trading.
+            Essential for execution quality measurement and algorithmic trading.
+            </summary>
+            <param name="priceVolumeData">Collection of (price, volume) tuples</param>
+            <returns>VWAP with financial precision</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.CalculateTWAP(System.Collections.Generic.IEnumerable{System.ValueTuple{System.Decimal,System.DateTime}})">
+            <summary>
+            Calculates Time Weighted Average Price (TWAP) for execution benchmarking.
+            Used to measure execution performance against time-based benchmarks.
+            </summary>
+            <param name="pricesWithTimestamps">Collection of (price, timestamp) tuples</param>
+            <returns>TWAP with financial precision</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.CalculateRSI(System.Collections.Generic.IEnumerable{System.Decimal},System.Int32)">
+            <summary>
+            Calculates Relative Strength Index (RSI) for momentum analysis.
+            Key technical indicator for identifying overbought/oversold conditions.
+            </summary>
+            <param name="prices">Price series for RSI calculation</param>
+            <param name="period">RSI period (typically 14)</param>
+            <returns>RSI value between 0 and 100</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.CalculateBollingerBands(System.Collections.Generic.IEnumerable{System.Decimal},System.Int32,System.Decimal)">
+            <summary>
+            Calculates Bollinger Bands for volatility analysis.
+            Returns upper band, middle band (SMA), and lower band.
+            </summary>
+            <param name="prices">Price series</param>
+            <param name="period">Period for moving average</param>
+            <param name="standardDeviations">Number of standard deviations for bands</param>
+            <returns>Tuple of (upperBand, middleBand, lowerBand)</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.CalculateKellyPercent(System.Decimal,System.Decimal,System.Decimal)">
+            <summary>
+            Calculates optimal position size using Kelly Criterion.
+            Helps determine the optimal fraction of capital to risk per trade.
+            </summary>
+            <param name="winRate">Historical win rate (as decimal, e.g., 0.6 for 60%)</param>
+            <param name="avgWin">Average winning trade amount</param>
+            <param name="avgLoss">Average losing trade amount (positive value)</param>
+            <returns>Kelly percentage (as decimal, e.g., 0.25 for 25%)</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.CalculateCorrelation(System.Collections.Generic.IEnumerable{System.Decimal},System.Collections.Generic.IEnumerable{System.Decimal})">
+            <summary>
+            Calculates correlation coefficient between two price series.
+            Used for portfolio diversification and pair trading strategies.
+            </summary>
+            <param name="series1">First price series</param>
+            <param name="series2">Second price series</param>
+            <returns>Correlation coefficient between -1 and 1</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.StandardDeviation(System.Collections.Generic.IEnumerable{System.Decimal},System.Boolean)">
+            <summary>
+            Calculates standard deviation with decimal precision.
+            Essential for volatility calculations and risk metrics.
+            </summary>
+            <param name="values">Series of values</param>
+            <param name="usePopulation">True for population std dev, false for sample</param>
+            <returns>Standard deviation with decimal precision</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.Variance(System.Collections.Generic.IEnumerable{System.Decimal},System.Boolean)">
+            <summary>
+            Calculates variance with decimal precision.
+            </summary>
+            <param name="values">Series of values</param>
+            <param name="usePopulation">True for population variance, false for sample</param>
+            <returns>Variance with decimal precision</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.MovingAverage(System.Collections.Generic.IEnumerable{System.Decimal},System.Int32)">
+            <summary>
+            Calculates moving average with specified period.
+            </summary>
+            <param name="values">Series of values</param>
+            <param name="period">Moving average period</param>
+            <returns>Series of moving averages</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.RoundFinancial(System.Decimal,System.Int32)">
+            <summary>
+            Rounds decimal value to financial precision (default 2 decimal places).
+            Uses banker's rounding for consistent behavior.
+            </summary>
+            <param name="value">Value to round</param>
+            <param name="decimals">Number of decimal places</param>
+            <returns>Rounded value with financial precision</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.CalculatePercentage(System.Decimal,System.Decimal,System.Int32)">
+            <summary>
+            Calculates percentage with financial precision.
+            </summary>
+            <param name="value">Numerator value</param>
+            <param name="total">Denominator value</param>
+            <param name="decimals">Precision for percentage</param>
+            <returns>Percentage value (e.g., 5.25 for 5.25%)</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.CalculatePercentageChange(System.Decimal,System.Decimal,System.Int32)">
+            <summary>
+            Calculates percentage change between two values.
+            </summary>
+            <param name="oldValue">Original value</param>
+            <param name="newValue">New value</param>
+            <param name="decimals">Precision for percentage</param>
+            <returns>Percentage change (e.g., 5.25 for 5.25% increase)</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Mathematics.TradingMath.Clamp(System.Decimal,System.Decimal,System.Decimal)">
+            <summary>
+            Clamps a value between minimum and maximum bounds.
+            Useful for risk management and position sizing limits.
+            </summary>
+            <param name="value">Value to clamp</param>
+            <param name="min">Minimum allowed value</param>
+            <param name="max">Maximum allowed value</param>
+            <returns>Clamped value within bounds</returns>
+        </member>
+        <member name="T:TradingPlatform.Common.Validation.TradingValidationExtensions">
+            <summary>
+            FluentValidation extensions for trading-specific validation rules.
+            Provides reusable validation logic for financial data, orders, and trading operations.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.ValidTradingPrice``1(FluentValidation.IRuleBuilder{``0,System.Decimal},System.Decimal,System.Decimal)">
+            <summary>
+            Validates that a price is positive and within reasonable bounds.
+            </summary>
+            <typeparam name="T">Type being validated</typeparam>
+            <param name="ruleBuilder">Rule builder</param>
+            <param name="minPrice">Minimum allowed price (default 0.01)</param>
+            <param name="maxPrice">Maximum allowed price (default 100,000)</param>
+            <returns>Rule builder for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.ValidTradingPriceOrNull``1(FluentValidation.IRuleBuilder{``0,System.Nullable{System.Decimal}},System.Decimal,System.Decimal)">
+            <summary>
+            Validates that a nullable price is either null or a valid trading price.
+            </summary>
+            <typeparam name="T">Type being validated</typeparam>
+            <param name="ruleBuilder">Rule builder</param>
+            <param name="minPrice">Minimum allowed price (default 0.01)</param>
+            <param name="maxPrice">Maximum allowed price (default 100,000)</param>
+            <returns>Rule builder for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.ValidStopPrice``1(FluentValidation.IRuleBuilder{``0,System.Decimal},System.Func{``0,System.Decimal},System.Boolean,System.Decimal)">
+            <summary>
+            Validates that a stop price is reasonable relative to entry price.
+            </summary>
+            <typeparam name="T">Type being validated</typeparam>
+            <param name="ruleBuilder">Rule builder</param>
+            <param name="entryPriceSelector">Function to get entry price</param>
+            <param name="isLongPosition">Whether this is a long position</param>
+            <param name="maxStopPercent">Maximum stop distance as percentage (default 10%)</param>
+            <returns>Rule builder for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.ValidTradingQuantity``1(FluentValidation.IRuleBuilder{``0,System.Decimal},System.Boolean,System.Decimal)">
+            <summary>
+            Validates that a quantity is positive and within reasonable bounds.
+            </summary>
+            <typeparam name="T">Type being validated</typeparam>
+            <param name="ruleBuilder">Rule builder</param>
+            <param name="allowFractional">Whether fractional quantities are allowed</param>
+            <param name="maxQuantity">Maximum allowed quantity (default 1,000,000)</param>
+            <returns>Rule builder for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.ValidPositionSize``1(FluentValidation.IRuleBuilder{``0,System.Decimal},System.Func{``0,System.Decimal},System.Func{``0,System.Decimal},System.Decimal)">
+            <summary>
+            Validates that a position size is appropriate for the account size.
+            </summary>
+            <typeparam name="T">Type being validated</typeparam>
+            <param name="ruleBuilder">Rule builder</param>
+            <param name="accountValueSelector">Function to get account value</param>
+            <param name="priceSelector">Function to get price per share</param>
+            <param name="maxPositionPercent">Maximum position size as percentage of account (default 25%)</param>
+            <returns>Rule builder for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.ValidTradingSymbol``1(FluentValidation.IRuleBuilder{``0,System.String},System.Int32)">
+            <summary>
+            Validates that a trading symbol follows standard conventions.
+            </summary>
+            <typeparam name="T">Type being validated</typeparam>
+            <param name="ruleBuilder">Rule builder</param>
+            <param name="maxLength">Maximum symbol length (default 10)</param>
+            <returns>Rule builder for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.ValidTradingSymbolList``1(FluentValidation.IRuleBuilder{``0,System.Collections.Generic.IEnumerable{System.String}},System.Int32)">
+            <summary>
+            Validates that a symbol list contains valid trading symbols.
+            </summary>
+            <typeparam name="T">Type being validated</typeparam>
+            <param name="ruleBuilder">Rule builder</param>
+            <param name="maxSymbols">Maximum number of symbols allowed (default 100)</param>
+            <returns>Rule builder for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.ValidOrderId``1(FluentValidation.IRuleBuilder{``0,System.String})">
+            <summary>
+            Validates that an order ID follows standard conventions.
+            </summary>
+            <typeparam name="T">Type being validated</typeparam>
+            <param name="ruleBuilder">Rule builder</param>
+            <returns>Rule builder for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.ValidAccountId``1(FluentValidation.IRuleBuilder{``0,System.String})">
+            <summary>
+            Validates that an account ID follows standard conventions.
+            </summary>
+            <typeparam name="T">Type being validated</typeparam>
+            <param name="ruleBuilder">Rule builder</param>
+            <returns>Rule builder for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.ValidTradingTimestamp``1(FluentValidation.IRuleBuilder{``0,System.DateTime},System.Nullable{System.TimeSpan},System.Boolean)">
+            <summary>
+            Validates that a timestamp is recent and not in the future.
+            </summary>
+            <typeparam name="T">Type being validated</typeparam>
+            <param name="ruleBuilder">Rule builder</param>
+            <param name="maxAge">Maximum allowed age (default 1 hour)</param>
+            <param name="allowFuture">Whether future timestamps are allowed (default false)</param>
+            <returns>Rule builder for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.ValidTradingDateRange``1(FluentValidation.IRuleBuilder{``0,System.DateTime},System.Func{``0,System.DateTime},System.Int32)">
+            <summary>
+            Validates that a date range is valid for trading operations.
+            </summary>
+            <typeparam name="T">Type being validated</typeparam>
+            <param name="ruleBuilder">Rule builder</param>
+            <param name="endDateSelector">Function to get end date</param>
+            <param name="maxRangeDays">Maximum allowed range in days (default 365)</param>
+            <returns>Rule builder for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.ValidRiskPercentage``1(FluentValidation.IRuleBuilder{``0,System.Decimal},System.Decimal)">
+            <summary>
+            Validates that a risk percentage is within acceptable bounds.
+            </summary>
+            <typeparam name="T">Type being validated</typeparam>
+            <param name="ruleBuilder">Rule builder</param>
+            <param name="maxRiskPercent">Maximum risk percentage (default 5%)</param>
+            <returns>Rule builder for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.ValidLeverage``1(FluentValidation.IRuleBuilder{``0,System.Decimal},System.Decimal)">
+            <summary>
+            Validates that leverage is within regulatory and risk limits.
+            </summary>
+            <typeparam name="T">Type being validated</typeparam>
+            <param name="ruleBuilder">Rule builder</param>
+            <param name="maxLeverage">Maximum allowed leverage (default 4:1)</param>
+            <returns>Rule builder for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.ValidMarketDataPrices``1(FluentValidation.IRuleBuilder{``0,System.Decimal},System.Func{``0,System.Decimal},System.Func{``0,System.Decimal},System.Func{``0,System.Decimal})">
+            <summary>
+            Validates that market data prices are consistent (high >= low, etc.).
+            </summary>
+            <typeparam name="T">Type being validated</typeparam>
+            <param name="ruleBuilder">Rule builder</param>
+            <param name="highSelector">Function to get high price</param>
+            <param name="lowSelector">Function to get low price</param>
+            <param name="openSelector">Function to get open price</param>
+            <returns>Rule builder for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.ValidTradingVolume``1(FluentValidation.IRuleBuilder{``0,System.Int64},System.Int64,System.Int64)">
+            <summary>
+            Validates that volume is reasonable for trading.
+            </summary>
+            <typeparam name="T">Type being validated</typeparam>
+            <param name="ruleBuilder">Rule builder</param>
+            <param name="minVolume">Minimum required volume (default 1000)</param>
+            <param name="maxVolume">Maximum reasonable volume (default 1 billion)</param>
+            <returns>Rule builder for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Common.Validation.TradingValidationExtensions.IsReservedSymbol(System.String)">
+            <summary>
+            Checks if a symbol is reserved and cannot be used for trading.
+            </summary>
+            <param name="symbol">Symbol to check</param>
+            <returns>True if symbol is reserved</returns>
+        </member>
+    </members>
+</doc>

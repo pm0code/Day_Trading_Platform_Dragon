@@ -1,0 +1,1831 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>TradingPlatform.Foundation</name>
+    </assembly>
+    <members>
+        <member name="T:TradingPlatform.Foundation.Enums.TradingStatus">
+            <summary>
+            Overall system health status for trading platform components.
+            Used for health checks, monitoring, and automated decision making.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.TradingStatus.Operational">
+            <summary>
+            System is fully operational and ready for trading.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.TradingStatus.Starting">
+            <summary>
+            System is starting up and not yet ready for trading.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.TradingStatus.Degraded">
+            <summary>
+            System is operational but with reduced functionality.
+            Some features may be disabled or operating with degraded performance.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.TradingStatus.Critical">
+            <summary>
+            System is experiencing critical issues affecting trading operations.
+            Trading activities should be halted until issues are resolved.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.TradingStatus.ShuttingDown">
+            <summary>
+            System is shutting down gracefully.
+            New operations should be rejected, existing operations completed.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.TradingStatus.Offline">
+            <summary>
+            System is offline and not available for trading.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.TradingStatus.Maintenance">
+            <summary>
+            System is in maintenance mode.
+            Trading is temporarily suspended for updates or repairs.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Enums.ServiceHealth">
+            <summary>
+            Health status for individual service components.
+            Provides granular health information for monitoring and diagnostics.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ServiceHealth.Healthy">
+            <summary>
+            Service is healthy and operating within normal parameters.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ServiceHealth.Warning">
+            <summary>
+            Service is operational but showing warning signs.
+            Performance may be impacted but functionality is preserved.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ServiceHealth.Degraded">
+            <summary>
+            Service is experiencing issues but still partially functional.
+            Some features may be unavailable or operating slowly.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ServiceHealth.Unhealthy">
+            <summary>
+            Service is unhealthy and may not be functioning properly.
+            Critical operations may fail or produce unreliable results.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ServiceHealth.Critical">
+            <summary>
+            Service is completely unavailable or non-responsive.
+            All operations will fail until service is restored.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ServiceHealth.Unknown">
+            <summary>
+            Service health status is unknown or cannot be determined.
+            May indicate monitoring issues or service startup/shutdown.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Enums.AlertSeverity">
+            <summary>
+            Alert severity levels for trading system notifications.
+            Used for prioritizing alerts and determining response urgency.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.AlertSeverity.Info">
+            <summary>
+            Informational alert providing status updates or notifications.
+            No immediate action required.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.AlertSeverity.Warning">
+            <summary>
+            Warning about potential issues that should be monitored.
+            May require preventive action to avoid problems.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.AlertSeverity.Error">
+            <summary>
+            Error condition that affects system functionality.
+            Requires attention but trading can continue with limitations.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.AlertSeverity.Critical">
+            <summary>
+            Critical issue that severely impacts trading operations.
+            Immediate action required to prevent trading disruption.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.AlertSeverity.Emergency">
+            <summary>
+            Emergency situation requiring immediate intervention.
+            Trading should be halted until issue is resolved.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Enums.MarketSession">
+            <summary>
+            Market session states for trading hours management.
+            Critical for determining when trading operations are allowed.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.MarketSession.Closed">
+            <summary>
+            Markets are closed and trading is not allowed.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.MarketSession.PreMarket">
+            <summary>
+            Pre-market trading session with limited liquidity.
+            Extended hours trading for qualified participants.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.MarketSession.Open">
+            <summary>
+            Regular market hours with full trading functionality.
+            Primary trading session with maximum liquidity.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.MarketSession.AfterHours">
+            <summary>
+            After-hours trading session with limited liquidity.
+            Extended hours trading for qualified participants.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.MarketSession.Halted">
+            <summary>
+            Market is temporarily halted due to volatility or news.
+            Trading is suspended until normal operations resume.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.MarketSession.Unknown">
+            <summary>
+            Market session state is unknown or cannot be determined.
+            May indicate connectivity issues or system problems.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Enums.DataQuality">
+            <summary>
+            Data quality levels for market data validation.
+            Used to indicate reliability and freshness of market data.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.DataQuality.Excellent">
+            <summary>
+            High-quality, real-time data suitable for all trading decisions.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.DataQuality.Good">
+            <summary>
+            Good quality data with minor delays or occasional gaps.
+            Suitable for most trading strategies with some limitations.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.DataQuality.Fair">
+            <summary>
+            Fair quality data with noticeable delays or data gaps.
+            May be suitable for less time-sensitive strategies.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.DataQuality.Poor">
+            <summary>
+            Poor quality data with significant delays or reliability issues.
+            Should be used with caution and may require verification.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.DataQuality.Unacceptable">
+            <summary>
+            Data quality is unacceptable for trading decisions.
+            Should not be used for any trading operations.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.DataQuality.Unknown">
+            <summary>
+            Data quality cannot be determined or validated.
+            Use with extreme caution and consider alternative sources.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Enums.ExecutionEnvironment">
+            <summary>
+            Execution environment types for configuration and behavior adaptation.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ExecutionEnvironment.Development">
+            <summary>
+            Development environment for coding and initial testing.
+            Debugging features enabled, external connections may be mocked.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ExecutionEnvironment.Testing">
+            <summary>
+            Testing environment for automated testing and validation.
+            May use test data and isolated systems.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ExecutionEnvironment.Staging">
+            <summary>
+            Staging environment that mirrors production configuration.
+            Used for final validation before production deployment.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ExecutionEnvironment.Production">
+            <summary>
+            Production environment for live trading operations.
+            Highest security and reliability requirements.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ExecutionEnvironment.DisasterRecovery">
+            <summary>
+            Disaster recovery environment for business continuity.
+            Standby systems ready to take over from production.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Enums.PerformanceTier">
+            <summary>
+            Performance tier classifications for latency-sensitive operations.
+            Used to apply appropriate performance optimizations and monitoring.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.PerformanceTier.Standard">
+            <summary>
+            Standard performance requirements for non-critical operations.
+            Response times measured in seconds.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.PerformanceTier.Enhanced">
+            <summary>
+            Enhanced performance for important but not time-critical operations.
+            Response times measured in hundreds of milliseconds.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.PerformanceTier.High">
+            <summary>
+            High performance for time-sensitive trading operations.
+            Response times measured in tens of milliseconds.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.PerformanceTier.UltraHigh">
+            <summary>
+            Ultra-high performance for critical trading paths.
+            Response times measured in milliseconds or sub-milliseconds.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.PerformanceTier.Maximum">
+            <summary>
+            Maximum performance with all optimizations enabled.
+            Response times measured in microseconds.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Enums.SecurityLevel">
+            <summary>
+            Security classification levels for data and operations.
+            Determines access controls and protection measures.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.SecurityLevel.Public">
+            <summary>
+            Public information with no security restrictions.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.SecurityLevel.Internal">
+            <summary>
+            Internal information for company use only.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.SecurityLevel.Confidential">
+            <summary>
+            Confidential information requiring access controls.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.SecurityLevel.Restricted">
+            <summary>
+            Restricted information for authorized personnel only.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.SecurityLevel.TopSecret">
+            <summary>
+            Top secret information with highest security requirements.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Enums.ComplianceLevel">
+            <summary>
+            Compliance requirement levels for regulatory adherence.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ComplianceLevel.None">
+            <summary>
+            No specific compliance requirements.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ComplianceLevel.Basic">
+            <summary>
+            Basic compliance with standard business practices.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ComplianceLevel.Standard">
+            <summary>
+            Standard financial services compliance requirements.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ComplianceLevel.Enhanced">
+            <summary>
+            Enhanced compliance for regulated trading activities.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ComplianceLevel.Strict">
+            <summary>
+            Strict compliance for institutional trading and reporting.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.ComplianceLevel.Maximum">
+            <summary>
+            Maximum compliance for market makers and large institutions.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Enums.CacheStrategy">
+            <summary>
+            Cache expiration strategies for different types of trading data.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.CacheStrategy.NoCache">
+            <summary>
+            No caching - always fetch fresh data.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.CacheStrategy.ShortTerm">
+            <summary>
+            Short-term caching for rapidly changing data.
+            Suitable for real-time market data.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.CacheStrategy.MediumTerm">
+            <summary>
+            Medium-term caching for moderately stable data.
+            Suitable for company information and fundamentals.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.CacheStrategy.LongTerm">
+            <summary>
+            Long-term caching for stable reference data.
+            Suitable for static configuration and historical data.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.CacheStrategy.Persistent">
+            <summary>
+            Persistent caching that survives application restarts.
+            Suitable for large datasets and computed results.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Enums.CacheStrategy.Adaptive">
+            <summary>
+            Adaptive caching with dynamic expiration based on usage patterns.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.IHealthCheck">
+            <summary>
+            Standardized health check interface for all trading platform components.
+            Provides consistent health monitoring across services, providers, and infrastructure components.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.IHealthCheck.Name">
+            <summary>
+            Unique name identifying this health check.
+            Should be consistent across deployments for proper monitoring.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.IHealthCheck.CheckHealthAsync(TradingPlatform.Foundation.Interfaces.HealthCheckContext,System.Threading.CancellationToken)">
+            <summary>
+            Executes the health check and returns the current status.
+            Implementation should be fast (less than 5 seconds) and safe to call frequently.
+            </summary>
+            <param name="context">Additional context for the health check</param>
+            <param name="cancellationToken">Cancellation token for timeout control</param>
+            <returns>Health check result with status and diagnostic information</returns>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.HealthCheckContext">
+            <summary>
+            Context information provided to health checks.
+            Contains registration information and shared state.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.HealthCheckContext.Registration">
+            <summary>
+            Registration information for this health check.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.HealthCheckContext.Properties">
+            <summary>
+            Additional properties that can be used by health checks.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.HealthCheckRegistration">
+            <summary>
+            Registration information for a health check.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.HealthCheckRegistration.Name">
+            <summary>
+            Unique name for the health check.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.HealthCheckRegistration.Factory">
+            <summary>
+            Factory function to create the health check instance.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.HealthCheckRegistration.FailureStatus">
+            <summary>
+            Failure status to report when the health check throws an exception.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.HealthCheckRegistration.Tags">
+            <summary>
+            Optional tags for grouping and filtering health checks.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.HealthCheckRegistration.Timeout">
+            <summary>
+            Timeout for the health check execution.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.HealthStatus">
+            <summary>
+            Overall health status for the system or component.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Interfaces.HealthStatus.Healthy">
+            <summary>
+            The component is healthy and operating normally.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Interfaces.HealthStatus.Degraded">
+            <summary>
+            The component is operational but experiencing some issues.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Interfaces.HealthStatus.Unhealthy">
+            <summary>
+            The component is not healthy and may not be operational.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ITradingHealthCheck">
+            <summary>
+            Specialized health check for trading-specific components.
+            Includes trading session awareness and performance requirements.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ITradingHealthCheck.IsCriticalForTrading">
+            <summary>
+            Indicates whether this health check is critical for trading operations.
+            Critical checks failing should stop trading activities.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ITradingHealthCheck.MarketHoursOnly">
+            <summary>
+            Indicates whether this health check should be performed during market hours only.
+            Some checks may be skipped when markets are closed to reduce noise.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ITradingHealthCheck.MaxExpectedLatencyMs">
+            <summary>
+            Expected maximum latency for this health check in milliseconds.
+            Used for performance monitoring and alerting.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.IMarketDataHealthCheck">
+            <summary>
+            Health check for market data providers with provider-specific concerns.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.IMarketDataHealthCheck.ProviderName">
+            <summary>
+            The market data provider this health check monitors.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.IMarketDataHealthCheck.HasSufficientQuotaAsync(System.Threading.CancellationToken)">
+            <summary>
+            Checks if the provider has sufficient API quota remaining.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.IMarketDataHealthCheck.MeasureLatencyAsync(System.Threading.CancellationToken)">
+            <summary>
+            Measures the current latency to the market data provider.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.IInfrastructureHealthCheck">
+            <summary>
+            Health check for trading infrastructure components (messaging, database, etc.).
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.IInfrastructureHealthCheck.ComponentName">
+            <summary>
+            The infrastructure component this health check monitors.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.IInfrastructureHealthCheck.CanHandleExpectedLoadAsync(System.Threading.CancellationToken)">
+            <summary>
+            Checks if the component can handle the expected trading load.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.IInfrastructureHealthCheck.GetResourceUtilizationAsync(System.Threading.CancellationToken)">
+            <summary>
+            Gets current resource utilization metrics for the component.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ResourceUtilizationMetrics">
+            <summary>
+            Resource utilization metrics for infrastructure components.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ResourceUtilizationMetrics.#ctor(System.Double,System.Double,System.Double,System.Double,System.Int32,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Resource utilization metrics for infrastructure components.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.IRetryPolicy">
+            <summary>
+            Retry policy interface for handling transient failures in trading operations.
+            Provides configurable retry logic with exponential backoff and circuit breaker patterns.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.IRetryPolicy.ExecuteAsync``1(System.Func{System.Threading.Tasks.Task{``0}},System.Threading.CancellationToken)">
+            <summary>
+            Executes an operation with retry logic for transient failures.
+            Returns the result of the operation if successful within retry limits.
+            </summary>
+            <typeparam name="T">Return type of the operation</typeparam>
+            <param name="operation">Operation to execute with retry logic</param>
+            <param name="cancellationToken">Cancellation token for timeout control</param>
+            <returns>Result of the successful operation</returns>
+            <exception cref="T:TradingPlatform.Foundation.Interfaces.RetryLimitExceededException">Thrown when all retry attempts are exhausted</exception>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.IRetryPolicy.ExecuteAsync(System.Func{System.Threading.Tasks.Task},System.Threading.CancellationToken)">
+            <summary>
+            Executes an operation with retry logic without return value.
+            </summary>
+            <param name="operation">Operation to execute with retry logic</param>
+            <param name="cancellationToken">Cancellation token for timeout control</param>
+            <exception cref="T:TradingPlatform.Foundation.Interfaces.RetryLimitExceededException">Thrown when all retry attempts are exhausted</exception>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.IRetryPolicy.ExecuteAsync``1(System.Func{System.Threading.Tasks.Task{``0}},System.Func{System.Exception,System.Int32,System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Executes an operation with custom retry predicate.
+            Allows fine-grained control over which exceptions should trigger retries.
+            </summary>
+            <typeparam name="T">Return type of the operation</typeparam>
+            <param name="operation">Operation to execute with retry logic</param>
+            <param name="shouldRetry">Predicate to determine if an exception should trigger a retry</param>
+            <param name="cancellationToken">Cancellation token for timeout control</param>
+            <returns>Result of the successful operation</returns>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.IRetryPolicy.Configuration">
+            <summary>
+            Gets current retry policy configuration.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.IRetryPolicy.Statistics">
+            <summary>
+            Gets retry statistics for monitoring and optimization.
+            </summary>
+        </member>
+        <member name="E:TradingPlatform.Foundation.Interfaces.IRetryPolicy.RetryAttempt">
+            <summary>
+            Event raised when a retry attempt is made.
+            Useful for monitoring and alerting on retry patterns.
+            </summary>
+        </member>
+        <member name="E:TradingPlatform.Foundation.Interfaces.IRetryPolicy.RetryExhausted">
+            <summary>
+            Event raised when retry policy gives up after exhausting all attempts.
+            Critical for monitoring operation reliability.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ICircuitBreaker">
+            <summary>
+            Circuit breaker interface for preventing cascade failures in trading systems.
+            Monitors failure rates and automatically breaks circuits when thresholds are exceeded.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ICircuitBreaker.ExecuteAsync``1(System.Func{System.Threading.Tasks.Task{``0}},System.Threading.CancellationToken)">
+            <summary>
+            Executes an operation through the circuit breaker.
+            May throw CircuitBreakerOpenException if circuit is open.
+            </summary>
+            <typeparam name="T">Return type of the operation</typeparam>
+            <param name="operation">Operation to execute</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Result of the operation if circuit allows execution</returns>
+            <exception cref="T:TradingPlatform.Foundation.Interfaces.CircuitBreakerOpenException">Thrown when circuit is open</exception>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ICircuitBreaker.ExecuteAsync(System.Func{System.Threading.Tasks.Task},System.Threading.CancellationToken)">
+            <summary>
+            Executes an operation through the circuit breaker without return value.
+            </summary>
+            <param name="operation">Operation to execute</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <exception cref="T:TradingPlatform.Foundation.Interfaces.CircuitBreakerOpenException">Thrown when circuit is open</exception>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ICircuitBreaker.State">
+            <summary>
+            Current state of the circuit breaker.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ICircuitBreaker.Configuration">
+            <summary>
+            Gets circuit breaker configuration.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ICircuitBreaker.Metrics">
+            <summary>
+            Gets circuit breaker metrics and statistics.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ICircuitBreaker.Open">
+            <summary>
+            Manually opens the circuit breaker.
+            Useful for maintenance or emergency situations.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ICircuitBreaker.Close">
+            <summary>
+            Manually closes the circuit breaker.
+            Should be used carefully and only when underlying issues are resolved.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ICircuitBreaker.Reset">
+            <summary>
+            Resets circuit breaker statistics.
+            Useful for clearing historical data after resolving issues.
+            </summary>
+        </member>
+        <member name="E:TradingPlatform.Foundation.Interfaces.ICircuitBreaker.StateChanged">
+            <summary>
+            Event raised when circuit breaker state changes.
+            Critical for monitoring system health and automated responses.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.IResiliencePolicy">
+            <summary>
+            Resilience policy that combines retry and circuit breaker patterns.
+            Provides comprehensive failure handling for critical trading operations.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.IResiliencePolicy.ExecuteAsync``1(System.Func{System.Threading.Tasks.Task{``0}},System.Threading.CancellationToken)">
+            <summary>
+            Executes an operation with combined retry and circuit breaker protection.
+            </summary>
+            <typeparam name="T">Return type of the operation</typeparam>
+            <param name="operation">Operation to execute</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Result of the successful operation</returns>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.IResiliencePolicy.RetryPolicy">
+            <summary>
+            The retry policy component.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.IResiliencePolicy.CircuitBreaker">
+            <summary>
+            The circuit breaker component.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.IResiliencePolicy.OperationTimeout">
+            <summary>
+            Timeout policy for operation execution.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.RetryPolicyConfiguration">
+            <summary>
+            Configuration for retry policy behavior.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.RetryPolicyConfiguration.#ctor(System.Int32,System.TimeSpan,System.TimeSpan,System.Double,System.Boolean,System.Collections.Generic.IReadOnlyList{System.Type})">
+            <summary>
+            Configuration for retry policy behavior.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.RetryPolicyConfiguration.TradingDefault">
+            <summary>
+            Default retry policy for trading operations.
+            Conservative settings appropriate for financial operations.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.RetryPolicyConfiguration.MarketDataDefault">
+            <summary>
+            Aggressive retry policy for critical market data operations.
+            Faster retries with more attempts for time-sensitive operations.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.CircuitBreakerConfiguration">
+            <summary>
+            Configuration for circuit breaker behavior.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.CircuitBreakerConfiguration.#ctor(System.Int32,System.Int32,System.TimeSpan,System.TimeSpan,System.Int32)">
+            <summary>
+            Configuration for circuit breaker behavior.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.CircuitBreakerConfiguration.TradingDefault">
+            <summary>
+            Default circuit breaker configuration for trading services.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.CircuitBreakerConfiguration.CriticalDefault">
+            <summary>
+            Sensitive circuit breaker configuration for critical operations.
+            Lower thresholds and faster recovery for mission-critical components.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.RetryPolicyStatistics">
+            <summary>
+            Statistics for retry policy monitoring.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.RetryPolicyStatistics.#ctor(System.Int64,System.Int64,System.Int64,System.Int64,System.Decimal,System.Decimal,System.TimeSpan,System.Collections.Generic.Dictionary{System.Type,System.Int32})">
+            <summary>
+            Statistics for retry policy monitoring.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.RetryPolicyStatistics.FailureRatePercent">
+            <summary>
+            Failure rate as a percentage.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.CircuitBreakerState">
+            <summary>
+            Current state of a circuit breaker.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Interfaces.CircuitBreakerState.Closed">
+            <summary>
+            Circuit is closed and operations are allowed.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Interfaces.CircuitBreakerState.Open">
+            <summary>
+            Circuit is open and operations are blocked.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Interfaces.CircuitBreakerState.HalfOpen">
+            <summary>
+            Circuit is half-open and testing if operations should resume.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.CircuitBreakerMetrics">
+            <summary>
+            Metrics for circuit breaker monitoring.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.CircuitBreakerMetrics.#ctor(TradingPlatform.Foundation.Interfaces.CircuitBreakerState,System.TimeSpan,System.Int64,System.Int64,System.Int64,System.Decimal,System.DateTime,System.DateTime,System.Int32,System.Int32)">
+            <summary>
+            Metrics for circuit breaker monitoring.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.CircuitBreakerMetrics.SuccessRatePercent">
+            <summary>
+            Success rate as a percentage.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.RetryAttemptEventArgs">
+            <summary>
+            Event arguments for retry attempt notifications.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.RetryExhaustedEventArgs">
+            <summary>
+            Event arguments for retry exhausted notifications.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.CircuitBreakerStateChangedEventArgs">
+            <summary>
+            Event arguments for circuit breaker state change notifications.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.RetryLimitExceededException">
+            <summary>
+            Exception thrown when retry policy exhausts all attempts.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.CircuitBreakerOpenException">
+            <summary>
+            Exception thrown when circuit breaker is open.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ITradingCache">
+            <summary>
+            High-performance caching interface optimized for trading applications.
+            Provides sub-millisecond access times and trading-specific cache patterns.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingCache.GetAsync``1(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets cached value by key with generic type support.
+            Returns null if key doesn't exist or has expired.
+            </summary>
+            <typeparam name="T">Type of cached value</typeparam>
+            <param name="key">Cache key</param>
+            <param name="cancellationToken">Cancellation token for timeout control</param>
+            <returns>Cached value or null if not found</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingCache.GetOrSetAsync``1(System.String,System.Func{System.Threading.Tasks.Task{``0}},System.TimeSpan,System.Threading.CancellationToken)">
+            <summary>
+            Gets cached value with fallback to factory function if not found.
+            Ensures atomic cache population to prevent multiple factory calls for same key.
+            </summary>
+            <typeparam name="T">Type of cached value</typeparam>
+            <param name="key">Cache key</param>
+            <param name="factory">Factory function to create value if not cached</param>
+            <param name="expiration">Cache expiration time</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Cached or newly created value</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingCache.SetAsync``1(System.String,``0,System.TimeSpan,System.Threading.CancellationToken)">
+            <summary>
+            Sets value in cache with specified expiration.
+            Overwrites existing value if key already exists.
+            </summary>
+            <typeparam name="T">Type of value to cache</typeparam>
+            <param name="key">Cache key</param>
+            <param name="value">Value to cache</param>
+            <param name="expiration">Cache expiration time</param>
+            <param name="cancellationToken">Cancellation token</param>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingCache.RemoveAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Removes value from cache by key.
+            Returns true if key existed and was removed, false if key didn't exist.
+            </summary>
+            <param name="key">Cache key to remove</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>True if removed, false if key didn't exist</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingCache.RemoveBulkAsync(System.Collections.Generic.IEnumerable{System.String},System.Threading.CancellationToken)">
+            <summary>
+            Removes multiple keys from cache in a single operation.
+            More efficient than individual remove operations for bulk operations.
+            </summary>
+            <param name="keys">Cache keys to remove</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Number of keys that were actually removed</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingCache.ExistsAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Checks if a key exists in the cache without retrieving the value.
+            Useful for existence checks without deserialization overhead.
+            </summary>
+            <param name="key">Cache key to check</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>True if key exists, false otherwise</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingCache.GetTtlAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets the time-to-live (TTL) for a cached key.
+            Returns null if key doesn't exist or has no expiration.
+            </summary>
+            <param name="key">Cache key</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Remaining TTL or null if key doesn't exist</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingCache.ExtendExpirationAsync(System.String,System.TimeSpan,System.Threading.CancellationToken)">
+            <summary>
+            Extends the expiration time for an existing cached key.
+            Does nothing if key doesn't exist.
+            </summary>
+            <param name="key">Cache key</param>
+            <param name="expiration">New expiration time from now</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>True if expiration was updated, false if key doesn't exist</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingCache.GetStatisticsAsync(System.Threading.CancellationToken)">
+            <summary>
+            Gets cache statistics for monitoring and optimization.
+            Includes hit rates, memory usage, and performance metrics.
+            </summary>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Comprehensive cache statistics</returns>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.IMarketDataCache">
+            <summary>
+            Specialized cache interface for market data with trading-specific features.
+            Provides optimized access patterns for real-time and historical market data.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.IMarketDataCache.CacheMarketDataAsync(System.String,System.Object,System.Threading.CancellationToken)">
+            <summary>
+            Caches real-time market data with automatic expiration based on market hours.
+            Data expires faster during market hours for fresher data.
+            </summary>
+            <param name="symbol">Trading symbol</param>
+            <param name="marketData">Market data to cache</param>
+            <param name="cancellationToken">Cancellation token</param>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.IMarketDataCache.GetFreshMarketDataAsync``1(System.String,System.TimeSpan,System.Threading.CancellationToken)">
+            <summary>
+            Gets cached market data for a symbol with automatic freshness validation.
+            Returns null if data is too stale for trading purposes.
+            </summary>
+            <typeparam name="T">Market data type</typeparam>
+            <param name="symbol">Trading symbol</param>
+            <param name="maxAge">Maximum acceptable age for the data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Fresh market data or null if stale/missing</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.IMarketDataCache.CacheHistoricalDataAsync(System.String,System.DateTime,System.DateTime,System.Object,System.Threading.CancellationToken)">
+            <summary>
+            Caches historical data with long expiration times since it doesn't change.
+            Uses optimized storage patterns for large historical datasets.
+            </summary>
+            <param name="symbol">Trading symbol</param>
+            <param name="startDate">Historical data start date</param>
+            <param name="endDate">Historical data end date</param>
+            <param name="historicalData">Historical data to cache</param>
+            <param name="cancellationToken">Cancellation token</param>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.IMarketDataCache.InvalidateSymbolDataAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Invalidates all market data cache entries for a specific symbol.
+            Useful when receiving correction data or handling corporate actions.
+            </summary>
+            <param name="symbol">Trading symbol</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Number of cache entries invalidated</returns>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.CacheStatistics">
+            <summary>
+            Cache statistics for monitoring and optimization.
+            All performance metrics use decimal types for financial precision compliance.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.CacheStatistics.#ctor(System.Int64,System.Int64,System.Int64,System.Decimal,System.Int64,System.Int64,System.Int64,System.Decimal,System.Decimal,System.Int64,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Cache statistics for monitoring and optimization.
+            All performance metrics use decimal types for financial precision compliance.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.CacheStatistics.MissRatePercent">
+            <summary>
+            Cache miss rate as a percentage.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.CacheStatistics.ItemsPerMb">
+            <summary>
+            Memory efficiency as items per MB.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ICacheConfiguration">
+            <summary>
+            Cache configuration for trading-specific optimization.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ICacheConfiguration.MaxMemoryBytes">
+            <summary>
+            Maximum memory usage for the cache in bytes.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ICacheConfiguration.DefaultExpiration">
+            <summary>
+            Default expiration time for cached items.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ICacheConfiguration.UseCompression">
+            <summary>
+            Whether to use compression for cached values to save memory.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ICacheConfiguration.MaxItems">
+            <summary>
+            Maximum number of items in the cache before eviction starts.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ICacheConfiguration.EvictionPolicy">
+            <summary>
+            Eviction policy when cache reaches capacity.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ICacheConfiguration.EnableStatistics">
+            <summary>
+            Whether to enable cache statistics collection.
+            May have slight performance impact but provides valuable insights.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.CacheEvictionPolicy">
+            <summary>
+            Cache eviction policies for when cache reaches capacity.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Interfaces.CacheEvictionPolicy.LRU">
+            <summary>
+            Least Recently Used - evict items that haven't been accessed recently.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Interfaces.CacheEvictionPolicy.LFU">
+            <summary>
+            Least Frequently Used - evict items with lowest access frequency.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Interfaces.CacheEvictionPolicy.FIFO">
+            <summary>
+            First In, First Out - evict oldest items first.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Interfaces.CacheEvictionPolicy.Random">
+            <summary>
+            Random eviction - useful for avoiding pathological cases.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Interfaces.CacheEvictionPolicy.TTL">
+            <summary>
+            Time-based eviction - evict items closest to expiration.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ITradingConfiguration`1">
+            <summary>
+            Strongly-typed configuration interface for trading platform components.
+            Provides reactive configuration updates and validation support.
+            </summary>
+            <typeparam name="T">Configuration model type</typeparam>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ITradingConfiguration`1.Value">
+            <summary>
+            Current configuration value with strong typing.
+            Guaranteed to be valid according to configured validation rules.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingConfiguration`1.Reload">
+            <summary>
+            Reloads configuration from all configured sources.
+            Triggers validation and change notifications if values differ.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingConfiguration`1.GetReloadToken">
+            <summary>
+            Gets a change token that triggers when configuration changes.
+            Used for reactive configuration updates without polling.
+            </summary>
+            <returns>Change token for monitoring configuration changes</returns>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ITradingConfigurationProvider">
+            <summary>
+            Configuration provider specifically designed for trading applications.
+            Handles environment-specific settings, secrets management, and hot reload.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingConfigurationProvider.GetConfiguration``1(System.String)">
+            <summary>
+            Gets strongly-typed configuration for the specified type.
+            Includes validation and environment-specific overrides.
+            </summary>
+            <typeparam name="T">Configuration model type</typeparam>
+            <param name="sectionPath">Configuration section path (e.g., "MarketData:AlphaVantage")</param>
+            <returns>Strongly-typed configuration instance</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingConfigurationProvider.GetValue(System.String,System.String)">
+            <summary>
+            Gets configuration value with fallback support.
+            </summary>
+            <param name="key">Configuration key using colon notation (e.g., "Redis:ConnectionString")</param>
+            <param name="defaultValue">Default value if key is not found</param>
+            <returns>Configuration value or default</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingConfigurationProvider.GetValue``1(System.String,``0)">
+            <summary>
+            Gets configuration value with type conversion.
+            </summary>
+            <typeparam name="T">Target type for conversion</typeparam>
+            <param name="key">Configuration key</param>
+            <param name="defaultValue">Default value if key is not found</param>
+            <returns>Converted configuration value or default</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingConfigurationProvider.ValidateAllAsync">
+            <summary>
+            Validates all loaded configuration against defined rules.
+            Should be called during application startup to catch configuration errors early.
+            </summary>
+            <returns>Validation results with any errors or warnings</returns>
+        </member>
+        <member name="E:TradingPlatform.Foundation.Interfaces.ITradingConfigurationProvider.ConfigurationChanged">
+            <summary>
+            Event raised when any configuration value changes.
+            Provides details about what changed for targeted updates.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ITradingConfigurationModel">
+            <summary>
+            Base interface for all trading configuration models.
+            Provides common validation and metadata support.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingConfigurationModel.Validate">
+            <summary>
+            Validates the configuration model against business rules.
+            Called automatically when configuration is loaded or changed.
+            </summary>
+            <returns>Validation result with any errors or warnings</returns>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ITradingConfigurationModel.Environment">
+            <summary>
+            Environment where this configuration is intended to be used.
+            Helps prevent accidental use of production configs in development.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ITradingConfigurationModel.SchemaVersion">
+            <summary>
+            Version of the configuration schema.
+            Used for migration and compatibility checking.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ConfigurationValidationResult">
+            <summary>
+            Configuration validation result containing any errors or warnings.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ConfigurationValidationResult.#ctor(System.Boolean,System.Collections.Generic.IReadOnlyList{TradingPlatform.Foundation.Interfaces.ConfigurationValidationError},System.Collections.Generic.IReadOnlyList{TradingPlatform.Foundation.Interfaces.ConfigurationValidationWarning})">
+            <summary>
+            Configuration validation result containing any errors or warnings.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ConfigurationValidationResult.Success">
+            <summary>
+            Creates a successful validation result.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ConfigurationValidationResult.Failed(TradingPlatform.Foundation.Interfaces.ConfigurationValidationError[])">
+            <summary>
+            Creates a failed validation result with errors.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ConfigurationValidationResult.WithWarnings(TradingPlatform.Foundation.Interfaces.ConfigurationValidationWarning[])">
+            <summary>
+            Creates a validation result with warnings but no errors.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ConfigurationValidationError">
+            <summary>
+            Configuration validation error indicating invalid or missing required values.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ConfigurationValidationError.#ctor(System.String,System.String,System.Object,System.String)">
+            <summary>
+            Configuration validation error indicating invalid or missing required values.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ConfigurationValidationWarning">
+            <summary>
+            Configuration validation warning indicating suboptimal but valid configuration.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ConfigurationValidationWarning.#ctor(System.String,System.String,System.Object,System.Object)">
+            <summary>
+            Configuration validation warning indicating suboptimal but valid configuration.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ConfigurationChangedEventArgs">
+            <summary>
+            Event arguments for configuration change notifications.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ConfigurationChangedEventArgs.SectionPath">
+            <summary>
+            The configuration section that changed.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ConfigurationChangedEventArgs.Changes">
+            <summary>
+            Specific properties that changed within the section.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ConfigurationChangedEventArgs.ChangeTime">
+            <summary>
+            Timestamp when the change was detected.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ConfigurationChange">
+            <summary>
+            Details about a specific configuration value change.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ConfigurationChange.#ctor(System.String,System.Object,System.Object,System.Boolean)">
+            <summary>
+            Details about a specific configuration value change.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ISensitiveConfiguration">
+            <summary>
+            Marker interface for configuration models that contain sensitive information.
+            Implementations should not log or expose these values in diagnostics.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ISensitiveConfiguration.GetSanitizedCopy">
+            <summary>
+            Returns a sanitized version of the configuration suitable for logging.
+            All sensitive values should be masked or replaced with placeholders.
+            </summary>
+            <returns>Configuration instance with sensitive values masked</returns>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.IEnvironmentConfiguration">
+            <summary>
+            Configuration model for trading environment settings.
+            Provides standardized environment identification and validation.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.IEnvironmentConfiguration.EnvironmentName">
+            <summary>
+            Current environment name (Development, Staging, Production).
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.IEnvironmentConfiguration.IsProduction">
+            <summary>
+            Whether this is a production environment requiring extra safety checks.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.IEnvironmentConfiguration.EnableDebugFeatures">
+            <summary>
+            Whether debug features should be enabled.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.IEnvironmentConfiguration.ApplicationVersion">
+            <summary>
+            Application version for this deployment.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.IEnvironmentConfiguration.DeploymentTime">
+            <summary>
+            Deployment timestamp for tracking configuration age.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ITradingService">
+            <summary>
+            Base interface for all trading services in the platform.
+            Provides standardized lifecycle management, health monitoring, and service identification.
+            All trading services must implement this interface to ensure consistent behavior.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ITradingService.ServiceName">
+            <summary>
+            Unique identifier for the service used in logging, monitoring, and diagnostics.
+            Should be consistent across restarts and deployments.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ITradingService.Version">
+            <summary>
+            Semantic version of the service implementation.
+            Used for compatibility checks and deployment tracking.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingService.CheckHealthAsync(System.Threading.CancellationToken)">
+            <summary>
+            Performs a comprehensive health check of the service.
+            Should verify all critical dependencies and operational status.
+            </summary>
+            <returns>Detailed health check result with status and diagnostic information</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingService.GetMetricsAsync(System.Threading.CancellationToken)">
+            <summary>
+            Gets current operational metrics for performance monitoring.
+            Includes throughput, latency, error rates, and resource utilization.
+            </summary>
+            <returns>Real-time service metrics</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ITradingService.HandleConfigurationChangeAsync(TradingPlatform.Foundation.Interfaces.ConfigurationChangeEvent,System.Threading.CancellationToken)">
+            <summary>
+            Gracefully handles configuration changes without service restart.
+            Should validate new configuration and apply changes atomically.
+            </summary>
+            <param name="configurationChange">Details of the configuration change</param>
+        </member>
+        <member name="E:TradingPlatform.Foundation.Interfaces.ITradingService.HealthStatusChanged">
+            <summary>
+            Event raised when the service's health status changes.
+            Critical for monitoring systems and automated response to failures.
+            </summary>
+        </member>
+        <member name="E:TradingPlatform.Foundation.Interfaces.ITradingService.MetricsThresholdExceeded">
+            <summary>
+            Event raised when service metrics cross configured thresholds.
+            Enables proactive monitoring and performance optimization.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.HealthCheckResult">
+            <summary>
+            Represents the result of a health check operation.
+            Provides comprehensive status information for monitoring and diagnostics.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.HealthCheckResult.#ctor(System.Boolean,System.String,System.String,System.TimeSpan,System.Exception,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Represents the result of a health check operation.
+            Provides comprehensive status information for monitoring and diagnostics.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.HealthCheckResult.Healthy(System.String,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Creates a healthy result with optional description and data.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.HealthCheckResult.Unhealthy(System.String,System.Exception,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Creates an unhealthy result with description and optional exception.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.HealthCheckResult.Degraded(System.String,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Creates a degraded result indicating partial functionality.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ServiceMetrics">
+            <summary>
+            Contains operational metrics for a trading service.
+            All measurements use System.Decimal for financial precision compliance.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ServiceMetrics.#ctor(System.String,System.DateTime,System.TimeSpan,System.Int64,System.Decimal,System.Decimal,System.Decimal,System.Int64,System.Decimal,System.Int64,System.Double)">
+            <summary>
+            Contains operational metrics for a trading service.
+            All measurements use System.Decimal for financial precision compliance.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Interfaces.ServiceMetrics.CustomMetrics">
+            <summary>
+            Additional custom metrics specific to the service.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.HealthStatusChangedEventArgs">
+            <summary>
+            Event arguments for health status change notifications.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.MetricsThresholdEventArgs">
+            <summary>
+            Event arguments for metrics threshold violations.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ConfigurationChangeEvent">
+            <summary>
+            Represents a configuration change event.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Interfaces.ConfigurationChangeEvent.#ctor(System.String,System.Object,System.Object,System.DateTime,System.String)">
+            <summary>
+            Represents a configuration change event.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Interfaces.ThresholdDirection">
+            <summary>
+            Direction of threshold violation.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Interfaces.ThresholdDirection.Above">
+            <summary>
+            Current value exceeded the upper threshold.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Interfaces.ThresholdDirection.Below">
+            <summary>
+            Current value fell below the lower threshold.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Models.OperationContext">
+            <summary>
+            Context information for trading operations providing correlation, timing, and metadata.
+            Essential for distributed tracing, performance monitoring, and audit compliance.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.CorrelationId">
+            <summary>
+            Unique identifier for correlating this operation across distributed systems.
+            Should be propagated through all related operations and logged consistently.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.OperationName">
+            <summary>
+            The trading operation being performed (e.g., "OrderSubmission", "MarketDataFetch").
+            Used for categorizing metrics and logs.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.StartTime">
+            <summary>
+            When the operation was initiated.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.UserId">
+            <summary>
+            User or service account initiating the operation.
+            Required for audit trails and authorization checks.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.SessionId">
+            <summary>
+            Session identifier for grouping related operations.
+            Useful for tracking user sessions and debugging.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.AccountId">
+            <summary>
+            Trading account identifier for financial operations.
+            Critical for position tracking and compliance monitoring.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.Symbol">
+            <summary>
+            Trading symbol if operation is symbol-specific.
+            Used for symbol-level monitoring and performance analysis.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.StrategyName">
+            <summary>
+            Strategy name if operation is part of a trading strategy.
+            Enables strategy-level performance tracking and attribution.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.OrderId">
+            <summary>
+            Order identifier for order-related operations.
+            Essential for order lifecycle tracking and compliance.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.Timeout">
+            <summary>
+            Maximum allowed duration for this operation.
+            Used for timeout enforcement and SLA monitoring.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.Priority">
+            <summary>
+            Priority level for the operation affecting processing order.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.Metadata">
+            <summary>
+            Additional metadata specific to the operation.
+            Allows extensibility without breaking contracts.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.Tags">
+            <summary>
+            Tags for categorizing and filtering operations.
+            Useful for metrics aggregation and monitoring dashboards.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.Parent">
+            <summary>
+            Parent operation context for hierarchical operations.
+            Enables building operation call trees for complex workflows.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.CancellationToken">
+            <summary>
+            Cancellation token for cooperative cancellation.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContext.CreateChild(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Creates a child operation context inheriting properties from this context.
+            </summary>
+            <param name="childOperationName">Name of the child operation</param>
+            <param name="cancellationToken">Cancellation token for the child operation</param>
+            <returns>New operation context as a child of this context</returns>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.Duration">
+            <summary>
+            Calculates the duration since the operation started.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.OperationContext.IsTimedOut">
+            <summary>
+            Checks if the operation has exceeded its timeout.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContext.WithTag(System.String)">
+            <summary>
+            Adds a tag to the operation for categorization.
+            </summary>
+            <param name="tag">Tag to add</param>
+            <returns>This context for fluent chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContext.WithTags(System.String[])">
+            <summary>
+            Adds multiple tags to the operation.
+            </summary>
+            <param name="tags">Tags to add</param>
+            <returns>This context for fluent chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContext.WithMetadata(System.String,System.Object)">
+            <summary>
+            Adds metadata to the operation context.
+            </summary>
+            <param name="key">Metadata key</param>
+            <param name="value">Metadata value</param>
+            <returns>This context for fluent chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContext.WithUser(System.String)">
+            <summary>
+            Sets the user ID for this operation.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContext.WithAccount(System.String)">
+            <summary>
+            Sets the account ID for this operation.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContext.WithSymbol(System.String)">
+            <summary>
+            Sets the trading symbol for this operation.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContext.WithStrategy(System.String)">
+            <summary>
+            Sets the strategy name for this operation.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContext.WithOrder(System.String)">
+            <summary>
+            Sets the order ID for this operation.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContext.WithTimeout(System.TimeSpan)">
+            <summary>
+            Sets the timeout for this operation.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContext.WithPriority(TradingPlatform.Foundation.Models.OperationPriority)">
+            <summary>
+            Sets the priority for this operation.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContext.GetOperationPath">
+            <summary>
+            Gets a breadcrumb trail of operation names from root to this operation.
+            Useful for understanding the call hierarchy in complex workflows.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContext.ToLogContext">
+            <summary>
+            Creates a dictionary suitable for structured logging.
+            Contains all relevant context information in a flat structure.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Models.OperationPriority">
+            <summary>
+            Priority levels for trading operations affecting processing order.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Models.OperationPriority.Low">
+            <summary>
+            Low priority operations that can be delayed.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Models.OperationPriority.Normal">
+            <summary>
+            Normal priority for standard operations.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Models.OperationPriority.High">
+            <summary>
+            High priority for time-sensitive operations.
+            </summary>
+        </member>
+        <member name="F:TradingPlatform.Foundation.Models.OperationPriority.Critical">
+            <summary>
+            Critical priority for emergency operations.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Models.OperationContextFactory">
+            <summary>
+            Factory for creating operation contexts with common configurations.
+            Provides convenience methods for typical trading scenarios.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContextFactory.MarketData(System.String,System.String)">
+            <summary>
+            Creates a context for market data operations.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContextFactory.OrderOperation(System.String,System.String,System.String)">
+            <summary>
+            Creates a context for order management operations.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContextFactory.Strategy(System.String,System.String)">
+            <summary>
+            Creates a context for strategy execution operations.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContextFactory.RiskCheck(System.String)">
+            <summary>
+            Creates a context for risk management operations.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.OperationContextFactory.Compliance(System.String)">
+            <summary>
+            Creates a context for compliance operations.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Models.TradingResult`1">
+            <summary>
+            Standardized result wrapper for trading operations.
+            Provides consistent error handling and success/failure patterns across all trading components.
+            Uses financial-precision decimal types for all monetary values.
+            </summary>
+            <typeparam name="T">Type of the result data</typeparam>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.TradingResult`1.IsSuccess">
+            <summary>
+            Indicates whether the operation succeeded.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.TradingResult`1.Value">
+            <summary>
+            The successful result value. Only available when IsSuccess is true.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.TradingResult`1.Error">
+            <summary>
+            The error information. Only available when IsSuccess is false.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult`1.#ctor(`0)">
+            <summary>
+            Creates a successful result with a value.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult`1.#ctor(TradingPlatform.Foundation.Models.TradingError)">
+            <summary>
+            Creates a failed result with an error.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult`1.Success(`0)">
+            <summary>
+            Creates a successful result.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult`1.Failure(TradingPlatform.Foundation.Models.TradingError)">
+            <summary>
+            Creates a failed result with an error.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult`1.Failure(System.String,System.String,System.Exception,System.String)">
+            <summary>
+            Creates a failed result with error details.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult`1.Map``1(System.Func{`0,``0})">
+            <summary>
+            Maps the success value to a different type while preserving errors.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult`1.Bind``1(System.Func{`0,TradingPlatform.Foundation.Models.TradingResult{``0}})">
+            <summary>
+            Maps the success value to a different result type while preserving errors.
+            Allows chaining of operations that may fail.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult`1.OnSuccess(System.Action{`0})">
+            <summary>
+            Executes an action if the result is successful.
+            Returns the original result for chaining.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult`1.OnFailure(System.Action{TradingPlatform.Foundation.Models.TradingError})">
+            <summary>
+            Executes an action if the result is a failure.
+            Returns the original result for chaining.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult`1.GetValueOrThrow">
+            <summary>
+            Gets the value or throws an exception if the result is a failure.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult`1.GetValueOrDefault(`0)">
+            <summary>
+            Gets the value or returns the specified default value if the result is a failure.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult`1.op_Implicit(`0)~TradingPlatform.Foundation.Models.TradingResult{`0}">
+            <summary>
+            Implicit conversion from a value to a successful result.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult`1.op_Implicit(TradingPlatform.Foundation.Models.TradingError)~TradingPlatform.Foundation.Models.TradingResult{`0}">
+            <summary>
+            Implicit conversion from an error to a failed result.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Models.TradingResult">
+            <summary>
+            Non-generic trading result for operations that don't return a value.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.TradingResult.IsSuccess">
+            <summary>
+            Indicates whether the operation succeeded.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.TradingResult.Error">
+            <summary>
+            The error information. Only available when IsSuccess is false.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult.#ctor(System.Boolean)">
+            <summary>
+            Creates a successful result.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult.#ctor(TradingPlatform.Foundation.Models.TradingError)">
+            <summary>
+            Creates a failed result with an error.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult.Success">
+            <summary>
+            Represents a successful operation.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult.Failure(TradingPlatform.Foundation.Models.TradingError)">
+            <summary>
+            Creates a failed result with an error.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult.Failure(System.String,System.String,System.Exception,System.String)">
+            <summary>
+            Creates a failed result with error details.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult.Map``1(System.Func{``0})">
+            <summary>
+            Maps to a generic result type.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult.OnSuccess(System.Action)">
+            <summary>
+            Executes an action if the result is successful.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult.OnFailure(System.Action{TradingPlatform.Foundation.Models.TradingError})">
+            <summary>
+            Executes an action if the result is a failure.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult.ThrowIfFailure">
+            <summary>
+            Throws an exception if the result is a failure.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingResult.op_Implicit(TradingPlatform.Foundation.Models.TradingError)~TradingPlatform.Foundation.Models.TradingResult">
+            <summary>
+            Implicit conversion from an error to a failed result.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Models.TradingError">
+            <summary>
+            Standardized error information for trading operations.
+            Provides detailed context for troubleshooting and monitoring.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.TradingError.FullMessage">
+            <summary>
+            Gets the full error message including inner exceptions.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Models.TradingError.ErrorCodes">
+            <summary>
+            Common error codes for trading operations.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingError.Validation(System.String,System.String,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Creates a validation error.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingError.RateLimit(System.String,System.String)">
+            <summary>
+            Creates a rate limit error.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingError.Timeout(System.String,System.TimeSpan,System.String)">
+            <summary>
+            Creates a timeout error.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Foundation.Models.TradingError.System(System.Exception,System.String)">
+            <summary>
+            Creates a system error from an exception.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Foundation.Models.TradingOperationException">
+            <summary>
+            Exception type for trading operation failures.
+            Wraps TradingError information in a throwable exception.
+            </summary>
+        </member>
+        <member name="P:TradingPlatform.Foundation.Models.TradingOperationException.TradingError">
+            <summary>
+            The trading error that caused this exception.
+            </summary>
+        </member>
+    </members>
+</doc>
