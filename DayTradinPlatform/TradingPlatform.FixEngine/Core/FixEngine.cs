@@ -78,11 +78,18 @@ public sealed class FixEngine : IFixEngine
         
         try
         {
-            // Smart routing to optimal venue
-            var optimalVenue = _orderRouter.SelectOptimalVenue(
-                request.Symbol, 
-                (int)request.Quantity, 
-                request.Price ?? 0m);
+            // Convert to Trading OrderRequest for venue selection
+            var routingRequest = new Trading.OrderRequest
+            {
+                Symbol = request.Symbol,
+                Side = request.Side,
+                OrderType = request.OrderType,
+                Quantity = request.Quantity,
+                Price = request.Price,
+                TimeInForce = request.TimeInForce
+            };
+            
+            var optimalVenue = _orderRouter.SelectOptimalVenue(routingRequest);
             
             if (!_orderManagers.TryGetValue(optimalVenue, out var orderManager))
             {
