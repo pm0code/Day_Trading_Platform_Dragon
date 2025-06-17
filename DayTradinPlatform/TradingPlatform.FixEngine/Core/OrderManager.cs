@@ -76,15 +76,14 @@ public sealed class OrderManager : IDisposable
             if (success)
             {
                 order.Status = OrderStatus.New;
-                _logger.LogInformation("Order submitted: {ClOrdId} - {Symbol} {Side} {Quantity}@{Price}", 
-                    clOrdId, order.Symbol, order.Side, order.Quantity, order.Price);
+                _logger.LogInfo($"Order submitted: {clOrdId} - {order.Symbol} {order.Side} {order.Quantity}@{order.Price}");
                 OrderStatusChanged?.Invoke(this, order);
             }
             else
             {
                 order.Status = OrderStatus.Rejected;
                 _activeOrders.TryRemove(clOrdId, out _);
-                _logger.LogError("Failed to send order: {ClOrdId}", clOrdId);
+                _logger.LogError($"Failed to send order: {clOrdId}");
             }
             
             return clOrdId;
@@ -93,7 +92,7 @@ public sealed class OrderManager : IDisposable
         {
             order.Status = OrderStatus.Rejected;
             _activeOrders.TryRemove(clOrdId, out _);
-            _logger.LogError(ex, "Error submitting order: {ClOrdId}", clOrdId);
+            _logger.LogError($"Error submitting order: {clOrdId}", ex);
             throw;
         }
     }
@@ -105,13 +104,13 @@ public sealed class OrderManager : IDisposable
     {
         if (!_activeOrders.TryGetValue(origClOrdId ?? clOrdId, out var order))
         {
-            _logger.LogWarning("Cannot cancel order - not found: {ClOrdId}", clOrdId);
+            _logger.LogWarning($"Cannot cancel order - not found: {clOrdId}");
             return false;
         }
         
         if (order.Status == OrderStatus.Filled || order.Status == OrderStatus.Cancelled)
         {
-            _logger.LogWarning("Cannot cancel order in status: {Status}", order.Status);
+            _logger.LogWarning($"Cannot cancel order in status: {order.Status}");
             return false;
         }
         
@@ -134,7 +133,7 @@ public sealed class OrderManager : IDisposable
             if (success)
             {
                 order.Status = OrderStatus.PendingCancel;
-                _logger.LogInformation("Cancel request sent for order: {ClOrdId}", clOrdId);
+                _logger.LogInfo($"Cancel request sent for order: {clOrdId}");
                 OrderStatusChanged?.Invoke(this, order);
             }
             
@@ -142,7 +141,7 @@ public sealed class OrderManager : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error cancelling order: {ClOrdId}", clOrdId);
+            _logger.LogError($"Error cancelling order: {clOrdId}", ex);
             return false;
         }
     }
@@ -210,8 +209,7 @@ public sealed class OrderManager : IDisposable
                 _activeOrders[newClOrdId] = newOrder;
                 originalOrder.Status = OrderStatus.PendingReplace;
                 
-                _logger.LogInformation("Order replace request sent: {OrigClOrdId} -> {NewClOrdId}", 
-                    origClOrdId, newClOrdId);
+                _logger.LogInfo($"Order replace request sent: {origClOrdId} -> {newClOrdId}");
                 
                 OrderStatusChanged?.Invoke(this, originalOrder);
                 OrderStatusChanged?.Invoke(this, newOrder);
@@ -221,7 +219,7 @@ public sealed class OrderManager : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error replacing order: {OrigClOrdId}", origClOrdId);
+            _logger.LogError($"Error replacing order: {origClOrdId}", ex);
             throw;
         }
     }
@@ -263,15 +261,14 @@ public sealed class OrderManager : IDisposable
             
             if (success)
             {
-                _logger.LogInformation("Mass cancel request sent - Symbol: {Symbol}, Side: {Side}", 
-                    symbol ?? "ALL", side?.ToString() ?? "ALL");
+                _logger.LogInfo($"Mass cancel request sent - Symbol: {symbol ?? "ALL"}, Side: {side?.ToString() ?? "ALL"}");
             }
             
             return success;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending mass cancel request");
+            _logger.LogError("Error sending mass cancel request", ex);
             return false;
         }
     }
@@ -319,7 +316,7 @@ public sealed class OrderManager : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing order message: {MsgType}", message.MsgType);
+            _logger.LogError($"Error processing order message: {message.MsgType}", ex);
         }
     }
     
@@ -364,8 +361,7 @@ public sealed class OrderManager : IDisposable
                 
                 ExecutionReceived?.Invoke(this, execution);
                 
-                _logger.LogInformation("Execution received: {ClOrdId} - {Quantity}@{Price}, Status: {Status}", 
-                    clOrdId, execution.Quantity, execution.Price, order.Status);
+                _logger.LogInfo($"Execution received: {clOrdId} - {execution.Quantity}@{execution.Price}, Status: {order.Status}");
             }
             
             OrderStatusChanged?.Invoke(this, order);
@@ -386,8 +382,7 @@ public sealed class OrderManager : IDisposable
         var cxlRejReason = message.GetField(102); // CxlRejReason
         var text = message.GetField(58); // Text
         
-        _logger.LogWarning("Order cancel rejected: {ClOrdId}, Reason: {Reason}, Text: {Text}",
-            clOrdId, cxlRejReason, text);
+        _logger.LogWarning($"Order cancel rejected: {clOrdId}, Reason: {cxlRejReason}, Text: {text}");
         
         if (!string.IsNullOrEmpty(clOrdId) && _activeOrders.TryGetValue(clOrdId, out var order))
         {
@@ -516,7 +511,7 @@ public sealed class OrderManager : IDisposable
             if (order.Status == OrderStatus.PendingNew && 
                 now - order.CreatedTime > timeoutThreshold)
             {
-                _logger.LogWarning("Order timeout detected: {ClOrdId}", order.ClOrdId);
+                _logger.LogWarning($"Order timeout detected: {order.ClOrdId}");
                 order.Status = OrderStatus.Rejected;
                 OrderStatusChanged?.Invoke(this, order);
                 _activeOrders.TryRemove(order.ClOrdId, out _);

@@ -115,7 +115,7 @@ public sealed class OrderRouter : IDisposable
     /// <summary>
     /// Selects optimal venue for US equity order based on order size, type, and market conditions
     /// </summary>
-    private string SelectOptimalVenue(OrderRequest request)
+    public string SelectOptimalVenue(OrderRequest request)
     {
         var orderSize = request.Quantity * request.Price;
         
