@@ -18,6 +18,28 @@
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="System.Reactive" Version="6.0.1" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="9.0.6" />
+    
+    <!-- OpenTelemetry Infrastructure - Free & Open Source -->
+    <PackageReference Include="OpenTelemetry" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.0.0-beta.12" />
+    <PackageReference Include="OpenTelemetry.Exporter.Jaeger" Version="1.5.1" />
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.9.0-beta.2" />
+    
+    <!-- Prometheus Metrics - Free & Open Source -->
+    <PackageReference Include="prometheus-net" Version="8.2.1" />
+    <PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
+    
+    <!-- Audit.NET for Compliance - Free & Open Source -->
+    <PackageReference Include="Audit.NET" Version="25.0.3" />
+    <PackageReference Include="Audit.NET.SqlServer" Version="25.0.3" />
+    
+    <!-- ML.NET for AI Analysis - Free Microsoft ML Framework -->
+    <PackageReference Include="Microsoft.ML" Version="4.0.0" />
+    <PackageReference Include="Microsoft.ML.TimeSeries" Version="4.0.0" />
+    <PackageReference Include="Microsoft.ML.AutoML" Version="0.21.1" />
   </ItemGroup>
 
   <ItemGroup>

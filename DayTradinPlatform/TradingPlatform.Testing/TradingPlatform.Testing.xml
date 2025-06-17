@@ -1,0 +1,258 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>TradingPlatform.Testing</name>
+    </assembly>
+    <members>
+        <member name="T:TradingPlatform.Testing.Examples.MockMessageBusExamples">
+            <summary>
+            Example usage patterns for the standardized MockMessageBus implementation.
+            Demonstrates comprehensive testing approaches for trading platform components.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Examples.MockMessageBusExamples.BasicUsageExample">
+            <summary>
+            Example: Basic message publication and verification.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Examples.MockMessageBusExamples.ErrorInjectionExample">
+            <summary>
+            Example: Testing with error injection to validate resilience.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Examples.MockMessageBusExamples.PerformanceTestingExample">
+            <summary>
+            Example: Performance testing with latency measurement.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Examples.MockMessageBusExamples.TradingPatternExample">
+            <summary>
+            Example: Testing trading message patterns and sequences.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Examples.MockMessageBusExamples.UnhealthySystemExample">
+            <summary>
+            Example: Testing unhealthy system scenarios.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Examples.MockMessageBusExamples.ScenarioTestingExample">
+            <summary>
+            Example: Comprehensive scenario testing.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Examples.MockMessageBusExamples.AsynchronousWaitingExample">
+            <summary>
+            Example: Asynchronous message waiting with timeouts.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Examples.MockMessageBusExamples.RunAllExamples">
+            <summary>
+            Runs all examples to demonstrate the MockMessageBus capabilities.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Testing.Mocks.MockMessageBus">
+            <summary>
+            Comprehensive mock implementation of IMessageBus for testing purposes.
+            Provides extensive testing capabilities including message capture, latency simulation,
+            error injection, and comprehensive verification methods.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.SetSimulatedLatency(System.TimeSpan)">
+            <summary>
+            Configures the mock to simulate specific latency for performance testing.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.SetHealthStatus(System.Boolean)">
+            <summary>
+            Configures the health status for testing failure scenarios.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.SetErrorRate(System.Double)">
+            <summary>
+            Configures error injection rate for resilience testing.
+            </summary>
+            <param name="errorRate">Probability (0-1) of operations failing</param>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.SetMessageCapture(System.Boolean,System.Int32)">
+            <summary>
+            Enables or disables message capture for verification.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.GetPublishedMessages">
+            <summary>
+            Gets all published messages for verification in tests.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.GetPublishedMessages(System.String)">
+            <summary>
+            Gets published messages for a specific stream.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.GetPublishedMessageCount(System.String)">
+            <summary>
+            Gets count of published messages for a specific stream.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.GetSubscriptions">
+            <summary>
+            Gets all subscriptions for verification in tests.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.GetSubscriptions(System.String)">
+            <summary>
+            Gets subscriptions for a specific stream.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.GetAcknowledgedMessages">
+            <summary>
+            Gets all acknowledged message IDs.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.WasMessagePublished(System.String,System.String)">
+            <summary>
+            Verifies that a message was published to the specified stream.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.WasMessagePublished(System.String,System.String,System.Int32)">
+            <summary>
+            Verifies that a specific number of messages were published to a stream.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.WasSubscriptionCreated(System.String,System.String,System.String)">
+            <summary>
+            Verifies that a subscription was created for the specified stream.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.WasMessageAcknowledged(System.String)">
+            <summary>
+            Verifies that a message was acknowledged.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.ClearCapturedMessages">
+            <summary>
+            Clears all captured messages and subscriptions for test isolation.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.Reset">
+            <summary>
+            Resets the mock to default state for test isolation.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Testing.Mocks.MockMessageBus.PublishedMessage">
+            <summary>
+            Represents a captured published message for verification.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.PublishedMessage.#ctor(System.String,System.String,System.String,System.Object,System.DateTime)">
+            <summary>
+            Represents a captured published message for verification.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Testing.Mocks.MockMessageBus.SubscriptionInfo">
+            <summary>
+            Represents a captured subscription for verification.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Mocks.MockMessageBus.SubscriptionInfo.#ctor(System.String,System.String,System.String,System.String,System.DateTime)">
+            <summary>
+            Represents a captured subscription for verification.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Testing.Utilities.MessageBusTestHelpers">
+            <summary>
+            Helper utilities for testing message bus interactions in trading platform components.
+            Provides standardized patterns for setting up, configuring, and verifying message bus behavior.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreateStandardMock(Microsoft.Extensions.Logging.ILogger{TradingPlatform.Testing.Mocks.MockMessageBus})">
+            <summary>
+            Creates a pre-configured MockMessageBus for standard testing scenarios.
+            </summary>
+            <param name="logger">Optional logger for debugging test issues</param>
+            <returns>Configured MockMessageBus instance</returns>
+        </member>
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreateHighLatencyMock(System.TimeSpan,Microsoft.Extensions.Logging.ILogger{TradingPlatform.Testing.Mocks.MockMessageBus})">
+            <summary>
+            Creates a MockMessageBus configured for high-latency testing scenarios.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreateErrorInjectingMock(System.Double,Microsoft.Extensions.Logging.ILogger{TradingPlatform.Testing.Mocks.MockMessageBus})">
+            <summary>
+            Creates a MockMessageBus configured for error injection testing.
+            </summary>
+            <param name="errorRate">Probability (0-1) of operations failing</param>
+        </member>
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreateUnhealthyMock(Microsoft.Extensions.Logging.ILogger{TradingPlatform.Testing.Mocks.MockMessageBus})">
+            <summary>
+            Creates a MockMessageBus configured for unhealthy system testing.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreatePerformanceMock(Microsoft.Extensions.Logging.ILogger{TradingPlatform.Testing.Mocks.MockMessageBus})">
+            <summary>
+            Creates a MockMessageBus optimized for performance testing scenarios.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.AddMockMessageBus(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{TradingPlatform.Testing.Mocks.MockMessageBus})">
+            <summary>
+            Registers a MockMessageBus in the service collection for dependency injection testing.
+            </summary>
+            <param name="services">Service collection to register with</param>
+            <param name="configureAction">Optional configuration action</param>
+            <returns>The service collection for chaining</returns>
+        </member>
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.VerifyMessageOrder(TradingPlatform.Testing.Mocks.MockMessageBus,System.String,System.String[])">
+            <summary>
+            Verifies that specific trading messages were published in the correct order.
+            </summary>
+            <param name="mockBus">MockMessageBus to verify</param>
+            <param name="stream">Stream to check</param>
+            <param name="expectedMessageTypes">Expected message types in order</param>
+            <returns>True if messages were published in the expected order</returns>
+        </member>
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.VerifyTradingPattern(TradingPlatform.Testing.Mocks.MockMessageBus,System.String,TradingPlatform.Testing.Utilities.TradingMessagePattern)">
+            <summary>
+            Verifies that trading-specific message patterns were followed.
+            </summary>
+            <param name="mockBus">MockMessageBus to verify</param>
+            <param name="orderStream">Order stream name</param>
+            <param name="expectedPattern">Expected trading message pattern</param>
+            <returns>True if the pattern was followed</returns>
+        </member>
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.WaitForMessagesAsync(TradingPlatform.Testing.Mocks.MockMessageBus,System.String,System.Int32,System.TimeSpan)">
+            <summary>
+            Waits for a specific number of messages to be published with timeout.
+            Useful for asynchronous testing scenarios.
+            </summary>
+            <param name="mockBus">MockMessageBus to monitor</param>
+            <param name="stream">Stream to monitor</param>
+            <param name="expectedCount">Expected number of messages</param>
+            <param name="timeout">Maximum time to wait</param>
+            <returns>True if the expected count was reached within timeout</returns>
+        </member>
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreateScenarioMock(TradingPlatform.Testing.Utilities.TestScenario,Microsoft.Extensions.Logging.ILogger{TradingPlatform.Testing.Mocks.MockMessageBus})">
+            <summary>
+            Creates a comprehensive test scenario with multiple conditions.
+            </summary>
+            <param name="scenario">Predefined test scenario</param>
+            <param name="logger">Optional logger</param>
+            <returns>Configured MockMessageBus for the scenario</returns>
+        </member>
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.ValidateConfigurationAsync(TradingPlatform.Testing.Mocks.MockMessageBus)">
+            <summary>
+            Validates that the mock configuration meets trading platform requirements.
+            </summary>
+            <param name="mockBus">MockMessageBus to validate</param>
+            <returns>Validation result with any issues found</returns>
+        </member>
+        <member name="T:TradingPlatform.Testing.Utilities.TradingMessagePattern">
+            <summary>
+            Predefined trading message patterns for verification.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Testing.Utilities.TestScenario">
+            <summary>
+            Predefined test scenarios for comprehensive testing.
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -4,7 +4,7 @@ using System.Linq;
 using Xunit;
 using TradingPlatform.Core.Mathematics;
 
-namespace TradingPlatform.Tests.Core.Mathematics
+namespace TradingPlatform.Testing.Tests
 {
     public class FinancialMathTests
     {

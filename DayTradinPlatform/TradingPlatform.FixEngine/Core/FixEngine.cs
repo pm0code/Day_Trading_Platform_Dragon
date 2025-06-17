@@ -4,6 +4,8 @@ using TradingPlatform.FixEngine.Interfaces;
 using TradingPlatform.FixEngine.Models;
 using TradingPlatform.FixEngine.Trading;
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Observability;
+using Audit.Core;
 
 namespace TradingPlatform.FixEngine.Core;
 
@@ -14,6 +16,9 @@ namespace TradingPlatform.FixEngine.Core;
 public sealed class FixEngine : IFixEngine
 {
     private readonly ILogger _logger;
+    private readonly ITradingMetrics _tradingMetrics;
+    private readonly IInfrastructureMetrics _infrastructureMetrics;
+    private readonly IObservabilityEnricher _observabilityEnricher;
     private readonly ConcurrentDictionary<string, FixSession> _venueSessions = new();
     private readonly ConcurrentDictionary<string, MarketDataManager> _marketDataManagers = new();
     private readonly ConcurrentDictionary<string, OrderManager> _orderManagers = new();
@@ -30,9 +35,17 @@ public sealed class FixEngine : IFixEngine
     public event EventHandler<Interfaces.MarketDataSnapshot>? MarketDataReceived;
     public event EventHandler<VenueStatusUpdate>? VenueStatusChanged;
     
-    public FixEngine(ILogger logger)
+    public FixEngine(
+        ILogger logger,
+        ITradingMetrics tradingMetrics,
+        IInfrastructureMetrics infrastructureMetrics,
+        IObservabilityEnricher observabilityEnricher)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _tradingMetrics = tradingMetrics ?? throw new ArgumentNullException(nameof(tradingMetrics));
+        _infrastructureMetrics = infrastructureMetrics ?? throw new ArgumentNullException(nameof(infrastructureMetrics));
+        _observabilityEnricher = observabilityEnricher ?? throw new ArgumentNullException(nameof(observabilityEnricher));
+        
         _orderRouter = new OrderRouter(_logger);
         _performanceMonitor = new PerformanceMonitor();
         
@@ -43,41 +56,111 @@ public sealed class FixEngine : IFixEngine
     
     public async Task<bool> InitializeAsync(FixEngineConfig config)
     {
+        using var activity = OpenTelemetryInstrumentation.FixEngineActivitySource.StartActivity("FixEngineInitialization");
+        var correlationId = _observabilityEnricher.GenerateCorrelationId();
+        
+        _observabilityEnricher.EnrichActivity(activity, "FixEngineInitialization", config);
+        activity?.SetTag("fix.correlation_id", correlationId);
+        
         if (_isInitialized)
-            throw new InvalidOperationException("FIX Engine is already initialized");
+        {
+            var error = "FIX Engine is already initialized";
+            activity?.SetStatus(ActivityStatusCode.Error, error);
+            throw new InvalidOperationException(error);
+        }
         
         _config = config ?? throw new ArgumentNullException(nameof(config));
+        var stopwatch = Stopwatch.StartNew();
         
         try
         {
-            _logger.LogInfo($"Initializing FIX Engine with {config.VenueConfigs.Count} venues");
+            // Comprehensive audit logging for initialization
+            await AuditScope.CreateAsync("FixEngineInitialization", config, new
+            {
+                EventType = "FixEngine.Initialization",
+                CorrelationId = correlationId,
+                VenueCount = config.VenueConfigs.Count,
+                ComplianceRequired = true,
+                RegulatoryScope = "FINRA.SEC.CFTC",
+                TimestampUtc = DateTime.UtcNow
+            });
             
-            // Initialize sessions for each venue
+            _logger.LogInfo($"Initializing FIX Engine with {config.VenueConfigs.Count} venues | CorrelationId: {correlationId}");
+            
+            // Initialize sessions for each venue with comprehensive monitoring
             foreach (var (venueName, venueConfig) in config.VenueConfigs)
             {
-                await InitializeVenueAsync(venueName, venueConfig);
+                var venueStopwatch = Stopwatch.StartNew();
+                await InitializeVenueAsync(venueName, venueConfig, correlationId);
+                venueStopwatch.Stop();
+                
+                // Record venue initialization metrics
+                _infrastructureMetrics.RecordNetworkLatency(venueStopwatch.Elapsed, venueName);
+                activity?.SetTag($"fix.venue.{venueName}.init_time_ms", venueStopwatch.Elapsed.TotalMilliseconds.ToString("F2"));
             }
             
+            stopwatch.Stop();
             _isInitialized = true;
-            _logger.LogInfo("FIX Engine initialization completed successfully");
+            
+            // Record successful initialization metrics
+            _tradingMetrics.RecordFixMessageProcessing("InitializationComplete", stopwatch.Elapsed);
+            
+            _logger.LogInfo($"FIX Engine initialization completed successfully in {stopwatch.Elapsed.TotalMilliseconds:F2}ms | CorrelationId: {correlationId}");
+            activity?.SetTag("fix.initialization.success", true);
+            activity?.SetTag("fix.initialization.duration_ms", stopwatch.Elapsed.TotalMilliseconds.ToString("F2"));
+            
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to initialize FIX Engine", ex);
+            stopwatch.Stop();
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            
+            // Record failed initialization
+            await AuditScope.CreateAsync("FixEngineInitializationFailure", ex, new
+            {
+                EventType = "FixEngine.InitializationFailure",
+                CorrelationId = correlationId,
+                Duration = stopwatch.Elapsed,
+                ErrorMessage = ex.Message,
+                StackTrace = ex.StackTrace
+            });
+            
+            _logger.LogError($"Failed to initialize FIX Engine after {stopwatch.Elapsed.TotalMilliseconds:F2}ms | CorrelationId: {correlationId}", ex);
             return false;
         }
     }
     
     public async Task<string> SubmitOrderAsync(Trading.OrderRequest request)
     {
+        using var activity = OpenTelemetryInstrumentation.FixEngineActivitySource.StartActivity("OrderSubmission");
+        var correlationId = _observabilityEnricher.GenerateCorrelationId();
+        
         EnsureInitialized();
+        
+        _observabilityEnricher.EnrichActivity(activity, "OrderSubmission", request);
+        activity?.SetTag("fix.correlation_id", correlationId);
+        activity?.SetTag("fix.order.symbol", request.Symbol);
+        activity?.SetTag("fix.order.side", request.Side);
+        activity?.SetTag("fix.order.quantity", request.Quantity.ToString());
+        activity?.SetTag("fix.order.price", request.Price?.ToString());
         
         var stopwatch = Stopwatch.StartNew();
         var orderId = GenerateOrderId();
         
         try
         {
+            // Comprehensive audit logging for order submission
+            await AuditScope.CreateAsync("OrderSubmission", request, new
+            {
+                EventType = "FixEngine.OrderSubmission",
+                CorrelationId = correlationId,
+                OrderId = orderId,
+                ComplianceRequired = true,
+                RegulatoryScope = "FINRA.3310",
+                TimestampUtc = DateTime.UtcNow
+            });
+            
             // Convert to Trading OrderRequest for venue selection
             var routingRequest = new Trading.OrderRequest
             {
@@ -89,11 +172,29 @@ public sealed class FixEngine : IFixEngine
                 TimeInForce = request.TimeInForce
             };
             
+            var venueSelectionStart = Stopwatch.StartNew();
             var optimalVenue = _orderRouter.SelectOptimalVenue(routingRequest);
+            venueSelectionStart.Stop();
+            
+            // Record venue selection metrics
+            _tradingMetrics.RecordFixMessageProcessing("VenueSelection", venueSelectionStart.Elapsed);
+            activity?.SetTag("fix.venue.selected", optimalVenue);
+            activity?.SetTag("fix.venue.selection_time_microseconds", venueSelectionStart.Elapsed.TotalMicroseconds.ToString("F2"));
             
             if (!_orderManagers.TryGetValue(optimalVenue, out var orderManager))
             {
-                throw new InvalidOperationException($"Order manager not available for venue: {optimalVenue}");
+                var error = $"Order manager not available for venue: {optimalVenue}";
+                activity?.SetStatus(ActivityStatusCode.Error, error);
+                
+                await AuditScope.CreateAsync("OrderSubmissionFailure", new { optimalVenue, request }, new
+                {
+                    EventType = "FixEngine.OrderSubmissionFailure",
+                    CorrelationId = correlationId,
+                    ErrorType = "VenueUnavailable",
+                    VenueName = optimalVenue
+                });
+                
+                throw new InvalidOperationException(error);
             }
             
             // Convert to FIX order request
@@ -107,18 +208,49 @@ public sealed class FixEngine : IFixEngine
                 TimeInForce = ConvertTimeInForce(request.TimeInForce)
             };
             
+            var orderSubmissionStart = Stopwatch.StartNew();
             var clOrdId = await orderManager.SubmitOrderAsync(fixOrderRequest);
+            orderSubmissionStart.Stop();
             
             stopwatch.Stop();
-            _performanceMonitor.RecordOrderLatency(stopwatch.Elapsed.TotalMicroseconds);
             
-            _logger.LogInfo($"Order submitted: {orderId} -> {clOrdId} via {optimalVenue} in {stopwatch.Elapsed.TotalMicroseconds}μs");
+            // Record comprehensive order submission metrics
+            _performanceMonitor.RecordOrderLatency(stopwatch.Elapsed.TotalMicroseconds);
+            _tradingMetrics.RecordOrderExecution(stopwatch.Elapsed, request.Symbol, request.Quantity);
+            _tradingMetrics.RecordFixMessageProcessing("OrderSubmission", orderSubmissionStart.Elapsed);
+            
+            // Update activity with success metrics
+            activity?.SetTag("fix.order.client_order_id", clOrdId);
+            activity?.SetTag("fix.order.total_latency_microseconds", stopwatch.Elapsed.TotalMicroseconds.ToString("F2"));
+            activity?.SetTag("fix.order.submission_latency_microseconds", orderSubmissionStart.Elapsed.TotalMicroseconds.ToString("F2"));
+            activity?.SetTag("fix.order.success", true);
+            
+            // Flag latency violations
+            if (stopwatch.Elapsed.TotalMicroseconds > 100)
+            {
+                activity?.SetTag("fix.latency.violation", true);
+                activity?.SetTag("fix.latency.severity", stopwatch.Elapsed.TotalMicroseconds > 1000 ? "critical" : "warning");
+            }
+            
+            _logger.LogInfo($"Order submitted: {orderId} -> {clOrdId} via {optimalVenue} in {stopwatch.Elapsed.TotalMicroseconds:F2}μs | CorrelationId: {correlationId}");
             
             return clOrdId;
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to submit order: {orderId}", ex);
+            stopwatch.Stop();
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            
+            // Record failed order submission audit
+            await AuditScope.CreateAsync("OrderSubmissionFailure", new { orderId, request, ex.Message }, new
+            {
+                EventType = "FixEngine.OrderSubmissionFailure",
+                CorrelationId = correlationId,
+                Duration = stopwatch.Elapsed,
+                ErrorType = ex.GetType().Name
+            });
+            
+            _logger.LogError($"Failed to submit order: {orderId} after {stopwatch.Elapsed.TotalMicroseconds:F2}μs | CorrelationId: {correlationId}", ex);
             throw;
         }
     }
@@ -274,62 +406,160 @@ public sealed class FixEngine : IFixEngine
         };
     }
     
-    private async Task InitializeVenueAsync(string venueName, VenueConnectionConfig config)
+    private async Task InitializeVenueAsync(string venueName, VenueConnectionConfig config, string correlationId)
     {
+        using var activity = OpenTelemetryInstrumentation.FixEngineActivitySource.StartActivity("VenueInitialization");
+        
+        _observabilityEnricher.EnrichActivity(activity, "VenueInitialization", config);
+        activity?.SetTag("fix.correlation_id", correlationId);
+        activity?.SetTag("fix.venue.name", venueName);
+        activity?.SetTag("fix.venue.host", config.Host);
+        activity?.SetTag("fix.venue.port", config.Port.ToString());
+        activity?.SetTag("fix.venue.target_comp_id", config.TargetCompId);
+        
+        var stopwatch = Stopwatch.StartNew();
+        
         try
         {
-            _logger.LogInfo($"Initializing venue: {venueName} at {config.Host}:{config.Port}");
+            // Comprehensive audit logging for venue initialization
+            await AuditScope.CreateAsync("VenueInitialization", new { venueName, config }, new
+            {
+                EventType = "FixEngine.VenueInitialization",
+                CorrelationId = correlationId,
+                VenueName = venueName,
+                VenueHost = config.Host,
+                VenuePort = config.Port,
+                ComplianceRequired = true,
+                RegulatoryScope = "FINRA.SEC.CFTC",
+                TimestampUtc = DateTime.UtcNow
+            });
             
-            // Create FIX session
+            _logger.LogInfo($"Initializing venue: {venueName} at {config.Host}:{config.Port} | CorrelationId: {correlationId}");
+            
+            // Create FIX session with enhanced monitoring
+            var sessionCreationStart = Stopwatch.StartNew();
             var session = new FixSession(_config!.SenderCompId, config.TargetCompId, _logger);
+            sessionCreationStart.Stop();
             
-            // Create market data manager
+            _infrastructureMetrics.RecordMemoryAllocation(GC.GetTotalMemory(false), $"FixSession_{venueName}");
+            activity?.SetTag("fix.session.creation_time_microseconds", sessionCreationStart.Elapsed.TotalMicroseconds.ToString("F2"));
+            
+            // Create market data manager with observability
+            var marketDataManagerCreationStart = Stopwatch.StartNew();
             var marketDataManager = new MarketDataManager(session, _logger);
-            marketDataManager.MarketDataReceived += OnMarketDataReceived;
-            marketDataManager.SubscriptionStatusChanged += OnSubscriptionStatusChanged;
+            marketDataManager.MarketDataReceived += (sender, update) => OnMarketDataReceived(sender, update, correlationId);
+            marketDataManager.SubscriptionStatusChanged += (sender, status) => OnSubscriptionStatusChanged(sender, status, correlationId);
+            marketDataManagerCreationStart.Stop();
             
-            // Create order manager
+            activity?.SetTag("fix.market_data_manager.creation_time_microseconds", marketDataManagerCreationStart.Elapsed.TotalMicroseconds.ToString("F2"));
+            
+            // Create order manager with observability
+            var orderManagerCreationStart = Stopwatch.StartNew();
             var orderManager = new OrderManager(session, _logger);
-            orderManager.ExecutionReceived += OnExecutionReceived;
-            orderManager.OrderStatusChanged += OnOrderStatusChanged;
-            orderManager.OrderRejected += OnOrderRejected;
+            orderManager.ExecutionReceived += (sender, execution) => OnExecutionReceived(sender, execution, correlationId);
+            orderManager.OrderStatusChanged += (sender, status) => OnOrderStatusChanged(sender, status, correlationId);
+            orderManager.OrderRejected += (sender, rejection) => OnOrderRejected(sender, rejection, correlationId);
+            orderManagerCreationStart.Stop();
             
-            // Session event handlers
-            session.SessionStateChanged += (s, state) => OnVenueStatusChanged(venueName, state);
-            session.MessageReceived += (s, msg) => _performanceMonitor.RecordMessageProcessed();
+            activity?.SetTag("fix.order_manager.creation_time_microseconds", orderManagerCreationStart.Elapsed.TotalMicroseconds.ToString("F2"));
+            
+            // Session event handlers with enhanced monitoring
+            session.SessionStateChanged += (s, state) => OnVenueStatusChanged(venueName, state, correlationId);
+            session.MessageReceived += (s, msg) => 
+            {
+                _performanceMonitor.RecordMessageProcessed();
+                _tradingMetrics.RecordFixMessageProcessing(msg.GetType().Name, TimeSpan.FromTicks(1)); // Minimal processing time
+            };
             
             // Store components
             _venueSessions[venueName] = session;
             _marketDataManagers[venueName] = marketDataManager;
             _orderManagers[venueName] = orderManager;
             
-            // Connect to venue
+            // Connect to venue with comprehensive monitoring
+            var connectionStart = Stopwatch.StartNew();
             var connected = await session.ConnectAsync(config.Host, config.Port, TimeSpan.FromSeconds(30));
+            connectionStart.Stop();
+            
+            // Record connection metrics
+            _infrastructureMetrics.RecordNetworkLatency(connectionStart.Elapsed, venueName);
+            activity?.SetTag("fix.connection.time_milliseconds", connectionStart.Elapsed.TotalMilliseconds.ToString("F2"));
+            activity?.SetTag("fix.connection.success", connected);
+            
             if (connected)
             {
-                _logger.LogInfo($"Successfully connected to venue: {venueName}");
+                stopwatch.Stop();
+                
+                // Record successful venue initialization
+                _tradingMetrics.RecordFixMessageProcessing("VenueInitialization", stopwatch.Elapsed);
+                
+                _logger.LogInfo($"Successfully connected to venue: {venueName} in {stopwatch.Elapsed.TotalMilliseconds:F2}ms | CorrelationId: {correlationId}");
+                
+                activity?.SetTag("fix.venue.initialization.success", true);
+                activity?.SetTag("fix.venue.initialization.duration_ms", stopwatch.Elapsed.TotalMilliseconds.ToString("F2"));
+                
                 VenueStatusChanged?.Invoke(this, new VenueStatusUpdate
                 {
                     Venue = venueName,
                     IsConnected = true,
                     Timestamp = DateTime.UtcNow,
-                    StatusMessage = "Connected successfully"
+                    StatusMessage = $"Connected successfully in {stopwatch.Elapsed.TotalMilliseconds:F2}ms"
                 });
             }
             else
             {
-                _logger.LogError($"Failed to connect to venue: {venueName}");
+                stopwatch.Stop();
+                var error = $"Failed to connect to venue: {venueName} after {stopwatch.Elapsed.TotalMilliseconds:F2}ms";
+                
+                activity?.SetStatus(ActivityStatusCode.Error, error);
+                activity?.SetTag("fix.venue.initialization.success", false);
+                activity?.SetTag("fix.venue.initialization.duration_ms", stopwatch.Elapsed.TotalMilliseconds.ToString("F2"));
+                
+                // Record failed venue connection audit
+                await AuditScope.CreateAsync("VenueInitializationFailure", new { venueName, config }, new
+                {
+                    EventType = "FixEngine.VenueInitializationFailure",
+                    CorrelationId = correlationId,
+                    VenueName = venueName,
+                    Duration = stopwatch.Elapsed,
+                    ErrorType = "ConnectionFailure"
+                });
+                
+                _logger.LogError(error);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to initialize venue: {venueName}", ex);
+            stopwatch.Stop();
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            
+            // Record venue initialization failure audit
+            await AuditScope.CreateAsync("VenueInitializationFailure", new { venueName, config, ex.Message }, new
+            {
+                EventType = "FixEngine.VenueInitializationFailure",
+                CorrelationId = correlationId,
+                VenueName = venueName,
+                Duration = stopwatch.Elapsed,
+                ErrorType = ex.GetType().Name,
+                ErrorMessage = ex.Message
+            });
+            
+            _logger.LogError($"Failed to initialize venue: {venueName} after {stopwatch.Elapsed.TotalMilliseconds:F2}ms | CorrelationId: {correlationId}", ex);
             throw;
         }
     }
     
-    private void OnMarketDataReceived(object? sender, MarketDataUpdate update)
+    private void OnMarketDataReceived(object? sender, MarketDataUpdate update, string correlationId)
     {
+        using var activity = OpenTelemetryInstrumentation.MarketDataActivitySource.StartActivity("MarketDataReceived");
+        
+        _observabilityEnricher.EnrichActivity(activity, "MarketDataReceived", update);
+        activity?.SetTag("fix.correlation_id", correlationId);
+        activity?.SetTag("fix.market_data.symbol", update.Symbol);
+        activity?.SetTag("fix.market_data.price", update.Price?.ToString());
+        activity?.SetTag("fix.market_data.volume", update.Volume?.ToString());
+        
+        var processingStart = Stopwatch.StartNew();
         _performanceMonitor.RecordMarketDataUpdate();
         
         var snapshot = new Interfaces.MarketDataSnapshot
@@ -344,6 +574,13 @@ public sealed class FixEngine : IFixEngine
             LastSize = update.Snapshot.LastSize,
             DataType = MarketDataType.Level1
         };
+        
+        processingStart.Stop();
+        
+        // Record market data processing metrics
+        _tradingMetrics.RecordMarketDataTick(update.Symbol, processingStart.Elapsed);
+        activity?.SetTag("fix.market_data.processing_time_microseconds", processingStart.Elapsed.TotalMicroseconds.ToString("F2"));
+        activity?.SetTag("fix.market_data.bid_ask_spread", (snapshot.AskPrice - snapshot.BidPrice)?.ToString());
         
         MarketDataReceived?.Invoke(this, snapshot);
     }
