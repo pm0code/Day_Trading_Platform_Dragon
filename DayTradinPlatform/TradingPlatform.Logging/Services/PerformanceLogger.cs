@@ -1,31 +1,40 @@
+// TradingPlatform.Logging.Services.PerformanceLogger - CANONICAL DELEGATION TO TradingLogOrchestrator
+// ZERO Microsoft.Extensions.Logging dependencies - Delegates to unified LogOrchestrator
+// ALL PERFORMANCE LOGGING MUST GO THROUGH TradingLogOrchestrator.Instance
+
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 using TradingPlatform.Logging.Interfaces;
 
 namespace TradingPlatform.Logging.Services;
 
 /// <summary>
-/// High-performance logger for ultra-low latency trading operations
-/// Tracks method execution times, throughput, and latency percentiles
-/// CRITICAL: Every performance-sensitive operation must be measured
+/// CANONICAL PERFORMANCE LOGGER - Delegates to TradingLogOrchestrator.Instance
+/// High-performance wrapper that ensures all performance logging goes through the orchestrator
+/// CRITICAL: Use TradingLogOrchestrator.Instance directly for best performance
 /// </summary>
 public class PerformanceLogger : IPerformanceLogger
 {
-    private readonly ITradingLogger _tradingLogger;
-    private readonly ILogger<PerformanceLogger> _logger;
+    private readonly TradingLogOrchestrator _orchestrator;
+    private readonly ILogger _logger;
     private readonly ConcurrentDictionary<string, List<double>> _latencyHistograms = new();
     private readonly ConcurrentDictionary<string, PerformanceCounters> _performanceCounters = new();
     private readonly Timer _reportingTimer;
 
-    public PerformanceLogger(ITradingLogger tradingLogger, ILogger<PerformanceLogger> logger)
+    public PerformanceLogger(ITradingLogger tradingLogger, ILogger logger)
     {
-        _tradingLogger = tradingLogger ?? throw new ArgumentNullException(nameof(tradingLogger));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _orchestrator = TradingLogOrchestrator.Instance;
+        _logger = logger;
         
         // Report performance statistics every 30 seconds
         _reportingTimer = new Timer(ReportPerformanceStatistics, null, 
             TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+            
+        // Log delegation setup
+        _orchestrator.LogInfo("PerformanceLogger initialized - delegating to TradingLogOrchestrator",
+            new { DelegationType = "Canonical", ReportingInterval = "30s" });
     }
 
     /// <summary>
@@ -34,25 +43,19 @@ public class PerformanceLogger : IPerformanceLogger
     /// </summary>
     public IDisposable MeasureOperation(string operationName, string? correlationId = null)
     {
-        correlationId ??= _tradingLogger.GenerateCorrelationId();
+        correlationId ??= _orchestrator.GenerateCorrelationId();
         
-        _tradingLogger.LogDebugTrace($"Starting performance measurement for operation: {operationName}", 
-            new Dictionary<string, object>
-            {
-                ["operation"] = operationName,
-                ["correlation_id"] = correlationId,
-                ["start_time"] = DateTime.UtcNow
-            });
+        _orchestrator.LogMethodEntry(new { OperationName = operationName, CorrelationId = correlationId });
 
         return new PerformanceMeasurement(operationName, correlationId, this);
     }
 
     /// <summary>
-    /// Log completed operation with performance metrics
+    /// Log completed operation with performance metrics - Delegates to Orchestrator
     /// </summary>
     public void LogOperationComplete(string operationName, TimeSpan duration, bool success, string? correlationId = null)
     {
-        correlationId ??= _tradingLogger.GenerateCorrelationId();
+        correlationId ??= _orchestrator.GenerateCorrelationId();
 
         // Record latency for histogram calculation
         RecordLatency(operationName, duration.TotalMilliseconds);
@@ -60,70 +63,51 @@ public class PerformanceLogger : IPerformanceLogger
         // Update performance counters
         UpdatePerformanceCounters(operationName, duration, success);
 
-        // Log the operation completion
-        _tradingLogger.LogPerformanceMetric($"operation.{operationName}.duration", 
-            duration.TotalMilliseconds, "ms", new Dictionary<string, object>
-            {
-                ["operation"] = operationName,
-                ["success"] = success,
-                ["correlation_id"] = correlationId
-            });
-
-        var logLevel = success ? LogLevel.Debug : LogLevel.Warning;
-        var status = success ? "SUCCESS" : "FAILED";
-
-        _logger.Log(logLevel, 
-            "OPERATION_COMPLETE: {OperationName} {Status} in {DurationMs}ms [CorrelationId: {CorrelationId}]",
-            operationName, status, duration.TotalMilliseconds, correlationId);
+        // Delegate to orchestrator for actual logging
+        _orchestrator.LogPerformance(operationName, duration, success, null, null, null, null);
 
         // Check for performance violations
         CheckPerformanceThresholds(operationName, duration, correlationId);
     }
 
     /// <summary>
-    /// Log throughput metrics for batch operations
+    /// Log throughput metrics for batch operations - Delegates to Orchestrator
     /// </summary>
     public void LogThroughput(string operation, int itemsProcessed, TimeSpan duration, string? correlationId = null)
     {
-        correlationId ??= _tradingLogger.GenerateCorrelationId();
+        correlationId ??= _orchestrator.GenerateCorrelationId();
 
         var throughputPerSecond = itemsProcessed / duration.TotalSeconds;
         var avgLatencyMs = duration.TotalMilliseconds / itemsProcessed;
 
-        _tradingLogger.LogPerformanceMetric($"throughput.{operation}.items_per_second", 
-            throughputPerSecond, "items/sec", new Dictionary<string, object>
-            {
-                ["operation"] = operation,
-                ["items_processed"] = itemsProcessed,
-                ["duration_ms"] = duration.TotalMilliseconds,
-                ["avg_latency_ms"] = avgLatencyMs,
-                ["correlation_id"] = correlationId
-            });
-
-        _logger.LogInformation(
-            "THROUGHPUT: {Operation} processed {ItemsProcessed} items in {DurationMs}ms ({ThroughputPerSec:F2} items/sec, {AvgLatencyMs:F2}ms avg) [CorrelationId: {CorrelationId}]",
-            operation, itemsProcessed, duration.TotalMilliseconds, throughputPerSecond, avgLatencyMs, correlationId);
+        // Delegate to orchestrator
+        _orchestrator.LogPerformance(operation, duration, true, throughputPerSecond, 
+            new { ItemsProcessed = itemsProcessed, AvgLatencyMs = avgLatencyMs },
+            new { ThroughputPerSecond = throughputPerSecond });
     }
 
     /// <summary>
-    /// Log latency percentiles for operation analysis
+    /// Log latency percentiles for operation analysis - Delegates to Orchestrator
     /// </summary>
     public void LogLatencyPercentile(string operation, TimeSpan p50, TimeSpan p95, TimeSpan p99, string? correlationId = null)
     {
-        correlationId ??= _tradingLogger.GenerateCorrelationId();
+        correlationId ??= _orchestrator.GenerateCorrelationId();
 
-        _tradingLogger.LogPerformanceMetric($"latency.{operation}.p50", p50.TotalMilliseconds, "ms");
-        _tradingLogger.LogPerformanceMetric($"latency.{operation}.p95", p95.TotalMilliseconds, "ms");
-        _tradingLogger.LogPerformanceMetric($"latency.{operation}.p99", p99.TotalMilliseconds, "ms");
+        // Delegate individual percentile logging to orchestrator
+        _orchestrator.LogPerformance($"{operation}.P50", p50, true, null, null, new { Percentile = "50th" });
+        _orchestrator.LogPerformance($"{operation}.P95", p95, true, null, null, new { Percentile = "95th" });
+        _orchestrator.LogPerformance($"{operation}.P99", p99, true, null, null, new { Percentile = "99th" });
 
-        _logger.LogInformation(
-            "LATENCY_PERCENTILES: {Operation} - P50: {P50Ms}ms, P95: {P95Ms}ms, P99: {P99Ms}ms [CorrelationId: {CorrelationId}]",
-            operation, p50.TotalMilliseconds, p95.TotalMilliseconds, p99.TotalMilliseconds, correlationId);
+        // Log summary
+        _orchestrator.LogInfo($"Latency percentiles for {operation}",
+            new { P50 = p50.TotalMilliseconds, P95 = p95.TotalMilliseconds, P99 = p99.TotalMilliseconds });
 
         // Alert on high P99 latency (>100ms for critical operations)
         if (IsCriticalOperation(operation) && p99.TotalMilliseconds > 100)
         {
-            _tradingLogger.LogLatencyViolation(operation, p99, TimeSpan.FromMilliseconds(100), correlationId);
+            _orchestrator.LogWarning($"High P99 latency for {operation}",
+                impact: $"Performance degradation: {p99.TotalMilliseconds}ms P99 latency",
+                recommendedAction: "Investigate performance bottleneck");
         }
     }
 
@@ -176,13 +160,18 @@ public class PerformanceLogger : IPerformanceLogger
         {
             var severity = duration > thresholds.Critical ? "CRITICAL" : "WARNING";
             
-            _logger.LogWarning(
-                "PERFORMANCE_THRESHOLD_EXCEEDED: {OperationName} took {DurationMs}ms, threshold: {ThresholdMs}ms, severity: {Severity} [CorrelationId: {CorrelationId}]",
-                operationName, duration.TotalMilliseconds, thresholds.Warning.TotalMilliseconds, severity, correlationId);
+            _orchestrator.LogWarning($"Performance threshold exceeded for {operationName}",
+                impact: $"Performance degradation: {duration.TotalMilliseconds}ms vs {thresholds.Warning.TotalMilliseconds}ms threshold",
+                recommendedAction: "Investigate performance bottleneck",
+                additionalData: new { OperationName = operationName, Duration = duration, Threshold = thresholds.Warning, Severity = severity, CorrelationId = correlationId });
 
             if (duration > thresholds.Critical)
             {
-                _tradingLogger.LogLatencyViolation(operationName, duration, thresholds.Critical, correlationId);
+                _orchestrator.LogRisk("PerformanceViolation", "CRITICAL", 
+                    $"Critical performance threshold exceeded: {operationName}",
+                    null, null, 
+                    new[] { "Immediate performance investigation required" },
+                    "Performance SLA violation");
             }
         }
     }
@@ -240,9 +229,10 @@ public class PerformanceLogger : IPerformanceLogger
                 var avgDurationMs = counters.TotalDurationMs / counters.TotalOperations;
                 var successRate = (double)counters.SuccessfulOperations / counters.TotalOperations * 100;
 
-                _tradingLogger.LogPerformanceMetric($"operation.{operationName}.avg_duration", avgDurationMs, "ms");
-                _tradingLogger.LogPerformanceMetric($"operation.{operationName}.success_rate", successRate, "percent");
-                _tradingLogger.LogPerformanceMetric($"operation.{operationName}.total_operations", counters.TotalOperations, "count");
+                // Delegate performance reporting to orchestrator
+                _orchestrator.LogPerformance($"Report.{operationName}", 
+                    TimeSpan.FromMilliseconds(avgDurationMs), true, null,
+                    new { SuccessRate = successRate, TotalOperations = counters.TotalOperations, MinDuration = counters.MinDurationMs, MaxDuration = counters.MaxDurationMs });
 
                 // Calculate and report percentiles if we have histogram data
                 if (_latencyHistograms.TryGetValue(operationName, out var latencies) && latencies.Count > 0)
@@ -260,15 +250,13 @@ public class PerformanceLogger : IPerformanceLogger
                             TimeSpan.FromMilliseconds(p99));
                     }
                 }
-
-                _logger.LogDebug(
-                    "PERFORMANCE_REPORT: {OperationName} - Avg: {AvgMs}ms, Min: {MinMs}ms, Max: {MaxMs}ms, Success: {SuccessRate:F1}%, Count: {TotalOps}",
-                    operationName, avgDurationMs, counters.MinDurationMs, counters.MaxDurationMs, successRate, counters.TotalOperations);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to report performance statistics");
+            _orchestrator.LogError("Failed to report performance statistics", ex,
+                operationContext: "Performance statistics reporting",
+                troubleshootingHints: "Check performance logger health");
         }
     }
 
@@ -289,6 +277,7 @@ public class PerformanceLogger : IPerformanceLogger
     public void Dispose()
     {
         _reportingTimer?.Dispose();
+        _orchestrator.LogInfo("PerformanceLogger disposed");
     }
 }
 

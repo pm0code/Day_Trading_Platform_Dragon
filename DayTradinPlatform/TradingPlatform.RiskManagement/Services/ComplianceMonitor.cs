@@ -4,6 +4,7 @@ using TradingPlatform.Messaging.Events;
 using System.Collections.Concurrent;
 
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 namespace TradingPlatform.RiskManagement.Services;
 
 public class ComplianceMonitor : IComplianceMonitor
@@ -35,7 +36,7 @@ public class ComplianceMonitor : IComplianceMonitor
             LastChecked: DateTime.UtcNow
         );
 
-        _logger.LogInformation("Compliance status checked - Compliant: {IsCompliant}, Violations: {ViolationCount}", 
+        TradingLogOrchestrator.Instance.LogInfo("Compliance status checked - Compliant: {IsCompliant}, Violations: {ViolationCount}", 
             isCompliant, violations.Count());
 
         return status;
@@ -158,7 +159,7 @@ public class ComplianceMonitor : IComplianceMonitor
 
         var hasMajorViolations = violations.Any(v => v.Severity >= ViolationSeverity.Major);
         
-        _logger.LogDebug("Regulatory validation for {Symbol}: {Result} ({ViolationCount} violations)", 
+        TradingLogOrchestrator.Instance.LogInfo("Regulatory validation for {Symbol}: {Result} ({ViolationCount} violations)", 
             request.Symbol, !hasMajorViolations ? "PASSED" : "FAILED", violations.Count);
 
         return !hasMajorViolations;
@@ -177,7 +178,7 @@ public class ComplianceMonitor : IComplianceMonitor
             RequiresAcknowledgment = false
         });
 
-        _logger.LogInformation("Compliance event logged: {EventType} for account {AccountId}", 
+        TradingLogOrchestrator.Instance.LogInfo("Compliance event logged: {EventType} for account {AccountId}", 
             complianceEvent.EventType, complianceEvent.AccountId);
     }
 
@@ -247,7 +248,7 @@ public class ComplianceMonitor : IComplianceMonitor
 
         await LogComplianceEventAsync(complianceEvent);
         
-        _logger.LogWarning("Compliance violation: {RuleId} - {Description} (Severity: {Severity})", 
+        TradingLogOrchestrator.Instance.LogWarning("Compliance violation: {RuleId} - {Description} (Severity: {Severity})", 
             violation.RuleId, violation.Description, violation.Severity);
     }
 }

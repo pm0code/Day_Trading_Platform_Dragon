@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.StrategyEngine.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.StrategyEngine.Services;
 
@@ -71,14 +72,14 @@ public class StrategyManager : IStrategyManager
             var runningStrategy = strategyInfo with { Status = StrategyStatus.Running };
             _activeStrategies.TryUpdate(strategyId, runningStrategy, strategyInfo);
 
-            _logger.LogInformation("Strategy {StrategyId} ({StrategyName}) started successfully", 
+            TradingLogOrchestrator.Instance.LogInfo("Strategy {StrategyId} ({StrategyName}) started successfully", 
                 strategyId, config.Name);
 
             return new StrategyResult(true, $"Strategy {strategyId} started successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error starting strategy {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error starting strategy {StrategyId}", strategyId);
             return new StrategyResult(false, ex.Message, "START_ERROR");
         }
     }
@@ -108,14 +109,14 @@ public class StrategyManager : IStrategyManager
             var stoppedStrategy = stoppingStrategy with { Status = StrategyStatus.Stopped };
             _activeStrategies.TryUpdate(strategyId, stoppedStrategy, stoppingStrategy);
 
-            _logger.LogInformation("Strategy {StrategyId} ({StrategyName}) stopped successfully", 
+            TradingLogOrchestrator.Instance.LogInfo("Strategy {StrategyId} ({StrategyName}) stopped successfully", 
                 strategyId, strategy.Name);
 
             return new StrategyResult(true, $"Strategy {strategyId} stopped successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error stopping strategy {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error stopping strategy {StrategyId}", strategyId);
             return new StrategyResult(false, ex.Message, "STOP_ERROR");
         }
     }
@@ -144,14 +145,14 @@ public class StrategyManager : IStrategyManager
             // Update configuration
             _strategyConfigs.AddOrUpdate(config.StrategyId, config, (k, v) => config);
 
-            _logger.LogInformation("Strategy configuration updated for {StrategyId}", config.StrategyId);
+            TradingLogOrchestrator.Instance.LogInfo("Strategy configuration updated for {StrategyId}", config.StrategyId);
 
             await Task.CompletedTask;
             return new StrategyResult(true, $"Configuration updated for strategy {config.StrategyId}");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating strategy configuration for {StrategyId}", config.StrategyId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error updating strategy configuration for {StrategyId}", config.StrategyId);
             return new StrategyResult(false, ex.Message, "CONFIG_UPDATE_ERROR");
         }
     }
@@ -184,7 +185,7 @@ public class StrategyManager : IStrategyManager
 
                 _activeStrategies.TryUpdate(strategyId, updatedStrategy, strategy);
                 
-                _logger.LogDebug("Updated metrics for strategy {StrategyId}: PnL={PnL}, Trades={TradeCount}", 
+                TradingLogOrchestrator.Instance.LogInfo("Updated metrics for strategy {StrategyId}: PnL={PnL}, Trades={TradeCount}", 
                     strategyId, updatedStrategy.PnL, updatedStrategy.TradeCount);
             }
 
@@ -192,7 +193,7 @@ public class StrategyManager : IStrategyManager
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating strategy metrics for {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error updating strategy metrics for {StrategyId}", strategyId);
         }
     }
 
@@ -225,14 +226,14 @@ public class StrategyManager : IStrategyManager
             var pausedStrategy = strategy with { Status = StrategyStatus.Paused };
             _activeStrategies.TryUpdate(strategyId, pausedStrategy, strategy);
 
-            _logger.LogInformation("Strategy {StrategyId} paused", strategyId);
+            TradingLogOrchestrator.Instance.LogInfo("Strategy {StrategyId} paused", strategyId);
             
             await Task.CompletedTask;
             return new StrategyResult(true, $"Strategy {strategyId} paused successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error pausing strategy {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error pausing strategy {StrategyId}", strategyId);
             return new StrategyResult(false, ex.Message, "PAUSE_ERROR");
         }
     }
@@ -257,14 +258,14 @@ public class StrategyManager : IStrategyManager
             var runningStrategy = strategy with { Status = StrategyStatus.Running };
             _activeStrategies.TryUpdate(strategyId, runningStrategy, strategy);
 
-            _logger.LogInformation("Strategy {StrategyId} resumed", strategyId);
+            TradingLogOrchestrator.Instance.LogInfo("Strategy {StrategyId} resumed", strategyId);
             
             await Task.CompletedTask;
             return new StrategyResult(true, $"Strategy {strategyId} resumed successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error resuming strategy {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error resuming strategy {StrategyId}", strategyId);
             return new StrategyResult(false, ex.Message, "RESUME_ERROR");
         }
     }
@@ -321,7 +322,7 @@ public class StrategyManager : IStrategyManager
         _strategyConfigs.TryAdd(gapConfig.StrategyId, gapConfig);
         _strategyConfigs.TryAdd(momentumConfig.StrategyId, momentumConfig);
 
-        _logger.LogInformation("Initialized {ConfigCount} default strategy configurations", 
+        TradingLogOrchestrator.Instance.LogInfo("Initialized {ConfigCount} default strategy configurations", 
             _strategyConfigs.Count);
     }
 }

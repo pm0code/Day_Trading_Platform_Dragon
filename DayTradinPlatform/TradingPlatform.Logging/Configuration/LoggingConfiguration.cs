@@ -161,9 +161,9 @@ public static class LoggingConfiguration
     /// </summary>
     public static IServiceCollection AddTradingLogging(this IServiceCollection services, string serviceName)
     {
-        // Register core logging services
+        // Register core logging services using CANONICAL TradingLogOrchestrator
         services.AddSingleton<ITradingLogger>(provider => 
-            new TradingLogger(provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<TradingLogger>>(), serviceName));
+            new TradingLogger(serviceName));
         
         services.AddSingleton<IPerformanceLogger, PerformanceLogger>();
         

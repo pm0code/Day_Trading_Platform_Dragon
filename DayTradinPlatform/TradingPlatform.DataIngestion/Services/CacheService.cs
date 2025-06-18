@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Caching.Memory;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.DataIngestion.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.DataIngestion.Services
 {
@@ -31,11 +32,11 @@ namespace TradingPlatform.DataIngestion.Services
         {
             if (_cache.TryGetValue(key, out T value))
             {
-                _logger.LogTrace($"Cache hit for key: {key}");
+                TradingLogOrchestrator.Instance.LogInfo($"Cache hit for key: {key}");
                 return value;
             }
 
-            _logger.LogTrace($"Cache miss for key: {key}");
+            TradingLogOrchestrator.Instance.LogInfo($"Cache miss for key: {key}");
             return null;
         }
 
@@ -43,7 +44,7 @@ namespace TradingPlatform.DataIngestion.Services
         {
             if (value == null)
             {
-                _logger.LogWarning($"Attempted to cache null value for key: {key}");
+                TradingLogOrchestrator.Instance.LogWarning($"Attempted to cache null value for key: {key}");
                 return;
             }
 
@@ -55,20 +56,20 @@ namespace TradingPlatform.DataIngestion.Services
             };
 
             _cache.Set(key, value, options);
-            _logger.LogTrace($"Cached value for key: {key}, expires in: {expiration}");
+            TradingLogOrchestrator.Instance.LogInfo($"Cached value for key: {key}, expires in: {expiration}");
         }
 
         public async Task RemoveAsync(string key)
         {
             _cache.Remove(key);
-            _logger.LogTrace($"Removed cache entry for key: {key}");
+            TradingLogOrchestrator.Instance.LogInfo($"Removed cache entry for key: {key}");
         }
 
         public async Task ClearMarketDataAsync(string marketCode)
         {
             // In a real implementation, we'd need to track keys by market
             // For MVP, we'll implement a simple approach
-            _logger.LogInformation($"Clearing market data cache for: {marketCode}");
+            TradingLogOrchestrator.Instance.LogInfo($"Clearing market data cache for: {marketCode}");
 
             // This is a simplified implementation
             // In production, we'd maintain a key registry by market
@@ -77,7 +78,7 @@ namespace TradingPlatform.DataIngestion.Services
         public async Task<bool> ExistsAsync(string key)
         {
             var exists = _cache.TryGetValue(key, out _);
-            _logger.LogTrace($"Cache existence check for key: {key} = {exists}");
+            TradingLogOrchestrator.Instance.LogInfo($"Cache existence check for key: {key} = {exists}");
             return exists;
         }
     }

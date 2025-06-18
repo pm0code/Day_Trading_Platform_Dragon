@@ -2,7 +2,8 @@
 
 using System;
 using System.Collections.Generic;
-using TradingPlatform.Core.Interfaces; // For logging
+using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging; // For logging
 
 namespace TradingPlatform.Core.Models
 {
@@ -38,7 +39,7 @@ namespace TradingPlatform.Core.Models
                 if (value > Ask)
                 {
                     // Log warning and correct the value
-                    _logger.LogWarning($"Invalid Bid ({value}) > Ask ({Ask}) for {Symbol}. Setting Bid to Ask.");
+                    TradingLogOrchestrator.Instance.LogWarning($"Invalid Bid ({value}) > Ask ({Ask}) for {Symbol}. Setting Bid to Ask.");
                     _bid = Ask; // Consistent correction
                 }
                 else
@@ -57,7 +58,7 @@ namespace TradingPlatform.Core.Models
                 if (value < Bid)
                 {
                     // Log warning and correct the value
-                    _logger.LogWarning($"Invalid Ask ({value}) < Bid ({Bid}) for {Symbol}. Setting Ask to Bid.");
+                    TradingLogOrchestrator.Instance.LogWarning($"Invalid Ask ({value}) < Bid ({Bid}) for {Symbol}. Setting Ask to Bid.");
                     _ask = Bid; // Consistent correction
                 }
                 else

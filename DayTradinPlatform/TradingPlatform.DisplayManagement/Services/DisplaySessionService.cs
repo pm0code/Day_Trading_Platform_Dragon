@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using TradingPlatform.Core.Interfaces;
 using Microsoft.Extensions.Options;
 using TradingPlatform.DisplayManagement.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.DisplayManagement.Services;
 
@@ -110,7 +111,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Starting DRAGON display session monitoring service");
+        TradingLogOrchestrator.Instance.LogInfo("Starting DRAGON display session monitoring service");
 
         // Initial session detection
         await RefreshSessionInfoAsync();
@@ -129,12 +130,12 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during session monitoring");
+                TradingLogOrchestrator.Instance.LogError(ex, "Error during session monitoring");
                 await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken); // Retry after 30 seconds
             }
         }
 
-        _logger.LogInformation("DRAGON display session monitoring service stopped");
+        TradingLogOrchestrator.Instance.LogInfo("DRAGON display session monitoring service stopped");
     }
 
     /// <summary>
@@ -160,7 +161,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
     {
         try
         {
-            _logger.LogDebug("Refreshing DRAGON display session information");
+            TradingLogOrchestrator.Instance.LogInfo("Refreshing DRAGON display session information");
             
             var previousSession = _currentSession;
             _currentSession = await DetectCurrentSessionAsync();
@@ -172,12 +173,12 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
                 await NotifySessionChanged(previousSession, _currentSession);
             }
 
-            _logger.LogInformation("Session detected: {SessionType} ({Description})", 
+            TradingLogOrchestrator.Instance.LogInfo("Session detected: {SessionType} ({Description})", 
                 _currentSession.SessionType, _currentSession.Description);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to refresh session information");
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to refresh session information");
         }
     }
 
@@ -316,7 +317,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to detect session type, defaulting to Unknown");
+            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to detect session type, defaulting to Unknown");
             return DisplaySessionType.Unknown;
         }
     }
@@ -374,7 +375,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to get remote client information");
+            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to get remote client information");
             return null;
         }
     }
@@ -607,13 +608,13 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
 
             if (_options.LogSessionChanges)
             {
-                _logger.LogInformation("Session changed from {PreviousType} to {CurrentType}", 
+                TradingLogOrchestrator.Instance.LogInfo("Session changed from {PreviousType} to {CurrentType}", 
                     previous.SessionType, current.SessionType);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to notify session change");
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to notify session change");
         }
     }
 

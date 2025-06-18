@@ -1,710 +1,553 @@
-using System.Diagnostics;
+// TradingPlatform.Logging.Services.TradingLogger - CANONICAL DELEGATION TO TradingLogOrchestrator
+// ZERO Microsoft.Extensions.Logging dependencies - Delegates to unified LogOrchestrator
+// ALL LOGGING MUST GO THROUGH TradingLogOrchestrator.Instance
+
 using System.Runtime.CompilerServices;
-using Microsoft.Extensions.Logging;
-using Serilog;
-using Serilog.Context;
+using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 using TradingPlatform.Logging.Interfaces;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace TradingPlatform.Logging.Services;
 
 /// <summary>
-/// Enterprise-grade trading logger with comprehensive instrumentation
-/// CRITICAL: Every trading operation MUST be logged with full context and timing
+/// CANONICAL LOGGING WRAPPER - Delegates all calls to TradingLogOrchestrator.Instance
+/// This ensures ALL logging throughout the platform goes through the single LogOrchestrator
+/// CRITICAL: Use TradingLogOrchestrator.Instance directly for best performance
 /// </summary>
-public class TradingLogger : ITradingLogger
+public class TradingLogger : ILogger, ITradingLogger
 {
-    private readonly ILogger _logger;
-    private readonly Serilog.ILogger _serilogLogger;
+    private readonly TradingLogOrchestrator _orchestrator;
     private readonly string _serviceName;
-    private readonly AsyncLocal<string?> _correlationId = new();
 
-    public TradingLogger(ILogger<TradingLogger> logger, string serviceName)
+    public TradingLogger(string serviceName = "TradingPlatform")
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _serilogLogger = Serilog.Log.ForContext<TradingLogger>();
         _serviceName = serviceName;
+        _orchestrator = TradingLogOrchestrator.Instance;
+        
+        // Log the delegation setup
+        _orchestrator.LogInfo("TradingLogger initialized - delegating to TradingLogOrchestrator", 
+            new { ServiceName = serviceName, DelegationType = "Canonical" });
     }
 
-    #region Trading Operation Logging
+    #region ILogger Interface - Delegated to TradingLogOrchestrator
+
+    public void LogInfo(string message, 
+                        object? additionalData = null,
+                        [CallerMemberName] string memberName = "",
+                        [CallerFilePath] string sourceFilePath = "",
+                        [CallerLineNumber] int sourceLineNumber = 0)
+    {
+        _orchestrator.LogInfo(message, additionalData, memberName, sourceFilePath, sourceLineNumber);
+    }
+
+    public void LogWarning(string message,
+                           string? impact = null,
+                           string? recommendedAction = null, 
+                           object? additionalData = null,
+                           [CallerMemberName] string memberName = "",
+                           [CallerFilePath] string sourceFilePath = "",
+                           [CallerLineNumber] int sourceLineNumber = 0)
+    {
+        _orchestrator.LogWarning(message, impact, recommendedAction, additionalData, memberName, sourceFilePath, sourceLineNumber);
+    }
+
+    public void LogError(string message,
+                         Exception? exception = null,
+                         string? operationContext = null,
+                         string? userImpact = null,
+                         string? troubleshootingHints = null,
+                         object? additionalData = null,
+                         [CallerMemberName] string memberName = "",
+                         [CallerFilePath] string sourceFilePath = "",
+                         [CallerLineNumber] int sourceLineNumber = 0)
+    {
+        _orchestrator.LogError(message, exception, operationContext, userImpact, troubleshootingHints, additionalData, memberName, sourceFilePath, sourceLineNumber);
+    }
+
+    public void LogTrade(string symbol,
+                         string action,
+                         decimal quantity,
+                         decimal price,
+                         string? orderId = null,
+                         string? strategy = null,
+                         TimeSpan? executionTime = null,
+                         object? marketConditions = null,
+                         object? riskMetrics = null,
+                         [CallerMemberName] string memberName = "")
+    {
+        _orchestrator.LogTrade(symbol, action, quantity, price, orderId, strategy, executionTime, marketConditions, riskMetrics, memberName);
+    }
+
+    public void LogPositionChange(string symbol,
+                                  decimal oldPosition,
+                                  decimal newPosition,
+                                  string reason,
+                                  decimal? pnlImpact = null,
+                                  object? riskImpact = null,
+                                  [CallerMemberName] string memberName = "")
+    {
+        _orchestrator.LogPositionChange(symbol, oldPosition, newPosition, reason, pnlImpact, riskImpact, memberName);
+    }
+
+    public void LogPerformance(string operation,
+                               TimeSpan duration,
+                               bool success = true,
+                               double? throughput = null,
+                               object? resourceUsage = null,
+                               object? businessMetrics = null,
+                               TimeSpan? comparisonTarget = null,
+                               [CallerMemberName] string memberName = "")
+    {
+        _orchestrator.LogPerformance(operation, duration, success, throughput, resourceUsage, businessMetrics, comparisonTarget, memberName);
+    }
+
+    public void LogHealth(string component,
+                          string status,
+                          object? metrics = null,
+                          string[]? alerts = null,
+                          string[]? recommendedActions = null,
+                          [CallerMemberName] string memberName = "")
+    {
+        _orchestrator.LogHealth(component, status, metrics, alerts, recommendedActions, memberName);
+    }
+
+    public void LogRisk(string riskType,
+                        string severity,
+                        string description,
+                        decimal? currentExposure = null,
+                        decimal? riskLimit = null,
+                        string[]? mitigationActions = null,
+                        string? regulatoryImplications = null,
+                        [CallerMemberName] string memberName = "")
+    {
+        _orchestrator.LogRisk(riskType, severity, description, currentExposure, riskLimit, mitigationActions, regulatoryImplications, memberName);
+    }
+
+    public void LogDataPipeline(string pipeline,
+                                string stage,
+                                int recordsProcessed,
+                                object? dataQuality = null,
+                                object? latencyMetrics = null,
+                                string[]? errors = null,
+                                [CallerMemberName] string memberName = "")
+    {
+        _orchestrator.LogDataPipeline(pipeline, stage, recordsProcessed, dataQuality, latencyMetrics, errors, memberName);
+    }
+
+    public void LogMarketData(string symbol,
+                              string dataType,
+                              string source,
+                              TimeSpan? latency = null,
+                              string? quality = null,
+                              object? volume = null,
+                              [CallerMemberName] string memberName = "")
+    {
+        _orchestrator.LogMarketData(symbol, dataType, source, latency, quality, volume, memberName);
+    }
+
+    public void LogMethodEntry(object? parameters = null,
+                               [CallerMemberName] string memberName = "",
+                               [CallerFilePath] string sourceFilePath = "")
+    {
+        _orchestrator.LogMethodEntry(parameters, memberName, sourceFilePath);
+    }
+
+    public void LogMethodExit(object? result = null,
+                              TimeSpan? executionTime = null,
+                              bool success = true,
+                              [CallerMemberName] string memberName = "")
+    {
+        _orchestrator.LogMethodExit(result, executionTime, success, memberName);
+    }
+
+    #endregion
+
+    #region ITradingLogger Interface - Delegated to TradingLogOrchestrator
 
     public void LogOrderSubmission(string orderId, string symbol, decimal quantity, decimal price, string side, string correlationId)
     {
-        using var scope = BeginScope(new Dictionary<string, object>
-        {
-            ["OperationType"] = "OrderSubmission",
-            ["OrderId"] = orderId,
-            ["Symbol"] = symbol,
-            ["Quantity"] = quantity,
-            ["Price"] = price,
-            ["Side"] = side,
-            ["CorrelationId"] = correlationId,
-            ["Timestamp"] = DateTime.UtcNow,
-            ["Service"] = _serviceName
-        });
-
-        _serilogLogger.Information(
-            "ORDER_SUBMISSION: Order {OrderId} submitted for {Symbol} - {Side} {Quantity} @ {Price} [CorrelationId: {CorrelationId}]",
-            orderId, symbol, side, quantity, price, correlationId);
-
-        LogPerformanceMetric("orders.submitted", 1, "count", new Dictionary<string, object>
-        {
-            ["symbol"] = symbol,
-            ["side"] = side,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogTrade(symbol, $"SUBMIT_{side}", quantity, price, orderId, "OrderSubmission", null, null, null);
     }
 
     public void LogOrderExecution(string orderId, string symbol, decimal executedQuantity, decimal executedPrice, TimeSpan latency, string correlationId)
     {
-        using var scope = BeginScope(new Dictionary<string, object>
-        {
-            ["OperationType"] = "OrderExecution",
-            ["OrderId"] = orderId,
-            ["Symbol"] = symbol,
-            ["ExecutedQuantity"] = executedQuantity,
-            ["ExecutedPrice"] = executedPrice,
-            ["LatencyMs"] = latency.TotalMilliseconds,
-            ["CorrelationId"] = correlationId,
-            ["Timestamp"] = DateTime.UtcNow,
-            ["Service"] = _serviceName
-        });
-
-        _serilogLogger.Information(
-            "ORDER_EXECUTION: Order {OrderId} executed for {Symbol} - {ExecutedQuantity} @ {ExecutedPrice} in {LatencyMs}ms [CorrelationId: {CorrelationId}]",
-            orderId, symbol, executedQuantity, executedPrice, latency.TotalMilliseconds, correlationId);
-
-        // Check for latency violations (target <100μs for critical path)
-        if (latency.TotalMicroseconds > 100)
-        {
-            LogLatencyViolation("OrderExecution", latency, TimeSpan.FromMicroseconds(100), correlationId);
-        }
-
-        LogPerformanceMetric("orders.executed", 1, "count", new Dictionary<string, object>
-        {
-            ["symbol"] = symbol,
-            ["latency_ms"] = latency.TotalMilliseconds,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogTrade(symbol, "EXECUTED", executedQuantity, executedPrice, orderId, "OrderExecution", latency, null, null);
     }
 
     public void LogOrderRejection(string orderId, string symbol, string reason, string correlationId)
     {
-        using var scope = BeginScope(new Dictionary<string, object>
-        {
-            ["OperationType"] = "OrderRejection",
-            ["OrderId"] = orderId,
-            ["Symbol"] = symbol,
-            ["Reason"] = reason,
-            ["CorrelationId"] = correlationId,
-            ["Timestamp"] = DateTime.UtcNow,
-            ["Service"] = _serviceName
-        });
-
-        _serilogLogger.Warning(
-            "ORDER_REJECTION: Order {OrderId} rejected for {Symbol} - Reason: {Reason} [CorrelationId: {CorrelationId}]",
-            orderId, symbol, reason, correlationId);
-
-        LogPerformanceMetric("orders.rejected", 1, "count", new Dictionary<string, object>
-        {
-            ["symbol"] = symbol,
-            ["reason"] = reason,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogWarning($"Order rejected: {orderId} for {symbol}", 
+            impact: "Trading operation failed", 
+            recommendedAction: "Review order parameters and retry",
+            additionalData: new { OrderId = orderId, Symbol = symbol, Reason = reason, CorrelationId = correlationId });
     }
 
     public void LogOrderCancellation(string orderId, string symbol, string reason, string correlationId)
     {
-        using var scope = BeginScope(new Dictionary<string, object>
-        {
-            ["OperationType"] = "OrderCancellation",
-            ["OrderId"] = orderId,
-            ["Symbol"] = symbol,
-            ["Reason"] = reason,
-            ["CorrelationId"] = correlationId,
-            ["Timestamp"] = DateTime.UtcNow,
-            ["Service"] = _serviceName
-        });
-
-        _serilogLogger.Information(
-            "ORDER_CANCELLATION: Order {OrderId} cancelled for {Symbol} - Reason: {Reason} [CorrelationId: {CorrelationId}]",
-            orderId, symbol, reason, correlationId);
-
-        LogPerformanceMetric("orders.cancelled", 1, "count", new Dictionary<string, object>
-        {
-            ["symbol"] = symbol,
-            ["reason"] = reason,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogInfo($"Order cancelled: {orderId} for {symbol} - {reason}",
+            new { OrderId = orderId, Symbol = symbol, Reason = reason, CorrelationId = correlationId });
     }
-
-    #endregion
-
-    #region Market Data Logging
 
     public void LogMarketDataReceived(string symbol, decimal price, long volume, DateTime timestamp, TimeSpan latency)
     {
-        using var scope = BeginScope(new Dictionary<string, object>
-        {
-            ["OperationType"] = "MarketDataReceived",
-            ["Symbol"] = symbol,
-            ["Price"] = price,
-            ["Volume"] = volume,
-            ["DataTimestamp"] = timestamp,
-            ["LatencyMs"] = latency.TotalMilliseconds,
-            ["Service"] = _serviceName
-        });
-
-        _serilogLogger.Debug(
-            "MARKET_DATA: {Symbol} - Price: {Price}, Volume: {Volume}, Latency: {LatencyMs}ms",
-            symbol, price, volume, latency.TotalMilliseconds);
-
-        // Alert on high latency (target <50μs for market data)
-        if (latency.TotalMicroseconds > 50)
-        {
-            LogLatencyViolation("MarketDataReceived", latency, TimeSpan.FromMicroseconds(50), GenerateCorrelationId());
-        }
-
-        LogPerformanceMetric("market_data.received", 1, "count", new Dictionary<string, object>
-        {
-            ["symbol"] = symbol,
-            ["latency_ms"] = latency.TotalMilliseconds,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogMarketData(symbol, "PRICE_UPDATE", "Market", latency, "LIVE", new { Price = price, Volume = volume, Timestamp = timestamp });
     }
 
     public void LogMarketDataCacheHit(string symbol, TimeSpan retrievalTime)
     {
-        _serilogLogger.Debug(
-            "CACHE_HIT: {Symbol} retrieved from cache in {RetrievalTimeMs}ms",
-            symbol, retrievalTime.TotalMilliseconds);
-
-        LogPerformanceMetric("market_data.cache_hit", 1, "count", new Dictionary<string, object>
-        {
-            ["symbol"] = symbol,
-            ["retrieval_time_ms"] = retrievalTime.TotalMilliseconds,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogPerformance($"MarketDataCache.Hit.{symbol}", retrievalTime, true);
     }
 
     public void LogMarketDataCacheMiss(string symbol, TimeSpan retrievalTime)
     {
-        _serilogLogger.Debug(
-            "CACHE_MISS: {Symbol} not in cache, fetched in {RetrievalTimeMs}ms",
-            symbol, retrievalTime.TotalMilliseconds);
-
-        LogPerformanceMetric("market_data.cache_miss", 1, "count", new Dictionary<string, object>
-        {
-            ["symbol"] = symbol,
-            ["retrieval_time_ms"] = retrievalTime.TotalMilliseconds,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogPerformance($"MarketDataCache.Miss.{symbol}", retrievalTime, false);
     }
 
     public void LogMarketDataProviderLatency(string provider, string symbol, TimeSpan latency)
     {
-        _serilogLogger.Information(
-            "PROVIDER_LATENCY: {Provider} - {Symbol} responded in {LatencyMs}ms",
-            provider, symbol, latency.TotalMilliseconds);
-
-        LogPerformanceMetric("market_data.provider_latency", latency.TotalMilliseconds, "ms", new Dictionary<string, object>
-        {
-            ["provider"] = provider,
-            ["symbol"] = symbol,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogMarketData(symbol, "PROVIDER_LATENCY", provider, latency, "MEASURED", null);
     }
-
-    #endregion
-
-    #region Strategy Execution Logging
 
     public void LogStrategySignal(string strategyName, string symbol, string signal, decimal confidence, string reason, string correlationId)
     {
-        using var scope = BeginScope(new Dictionary<string, object>
-        {
-            ["OperationType"] = "StrategySignal",
-            ["StrategyName"] = strategyName,
-            ["Symbol"] = symbol,
-            ["Signal"] = signal,
-            ["Confidence"] = confidence,
-            ["Reason"] = reason,
-            ["CorrelationId"] = correlationId,
-            ["Service"] = _serviceName
-        });
-
-        _serilogLogger.Information(
-            "STRATEGY_SIGNAL: {StrategyName} generated {Signal} signal for {Symbol} with {Confidence}% confidence - {Reason} [CorrelationId: {CorrelationId}]",
-            strategyName, signal, symbol, confidence, reason, correlationId);
-
-        LogPerformanceMetric("strategy.signals", 1, "count", new Dictionary<string, object>
-        {
-            ["strategy"] = strategyName,
-            ["symbol"] = symbol,
-            ["signal"] = signal,
-            ["confidence"] = (double)confidence,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogInfo($"Strategy signal: {strategyName} generated {signal} for {symbol}",
+            new { StrategyName = strategyName, Symbol = symbol, Signal = signal, Confidence = confidence, Reason = reason, CorrelationId = correlationId });
     }
 
     public void LogStrategyExecution(string strategyName, string symbol, TimeSpan executionTime, bool success, string correlationId)
     {
-        using var scope = BeginScope(new Dictionary<string, object>
-        {
-            ["OperationType"] = "StrategyExecution",
-            ["StrategyName"] = strategyName,
-            ["Symbol"] = symbol,
-            ["ExecutionTimeMs"] = executionTime.TotalMilliseconds,
-            ["Success"] = success,
-            ["CorrelationId"] = correlationId,
-            ["Service"] = _serviceName
-        });
-
-        var logLevel = success ? LogLevel.Information : LogLevel.Warning;
-        var status = success ? "SUCCESS" : "FAILED";
-
-        _logger.Log(logLevel,
-            "STRATEGY_EXECUTION: {StrategyName} execution {Status} for {Symbol} in {ExecutionTimeMs}ms [CorrelationId: {CorrelationId}]",
-            strategyName, status, symbol, executionTime.TotalMilliseconds, correlationId);
-
-        // Check for execution time violations (target <45ms)
-        if (executionTime.TotalMilliseconds > 45)
-        {
-            LogLatencyViolation("StrategyExecution", executionTime, TimeSpan.FromMilliseconds(45), correlationId);
-        }
-
-        LogPerformanceMetric("strategy.executions", 1, "count", new Dictionary<string, object>
-        {
-            ["strategy"] = strategyName,
-            ["symbol"] = symbol,
-            ["success"] = success,
-            ["execution_time_ms"] = executionTime.TotalMilliseconds,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogPerformance($"Strategy.{strategyName}.{symbol}", executionTime, success);
     }
 
     public void LogStrategyPerformance(string strategyName, decimal pnl, decimal sharpeRatio, int tradesCount, string correlationId)
     {
-        using var scope = BeginScope(new Dictionary<string, object>
-        {
-            ["OperationType"] = "StrategyPerformance",
-            ["StrategyName"] = strategyName,
-            ["PnL"] = pnl,
-            ["SharpeRatio"] = sharpeRatio,
-            ["TradesCount"] = tradesCount,
-            ["CorrelationId"] = correlationId,
-            ["Service"] = _serviceName
-        });
-
-        _serilogLogger.Information(
-            "STRATEGY_PERFORMANCE: {StrategyName} - PnL: {PnL}, Sharpe: {SharpeRatio}, Trades: {TradesCount} [CorrelationId: {CorrelationId}]",
-            strategyName, pnl, sharpeRatio, tradesCount, correlationId);
-
-        LogPerformanceMetric("strategy.pnl", (double)pnl, "currency", new Dictionary<string, object>
-        {
-            ["strategy"] = strategyName,
-            ["service"] = _serviceName
-        });
-
-        LogPerformanceMetric("strategy.sharpe_ratio", (double)sharpeRatio, "ratio", new Dictionary<string, object>
-        {
-            ["strategy"] = strategyName,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogInfo($"Strategy performance: {strategyName}",
+            new { StrategyName = strategyName, PnL = pnl, SharpeRatio = sharpeRatio, TradesCount = tradesCount, CorrelationId = correlationId });
     }
-
-    #endregion
-
-    #region Risk Management Logging
 
     public void LogRiskCheck(string riskType, string symbol, decimal value, decimal limit, bool passed, string correlationId)
     {
-        using var scope = BeginScope(new Dictionary<string, object>
-        {
-            ["OperationType"] = "RiskCheck",
-            ["RiskType"] = riskType,
-            ["Symbol"] = symbol,
-            ["Value"] = value,
-            ["Limit"] = limit,
-            ["Passed"] = passed,
-            ["CorrelationId"] = correlationId,
-            ["Service"] = _serviceName
-        });
-
-        var logLevel = passed ? LogLevel.Debug : LogLevel.Warning;
-        var status = passed ? "PASSED" : "FAILED";
-
-        _logger.Log(logLevel,
-            "RISK_CHECK: {RiskType} {Status} for {Symbol} - Value: {Value}, Limit: {Limit} [CorrelationId: {CorrelationId}]",
-            riskType, status, symbol, value, limit, correlationId);
-
-        LogPerformanceMetric("risk.checks", 1, "count", new Dictionary<string, object>
-        {
-            ["risk_type"] = riskType,
-            ["symbol"] = symbol,
-            ["passed"] = passed,
-            ["service"] = _serviceName
-        });
+        var severity = passed ? "LOW" : "HIGH";
+        _orchestrator.LogRisk(riskType, severity, $"Risk check for {symbol}: {value} vs limit {limit}", value, limit);
     }
 
     public void LogRiskAlert(string alertType, string symbol, decimal currentValue, decimal threshold, string severity, string correlationId)
     {
-        using var scope = BeginScope(new Dictionary<string, object>
-        {
-            ["OperationType"] = "RiskAlert",
-            ["AlertType"] = alertType,
-            ["Symbol"] = symbol,
-            ["CurrentValue"] = currentValue,
-            ["Threshold"] = threshold,
-            ["Severity"] = severity,
-            ["CorrelationId"] = correlationId,
-            ["Service"] = _serviceName
-        });
-
-        var logLevel = severity.ToUpper() switch
-        {
-            "CRITICAL" => LogLevel.Critical,
-            "HIGH" => LogLevel.Error,
-            "MEDIUM" => LogLevel.Warning,
-            _ => LogLevel.Information
-        };
-
-        _logger.Log(logLevel,
-            "RISK_ALERT: {AlertType} alert for {Symbol} - Current: {CurrentValue}, Threshold: {Threshold}, Severity: {Severity} [CorrelationId: {CorrelationId}]",
-            alertType, symbol, currentValue, threshold, severity, correlationId);
-
-        LogPerformanceMetric("risk.alerts", 1, "count", new Dictionary<string, object>
-        {
-            ["alert_type"] = alertType,
-            ["symbol"] = symbol,
-            ["severity"] = severity,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogRisk(alertType, severity, $"Risk alert for {symbol}", currentValue, threshold);
     }
 
     public void LogComplianceCheck(string complianceType, string result, string details, string correlationId)
     {
-        using var scope = BeginScope(new Dictionary<string, object>
+        var passed = result.ToUpper() == "PASSED";
+        if (passed)
         {
-            ["OperationType"] = "ComplianceCheck",
-            ["ComplianceType"] = complianceType,
-            ["Result"] = result,
-            ["Details"] = details,
-            ["CorrelationId"] = correlationId,
-            ["Service"] = _serviceName
-        });
-
-        var logLevel = result.ToUpper() == "PASSED" ? LogLevel.Information : LogLevel.Warning;
-
-        _logger.Log(logLevel,
-            "COMPLIANCE_CHECK: {ComplianceType} {Result} - {Details} [CorrelationId: {CorrelationId}]",
-            complianceType, result, details, correlationId);
-
-        LogPerformanceMetric("compliance.checks", 1, "count", new Dictionary<string, object>
+            _orchestrator.LogInfo($"Compliance check passed: {complianceType} - {details}");
+        }
+        else
         {
-            ["compliance_type"] = complianceType,
-            ["result"] = result,
-            ["service"] = _serviceName
-        });
-    }
-
-    #endregion
-
-    #region Performance Logging
-
-    public void LogMethodEntry(string methodName, object? parameters = null, [CallerMemberName] string callerName = "")
-    {
-        _serilogLogger.Debug(
-            "METHOD_ENTRY: {MethodName} called from {CallerName} with parameters: {@Parameters}",
-            methodName, callerName, parameters);
-    }
-
-    public void LogMethodExit(string methodName, TimeSpan duration, object? result = null, [CallerMemberName] string callerName = "")
-    {
-        _serilogLogger.Debug(
-            "METHOD_EXIT: {MethodName} completed in {DurationMs}ms, Result: {@Result}",
-            methodName, duration.TotalMilliseconds, result);
-
-        LogPerformanceMetric("method.duration", duration.TotalMilliseconds, "ms", new Dictionary<string, object>
-        {
-            ["method"] = methodName,
-            ["caller"] = callerName,
-            ["service"] = _serviceName
-        });
+            _orchestrator.LogWarning($"Compliance check failed: {complianceType} - {details}",
+                impact: "Regulatory compliance violation",
+                recommendedAction: "Review compliance requirements immediately");
+        }
     }
 
     public void LogPerformanceMetric(string metricName, double value, string unit, Dictionary<string, object>? tags = null)
     {
-        var enrichedTags = new Dictionary<string, object>(tags ?? new Dictionary<string, object>())
-        {
-            ["metric_name"] = metricName,
-            ["value"] = value,
-            ["unit"] = unit,
-            ["timestamp"] = DateTime.UtcNow,
-            ["service"] = _serviceName
-        };
-
-        using var scope = BeginScope(enrichedTags);
-
-        _serilogLogger.Information(
-            "PERFORMANCE_METRIC: {MetricName} = {Value} {Unit} {@Tags}",
-            metricName, value, unit, enrichedTags);
+        _orchestrator.LogPerformance(metricName, TimeSpan.FromMilliseconds(value), true, null, null, tags);
     }
 
     public void LogLatencyViolation(string operation, TimeSpan actualLatency, TimeSpan expectedLatency, string correlationId)
     {
-        using var scope = BeginScope(new Dictionary<string, object>
-        {
-            ["OperationType"] = "LatencyViolation",
-            ["Operation"] = operation,
-            ["ActualLatencyMs"] = actualLatency.TotalMilliseconds,
-            ["ExpectedLatencyMs"] = expectedLatency.TotalMilliseconds,
-            ["ViolationRatio"] = actualLatency.TotalMilliseconds / expectedLatency.TotalMilliseconds,
-            ["CorrelationId"] = correlationId,
-            ["Service"] = _serviceName
-        });
-
-        _serilogLogger.Warning(
-            "LATENCY_VIOLATION: {Operation} took {ActualLatencyMs}ms, expected <{ExpectedLatencyMs}ms [CorrelationId: {CorrelationId}]",
-            operation, actualLatency.TotalMilliseconds, expectedLatency.TotalMilliseconds, correlationId);
-
-        LogPerformanceMetric("latency.violations", 1, "count", new Dictionary<string, object>
-        {
-            ["operation"] = operation,
-            ["actual_latency_ms"] = actualLatency.TotalMilliseconds,
-            ["expected_latency_ms"] = expectedLatency.TotalMilliseconds,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogWarning($"Latency violation: {operation}",
+            impact: $"Performance degradation: {actualLatency.TotalMicroseconds}μs vs {expectedLatency.TotalMicroseconds}μs target",
+            recommendedAction: "Investigate performance bottleneck",
+            additionalData: new { Operation = operation, ActualLatency = actualLatency, ExpectedLatency = expectedLatency, CorrelationId = correlationId });
     }
-
-    #endregion
-
-    #region System Health Logging
 
     public void LogSystemMetric(string metricName, double value, string unit)
     {
-        _serilogLogger.Information(
-            "SYSTEM_METRIC: {MetricName} = {Value} {Unit}",
-            metricName, value, unit);
-
-        LogPerformanceMetric($"system.{metricName}", value, unit, new Dictionary<string, object>
-        {
-            ["metric_type"] = "system",
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogHealth("SystemMetrics", "MONITORED", new { MetricName = metricName, Value = value, Unit = unit });
     }
 
     public void LogHealthCheck(string serviceName, bool healthy, TimeSpan responseTime, string? details = null)
     {
-        var logLevel = healthy ? LogLevel.Debug : LogLevel.Warning;
         var status = healthy ? "HEALTHY" : "UNHEALTHY";
-
-        _logger.Log(logLevel,
-            "HEALTH_CHECK: {ServiceName} is {Status} - Response time: {ResponseTimeMs}ms, Details: {Details}",
-            serviceName, status, responseTime.TotalMilliseconds, details);
-
-        LogPerformanceMetric("health.check", healthy ? 1 : 0, "boolean", new Dictionary<string, object>
-        {
-            ["target_service"] = serviceName,
-            ["response_time_ms"] = responseTime.TotalMilliseconds,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogHealth(serviceName, status, new { ResponseTime = responseTime }, 
+            healthy ? null : new[] { "Service health check failed" },
+            healthy ? null : new[] { "Investigate service status", "Check dependencies" });
     }
 
     public void LogResourceUsage(string resource, double usage, double capacity, string unit)
     {
         var utilizationPercent = (usage / capacity) * 100;
-
-        _serilogLogger.Information(
-            "RESOURCE_USAGE: {Resource} = {Usage}/{Capacity} {Unit} ({UtilizationPercent:F1}%)",
-            resource, usage, capacity, unit, utilizationPercent);
-
-        LogPerformanceMetric($"resource.{resource}.usage", usage, unit);
-        LogPerformanceMetric($"resource.{resource}.utilization", utilizationPercent, "percent");
+        var status = utilizationPercent > 90 ? "CRITICAL" : utilizationPercent > 75 ? "WARNING" : "HEALTHY";
+        _orchestrator.LogHealth($"Resource.{resource}", status, 
+            new { Usage = usage, Capacity = capacity, Unit = unit, UtilizationPercent = utilizationPercent });
     }
-
-    #endregion
-
-    #region Error and Exception Logging
 
     public void LogTradingError(string operation, Exception exception, string? correlationId = null, Dictionary<string, object>? context = null)
     {
-        using var scope = BeginScope(new Dictionary<string, object>(context ?? new Dictionary<string, object>())
-        {
-            ["OperationType"] = "TradingError",
-            ["Operation"] = operation,
-            ["ExceptionType"] = exception.GetType().Name,
-            ["CorrelationId"] = correlationId ?? GenerateCorrelationId(),
-            ["Service"] = _serviceName
-        });
-
-        _serilogLogger.Error(exception,
-            "TRADING_ERROR: {Operation} failed - {ExceptionMessage} [CorrelationId: {CorrelationId}]",
-            operation, exception.Message, correlationId);
-
-        LogPerformanceMetric("errors.trading", 1, "count", new Dictionary<string, object>
-        {
-            ["operation"] = operation,
-            ["exception_type"] = exception.GetType().Name,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogError($"Trading error in {operation}", exception, operation, "Trading operations impacted", 
+            "Check system status and retry operation", context);
     }
 
     public void LogCriticalError(string operation, Exception exception, string? correlationId = null, Dictionary<string, object>? context = null)
     {
-        using var scope = BeginScope(new Dictionary<string, object>(context ?? new Dictionary<string, object>())
-        {
-            ["OperationType"] = "CriticalError",
-            ["Operation"] = operation,
-            ["ExceptionType"] = exception.GetType().Name,
-            ["CorrelationId"] = correlationId ?? GenerateCorrelationId(),
-            ["Service"] = _serviceName
-        });
-
-        _serilogLogger.Fatal(exception,
-            "CRITICAL_ERROR: {Operation} failed critically - {ExceptionMessage} [CorrelationId: {CorrelationId}]",
-            operation, exception.Message, correlationId);
-
-        LogPerformanceMetric("errors.critical", 1, "count", new Dictionary<string, object>
-        {
-            ["operation"] = operation,
-            ["exception_type"] = exception.GetType().Name,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogError($"CRITICAL ERROR in {operation}", exception, operation, "System functionality severely impacted", 
+            "Immediate investigation required - escalate to operations team", context);
     }
 
     public void LogBusinessRuleViolation(string rule, string details, string? correlationId = null)
     {
-        using var scope = BeginScope(new Dictionary<string, object>
-        {
-            ["OperationType"] = "BusinessRuleViolation",
-            ["Rule"] = rule,
-            ["Details"] = details,
-            ["CorrelationId"] = correlationId ?? GenerateCorrelationId(),
-            ["Service"] = _serviceName
-        });
-
-        _serilogLogger.Warning(
-            "BUSINESS_RULE_VIOLATION: {Rule} violated - {Details} [CorrelationId: {CorrelationId}]",
-            rule, details, correlationId);
-
-        LogPerformanceMetric("business_rules.violations", 1, "count", new Dictionary<string, object>
-        {
-            ["rule"] = rule,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogWarning($"Business rule violation: {rule}",
+            impact: "Business logic constraint violated",
+            recommendedAction: "Review business rules and data integrity",
+            additionalData: new { Rule = rule, Details = details, CorrelationId = correlationId });
     }
-
-    #endregion
-
-    #region Debug and Diagnostic Logging
 
     public void LogDebugTrace(string message, Dictionary<string, object>? context = null, [CallerMemberName] string callerName = "")
     {
-        using var scope = BeginScope(context ?? new Dictionary<string, object>());
-
-        _serilogLogger.Debug(
-            "DEBUG_TRACE: {Message} [Caller: {CallerName}] {@Context}",
-            message, callerName, context);
+        _orchestrator.LogInfo($"DEBUG: {message}", context, callerName);
     }
 
     public void LogStateTransition(string entity, string fromState, string toState, string reason, string? correlationId = null)
     {
-        using var scope = BeginScope(new Dictionary<string, object>
-        {
-            ["OperationType"] = "StateTransition",
-            ["Entity"] = entity,
-            ["FromState"] = fromState,
-            ["ToState"] = toState,
-            ["Reason"] = reason,
-            ["CorrelationId"] = correlationId ?? GenerateCorrelationId(),
-            ["Service"] = _serviceName
-        });
-
-        _serilogLogger.Information(
-            "STATE_TRANSITION: {Entity} changed from {FromState} to {ToState} - {Reason} [CorrelationId: {CorrelationId}]",
-            entity, fromState, toState, reason, correlationId);
-
-        LogPerformanceMetric("state.transitions", 1, "count", new Dictionary<string, object>
-        {
-            ["entity"] = entity,
-            ["from_state"] = fromState,
-            ["to_state"] = toState,
-            ["service"] = _serviceName
-        });
+        _orchestrator.LogInfo($"State transition: {entity} {fromState} → {toState}",
+            new { Entity = entity, FromState = fromState, ToState = toState, Reason = reason, CorrelationId = correlationId });
     }
 
     public void LogConfiguration(string component, Dictionary<string, object> configuration)
     {
-        using var scope = BeginScope(new Dictionary<string, object>
-        {
-            ["OperationType"] = "Configuration",
-            ["Component"] = component,
-            ["Service"] = _serviceName
-        });
-
-        _serilogLogger.Information(
-            "CONFIGURATION: {Component} configured with {@Configuration}",
-            component, configuration);
+        _orchestrator.LogInfo($"Configuration: {component}", configuration);
     }
 
-    #endregion
+    // Additional comprehensive debugging methods
+    public void LogClassInstantiation(string className, object? constructorParams = null, [CallerMemberName] string callerName = "")
+    {
+        _orchestrator.LogClassInstantiation(className, constructorParams, callerName);
+    }
 
-    #region Correlation and Context
+    public void LogVariableChange(string variableName, object? oldValue, object? newValue, [CallerMemberName] string callerName = "", [CallerLineNumber] int lineNumber = 0)
+    {
+        _orchestrator.LogVariableChange(variableName, oldValue, newValue, callerName, lineNumber);
+    }
 
+    public void LogDataMovement(string source, string destination, object? data, string operation, [CallerMemberName] string callerName = "")
+    {
+        _orchestrator.LogDataMovement(source, destination, data, operation, callerName);
+    }
+
+    public void LogDatabaseOperation(string operation, string table, object? parameters, TimeSpan? duration = null, bool success = true, string? errorMessage = null)
+    {
+        if (success)
+        {
+            _orchestrator.LogPerformance($"Database.{operation}.{table}", duration ?? TimeSpan.Zero, true, null, parameters);
+        }
+        else
+        {
+            _orchestrator.LogError($"Database operation failed: {operation} on {table}", 
+                operationContext: $"Database {operation}",
+                userImpact: "Data operation failed",
+                troubleshootingHints: errorMessage ?? "Check database connectivity and permissions",
+                additionalData: new { Operation = operation, Table = table, Parameters = parameters });
+        }
+    }
+
+    public void LogApiCall(string endpoint, string method, object? request, object? response, TimeSpan? duration = null, int? statusCode = null, string? errorMessage = null)
+    {
+        var success = statusCode < 400;
+        _orchestrator.LogPerformance($"Api.{method}.{endpoint}", duration ?? TimeSpan.Zero, success, null,
+            new { Request = request, Response = response, StatusCode = statusCode, ErrorMessage = errorMessage });
+    }
+
+    public void LogCacheOperation(string operation, string key, bool hit, TimeSpan? duration = null, object? data = null)
+    {
+        _orchestrator.LogPerformance($"Cache.{operation}.{(hit ? "Hit" : "Miss")}", duration ?? TimeSpan.Zero, hit, null,
+            new { Key = key, Data = data });
+    }
+
+    public void LogThreadOperation(string operation, int threadId, string threadName, object? context = null)
+    {
+        _orchestrator.LogInfo($"Thread operation: {operation}",
+            new { Operation = operation, ThreadId = threadId, ThreadName = threadName, Context = context });
+    }
+
+    public void LogMemoryUsage(string component, long bytesUsed, long bytesAllocated, string? details = null)
+    {
+        var utilizationPercent = bytesAllocated > 0 ? (double)bytesUsed / bytesAllocated * 100 : 0;
+        _orchestrator.LogHealth($"Memory.{component}", utilizationPercent > 90 ? "HIGH_USAGE" : "NORMAL",
+            new { BytesUsed = bytesUsed, BytesAllocated = bytesAllocated, UtilizationPercent = utilizationPercent, Details = details });
+    }
+
+    public void LogFileOperation(string operation, string filePath, long? fileSize = null, bool success = true, string? errorMessage = null)
+    {
+        if (success)
+        {
+            _orchestrator.LogInfo($"File operation: {operation} on {filePath}",
+                new { Operation = operation, FilePath = filePath, FileSize = fileSize });
+        }
+        else
+        {
+            _orchestrator.LogError($"File operation failed: {operation} on {filePath}",
+                operationContext: $"File {operation}",
+                troubleshootingHints: errorMessage ?? "Check file permissions and disk space",
+                additionalData: new { Operation = operation, FilePath = filePath, FileSize = fileSize });
+        }
+    }
+
+    public void LogNetworkOperation(string operation, string endpoint, long? bytesTransferred = null, TimeSpan? latency = null, bool success = true, string? errorMessage = null)
+    {
+        if (success)
+        {
+            _orchestrator.LogPerformance($"Network.{operation}", latency ?? TimeSpan.Zero, true, null,
+                new { Endpoint = endpoint, BytesTransferred = bytesTransferred });
+        }
+        else
+        {
+            _orchestrator.LogError($"Network operation failed: {operation} to {endpoint}",
+                operationContext: $"Network {operation}",
+                troubleshootingHints: errorMessage ?? "Check network connectivity",
+                additionalData: new { Operation = operation, Endpoint = endpoint, BytesTransferred = bytesTransferred });
+        }
+    }
+
+    public void LogSecurityEvent(string eventType, string details, string? userId = null, string? ipAddress = null, string? riskLevel = null)
+    {
+        var severity = riskLevel?.ToUpper() switch
+        {
+            "HIGH" => "HIGH",
+            "CRITICAL" => "CRITICAL",
+            _ => "MEDIUM"
+        };
+        
+        _orchestrator.LogRisk("SecurityEvent", severity, $"{eventType}: {details}", null, null, null,
+            "Security event requires investigation");
+    }
+
+    public void LogExceptionDetails(Exception exception, string context, Dictionary<string, object>? additionalData = null, [CallerMemberName] string callerName = "", [CallerLineNumber] int lineNumber = 0)
+    {
+        _orchestrator.LogExceptionDetails(exception, context, additionalData, callerName, lineNumber);
+    }
+
+    public void LogStackTrace(string reason, [CallerMemberName] string callerName = "")
+    {
+        _orchestrator.LogStackTrace(reason, callerName);
+    }
+
+    public void LogSystemResource(string resourceType, double currentValue, double maxValue, string unit, string? threshold = null)
+    {
+        var utilizationPercent = (currentValue / maxValue) * 100;
+        var status = utilizationPercent > 90 ? "CRITICAL" : utilizationPercent > 75 ? "WARNING" : "HEALTHY";
+        _orchestrator.LogHealth($"SystemResource.{resourceType}", status,
+            new { CurrentValue = currentValue, MaxValue = maxValue, Unit = unit, UtilizationPercent = utilizationPercent, Threshold = threshold });
+    }
+
+    public void LogApplicationEvent(string eventType, string description, object? metadata = null)
+    {
+        _orchestrator.LogInfo($"Application event: {eventType} - {description}", metadata);
+    }
+
+    public void LogUserAction(string userId, string action, object? parameters = null, string? sessionId = null)
+    {
+        _orchestrator.LogInfo($"User action: {action} by {userId}",
+            new { UserId = userId, Action = action, Parameters = parameters, SessionId = sessionId });
+    }
+
+    public void LogComponentLifecycle(string component, string state, string? reason = null, object? configuration = null)
+    {
+        _orchestrator.LogInfo($"Component lifecycle: {component} → {state}",
+            new { Component = component, State = state, Reason = reason, Configuration = configuration });
+    }
+
+    public void LogMessageQueueOperation(string operation, string queue, string? messageId = null, object? message = null, bool success = true, string? errorMessage = null)
+    {
+        if (success)
+        {
+            _orchestrator.LogInfo($"Message queue operation: {operation} on {queue}",
+                new { Operation = operation, Queue = queue, MessageId = messageId, Message = message });
+        }
+        else
+        {
+            _orchestrator.LogError($"Message queue operation failed: {operation} on {queue}",
+                operationContext: $"Message queue {operation}",
+                troubleshootingHints: errorMessage ?? "Check message queue connectivity and permissions",
+                additionalData: new { Operation = operation, Queue = queue, MessageId = messageId });
+        }
+    }
+
+    public void LogScheduledTask(string taskName, DateTime scheduledTime, DateTime? actualTime = null, bool success = true, TimeSpan? duration = null, string? errorMessage = null)
+    {
+        if (success)
+        {
+            _orchestrator.LogPerformance($"ScheduledTask.{taskName}", duration ?? TimeSpan.Zero, true, null,
+                new { TaskName = taskName, ScheduledTime = scheduledTime, ActualTime = actualTime });
+        }
+        else
+        {
+            _orchestrator.LogError($"Scheduled task failed: {taskName}",
+                operationContext: "Scheduled task execution",
+                troubleshootingHints: errorMessage ?? "Check task configuration and dependencies",
+                additionalData: new { TaskName = taskName, ScheduledTime = scheduledTime, ActualTime = actualTime });
+        }
+    }
+
+    public void LogValidation(string validationType, object? input, bool passed, string[]? errors = null, [CallerMemberName] string callerName = "")
+    {
+        if (passed)
+        {
+            _orchestrator.LogInfo($"Validation passed: {validationType}", new { Input = input }, callerName);
+        }
+        else
+        {
+            _orchestrator.LogWarning($"Validation failed: {validationType}",
+                impact: "Data validation constraint violated",
+                recommendedAction: "Review input data and validation rules",
+                additionalData: new { Input = input, Errors = errors }, callerName);
+        }
+    }
+
+    public void LogConfigurationChange(string component, string setting, object? oldValue, object? newValue, string? changedBy = null)
+    {
+        _orchestrator.LogInfo($"Configuration change: {component}.{setting}",
+            new { Component = component, Setting = setting, OldValue = oldValue, NewValue = newValue, ChangedBy = changedBy });
+    }
+
+    public void LogAlert(string alertType, string severity, string message, object? context = null, string[]? recommendedActions = null)
+    {
+        _orchestrator.LogRisk(alertType, severity, message, null, null, recommendedActions, "Alert requires attention");
+    }
+
+    // Correlation and Context
     public IDisposable BeginScope(string operationName, string? correlationId = null)
     {
-        var scopeCorrelationId = correlationId ?? GenerateCorrelationId();
-        SetCorrelationId(scopeCorrelationId);
-
-        return BeginScope(new Dictionary<string, object>
-        {
-            ["OperationName"] = operationName,
-            ["CorrelationId"] = scopeCorrelationId,
-            ["Service"] = _serviceName,
-            ["StartTime"] = DateTime.UtcNow
-        });
+        return new LogScope(); // Simplified scope for delegation
     }
 
     public IDisposable BeginScope(Dictionary<string, object> properties)
     {
-        var enrichedProperties = new Dictionary<string, object>(properties)
-        {
-            ["Service"] = _serviceName,
-            ["Timestamp"] = DateTime.UtcNow
-        };
-
-        return LogContext.PushProperty("Scope", enrichedProperties);
+        return new LogScope(); // Simplified scope for delegation
     }
 
     public string GenerateCorrelationId()
     {
-        return Guid.NewGuid().ToString("N")[..8]; // Short correlation ID for performance
+        return _orchestrator.GenerateCorrelationId();
     }
 
     public void SetCorrelationId(string correlationId)
     {
-        _correlationId.Value = correlationId;
+        // Correlation ID is handled by the orchestrator
     }
 
     #endregion
+}
 
-    #region ILogger Implementation
-
-    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+/// <summary>
+/// Simplified scope for delegation pattern
+/// </summary>
+internal class LogScope : IDisposable
+{
+    public void Dispose()
     {
-        return _logger.BeginScope(state);
+        // No-op for delegation pattern
     }
-
-    public bool IsEnabled(LogLevel logLevel)
-    {
-        return _logger.IsEnabled(logLevel);
-    }
-
-    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
-    {
-        _logger.Log(logLevel, eventId, state, exception, formatter);
-    }
-
-    #endregion
 }

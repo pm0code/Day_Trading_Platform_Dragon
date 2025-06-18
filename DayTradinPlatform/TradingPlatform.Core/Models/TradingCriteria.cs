@@ -1,7 +1,8 @@
 ﻿// File: TradingPlatform.Core\Models\TradingCriteria.cs
 
 using System;
-using TradingPlatform.Core.Interfaces; // For logging
+using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging; // For logging
 
 namespace TradingPlatform.Core.Models
 {
@@ -23,7 +24,7 @@ namespace TradingPlatform.Core.Models
             {
                 if (value < 0)
                 {
-                    _logger.LogWarning("MinimumVolume cannot be negative. Setting to default (1,000,000).");
+                    TradingLogOrchestrator.Instance.LogWarning("MinimumVolume cannot be negative. Setting to default (1,000,000).");
                     _minimumVolume = 1_000_000;
                 }
                 else
@@ -42,7 +43,7 @@ namespace TradingPlatform.Core.Models
             {
                 if (value < 0)
                 {
-                    _logger.LogWarning("MinimumRelativeVolume cannot be negative. Setting to default (2.0).");
+                    TradingLogOrchestrator.Instance.LogWarning("MinimumRelativeVolume cannot be negative. Setting to default (2.0).");
                     _minimumRelativeVolume = 2.0m;
                 }
                 else
@@ -60,7 +61,7 @@ namespace TradingPlatform.Core.Models
             {
                 if (value < 0)
                 {
-                    _logger.LogWarning("MinimumPrice cannot be negative. Setting to default (5.00).");
+                    TradingLogOrchestrator.Instance.LogWarning("MinimumPrice cannot be negative. Setting to default (5.00).");
                     _minimumPrice = 5.00m;
                 }
                 else
@@ -79,12 +80,12 @@ namespace TradingPlatform.Core.Models
             {
                 if (value < 0)
                 {
-                    _logger.LogWarning("MaximumPrice cannot be negative. Setting to default (500.00).");
+                    TradingLogOrchestrator.Instance.LogWarning("MaximumPrice cannot be negative. Setting to default (500.00).");
                     _maximumPrice = 500.00m;
                 }
                 else if (value < MinimumPrice)
                 {
-                    _logger.LogWarning("MaximumPrice cannot be less than MinimumPrice. Setting to MinimumPrice.");
+                    TradingLogOrchestrator.Instance.LogWarning("MaximumPrice cannot be less than MinimumPrice. Setting to MinimumPrice.");
                     _maximumPrice = MinimumPrice;
                 }
                 else
@@ -106,7 +107,7 @@ namespace TradingPlatform.Core.Models
             {
                 if (value < 0)
                 {
-                    _logger.LogWarning("MinimumATR cannot be negative. Setting to default (0.25).");
+                    TradingLogOrchestrator.Instance.LogWarning("MinimumATR cannot be negative. Setting to default (0.25).");
                     _minimumATR = 0.25m;
                 }
                 else
@@ -125,7 +126,7 @@ namespace TradingPlatform.Core.Models
             {
                 if (value < 0)
                 {
-                    _logger.LogWarning("MinimumChangePercent cannot be negative. Setting to default (2.0).");
+                    TradingLogOrchestrator.Instance.LogWarning("MinimumChangePercent cannot be negative. Setting to default (2.0).");
                     _minimumChangePercent = 2.0m;
                 }
                 else
@@ -144,7 +145,7 @@ namespace TradingPlatform.Core.Models
             {
                 if (value < 0)
                 {
-                    _logger.LogWarning("MinimumMarketCap cannot be negative. Setting to default (100,000,000).");
+                    TradingLogOrchestrator.Instance.LogWarning("MinimumMarketCap cannot be negative. Setting to default (100,000,000).");
                     _minimumMarketCap = 100_000_000m;
                 }
                 else
@@ -163,7 +164,7 @@ namespace TradingPlatform.Core.Models
             {
                 if (value < 0)
                 {
-                    _logger.LogWarning("MinimumGapPercent cannot be negative. Setting to default (3.0).");
+                    TradingLogOrchestrator.Instance.LogWarning("MinimumGapPercent cannot be negative. Setting to default (3.0).");
                     _minimumGapPercent = 3.0m;
                 }
                 else
@@ -188,7 +189,7 @@ namespace TradingPlatform.Core.Models
             {
                 if (value < 0)
                 {
-                    _logger.LogWarning("MaximumSpread cannot be negative. Setting to default (0.05).");
+                    TradingLogOrchestrator.Instance.LogWarning("MaximumSpread cannot be negative. Setting to default (0.05).");
                     _maximumSpread = 0.05m;
                 }
                 else

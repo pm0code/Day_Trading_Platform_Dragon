@@ -4,6 +4,7 @@ using Microsoft.Extensions.Caching.Memory;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.DataIngestion.Interfaces;
 using TradingPlatform.DataIngestion.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.DataIngestion.RateLimiting
 {
@@ -36,7 +37,7 @@ namespace TradingPlatform.DataIngestion.RateLimiting
                 _ => 60
             };
 
-            _logger.LogDebug($"Rate limit check for {provider}: {requestCount}/{limit} requests");
+            TradingLogOrchestrator.Instance.LogInfo($"Rate limit check for {provider}: {requestCount}/{limit} requests");
 
             return requestCount < limit;
         }
@@ -49,7 +50,7 @@ namespace TradingPlatform.DataIngestion.RateLimiting
             _cache.Set(cacheKey, currentCount + 1, TimeSpan.FromMinutes(1));
             _lastRequestTimes.AddOrUpdate(provider, DateTime.UtcNow, (k, v) => DateTime.UtcNow);
 
-            _logger.LogTrace($"Recorded API request for {provider}. Count: {currentCount + 1}");
+            TradingLogOrchestrator.Instance.LogInfo($"Recorded API request for {provider}. Count: {currentCount + 1}");
         }
 
         public async Task<TimeSpan> GetWaitTimeAsync(string provider)
@@ -91,7 +92,7 @@ namespace TradingPlatform.DataIngestion.RateLimiting
             _cache.Remove(cacheKey);
             _lastRequestTimes.TryRemove(provider, out _);
 
-            _logger.LogInformation($"Rate limits reset for {provider}");
+            TradingLogOrchestrator.Instance.LogInfo($"Rate limits reset for {provider}");
         }
 
         public async Task<bool> IsProviderAvailableAsync(string provider)
@@ -130,7 +131,7 @@ namespace TradingPlatform.DataIngestion.RateLimiting
 
         public void RecordFailure(Exception exception)
         {
-            _logger.LogWarning($"API request failed: {exception.Message}");
+            TradingLogOrchestrator.Instance.LogWarning($"API request failed: {exception.Message}");
             // For now, just log the failure. Could implement backoff logic here.
         }
 

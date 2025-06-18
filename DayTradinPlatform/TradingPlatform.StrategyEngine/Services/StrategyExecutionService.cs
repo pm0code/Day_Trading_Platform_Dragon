@@ -3,6 +3,7 @@ using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Messaging.Events;
 using TradingPlatform.Messaging.Interfaces;
 using TradingPlatform.StrategyEngine.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.StrategyEngine.Services;
 
@@ -43,7 +44,7 @@ public class StrategyExecutionService : IStrategyExecutionService
 
     public async Task StartBackgroundProcessingAsync()
     {
-        _logger.LogInformation("Starting background Redis Streams processing for strategy execution");
+        TradingLogOrchestrator.Instance.LogInfo("Starting background Redis Streams processing for strategy execution");
 
         try
         {
@@ -57,11 +58,11 @@ public class StrategyExecutionService : IStrategyExecutionService
                 "strategy-group", "control-consumer", 
                 HandleStrategyControlEvent, _cancellationTokenSource.Token);
 
-            _logger.LogInformation("Background processing started successfully");
+            TradingLogOrchestrator.Instance.LogInfo("Background processing started successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error starting background processing");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error starting background processing");
             throw;
         }
     }
@@ -117,7 +118,7 @@ public class StrategyExecutionService : IStrategyExecutionService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting health status");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error getting health status");
             return new StrategyHealthStatus(false, "Error", 0, 0, TimeSpan.Zero, DateTime.UtcNow, 
                 new[] { ex.Message });
         }
@@ -146,7 +147,7 @@ public class StrategyExecutionService : IStrategyExecutionService
             
             if (signals.Length > 0)
             {
-                _logger.LogInformation("Generated {SignalCount} signals for strategy {StrategyId} on {Symbol}", 
+                TradingLogOrchestrator.Instance.LogInfo("Generated {SignalCount} signals for strategy {StrategyId} on {Symbol}", 
                     signals.Length, strategyId, conditions.Symbol);
 
                 // Process each signal
@@ -171,7 +172,7 @@ public class StrategyExecutionService : IStrategyExecutionService
                     }
                     else
                     {
-                        _logger.LogWarning("Signal rejected by risk assessment for {StrategyId}: {Reason}", 
+                        TradingLogOrchestrator.Instance.LogWarning("Signal rejected by risk assessment for {StrategyId}: {Reason}", 
                             strategyId, "Risk limits exceeded");
                     }
                 }
@@ -184,11 +185,11 @@ public class StrategyExecutionService : IStrategyExecutionService
             // Log performance for strategy execution latency tracking
             if (stopwatch.Elapsed.TotalMilliseconds > 45) // Target: <45ms strategy execution
             {
-                _logger.LogWarning("Strategy execution exceeded 45ms target: {ElapsedMilliseconds}ms for {StrategyId}",
+                TradingLogOrchestrator.Instance.LogWarning("Strategy execution exceeded 45ms target: {ElapsedMilliseconds}ms for {StrategyId}",
                     stopwatch.Elapsed.TotalMilliseconds, strategyId);
             }
 
-            _logger.LogDebug("Strategy {StrategyId} executed in {ElapsedMicroseconds}μs", 
+            TradingLogOrchestrator.Instance.LogInfo("Strategy {StrategyId} executed in {ElapsedMicroseconds}μs", 
                 strategyId, stopwatch.Elapsed.TotalMicroseconds);
 
             return new StrategyResult(true, $"Strategy {strategyId} executed successfully", 
@@ -201,7 +202,7 @@ public class StrategyExecutionService : IStrategyExecutionService
         catch (Exception ex)
         {
             stopwatch.Stop();
-            _logger.LogError(ex, "Error executing strategy {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error executing strategy {StrategyId}", strategyId);
             return new StrategyResult(false, ex.Message, "EXECUTION_ERROR");
         }
     }
@@ -234,7 +235,7 @@ public class StrategyExecutionService : IStrategyExecutionService
     {
         try
         {
-            _logger.LogDebug("Processing market data event for {Symbol}", marketDataEvent.Symbol);
+            TradingLogOrchestrator.Instance.LogInfo("Processing market data event for {Symbol}", marketDataEvent.Symbol);
 
             // Create market conditions from market data
             var conditions = new MarketConditions(
@@ -258,7 +259,7 @@ public class StrategyExecutionService : IStrategyExecutionService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error handling market data event for {Symbol}", marketDataEvent.Symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error handling market data event for {Symbol}", marketDataEvent.Symbol);
         }
     }
 
@@ -266,7 +267,7 @@ public class StrategyExecutionService : IStrategyExecutionService
     {
         try
         {
-            _logger.LogInformation("Processing strategy control event: {Signal} for {StrategyName}", 
+            TradingLogOrchestrator.Instance.LogInfo("Processing strategy control event: {Signal} for {StrategyName}", 
                 strategyEvent.Signal, strategyEvent.StrategyName);
 
             switch (strategyEvent.Signal?.ToLowerInvariant())
@@ -278,13 +279,13 @@ public class StrategyExecutionService : IStrategyExecutionService
                     await _strategyManager.StopStrategyAsync(strategyEvent.StrategyName);
                     break;
                 default:
-                    _logger.LogWarning("Unknown strategy control signal: {Signal}", strategyEvent.Signal);
+                    TradingLogOrchestrator.Instance.LogWarning("Unknown strategy control signal: {Signal}", strategyEvent.Signal);
                     break;
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error handling strategy control event for {StrategyName}", 
+            TradingLogOrchestrator.Instance.LogError(ex, "Error handling strategy control event for {StrategyName}", 
                 strategyEvent.StrategyName);
         }
     }

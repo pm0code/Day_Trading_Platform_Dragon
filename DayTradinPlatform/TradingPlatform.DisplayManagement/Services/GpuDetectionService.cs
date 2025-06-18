@@ -2,6 +2,7 @@ using System.Management;
 using System.Runtime.InteropServices;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.DisplayManagement.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.DisplayManagement.Services;
 
@@ -52,12 +53,12 @@ public class GpuDetectionService : IGpuDetectionService
     /// </summary>
     public async Task<List<GpuInfo>> GetGpuInformationAsync()
     {
-        _logger.LogInformation("Detecting GPU information for DRAGON system monitor configuration");
+        TradingLogOrchestrator.Instance.LogInfo("Detecting GPU information for DRAGON system monitor configuration");
         
         // Return cached data if still valid
         if (_cachedGpuInfo.Any() && DateTime.UtcNow - _lastCacheUpdate < _cacheExpiry)
         {
-            _logger.LogDebug("Returning cached GPU information");
+            TradingLogOrchestrator.Instance.LogInfo("Returning cached GPU information");
             return _cachedGpuInfo;
         }
 
@@ -77,24 +78,24 @@ public class GpuDetectionService : IGpuDetectionService
                     if (gpuInfo != null)
                     {
                         _cachedGpuInfo.Add(gpuInfo);
-                        _logger.LogInformation("Detected GPU: {Name} - {MaxMonitors} max monitors, {VramGB}GB VRAM", 
+                        TradingLogOrchestrator.Instance.LogInfo("Detected GPU: {Name} - {MaxMonitors} max monitors, {VramGB}GB VRAM", 
                             gpuInfo.Name, gpuInfo.MaxDisplayOutputs, gpuInfo.VideoMemoryGB);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to extract information for GPU device");
+                    TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to extract information for GPU device");
                 }
             }
 
             _lastCacheUpdate = DateTime.UtcNow;
             
-            _logger.LogInformation("GPU detection complete. Found {GpuCount} GPU(s)", _cachedGpuInfo.Count);
+            TradingLogOrchestrator.Instance.LogInfo("GPU detection complete. Found {GpuCount} GPU(s)", _cachedGpuInfo.Count);
             return _cachedGpuInfo;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to detect GPU information");
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to detect GPU information");
             return new List<GpuInfo>();
         }
     }
@@ -108,7 +109,7 @@ public class GpuDetectionService : IGpuDetectionService
         
         if (!gpus.Any())
         {
-            _logger.LogWarning("No GPUs detected, defaulting to single monitor recommendation");
+            TradingLogOrchestrator.Instance.LogWarning("No GPUs detected, defaulting to single monitor recommendation");
             return 1;
         }
 
@@ -123,7 +124,7 @@ public class GpuDetectionService : IGpuDetectionService
         // Cap at reasonable limits for trading platforms
         var finalRecommendation = Math.Min(recommendedMax, 12); // Maximum 12 monitors for practical trading
         
-        _logger.LogInformation("Recommended maximum monitors: {Count} (based on {TotalOutputs} total GPU outputs)", 
+        TradingLogOrchestrator.Instance.LogInfo("Recommended maximum monitors: {Count} (based on {TotalOutputs} total GPU outputs)", 
             finalRecommendation, totalMaxOutputs);
             
         return finalRecommendation;
@@ -206,7 +207,7 @@ public class GpuDetectionService : IGpuDetectionService
             validation.Warnings.Add("4+ monitor configuration detected - ensure adequate GPU cooling for extended trading sessions");
         }
 
-        _logger.LogInformation("Monitor configuration validation: {MonitorCount} monitors, Supported: {IsSupported}", 
+        TradingLogOrchestrator.Instance.LogInfo("Monitor configuration validation: {MonitorCount} monitors, Supported: {IsSupported}", 
             configuration.Count, validation.IsSupported);
 
         return validation;
@@ -246,7 +247,7 @@ public class GpuDetectionService : IGpuDetectionService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to extract GPU information from WMI object");
+            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to extract GPU information from WMI object");
             return null;
         }
     }

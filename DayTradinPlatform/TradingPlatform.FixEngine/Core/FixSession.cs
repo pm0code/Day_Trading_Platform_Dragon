@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Channels;
 using TradingPlatform.FixEngine.Models;
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.FixEngine.Core;
 
@@ -110,7 +111,7 @@ public sealed class FixSession : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to connect FIX session: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to connect FIX session: {ex.Message}", ex);
             return false;
         }
     }
@@ -134,7 +135,7 @@ public sealed class FixSession : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error during FIX session disconnect: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Error during FIX session disconnect: {ex.Message}", ex);
         }
     }
     
@@ -150,7 +151,7 @@ public sealed class FixSession : IDisposable
         
         if (!IsConnected)
         {
-            _logger.LogWarning("Attempted to send message on disconnected FIX session");
+            TradingLogOrchestrator.Instance.LogWarning("Attempted to send message on disconnected FIX session");
             return false;
         }
         
@@ -199,7 +200,7 @@ public sealed class FixSession : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error processing outbound messages: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Error processing outbound messages: {ex.Message}", ex);
         }
     }
     
@@ -216,7 +217,7 @@ public sealed class FixSession : IDisposable
             await _stream.WriteAsync(bytes, _cancellationTokenSource.Token);
             await _stream.FlushAsync(_cancellationTokenSource.Token);
             
-            _logger.LogDebug($"Sent FIX message: {message.MsgType} (seq={message.MsgSeqNum})");
+            TradingLogOrchestrator.Instance.LogInfo($"Sent FIX message: {message.MsgType} (seq={message.MsgSeqNum})");
         }
         finally
         {
@@ -245,7 +246,7 @@ public sealed class FixSession : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error receiving FIX messages: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Error receiving FIX messages: {ex.Message}", ex);
             SessionStateChanged?.Invoke(this, "Error");
         }
     }
@@ -273,7 +274,7 @@ public sealed class FixSession : IDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error parsing FIX message: {ex.Message}", ex);
+                TradingLogOrchestrator.Instance.LogError($"Error parsing FIX message: {ex.Message}", ex);
             }
         }
     }
@@ -293,7 +294,7 @@ public sealed class FixSession : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error processing inbound messages: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Error processing inbound messages: {ex.Message}", ex);
         }
     }
     
@@ -329,7 +330,7 @@ public sealed class FixSession : IDisposable
                 break;
         }
         
-        _logger.LogDebug($"Received FIX message: {message.MsgType} (seq={message.MsgSeqNum})");
+        TradingLogOrchestrator.Instance.LogInfo($"Received FIX message: {message.MsgType} (seq={message.MsgSeqNum})");
     }
     
     private async void SendHeartbeat(object? state)

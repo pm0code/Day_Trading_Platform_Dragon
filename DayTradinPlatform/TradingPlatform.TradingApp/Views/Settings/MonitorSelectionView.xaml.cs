@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using TradingPlatform.DisplayManagement.Models;
 using TradingPlatform.DisplayManagement.Services;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.TradingApp.Views.Settings;
 
@@ -46,17 +47,17 @@ public sealed partial class MonitorSelectionView : UserControl
     {
         try
         {
-            _logger.LogInformation("Initializing DRAGON monitor selection interface");
+            TradingLogOrchestrator.Instance.LogInfo("Initializing DRAGON monitor selection interface");
             
             await DetectSystemCapabilitiesAsync();
             await LoadSavedConfigurationAsync();
             UpdateUI();
             
-            _logger.LogInformation("Monitor selection interface initialized successfully");
+            TradingLogOrchestrator.Instance.LogInfo("Monitor selection interface initialized successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to initialize monitor selection interface");
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to initialize monitor selection interface");
             ShowErrorMessage("Failed to initialize monitor detection. Please check your system configuration.");
         }
     }
@@ -92,7 +93,7 @@ public sealed partial class MonitorSelectionView : UserControl
         if (savedConfig != null)
         {
             _currentConfiguration = savedConfig;
-            _logger.LogInformation("Loaded saved monitor configuration with {MonitorCount} monitors", 
+            TradingLogOrchestrator.Instance.LogInfo("Loaded saved monitor configuration with {MonitorCount} monitors", 
                 savedConfig.Monitors.Count);
         }
         else
@@ -431,13 +432,13 @@ public sealed partial class MonitorSelectionView : UserControl
     {
         try
         {
-            _logger.LogInformation("Refreshing GPU detection");
+            TradingLogOrchestrator.Instance.LogInfo("Refreshing GPU detection");
             await DetectSystemCapabilitiesAsync();
             UpdateUI();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to refresh GPU detection");
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to refresh GPU detection");
             ShowErrorMessage("Failed to refresh GPU information.");
         }
     }
@@ -453,7 +454,7 @@ public sealed partial class MonitorSelectionView : UserControl
     {
         try
         {
-            _logger.LogInformation("Saving monitor configuration");
+            TradingLogOrchestrator.Instance.LogInfo("Saving monitor configuration");
             
             var selectedCount = (int)MonitorCountSlider.Value;
             _currentConfiguration.Monitors = _connectedMonitors.Take(selectedCount).ToList();
@@ -464,7 +465,7 @@ public sealed partial class MonitorSelectionView : UserControl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to save monitor configuration");
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to save monitor configuration");
             ShowErrorMessage("Failed to save configuration.");
         }
     }
@@ -473,7 +474,7 @@ public sealed partial class MonitorSelectionView : UserControl
     {
         try
         {
-            _logger.LogInformation("Testing monitor configuration");
+            TradingLogOrchestrator.Instance.LogInfo("Testing monitor configuration");
             
             var validation = await _monitorDetectionService.ValidateAndOptimizeConfigurationAsync(_currentConfiguration);
             
@@ -485,7 +486,7 @@ public sealed partial class MonitorSelectionView : UserControl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to test monitor configuration");
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to test monitor configuration");
             ShowErrorMessage("Failed to test configuration.");
         }
     }
@@ -494,7 +495,7 @@ public sealed partial class MonitorSelectionView : UserControl
     {
         try
         {
-            _logger.LogInformation("Resetting to default monitor configuration");
+            TradingLogOrchestrator.Instance.LogInfo("Resetting to default monitor configuration");
             
             MonitorCountSlider.Value = Math.Min(_connectedMonitors.Count, _currentRecommendation.RecommendedMonitorCount);
             
@@ -510,7 +511,7 @@ public sealed partial class MonitorSelectionView : UserControl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to reset configuration");
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to reset configuration");
             ShowErrorMessage("Failed to reset configuration.");
         }
     }
@@ -546,19 +547,19 @@ public sealed partial class MonitorSelectionView : UserControl
     private void ShowSuccessMessage(string message)
     {
         // In a real implementation, you would show a proper message dialog
-        _logger.LogInformation("Success: {Message}", message);
+        TradingLogOrchestrator.Instance.LogInfo("Success: {Message}", message);
     }
 
     private void ShowErrorMessage(string message)
     {
         // In a real implementation, you would show a proper error dialog
-        _logger.LogError("Error: {Message}", message);
+        TradingLogOrchestrator.Instance.LogError("Error: {Message}", message);
     }
 
     private void ShowInfoMessage(string message)
     {
         // In a real implementation, you would show a proper info dialog
-        _logger.LogInformation("Info: {Message}", message);
+        TradingLogOrchestrator.Instance.LogInfo("Info: {Message}", message);
     }
 
     #endregion

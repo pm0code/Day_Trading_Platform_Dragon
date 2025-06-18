@@ -2,6 +2,7 @@ using TradingPlatform.PaperTrading.Models;
 using System.Collections.Concurrent;
 
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 namespace TradingPlatform.PaperTrading.Services;
 
 public class ExecutionAnalytics : IExecutionAnalytics
@@ -63,7 +64,7 @@ public class ExecutionAnalytics : IExecutionAnalytics
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating performance metrics");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating performance metrics");
             return CreateEmptyPerformanceMetrics();
         }
     }
@@ -102,7 +103,7 @@ public class ExecutionAnalytics : IExecutionAnalytics
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating execution analytics");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating execution analytics");
             return CreateEmptyExecutionAnalytics();
         }
     }
@@ -136,14 +137,14 @@ public class ExecutionAnalytics : IExecutionAnalytics
                     return existingList;
                 });
 
-            _logger.LogDebug("Recorded execution: {ExecutionId} for {Symbol} {Quantity}@{Price}", 
+            TradingLogOrchestrator.Instance.LogInfo("Recorded execution: {ExecutionId} for {Symbol} {Quantity}@{Price}", 
                 execution.ExecutionId, execution.Symbol, execution.Quantity, execution.Price);
                 
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error recording execution {ExecutionId}", execution.ExecutionId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error recording execution {ExecutionId}", execution.ExecutionId);
         }
     }
 

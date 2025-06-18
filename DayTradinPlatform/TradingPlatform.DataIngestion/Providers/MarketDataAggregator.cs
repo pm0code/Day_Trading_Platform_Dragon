@@ -9,6 +9,7 @@ using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.DataIngestion.Configuration;
 using TradingPlatform.DataIngestion.Interfaces;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.DataIngestion.Providers
 {
@@ -48,14 +49,14 @@ namespace TradingPlatform.DataIngestion.Providers
 
         public async Task<MarketData?> AggregateAsync<T>(T data, string providerName) where T : class
         {
-            _logger.LogTrace($"Aggregating data from {providerName}");
+            TradingLogOrchestrator.Instance.LogInfo($"Aggregating data from {providerName}");
             _statistics.TotalAggregations++;
 
             try
             {
                 if (data == null)
                 {
-                    _logger.LogWarning($"Null data received from {providerName}");
+                    TradingLogOrchestrator.Instance.LogWarning($"Null data received from {providerName}");
                     _statistics.FailedAggregations++;
                     return null;
                 }
@@ -74,7 +75,7 @@ namespace TradingPlatform.DataIngestion.Providers
                         result = MapFinnhubQuote(finnhubQuote);
                         break;
                     default:
-                        _logger.LogError($"Unknown data type from {providerName}: {typeof(T).Name}");
+                        TradingLogOrchestrator.Instance.LogError($"Unknown data type from {providerName}: {typeof(T).Name}");
                         _statistics.FailedAggregations++;
                         return null;
                 }
@@ -87,13 +88,13 @@ namespace TradingPlatform.DataIngestion.Providers
                     return result;
                 }
 
-                _logger.LogWarning($"Invalid market data from {providerName}");
+                TradingLogOrchestrator.Instance.LogWarning($"Invalid market data from {providerName}");
                 _statistics.FailedAggregations++;
                 return null;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error aggregating data from {providerName}");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Error aggregating data from {providerName}");
                 await RecordProviderFailureAsync(providerName, ex);
                 _statistics.FailedAggregations++;
                 return null;
@@ -102,7 +103,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
         public async Task<List<MarketData>> AggregateBatchAsync<T>(List<T> dataList, string providerName) where T : class
         {
-            _logger.LogInformation($"Aggregating batch of {dataList?.Count ?? 0} items from {providerName}");
+            TradingLogOrchestrator.Instance.LogInfo($"Aggregating batch of {dataList?.Count ?? 0} items from {providerName}");
 
             if (dataList?.Any() != true)
             {
@@ -120,13 +121,13 @@ namespace TradingPlatform.DataIngestion.Providers
                 }
             }
 
-            _logger.LogInformation($"Successfully aggregated {results.Count}/{dataList.Count} items from {providerName}");
+            TradingLogOrchestrator.Instance.LogInfo($"Successfully aggregated {results.Count}/{dataList.Count} items from {providerName}");
             return results;
         }
 
         public async Task<MarketData?> AggregateMultiProviderAsync(string symbol, MarketData? primaryData, MarketData? fallbackData = null)
         {
-            _logger.LogTrace($"Aggregating multi-provider data for {symbol}");
+            TradingLogOrchestrator.Instance.LogInfo($"Aggregating multi-provider data for {symbol}");
 
             if (primaryData != null && ValidateMarketData(primaryData))
             {
@@ -135,7 +136,7 @@ namespace TradingPlatform.DataIngestion.Providers
                     var qualityReport = CompareProviderData(primaryData, fallbackData);
                     if (qualityReport.HasDiscrepancies)
                     {
-                        _logger.LogWarning($"Data discrepancies detected for {symbol}: {string.Join(", ", qualityReport.Issues)}");
+                        TradingLogOrchestrator.Instance.LogWarning($"Data discrepancies detected for {symbol}: {string.Join(", ", qualityReport.Issues)}");
                         OnDataQualityIssue(new DataQualityEventArgs
                         {
                             Symbol = symbol,
@@ -154,11 +155,11 @@ namespace TradingPlatform.DataIngestion.Providers
 
             if (fallbackData != null && ValidateMarketData(fallbackData))
             {
-                _logger.LogInformation($"Using fallback data for {symbol}");
+                TradingLogOrchestrator.Instance.LogInfo($"Using fallback data for {symbol}");
                 return fallbackData;
             }
 
-            _logger.LogError($"No valid data available for {symbol} from any provider");
+            TradingLogOrchestrator.Instance.LogError($"No valid data available for {symbol} from any provider");
             return null;
         }
 
@@ -181,7 +182,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 _providerFailures[providerName] = DateTime.UtcNow;
                 _consecutiveFailures[providerName] = _consecutiveFailures.GetValueOrDefault(providerName, 0) + 1;
 
-                _logger.LogWarning($"Recorded failure for provider {providerName}. Consecutive failures: {_consecutiveFailures[providerName]}");
+                TradingLogOrchestrator.Instance.LogWarning($"Recorded failure for provider {providerName}. Consecutive failures: {_consecutiveFailures[providerName]}");
 
                 OnProviderFailure(new ProviderFailureEventArgs
                 {
@@ -199,7 +200,7 @@ namespace TradingPlatform.DataIngestion.Providers
             {
                 if (_consecutiveFailures.ContainsKey(providerName))
                 {
-                    _logger.LogInformation($"Provider {providerName} recovered from failure state");
+                    TradingLogOrchestrator.Instance.LogInfo($"Provider {providerName} recovered from failure state");
                     _consecutiveFailures.Remove(providerName);
                 }
 
@@ -227,7 +228,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
             if (!isValid)
             {
-                _logger.LogWarning($"Invalid market data for {marketData?.Symbol}: Price={marketData?.Price}, Volume={marketData?.Volume}");
+                TradingLogOrchestrator.Instance.LogWarning($"Invalid market data for {marketData?.Symbol}: Price={marketData?.Price}, Volume={marketData?.Volume}");
             }
 
             return isValid;
@@ -307,12 +308,12 @@ namespace TradingPlatform.DataIngestion.Providers
                 {
                     if (cachedData != null && cachedData.Timestamp > DateTime.UtcNow.Subtract(maxAge))
                     {
-                        _logger.LogTrace($"Cache hit for {symbol}");
+                        TradingLogOrchestrator.Instance.LogInfo($"Cache hit for {symbol}");
                         return cachedData;
                     }
                 }
 
-                _logger.LogTrace($"Cache miss for {symbol}");
+                TradingLogOrchestrator.Instance.LogInfo($"Cache miss for {symbol}");
                 return null;
             });
         }
@@ -323,7 +324,7 @@ namespace TradingPlatform.DataIngestion.Providers
             {
                 var cacheKey = $"aggregated_{symbol}";
                 _cache.Set(cacheKey, marketData, expiration);
-                _logger.LogTrace($"Cached data for {symbol} with expiration {expiration.TotalMinutes} minutes");
+                TradingLogOrchestrator.Instance.LogInfo($"Cached data for {symbol} with expiration {expiration.TotalMinutes} minutes");
             });
         }
 
@@ -370,49 +371,48 @@ namespace TradingPlatform.DataIngestion.Providers
 
         public async Task<MarketData?> GetRealTimeDataAsync(string symbol)
         {
-            _logger.LogTrace($"Getting real-time data for {symbol}");
+            TradingLogOrchestrator.Instance.LogInfo($"Getting real-time data for {symbol}");
 
             var primaryData = await TryGetDataFromProvider("AlphaVantage",
                 async () => await _alphaVantageProvider.GetQuoteAsync(symbol));
 
             if (primaryData != null)
             {
-                _logger.LogTrace($"Successfully retrieved {symbol} from AlphaVantage");
+                TradingLogOrchestrator.Instance.LogInfo($"Successfully retrieved {symbol} from AlphaVantage");
                 return primaryData;
             }
 
             if (_config.EnableBackupProviders)
             {
-                _logger.LogInformation($"Falling back to Finnhub for {symbol}");
+                TradingLogOrchestrator.Instance.LogInfo($"Falling back to Finnhub for {symbol}");
                 var fallbackData = await TryGetDataFromProvider("Finnhub",
                     async () => await _finnhubProvider.GetQuoteAsync(symbol));
 
                 if (fallbackData != null)
                 {
-                    _logger.LogInformation($"Successfully retrieved {symbol} from Finnhub fallback");
+                    TradingLogOrchestrator.Instance.LogInfo($"Successfully retrieved {symbol} from Finnhub fallback");
                     return fallbackData;
                 }
             }
 
-            _logger.LogError($"Failed to retrieve data for {symbol} from all providers");
+            TradingLogOrchestrator.Instance.LogError($"Failed to retrieve data for {symbol} from all providers");
             return null;
         }
 
         public async Task<List<MarketData>> GetMultipleQuotesAsync(List<string> symbols)
         {
-            _logger.LogInformation($"Getting quotes for {symbols.Count} symbols");
+            TradingLogOrchestrator.Instance.LogInfo($"Getting quotes for {symbols.Count} symbols");
             var results = new List<MarketData>();
 
             var alphaVantageSymbols = symbols.Take(GetAlphaVantageQuota()).ToList();
             if (alphaVantageSymbols.Any())
             {
-                var alphaVantageResults = await TryGetBatchDataFromProvider("AlphaVantage",
-                    async () => await _alphaVantageProvider.GetBatchQuotesAsync(alphaVantageSymbols));
+                var alphaVantageResults = await TryGetBatchDataFromProvider("AlphaVantage", async () => await _alphaVantageProvider.GetBatchQuotesAsync(alphaVantageSymbols));
 
                 if (alphaVantageResults?.Any() == true)
                 {
                     results.AddRange(alphaVantageResults);
-                    _logger.LogInformation($"Retrieved {alphaVantageResults.Count} quotes from AlphaVantage");
+                    TradingLogOrchestrator.Instance.LogInfo($"Retrieved {alphaVantageResults.Count} quotes from AlphaVantage");
                 }
             }
 
@@ -425,11 +425,11 @@ namespace TradingPlatform.DataIngestion.Providers
                 if (finnhubResults?.Any() == true)
                 {
                     results.AddRange(finnhubResults);
-                    _logger.LogInformation($"Retrieved {finnhubResults.Count} quotes from Finnhub");
+                    TradingLogOrchestrator.Instance.LogInfo($"Retrieved {finnhubResults.Count} quotes from Finnhub");
                 }
             }
 
-            _logger.LogInformation($"Total retrieved: {results.Count}/{symbols.Count} quotes");
+            TradingLogOrchestrator.Instance.LogInfo($"Total retrieved: {results.Count}/{symbols.Count} quotes");
             return results;
         }
 
@@ -439,7 +439,7 @@ namespace TradingPlatform.DataIngestion.Providers
         {
             if (IsProviderInCircuitBreaker(providerName))
             {
-                _logger.LogWarning($"Provider {providerName} is in circuit breaker state");
+                TradingLogOrchestrator.Instance.LogWarning($"Provider {providerName} is in circuit breaker state");
                 return null;
             }
 
@@ -454,7 +454,7 @@ namespace TradingPlatform.DataIngestion.Providers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error retrieving data from {providerName}");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Error retrieving data from {providerName}");
                 await RecordProviderFailureAsync(providerName, ex);
                 return null;
             }
@@ -499,7 +499,7 @@ namespace TradingPlatform.DataIngestion.Providers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error mapping AlphaVantage quote for {quote?.Symbol}");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Error mapping AlphaVantage quote for {quote?.Symbol}");
                 return null;
             }
         }
@@ -523,7 +523,7 @@ namespace TradingPlatform.DataIngestion.Providers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error mapping Finnhub quote for {quote?.Symbol}");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Error mapping Finnhub quote for {quote?.Symbol}");
                 return null;
             }
         }

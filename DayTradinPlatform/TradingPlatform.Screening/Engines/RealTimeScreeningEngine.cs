@@ -7,6 +7,7 @@ using System.Reactive.Subjects;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Screening.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.Screening.Engines
 {
@@ -43,7 +44,7 @@ namespace TradingPlatform.Screening.Engines
 
         public async Task<List<ScreeningResult>> ScreenSymbolsAsync(ScreeningRequest request)
         {
-            _logger.LogInformation($"Starting batch screening for {request.Symbols.Count} symbols");
+            TradingLogOrchestrator.Instance.LogInfo($"Starting batch screening for {request.Symbols.Count} symbols");
             var stopwatch = Stopwatch.StartNew();
             var results = new ConcurrentBag<ScreeningResult>();
 
@@ -57,7 +58,7 @@ namespace TradingPlatform.Screening.Engines
                         var marketData = await _marketDataProvider.GetRealTimeDataAsync(symbol);
                         if (marketData == null)
                         {
-                            _logger.LogWarning($"No market data available for {symbol}");
+                            TradingLogOrchestrator.Instance.LogWarning($"No market data available for {symbol}");
                             return;
                         }
 
@@ -82,24 +83,24 @@ namespace TradingPlatform.Screening.Engines
                     .ToList();
 
                 stopwatch.Stop();
-                _logger.LogInformation($"Batch screening completed: {finalResults.Count}/{request.Symbols.Count} symbols passed in {stopwatch.ElapsedMilliseconds}ms");
+                TradingLogOrchestrator.Instance.LogInfo($"Batch screening completed: {finalResults.Count}/{request.Symbols.Count} symbols passed in {stopwatch.ElapsedMilliseconds}ms");
 
                 return finalResults;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during batch screening");
+                TradingLogOrchestrator.Instance.LogError(ex, "Error during batch screening");
                 return new List<ScreeningResult>();
             }
         }
 
         public IObservable<ScreeningResult> StartRealTimeScreeningAsync(ScreeningRequest request)
         {
-            _logger.LogInformation($"Starting real-time screening for {request.Symbols.Count} symbols with {request.UpdateInterval.TotalSeconds}s interval");
+            TradingLogOrchestrator.Instance.LogInfo($"Starting real-time screening for {request.Symbols.Count} symbols with {request.UpdateInterval.TotalSeconds}s interval");
 
             if (_isScreeningActive)
             {
-                _logger.LogWarning("Real-time screening already active");
+                TradingLogOrchestrator.Instance.LogWarning("Real-time screening already active");
                 return _screeningResults.AsObservable();
             }
 
@@ -130,7 +131,7 @@ namespace TradingPlatform.Screening.Engines
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Error in real-time screening loop");
+                        TradingLogOrchestrator.Instance.LogError(ex, "Error in real-time screening loop");
                         await Task.Delay(TimeSpan.FromSeconds(10), _cancellationTokenSource.Token);
                     }
                 }
@@ -141,7 +142,7 @@ namespace TradingPlatform.Screening.Engines
 
         public async Task StopRealTimeScreeningAsync()
         {
-            _logger.LogInformation("Stopping real-time screening");
+            TradingLogOrchestrator.Instance.LogInfo("Stopping real-time screening");
             _isScreeningActive = false;
             _cancellationTokenSource?.Cancel();
             await Task.Delay(100);

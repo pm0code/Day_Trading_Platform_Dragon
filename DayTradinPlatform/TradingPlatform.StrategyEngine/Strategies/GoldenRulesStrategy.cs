@@ -1,5 +1,6 @@
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.StrategyEngine.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.StrategyEngine.Strategies;
 
@@ -25,14 +26,14 @@ public class GoldenRulesStrategy : IGoldenRulesStrategy
     {
         try
         {
-            _logger.LogDebug("Evaluating Golden Rules for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogInfo("Evaluating Golden Rules for {Symbol}", symbol);
 
             // Evaluate Golden Rules compliance
             var assessment = await EvaluateGoldenRulesAsync(symbol, conditions);
             
             if (!assessment.OverallCompliance || assessment.ConfidenceScore < 0.7m)
             {
-                _logger.LogDebug("Golden Rules assessment failed for {Symbol}: Compliance={Compliance}, Confidence={Confidence}", 
+                TradingLogOrchestrator.Instance.LogInfo("Golden Rules assessment failed for {Symbol}: Compliance={Compliance}, Confidence={Confidence}", 
                     symbol, assessment.OverallCompliance, assessment.ConfidenceScore);
                 return Array.Empty<TradingSignal>();
             }
@@ -84,14 +85,14 @@ public class GoldenRulesStrategy : IGoldenRulesStrategy
                 signals.Add(sellSignal);
             }
 
-            _logger.LogInformation("Generated {SignalCount} Golden Rules signals for {Symbol}", 
+            TradingLogOrchestrator.Instance.LogInfo("Generated {SignalCount} Golden Rules signals for {Symbol}", 
                 signals.Count, symbol);
 
             return signals.ToArray();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error generating Golden Rules signals for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error generating Golden Rules signals for {Symbol}", symbol);
             return Array.Empty<TradingSignal>();
         }
     }
@@ -133,7 +134,7 @@ public class GoldenRulesStrategy : IGoldenRulesStrategy
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error evaluating Golden Rules for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error evaluating Golden Rules for {Symbol}", symbol);
             return new GoldenRulesAssessment(false, 0, _goldenRules.Length, 
                 new[] { "Evaluation Error" }, 0.0m, "Do not trade - evaluation failed");
         }

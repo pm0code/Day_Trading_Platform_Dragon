@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.Gateway.Services;
 
@@ -53,7 +54,7 @@ public class ProcessManager : IProcessManager
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting process info for {ServiceName}", serviceName);
+                TradingLogOrchestrator.Instance.LogError(ex, "Error getting process info for {ServiceName}", serviceName);
                 processInfos.Add(new ProcessInfo(
                     serviceName, 0, ProcessStatus.Error, TimeSpan.Zero,
                     0, 0, 0, Array.Empty<int>(), ProcessPriorityLevel.Normal));
@@ -74,7 +75,7 @@ public class ProcessManager : IProcessManager
 
             if (_managedProcesses.ContainsKey(serviceName))
             {
-                _logger.LogWarning("Service {ServiceName} is already running", serviceName);
+                TradingLogOrchestrator.Instance.LogWarning("Service {ServiceName} is already running", serviceName);
                 return;
             }
 
@@ -106,23 +107,23 @@ public class ProcessManager : IProcessManager
             process.OutputDataReceived += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(e.Data))
-                    _logger.LogInformation("[{ServiceName}] {Output}", serviceName, e.Data);
+                    TradingLogOrchestrator.Instance.LogInfo("[{ServiceName}] {Output}", serviceName, e.Data);
             };
 
             process.ErrorDataReceived += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(e.Data))
-                    _logger.LogError("[{ServiceName}] {Error}", serviceName, e.Data);
+                    TradingLogOrchestrator.Instance.LogError("[{ServiceName}] {Error}", serviceName, e.Data);
             };
 
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
-            _logger.LogInformation("Started service {ServiceName} with PID {ProcessId}", serviceName, process.Id);
+            TradingLogOrchestrator.Instance.LogInfo("Started service {ServiceName} with PID {ProcessId}", serviceName, process.Id);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to start service {ServiceName}", serviceName);
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to start service {ServiceName}", serviceName);
             throw;
         }
     }
@@ -133,7 +134,7 @@ public class ProcessManager : IProcessManager
         {
             if (!_managedProcesses.TryGetValue(serviceName, out var process))
             {
-                _logger.LogWarning("Service {ServiceName} is not running", serviceName);
+                TradingLogOrchestrator.Instance.LogWarning("Service {ServiceName} is not running", serviceName);
                 return;
             }
 
@@ -149,16 +150,16 @@ public class ProcessManager : IProcessManager
             // Wait for graceful shutdown
             if (!process.WaitForExit(5000)) // 5 second timeout
             {
-                _logger.LogWarning("Service {ServiceName} did not shut down gracefully, forcing termination", serviceName);
+                TradingLogOrchestrator.Instance.LogWarning("Service {ServiceName} did not shut down gracefully, forcing termination", serviceName);
                 process.Kill();
             }
 
             _managedProcesses.Remove(serviceName);
-            _logger.LogInformation("Stopped service {ServiceName}", serviceName);
+            TradingLogOrchestrator.Instance.LogInfo("Stopped service {ServiceName}", serviceName);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to stop service {ServiceName}", serviceName);
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to stop service {ServiceName}", serviceName);
             throw;
         }
 
@@ -167,7 +168,7 @@ public class ProcessManager : IProcessManager
 
     public async Task RestartServiceAsync(string serviceName)
     {
-        _logger.LogInformation("Restarting service {ServiceName}", serviceName);
+        TradingLogOrchestrator.Instance.LogInfo("Restarting service {ServiceName}", serviceName);
         
         await StopServiceAsync(serviceName);
         await Task.Delay(2000); // Brief pause for cleanup
@@ -180,7 +181,7 @@ public class ProcessManager : IProcessManager
         {
             if (!_managedProcesses.TryGetValue(serviceName, out var process))
             {
-                _logger.LogWarning("Cannot set CPU affinity for unknown service {ServiceName}", serviceName);
+                TradingLogOrchestrator.Instance.LogWarning("Cannot set CPU affinity for unknown service {ServiceName}", serviceName);
                 return;
             }
 
@@ -200,13 +201,13 @@ public class ProcessManager : IProcessManager
             if (affinityMask > 0)
             {
                 process.ProcessorAffinity = new IntPtr(affinityMask);
-                _logger.LogInformation("Set CPU affinity for {ServiceName} to cores: {Cores}", 
+                TradingLogOrchestrator.Instance.LogInfo("Set CPU affinity for {ServiceName} to cores: {Cores}", 
                     serviceName, string.Join(", ", cpuCores));
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to set CPU affinity for {ServiceName}", serviceName);
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to set CPU affinity for {ServiceName}", serviceName);
         }
 
         await Task.CompletedTask;
@@ -218,7 +219,7 @@ public class ProcessManager : IProcessManager
         {
             if (!_managedProcesses.TryGetValue(serviceName, out var process))
             {
-                _logger.LogWarning("Cannot set priority for unknown service {ServiceName}", serviceName);
+                TradingLogOrchestrator.Instance.LogWarning("Cannot set priority for unknown service {ServiceName}", serviceName);
                 return;
             }
 
@@ -235,11 +236,11 @@ public class ProcessManager : IProcessManager
             };
 
             process.PriorityClass = processPriority;
-            _logger.LogInformation("Set process priority for {ServiceName} to {Priority}", serviceName, priority);
+            TradingLogOrchestrator.Instance.LogInfo("Set process priority for {ServiceName} to {Priority}", serviceName, priority);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to set process priority for {ServiceName}", serviceName);
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to set process priority for {ServiceName}", serviceName);
         }
 
         await Task.CompletedTask;
@@ -271,7 +272,7 @@ public class ProcessManager : IProcessManager
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting performance metrics for {ServiceName}", serviceName);
+                TradingLogOrchestrator.Instance.LogError(ex, "Error getting performance metrics for {ServiceName}", serviceName);
             }
         }
 
@@ -283,7 +284,7 @@ public class ProcessManager : IProcessManager
     {
         try
         {
-            _logger.LogInformation("Optimizing Windows 11 for trading workstation performance");
+            TradingLogOrchestrator.Instance.LogInfo("Optimizing Windows 11 for trading workstation performance");
 
             // Set high-performance power plan
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -294,11 +295,11 @@ public class ProcessManager : IProcessManager
                 await SetTimerResolutionAsync();
             }
 
-            _logger.LogInformation("Windows 11 trading optimization completed");
+            TradingLogOrchestrator.Instance.LogInfo("Windows 11 trading optimization completed");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to optimize Windows 11 for trading");
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to optimize Windows 11 for trading");
         }
     }
 
@@ -409,19 +410,19 @@ public class ProcessManager : IProcessManager
             if (process != null)
             {
                 await process.WaitForExitAsync();
-                _logger.LogInformation("Set Windows power plan to High Performance");
+                TradingLogOrchestrator.Instance.LogInfo("Set Windows power plan to High Performance");
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to set high performance power plan");
+            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to set high performance power plan");
         }
     }
 
     private async Task DisableWindowsDefenderRealTimeAsync()
     {
         // Note: This would require admin privileges and should be done carefully
-        _logger.LogInformation("Windows Defender real-time scanning optimization skipped (requires admin rights)");
+        TradingLogOrchestrator.Instance.LogInfo("Windows Defender real-time scanning optimization skipped (requires admin rights)");
         await Task.CompletedTask;
     }
 
@@ -430,12 +431,12 @@ public class ProcessManager : IProcessManager
         try
         {
             // Optimize TCP settings for low latency
-            _logger.LogInformation("Network settings optimization completed");
+            TradingLogOrchestrator.Instance.LogInfo("Network settings optimization completed");
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to optimize network settings");
+            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to optimize network settings");
         }
     }
 
@@ -444,12 +445,12 @@ public class ProcessManager : IProcessManager
         try
         {
             // Set Windows timer resolution to 1ms for precise timing
-            _logger.LogInformation("Windows timer resolution optimization completed");
+            TradingLogOrchestrator.Instance.LogInfo("Windows timer resolution optimization completed");
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to set timer resolution");
+            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to set timer resolution");
         }
     }
 

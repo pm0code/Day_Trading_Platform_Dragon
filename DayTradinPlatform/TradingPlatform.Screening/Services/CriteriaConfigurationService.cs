@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TradingPlatform.Core.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.Screening.Services
 {
@@ -42,7 +43,7 @@ namespace TradingPlatform.Screening.Services
             else
             {
                 var defaultCriteria = GetDefaultCriteria();
-                _logger.LogInformation($"No criteria found for key '{key}'. Returning default criteria."); // Log when returning default
+                TradingLogOrchestrator.Instance.LogInfo($"No criteria found for key '{key}'. Returning default criteria."); // Log when returning default
                 return defaultCriteria;
             }
         }

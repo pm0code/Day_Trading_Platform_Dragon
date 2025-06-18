@@ -11,6 +11,7 @@ using TradingPlatform.Core.Models;
 using TradingPlatform.DataIngestion.Interfaces;
 using TradingPlatform.DataIngestion.Models;
 using System.Text.Json;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.DataIngestion.Providers
 {
@@ -34,14 +35,14 @@ namespace TradingPlatform.DataIngestion.Providers
 
         public async Task<MarketData> GetQuoteAsync(string symbol)
         {
-            _logger.LogInformation($"Fetching quote for {symbol} from Finnhub");
+            TradingLogOrchestrator.Instance.LogInfo($"Fetching quote for {symbol} from Finnhub");
 
             // 1. Check Cache
             string cacheKey = $"finnhub_{symbol}_quote";
             if (_cache.TryGetValue(cacheKey, out MarketData cachedData) &&
                 cachedData.Timestamp > DateTime.UtcNow.AddSeconds(-_config.Cache.QuoteCacheSeconds))
             {
-                _logger.LogTrace($"Quote for {symbol} retrieved from cache.");
+                TradingLogOrchestrator.Instance.LogInfo($"Quote for {symbol} retrieved from cache.");
                 return cachedData;
             }
 
@@ -61,7 +62,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 // 5. Error Handling
                 if (!response.IsSuccessful || string.IsNullOrEmpty(response.Content))
                 {
-                    _logger.LogError($"Failed to get Finnhub quote for {symbol}: {response.ErrorMessage}");
+                    TradingLogOrchestrator.Instance.LogError($"Failed to get Finnhub quote for {symbol}: {response.ErrorMessage}");
                     return null;
                 }
 
@@ -69,7 +70,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 var jsonResponse = JsonSerializer.Deserialize<FinnhubQuoteResponse>(response.Content);
                 if (jsonResponse == null)
                 {
-                    _logger.LogError($"Failed to deserialize Finnhub quote response for {symbol}");
+                    TradingLogOrchestrator.Instance.LogError($"Failed to deserialize Finnhub quote response for {symbol}");
                     return null;
                 }
 
@@ -78,19 +79,19 @@ namespace TradingPlatform.DataIngestion.Providers
 
                 // 8. Cache the Result
                 _cache.Set(cacheKey, marketData, TimeSpan.FromSeconds(_config.Cache.QuoteCacheSeconds));
-                _logger.LogTrace($"Successfully retrieved Finnhub quote for {symbol}");
+                TradingLogOrchestrator.Instance.LogInfo($"Successfully retrieved Finnhub quote for {symbol}");
                 return marketData;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Exception while fetching quote for {symbol} from Finnhub");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Exception while fetching quote for {symbol} from Finnhub");
                 return null;
             }
         }
 
         public async Task<List<MarketData>> GetBatchQuotesAsync(List<string> symbols)
         {
-            _logger.LogInformation($"Fetching batch quotes for {symbols.Count} symbols from Finnhub");
+            TradingLogOrchestrator.Instance.LogInfo($"Fetching batch quotes for {symbols.Count} symbols from Finnhub");
             var results = new List<MarketData>();
 
             foreach (var symbol in symbols)
@@ -105,13 +106,13 @@ namespace TradingPlatform.DataIngestion.Providers
                 await Task.Delay(100);
             }
 
-            _logger.LogInformation($"Successfully retrieved {results.Count}/{symbols.Count} quotes from Finnhub");
+            TradingLogOrchestrator.Instance.LogInfo($"Successfully retrieved {results.Count}/{symbols.Count} quotes from Finnhub");
             return results;
         }
 
         public async Task<MarketData> GetCandleDataAsync(string symbol, string resolution, DateTime from, DateTime to)
         {
-            _logger.LogInformation($"Fetching candle data for {symbol} from Finnhub");
+            TradingLogOrchestrator.Instance.LogInfo($"Fetching candle data for {symbol} from Finnhub");
 
             // Check cache
             string cacheKey = $"finnhub_{symbol}_candle_{resolution}_{from:yyyyMMdd}_{to:yyyyMMdd}";
@@ -138,21 +139,20 @@ namespace TradingPlatform.DataIngestion.Providers
 
                 if (!response.IsSuccessful || string.IsNullOrEmpty(response.Content))
                 {
-                    _logger.LogError($"Failed to get Finnhub candle data for {symbol}: {response.ErrorMessage}");
+                    TradingLogOrchestrator.Instance.LogError($"Failed to get Finnhub candle data for {symbol}: {response.ErrorMessage}");
                     return null;
                 }
 
                 var jsonResponse = JsonSerializer.Deserialize<FinnhubCandleResponse>(response.Content);
                 if (jsonResponse?.Close?.Any() != true)
                 {
-                    _logger.LogWarning($"No candle data available for {symbol}");
+                    TradingLogOrchestrator.Instance.LogWarning($"No candle data available for {symbol}");
                     return null;
                 }
 
                 var marketData = new MarketData(_logger)
                 {
-                    Symbol = symbol,
-                    Price = jsonResponse.Close.Last(),
+                    Symbol = symbol, Price = jsonResponse.Close.Last(),
                     Open = jsonResponse.Open.Last(),
                     High = jsonResponse.High.Last(),
                     Low = jsonResponse.Low.Last(),
@@ -165,14 +165,14 @@ namespace TradingPlatform.DataIngestion.Providers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Exception while fetching candle data for {symbol} from Finnhub");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Exception while fetching candle data for {symbol} from Finnhub");
                 return null;
             }
         }
 
         public async Task<List<DailyData>> FetchHistoricalDataAsync(string symbol, DateTime startDate, DateTime endDate)
         {
-            _logger.LogInformation($"Fetching historical data for {symbol} from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
+            TradingLogOrchestrator.Instance.LogInfo($"Fetching historical data for {symbol} from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
 
             var candleData = await GetCandleDataAsync(symbol, "D", startDate, endDate);
             if (candleData == null)
@@ -200,12 +200,12 @@ namespace TradingPlatform.DataIngestion.Providers
 
         public async Task<List<string>> GetStockSymbolsAsync(string exchange = "US")
         {
-            _logger.LogInformation($"Fetching stock symbols for exchange: {exchange}");
+            TradingLogOrchestrator.Instance.LogInfo($"Fetching stock symbols for exchange: {exchange}");
 
             string cacheKey = $"finnhub_symbols_{exchange}";
             if (_cache.TryGetValue(cacheKey, out List<string> cachedSymbols))
             {
-                _logger.LogTrace($"Stock symbols for {exchange} retrieved from cache");
+                TradingLogOrchestrator.Instance.LogInfo($"Stock symbols for {exchange} retrieved from cache");
                 return cachedSymbols;
             }
 
@@ -221,7 +221,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
                 if (!response.IsSuccessful || string.IsNullOrEmpty(response.Content))
                 {
-                    _logger.LogError($"Failed to get stock symbols from Finnhub: {response.ErrorMessage}");
+                    TradingLogOrchestrator.Instance.LogError($"Failed to get stock symbols from Finnhub: {response.ErrorMessage}");
                     return new List<string>();
                 }
 
@@ -230,20 +230,20 @@ namespace TradingPlatform.DataIngestion.Providers
 
                 // Cache for 4 hours as symbols don't change frequently
                 _cache.Set(cacheKey, symbols, TimeSpan.FromHours(4));
-                _logger.LogInformation($"Retrieved {symbols.Count} symbols for exchange {exchange}");
+                TradingLogOrchestrator.Instance.LogInfo($"Retrieved {symbols.Count} symbols for exchange {exchange}");
 
                 return symbols;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Exception while fetching stock symbols for {exchange}");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Exception while fetching stock symbols for {exchange}");
                 return new List<string>();
             }
         }
 
         public async Task<bool> IsMarketOpenAsync()
         {
-            _logger.LogInformation("Checking market status from Finnhub");
+            TradingLogOrchestrator.Instance.LogInfo("Checking market status from Finnhub");
 
             string cacheKey = "finnhub_market_status";
             if (_cache.TryGetValue(cacheKey, out bool cachedStatus))
@@ -263,7 +263,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
                 if (!response.IsSuccessful || string.IsNullOrEmpty(response.Content))
                 {
-                    _logger.LogWarning($"Failed to get market status from Finnhub: {response.ErrorMessage}");
+                    TradingLogOrchestrator.Instance.LogWarning($"Failed to get market status from Finnhub: {response.ErrorMessage}");
                     // Fallback to time-based check
                     return IsMarketOpenTimeBasedCheck();
                 }
@@ -273,20 +273,20 @@ namespace TradingPlatform.DataIngestion.Providers
 
                 // Cache for 1 minute as market status can change
                 _cache.Set(cacheKey, isOpen, TimeSpan.FromMinutes(1));
-                _logger.LogInformation($"Market status: {(isOpen ? "Open" : "Closed")}");
+                TradingLogOrchestrator.Instance.LogInfo($"Market status: {(isOpen ? "Open" : "Closed")}");
 
                 return isOpen;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception while checking market status");
+                TradingLogOrchestrator.Instance.LogError(ex, "Exception while checking market status");
                 return IsMarketOpenTimeBasedCheck();
             }
         }
 
         public async Task<SentimentData> GetSentimentAsync(string symbol)
         {
-            _logger.LogInformation($"Fetching sentiment data for {symbol}");
+            TradingLogOrchestrator.Instance.LogInfo($"Fetching sentiment data for {symbol}");
 
             string cacheKey = $"finnhub_{symbol}_sentiment";
             if (_cache.TryGetValue(cacheKey, out SentimentData cachedSentiment))
@@ -308,7 +308,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
                 if (!response.IsSuccessful || string.IsNullOrEmpty(response.Content))
                 {
-                    _logger.LogWarning($"Failed to get sentiment data for {symbol}: {response.ErrorMessage}");
+                    TradingLogOrchestrator.Instance.LogWarning($"Failed to get sentiment data for {symbol}: {response.ErrorMessage}");
                     return new SentimentData { Symbol = symbol, Sentiment = "neutral", Confidence = 0.5m };
                 }
 
@@ -322,14 +322,14 @@ namespace TradingPlatform.DataIngestion.Providers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Exception while fetching sentiment for {symbol}");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Exception while fetching sentiment for {symbol}");
                 return new SentimentData { Symbol = symbol, Sentiment = "neutral", Confidence = 0.5m };
             }
         }
 
         public async Task<List<NewsItem>> GetMarketNewsAsync(string category = "general")
         {
-            _logger.LogInformation($"Fetching market news for category: {category}");
+            TradingLogOrchestrator.Instance.LogInfo($"Fetching market news for category: {category}");
 
             string cacheKey = $"finnhub_news_{category}";
             if (_cache.TryGetValue(cacheKey, out List<NewsItem> cachedNews))
@@ -349,7 +349,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
                 if (!response.IsSuccessful || string.IsNullOrEmpty(response.Content))
                 {
-                    _logger.LogWarning($"Failed to get market news: {response.ErrorMessage}");
+                    TradingLogOrchestrator.Instance.LogWarning($"Failed to get market news: {response.ErrorMessage}");
                     return new List<NewsItem>();
                 }
 
@@ -358,13 +358,13 @@ namespace TradingPlatform.DataIngestion.Providers
 
                 // Cache news for 15 minutes
                 _cache.Set(cacheKey, newsItems, TimeSpan.FromMinutes(15));
-                _logger.LogInformation($"Retrieved {newsItems.Count} news items");
+                TradingLogOrchestrator.Instance.LogInfo($"Retrieved {newsItems.Count} news items");
 
                 return newsItems;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Exception while fetching market news");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Exception while fetching market news");
                 return new List<NewsItem>();
             }
         }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using TradingPlatform.Core.Interfaces;
 using StackExchange.Redis;
 using TradingPlatform.Messaging.Interfaces;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.Messaging.Services;
 
@@ -37,7 +38,7 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
         };
 
-        _logger.LogInformation("RedisMessageBus initialized with connection to {EndPoint}", 
+        TradingLogOrchestrator.Instance.LogInfo("RedisMessageBus initialized with connection to {EndPoint}", 
             _redis.GetEndPoints()[0]);
     }
 
@@ -70,23 +71,23 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
             // Performance monitoring - log if exceeding sub-millisecond target
             if (stopwatch.ElapsedTicks > TimeSpan.TicksPerMillisecond)
             {
-                _logger.LogWarning("Publish latency exceeded 1ms: {ElapsedMs}ms for stream {Stream}", 
+                TradingLogOrchestrator.Instance.LogWarning("Publish latency exceeded 1ms: {ElapsedMs}ms for stream {Stream}", 
                     stopwatch.Elapsed.TotalMilliseconds, stream);
             }
 
-            _logger.LogDebug("Published message {MessageId} to stream {Stream} in {ElapsedMicroseconds}μs", 
+            TradingLogOrchestrator.Instance.LogInfo("Published message {MessageId} to stream {Stream} in {ElapsedMicroseconds}μs", 
                 messageId, stream, stopwatch.Elapsed.TotalMicroseconds);
 
             return messageId.ToString();
         }
         catch (RedisException ex)
         {
-            _logger.LogError(ex, "Redis error publishing to stream {Stream}", stream);
+            TradingLogOrchestrator.Instance.LogError(ex, "Redis error publishing to stream {Stream}", stream);
             throw;
         }
         catch (JsonException ex)
         {
-            _logger.LogError(ex, "JSON serialization error for stream {Stream}", stream);
+            TradingLogOrchestrator.Instance.LogError(ex, "JSON serialization error for stream {Stream}", stream);
             throw;
         }
     }
@@ -106,13 +107,13 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
             try
             {
                 await _database.StreamCreateConsumerGroupAsync(stream, consumerGroup, "0", true);
-                _logger.LogInformation("Created consumer group {ConsumerGroup} for stream {Stream}", 
+                TradingLogOrchestrator.Instance.LogInfo("Created consumer group {ConsumerGroup} for stream {Stream}", 
                     consumerGroup, stream);
             }
             catch (RedisServerException ex) when (ex.Message.Contains("BUSYGROUP"))
             {
                 // Consumer group already exists - this is expected
-                _logger.LogDebug("Consumer group {ConsumerGroup} already exists for stream {Stream}", 
+                TradingLogOrchestrator.Instance.LogInfo("Consumer group {ConsumerGroup} already exists for stream {Stream}", 
                     consumerGroup, stream);
             }
 
@@ -150,20 +151,20 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
                 }
                 catch (OperationCanceledException)
                 {
-                    _logger.LogInformation("Subscription cancelled for stream {Stream}, consumer {ConsumerName}", 
+                    TradingLogOrchestrator.Instance.LogInfo("Subscription cancelled for stream {Stream}, consumer {ConsumerName}", 
                         stream, consumerName);
                     break;
                 }
                 catch (RedisException ex)
                 {
-                    _logger.LogError(ex, "Redis error reading from stream {Stream}", stream);
+                    TradingLogOrchestrator.Instance.LogError(ex, "Redis error reading from stream {Stream}", stream);
                     await Task.Delay(1000, cancellationToken); // Backoff on errors
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Subscription error for stream {Stream}, consumer {ConsumerName}", 
+            TradingLogOrchestrator.Instance.LogError(ex, "Subscription error for stream {Stream}, consumer {ConsumerName}", 
                 stream, consumerName);
             throw;
         }
@@ -183,7 +184,7 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
             var message = JsonSerializer.Deserialize<T>(messageData!, _jsonOptions);
             if (message == null)
             {
-                _logger.LogWarning("Failed to deserialize message {MessageId} from stream {Stream}", 
+                TradingLogOrchestrator.Instance.LogWarning("Failed to deserialize message {MessageId} from stream {Stream}", 
                     messageId, stream);
                 return;
             }
@@ -195,18 +196,18 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
             await AcknowledgeAsync(stream, consumerGroup, messageId.ToString());
 
             processingStopwatch.Stop();
-            _logger.LogDebug("Processed message {MessageId} in {ElapsedMicroseconds}μs", 
+            TradingLogOrchestrator.Instance.LogInfo("Processed message {MessageId} in {ElapsedMicroseconds}μs", 
                 messageId, processingStopwatch.Elapsed.TotalMicroseconds);
         }
         catch (JsonException ex)
         {
-            _logger.LogError(ex, "JSON deserialization error for message {MessageId} from stream {Stream}", 
+            TradingLogOrchestrator.Instance.LogError(ex, "JSON deserialization error for message {MessageId} from stream {Stream}", 
                 messageId, stream);
             // Don't acknowledge - message will be retried
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing message {MessageId} from stream {Stream}", 
+            TradingLogOrchestrator.Instance.LogError(ex, "Error processing message {MessageId} from stream {Stream}", 
                 messageId, stream);
             // Don't acknowledge - message will be retried
         }
@@ -225,13 +226,13 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
             
             if (acknowledgedCount == 0)
             {
-                _logger.LogWarning("Failed to acknowledge message {MessageId} for stream {Stream}, group {ConsumerGroup}", 
+                TradingLogOrchestrator.Instance.LogWarning("Failed to acknowledge message {MessageId} for stream {Stream}, group {ConsumerGroup}", 
                     messageId, stream, consumerGroup);
             }
         }
         catch (RedisException ex)
         {
-            _logger.LogError(ex, "Redis error acknowledging message {MessageId}", messageId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Redis error acknowledging message {MessageId}", messageId);
             throw;
         }
     }
@@ -253,7 +254,7 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
         }
         catch (RedisException ex)
         {
-            _logger.LogError(ex, "Redis latency check failed");
+            TradingLogOrchestrator.Instance.LogError(ex, "Redis latency check failed");
             throw;
         }
     }
@@ -280,14 +281,14 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
             // Consider healthy if latency is reasonable (< 10ms)
             var isHealthy = latency.TotalMilliseconds < 10;
             
-            _logger.LogDebug("Health check completed: {IsHealthy}, latency: {LatencyMs}ms", 
+            TradingLogOrchestrator.Instance.LogInfo("Health check completed: {IsHealthy}, latency: {LatencyMs}ms", 
                 isHealthy, latency.TotalMilliseconds);
 
             return isHealthy;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Health check failed");
+            TradingLogOrchestrator.Instance.LogError(ex, "Health check failed");
             return false;
         }
     }
@@ -306,7 +307,7 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
         {
             _connectionSemaphore?.Dispose();
             _disposed = true;
-            _logger.LogInformation("RedisMessageBus disposed");
+            TradingLogOrchestrator.Instance.LogInfo("RedisMessageBus disposed");
         }
     }
 }

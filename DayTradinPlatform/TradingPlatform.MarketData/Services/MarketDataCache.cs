@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.MarketData.Services;
 
@@ -42,7 +43,7 @@ public class MarketDataCache : IMarketDataCache
                 if (!cacheEntry.IsExpired)
                 {
                     Interlocked.Increment(ref _hitCount);
-                    _logger.LogDebug("Memory cache hit for {Symbol}", symbol);
+                    TradingLogOrchestrator.Instance.LogInfo("Memory cache hit for {Symbol}", symbol);
                     return cacheEntry.Data;
                 }
                 else
@@ -56,12 +57,12 @@ public class MarketDataCache : IMarketDataCache
             // This provides sub-millisecond access for active trading
 
             Interlocked.Increment(ref _missCount);
-            _logger.LogDebug("Cache miss for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogInfo("Cache miss for {Symbol}", symbol);
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting cached data for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error getting cached data for {Symbol}", symbol);
             Interlocked.Increment(ref _missCount);
             return null;
         }
@@ -84,12 +85,12 @@ public class MarketDataCache : IMarketDataCache
             var dataSize = System.Text.Encoding.UTF8.GetByteCount(serializedData);
             Interlocked.Add(ref _memoryUsageBytes, dataSize);
 
-            _logger.LogDebug("Cached market data for {Symbol} with TTL {TTL}ms", 
+            TradingLogOrchestrator.Instance.LogInfo("Cached market data for {Symbol} with TTL {TTL}ms", 
                 symbol, expiry.TotalMilliseconds);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error caching data for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error caching data for {Symbol}", symbol);
         }
     }
 
@@ -103,11 +104,11 @@ public class MarketDataCache : IMarketDataCache
 
             // For MVP, only memory cache needs invalidation
 
-            _logger.LogDebug("Invalidated cache for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogInfo("Invalidated cache for {Symbol}", symbol);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error invalidating cache for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error invalidating cache for {Symbol}", symbol);
         }
     }
 
@@ -156,12 +157,12 @@ public class MarketDataCache : IMarketDataCache
 
             if (expiredKeys.Length > 0)
             {
-                _logger.LogDebug("Cleaned up {ExpiredCount} expired cache entries", expiredKeys.Length);
+                TradingLogOrchestrator.Instance.LogInfo("Cleaned up {ExpiredCount} expired cache entries", expiredKeys.Length);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during cache cleanup");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error during cache cleanup");
         }
     }
 

@@ -1,6 +1,7 @@
 using TradingPlatform.PaperTrading.Models;
 
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 namespace TradingPlatform.PaperTrading.Services;
 
 public class SlippageCalculator : ISlippageCalculator
@@ -29,7 +30,7 @@ public class SlippageCalculator : ISlippageCalculator
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating slippage");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating slippage");
             return 0m;
         }
     }
@@ -50,14 +51,14 @@ public class SlippageCalculator : ISlippageCalculator
             var spreadComponent = GetTypicalSpread(symbol) / 2m;
             var totalSlippage = estimatedSlippage + spreadComponent;
 
-            _logger.LogDebug("Estimated slippage for {Symbol}: {Slippage:P4} (participation: {Participation:P2})", 
+            TradingLogOrchestrator.Instance.LogInfo("Estimated slippage for {Symbol}: {Slippage:P4} (participation: {Participation:P2})", 
                 symbol, totalSlippage, participationRate);
 
             return await Task.FromResult(Math.Min(totalSlippage, 0.10m)); // Cap at 10%
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error estimating slippage for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error estimating slippage for {Symbol}", symbol);
             return 0.001m; // Default 10 basis points
         }
     }
@@ -82,14 +83,14 @@ public class SlippageCalculator : ISlippageCalculator
             
             var totalImpact = temporaryImpact + permanentImpact;
 
-            _logger.LogDebug("Market impact for {Symbol}: {Impact:P4} (temp: {Temp:P4}, perm: {Perm:P4})", 
+            TradingLogOrchestrator.Instance.LogInfo("Market impact for {Symbol}: {Impact:P4} (temp: {Temp:P4}, perm: {Perm:P4})", 
                 symbol, totalImpact, temporaryImpact, permanentImpact);
 
             return await Task.FromResult(totalImpact);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating market impact for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating market impact for {Symbol}", symbol);
             return 0.001m;
         }
     }

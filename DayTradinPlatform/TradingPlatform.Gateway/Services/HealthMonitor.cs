@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Messaging.Interfaces;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.Gateway.Services;
 
@@ -66,7 +67,7 @@ public class HealthMonitor : IHealthMonitor
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Health check failed for {HealthCheckName}", name);
+                    TradingLogOrchestrator.Instance.LogError(ex, "Health check failed for {HealthCheckName}", name);
                     serviceHealth[name] = false;
                     overallHealthy = false;
                 }
@@ -81,7 +82,7 @@ public class HealthMonitor : IHealthMonitor
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error performing health check");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error performing health check");
             stopwatch.Stop();
             
             return new HealthStatus(false, "Error", stopwatch.Elapsed, serviceHealth, 
@@ -141,7 +142,7 @@ public class HealthMonitor : IHealthMonitor
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting detailed health information");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error getting detailed health information");
         }
 
         return healthInfos.ToArray();
@@ -160,7 +161,7 @@ public class HealthMonitor : IHealthMonitor
             {
                 if (!healthStatus.ServiceHealth.GetValueOrDefault(system, false))
                 {
-                    _logger.LogWarning("Critical system {SystemName} is not healthy", system);
+                    TradingLogOrchestrator.Instance.LogWarning("Critical system {SystemName} is not healthy", system);
                     return false;
                 }
             }
@@ -169,7 +170,7 @@ public class HealthMonitor : IHealthMonitor
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking critical systems health");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error checking critical systems health");
             return false;
         }
     }
@@ -198,7 +199,7 @@ public class HealthMonitor : IHealthMonitor
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting trading health metrics");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error getting trading health metrics");
             throw;
         }
     }
@@ -206,12 +207,12 @@ public class HealthMonitor : IHealthMonitor
     public void RegisterHealthCheck(string name, Func<Task<HealthCheckResult>> healthCheck)
     {
         _healthChecks[name] = healthCheck ?? throw new ArgumentNullException(nameof(healthCheck));
-        _logger.LogInformation("Registered health check: {HealthCheckName}", name);
+        TradingLogOrchestrator.Instance.LogInfo("Registered health check: {HealthCheckName}", name);
     }
 
     public async Task StartMonitoringAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Starting continuous health monitoring");
+        TradingLogOrchestrator.Instance.LogInfo("Starting continuous health monitoring");
 
         try
         {
@@ -223,11 +224,11 @@ public class HealthMonitor : IHealthMonitor
         }
         catch (OperationCanceledException)
         {
-            _logger.LogInformation("Health monitoring stopped");
+            TradingLogOrchestrator.Instance.LogInfo("Health monitoring stopped");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in health monitoring loop");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error in health monitoring loop");
         }
     }
 
@@ -338,7 +339,7 @@ public class HealthMonitor : IHealthMonitor
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error performing periodic health checks");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error performing periodic health checks");
         }
     }
 
@@ -368,7 +369,7 @@ public class HealthMonitor : IHealthMonitor
             }
         }
 
-        _logger.LogWarning("New system alert: {Severity} - {Title}: {Description}", 
+        TradingLogOrchestrator.Instance.LogWarning("New system alert: {Severity} - {Title}: {Description}", 
             alert.Severity, alert.Title, alert.Description);
     }
 

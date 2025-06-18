@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.StrategyEngine.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.StrategyEngine.Services;
 
@@ -62,14 +63,14 @@ public class PerformanceTracker : IPerformanceTracker
                 CreateInitialPerformance(strategyId, pnl, isWinning),
                 (key, existing) => UpdateExistingPerformance(existing, pnl, isWinning));
 
-            _logger.LogDebug("Updated performance for strategy {StrategyId}: PnL={PnL}, IsWinning={IsWinning}", 
+            TradingLogOrchestrator.Instance.LogInfo("Updated performance for strategy {StrategyId}: PnL={PnL}, IsWinning={IsWinning}", 
                 strategyId, pnl, isWinning);
 
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating performance for strategy {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error updating performance for strategy {StrategyId}", strategyId);
         }
     }
 
@@ -108,7 +109,7 @@ public class PerformanceTracker : IPerformanceTracker
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating portfolio performance");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating portfolio performance");
             return new PortfolioPerformance(0.0m, 0.0m, 0.0m, 0, 0, 0.0m, DateTimeOffset.UtcNow);
         }
     }
@@ -120,12 +121,12 @@ public class PerformanceTracker : IPerformanceTracker
             _strategyPerformances.TryRemove(strategyId, out _);
             _tradeHistory.TryRemove(strategyId, out _);
 
-            _logger.LogInformation("Reset performance tracking for strategy {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogInfo("Reset performance tracking for strategy {StrategyId}", strategyId);
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error resetting performance for strategy {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error resetting performance for strategy {StrategyId}", strategyId);
         }
     }
 
@@ -234,7 +235,7 @@ public class PerformanceTracker : IPerformanceTracker
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating risk-adjusted metrics for {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating risk-adjusted metrics for {StrategyId}", strategyId);
             return new RiskAdjustedMetrics(strategyId, 0.0m, 0.0m, 0.0m, 0.0m, DateTimeOffset.UtcNow);
         }
     }
@@ -327,7 +328,7 @@ public class PerformanceTracker : IPerformanceTracker
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating performance metrics");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error updating performance metrics");
         }
     }
 }

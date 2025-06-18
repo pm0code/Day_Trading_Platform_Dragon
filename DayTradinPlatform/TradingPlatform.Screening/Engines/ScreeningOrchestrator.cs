@@ -4,6 +4,7 @@ using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Interfaces;
 using TradingPlatform.Screening.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.Screening.Engines
 {
@@ -57,12 +58,12 @@ namespace TradingPlatform.Screening.Engines
                 result.AdditionalMetrics["CriteriaCount"] = criteriaResults.Count;
                 result.AdditionalMetrics["PassedCount"] = result.PassedCriteria.Count;
 
-                _logger.LogTrace($"Orchestrated evaluation for {marketData.Symbol}: Score={result.OverallScore:F2}, Passed={result.MeetsCriteria}");
+                TradingLogOrchestrator.Instance.LogInfo($"Orchestrated evaluation for {marketData.Symbol}: Score={result.OverallScore:F2}, Passed={result.MeetsCriteria}");
                 return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error orchestrating criteria evaluation for {marketData.Symbol}");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Error orchestrating criteria evaluation for {marketData.Symbol}");
                 result.MeetsCriteria = false;
                 result.OverallScore = 0m;
                 result.CriteriaResults = new List<CriteriaResult>
