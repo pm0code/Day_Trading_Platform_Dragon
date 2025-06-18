@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Messaging.Interfaces;
 
 namespace TradingPlatform.Gateway.Services;
@@ -12,13 +12,13 @@ public class HealthMonitor : IHealthMonitor
 {
     private readonly IMessageBus _messageBus;
     private readonly IProcessManager _processManager;
-    private readonly ILogger<HealthMonitor> _logger;
+    private readonly ILogger _logger;
     private readonly Dictionary<string, Func<Task<HealthCheckResult>>> _healthChecks;
     private readonly List<SystemAlert> _activeAlerts;
     private readonly object _alertLock = new();
     private readonly Timer _monitoringTimer;
 
-    public HealthMonitor(IMessageBus messageBus, IProcessManager processManager, ILogger<HealthMonitor> logger)
+    public HealthMonitor(IMessageBus messageBus, IProcessManager processManager, ILogger logger)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _processManager = processManager ?? throw new ArgumentNullException(nameof(processManager));

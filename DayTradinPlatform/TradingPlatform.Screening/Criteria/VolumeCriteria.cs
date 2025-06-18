@@ -1,6 +1,6 @@
 // File: TradingPlatform.Screening.Criteria\VolumeCriteria.cs
 
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Models;
 
@@ -11,9 +11,9 @@ namespace TradingPlatform.Screening.Criteria
     /// </summary>
     public class VolumeCriteria
     {
-        private readonly ILogger<VolumeCriteria> _logger;
+        private readonly ILogger _logger;
 
-        public VolumeCriteria(ILogger<VolumeCriteria> logger)
+        public VolumeCriteria(ILogger logger)
         {
             _logger = logger;
         }

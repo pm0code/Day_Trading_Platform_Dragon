@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Messaging.Events;
 using TradingPlatform.Messaging.Interfaces;
@@ -17,14 +17,14 @@ namespace TradingPlatform.Gateway.Services;
 public class GatewayOrchestrator : IGatewayOrchestrator
 {
     private readonly IMessageBus _messageBus;
-    private readonly ILogger<GatewayOrchestrator> _logger;
+    private readonly ILogger _logger;
     private readonly ITradingLogger _tradingLogger;
     private readonly IPerformanceLogger _performanceLogger;
     private readonly Dictionary<string, WebSocket> _activeWebSockets;
     private readonly object _webSocketLock = new();
     private readonly CancellationTokenSource _cancellationTokenSource;
 
-    public GatewayOrchestrator(IMessageBus messageBus, ILogger<GatewayOrchestrator> logger, 
+    public GatewayOrchestrator(IMessageBus messageBus, ILogger logger, 
         ITradingLogger tradingLogger, IPerformanceLogger performanceLogger)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));

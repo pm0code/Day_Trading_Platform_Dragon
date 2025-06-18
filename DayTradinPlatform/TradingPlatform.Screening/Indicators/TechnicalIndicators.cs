@@ -1,6 +1,6 @@
 // File: TradingPlatform.Screening.Indicators\TechnicalIndicators.cs
 
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Core.Mathematics;
 
@@ -11,9 +11,9 @@ namespace TradingPlatform.Screening.Indicators
     /// </summary>
     public class TechnicalIndicators
     {
-        private readonly ILogger<TechnicalIndicators> _logger;
+        private readonly ILogger _logger;
 
-        public TechnicalIndicators(ILogger<TechnicalIndicators> logger)
+        public TechnicalIndicators(ILogger logger)
         {
             _logger = logger;
         }

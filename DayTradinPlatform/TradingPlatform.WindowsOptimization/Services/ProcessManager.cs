@@ -1,16 +1,16 @@
 using System.Diagnostics;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.WindowsOptimization.Models;
 
 namespace TradingPlatform.WindowsOptimization.Services;
 
 public class ProcessManager : IProcessManager
 {
-    private readonly ILogger<ProcessManager> _logger;
+    private readonly ILogger _logger;
     private readonly IWindowsOptimizationService _optimizationService;
 
     public ProcessManager(
-        ILogger<ProcessManager> logger,
+        ILogger logger,
         IWindowsOptimizationService optimizationService)
     {
         _logger = logger;

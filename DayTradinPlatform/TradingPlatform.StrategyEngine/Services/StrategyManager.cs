@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.StrategyEngine.Models;
 
 namespace TradingPlatform.StrategyEngine.Services;
@@ -10,11 +10,11 @@ namespace TradingPlatform.StrategyEngine.Services;
 /// </summary>
 public class StrategyManager : IStrategyManager
 {
-    private readonly ILogger<StrategyManager> _logger;
+    private readonly ILogger _logger;
     private readonly ConcurrentDictionary<string, StrategyInfo> _activeStrategies;
     private readonly ConcurrentDictionary<string, StrategyConfig> _strategyConfigs;
 
-    public StrategyManager(ILogger<StrategyManager> logger)
+    public StrategyManager(ILogger logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _activeStrategies = new ConcurrentDictionary<string, StrategyInfo>();

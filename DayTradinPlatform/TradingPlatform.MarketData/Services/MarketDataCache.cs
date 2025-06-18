@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 
 namespace TradingPlatform.MarketData.Services;
@@ -11,7 +11,7 @@ namespace TradingPlatform.MarketData.Services;
 /// </summary>
 public class MarketDataCache : IMarketDataCache
 {
-    private readonly ILogger<MarketDataCache> _logger;
+    private readonly ILogger _logger;
     private readonly ConcurrentDictionary<string, CacheEntry> _memoryCache;
     private readonly Timer _cleanupTimer;
     private readonly object _statsLock = new();
@@ -21,7 +21,7 @@ public class MarketDataCache : IMarketDataCache
     private long _missCount;
     private long _memoryUsageBytes;
 
-    public MarketDataCache(ILogger<MarketDataCache> logger)
+    public MarketDataCache(ILogger logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _memoryCache = new ConcurrentDictionary<string, CacheEntry>();

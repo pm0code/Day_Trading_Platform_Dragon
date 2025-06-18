@@ -3,6 +3,7 @@ using TradingPlatform.Messaging.Interfaces;
 using TradingPlatform.Messaging.Events;
 using System.Collections.Concurrent;
 
+using TradingPlatform.Core.Interfaces;
 namespace TradingPlatform.PaperTrading.Services;
 
 public class PaperTradingService : IPaperTradingService
@@ -12,7 +13,7 @@ public class PaperTradingService : IPaperTradingService
     private readonly IOrderBookSimulator _orderBookSimulator;
     private readonly IExecutionAnalytics _analytics;
     private readonly IMessageBus _messageBus;
-    private readonly ILogger<PaperTradingService> _logger;
+    private readonly ILogger _logger;
     private readonly ConcurrentDictionary<string, Order> _orders = new();
     private readonly ConcurrentQueue<Order> _pendingOrders = new();
 
@@ -22,7 +23,7 @@ public class PaperTradingService : IPaperTradingService
         IOrderBookSimulator orderBookSimulator,
         IExecutionAnalytics analytics,
         IMessageBus messageBus,
-        ILogger<PaperTradingService> logger)
+        ILogger logger)
     {
         _executionEngine = executionEngine;
         _portfolioManager = portfolioManager;

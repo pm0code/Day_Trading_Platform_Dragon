@@ -1,6 +1,6 @@
 // d:\Projects\C#.Net\DayTradingPlatform-P\DayTradinPlatform\CacheService.cs
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.DataIngestion.Models;
 
 namespace TradingPlatform.DataIngestion.Services
@@ -17,10 +17,10 @@ namespace TradingPlatform.DataIngestion.Services
     public class CacheService : ICacheService
     {
         private readonly IMemoryCache _cache;
-        private readonly ILogger<CacheService> _logger;
+        private readonly ILogger _logger;
         private readonly ApiConfiguration _config;
 
-        public CacheService(IMemoryCache cache, ILogger<CacheService> logger, ApiConfiguration config)
+        public CacheService(IMemoryCache cache, ILogger logger, ApiConfiguration config)
         {
             _cache = cache;
             _logger = logger;

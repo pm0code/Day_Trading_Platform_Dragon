@@ -1,6 +1,5 @@
 // File: TradingPlatform.DataIngestion\Providers\MarketDataAggregator.cs
 
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
@@ -10,8 +9,6 @@ using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.DataIngestion.Configuration;
 using TradingPlatform.DataIngestion.Interfaces;
-// Namespace aliases to resolve conflicts
-using CoreLogger = TradingPlatform.Core.Interfaces.ILogger;
 
 namespace TradingPlatform.DataIngestion.Providers
 {
@@ -19,7 +16,7 @@ namespace TradingPlatform.DataIngestion.Providers
     {
         private readonly IAlphaVantageProvider _alphaVantageProvider;
         private readonly IFinnhubProvider _finnhubProvider;
-        private readonly ILogger<MarketDataAggregator> _logger;
+        private readonly ILogger _logger;
         private readonly IMemoryCache _cache;
         private readonly DataIngestionConfig _config;
         private readonly Dictionary<string, DateTime> _providerFailures;
@@ -33,7 +30,7 @@ namespace TradingPlatform.DataIngestion.Providers
         public MarketDataAggregator(
             IAlphaVantageProvider alphaVantageProvider,
             IFinnhubProvider finnhubProvider,
-            ILogger<MarketDataAggregator> logger,
+            ILogger logger,
             IMemoryCache cache,
             DataIngestionConfig config)
         {

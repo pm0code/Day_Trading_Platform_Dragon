@@ -1,6 +1,5 @@
 // File: TradingPlatform.DataIngestion\Services\DataIngestionService.cs
 
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +18,7 @@ namespace TradingPlatform.DataIngestion.Services
     /// </summary>
     public class DataIngestionService : IDataIngestionService
     {
-        private readonly ILogger<DataIngestionService> _logger;
+        private readonly ILogger _logger;
         private readonly IAlphaVantageProvider _alphaVantageProvider;
         private readonly IFinnhubProvider _finnhubProvider;
         private readonly IRateLimiter _rateLimiter;
@@ -27,7 +26,7 @@ namespace TradingPlatform.DataIngestion.Services
         private readonly IMarketDataAggregator _aggregator;
         private readonly ApiConfiguration _config;
 
-        public DataIngestionService(ILogger<DataIngestionService> logger,
+        public DataIngestionService(ILogger logger,
                                       IAlphaVantageProvider alphaVantageProvider,
                                       IFinnhubProvider finnhubProvider,
                                       IRateLimiter rateLimiter,

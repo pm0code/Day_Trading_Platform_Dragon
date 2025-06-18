@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.DisplayManagement.Models;
 
 namespace TradingPlatform.DisplayManagement.Services;
@@ -40,7 +40,7 @@ public interface IMonitorDetectionService
 /// </summary>
 public class MonitorDetectionService : IMonitorDetectionService
 {
-    private readonly ILogger<MonitorDetectionService> _logger;
+    private readonly ILogger _logger;
     private readonly IGpuDetectionService _gpuDetectionService;
     private readonly string _configurationFilePath;
 
@@ -79,7 +79,7 @@ public class MonitorDetectionService : IMonitorDetectionService
     private const uint MONITORINFOF_PRIMARY = 0x00000001;
 
     public MonitorDetectionService(
-        ILogger<MonitorDetectionService> logger,
+        ILogger logger,
         IGpuDetectionService gpuDetectionService)
     {
         _logger = logger;

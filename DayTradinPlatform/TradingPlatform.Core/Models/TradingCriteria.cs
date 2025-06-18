@@ -1,15 +1,15 @@
 ﻿// File: TradingPlatform.Core\Models\TradingCriteria.cs
 
 using System;
-using Microsoft.Extensions.Logging; // For logging
+using TradingPlatform.Core.Interfaces; // For logging
 
 namespace TradingPlatform.Core.Models
 {
     public class TradingCriteria
     {
-        private readonly ILogger<TradingCriteria> _logger; // Add logger for validation messages
+        private readonly ILogger _logger; // Add logger for validation messages
 
-        public TradingCriteria(ILogger<TradingCriteria> logger)
+        public TradingCriteria(ILogger logger)
         {
             _logger = logger;
         }

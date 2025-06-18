@@ -1,12 +1,13 @@
 using TradingPlatform.RiskManagement.Models;
 
+using TradingPlatform.Core.Interfaces;
 namespace TradingPlatform.RiskManagement.Services;
 
 public class RiskCalculator : IRiskCalculator
 {
-    private readonly ILogger<RiskCalculator> _logger;
+    private readonly ILogger _logger;
 
-    public RiskCalculator(ILogger<RiskCalculator> logger)
+    public RiskCalculator(ILogger logger)
     {
         _logger = logger;
     }

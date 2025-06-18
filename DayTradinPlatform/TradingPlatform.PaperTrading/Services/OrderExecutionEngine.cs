@@ -1,17 +1,18 @@
 using TradingPlatform.PaperTrading.Models;
 
+using TradingPlatform.Core.Interfaces;
 namespace TradingPlatform.PaperTrading.Services;
 
 public class OrderExecutionEngine : IOrderExecutionEngine
 {
     private readonly IOrderBookSimulator _orderBookSimulator;
     private readonly ISlippageCalculator _slippageCalculator;
-    private readonly ILogger<OrderExecutionEngine> _logger;
+    private readonly ILogger _logger;
 
     public OrderExecutionEngine(
         IOrderBookSimulator orderBookSimulator,
         ISlippageCalculator slippageCalculator,
-        ILogger<OrderExecutionEngine> logger)
+        ILogger logger)
     {
         _orderBookSimulator = orderBookSimulator;
         _slippageCalculator = slippageCalculator;
@@ -103,7 +104,7 @@ public class OrderExecutionEngine : IOrderExecutionEngine
             
             // Market impact model based on order size relative to market
             var participationRate = orderValue / adv;
-            var temporaryImpact = 0.01m * (decimal)Math.Sqrt((double)participationRate);
+            var temporaryImpact = 0.01m * TradingPlatform.Common.Mathematics.TradingMath.Sqrt(participationRate);
             var permanentImpact = 0.005m * participationRate;
             var priceImpact = temporaryImpact + permanentImpact;
             

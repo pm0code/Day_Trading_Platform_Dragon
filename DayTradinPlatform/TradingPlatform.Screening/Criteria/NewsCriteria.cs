@@ -1,6 +1,6 @@
 // File: TradingPlatform.Screening.Criteria\NewsCriteria.cs
 
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Models;
 
@@ -11,9 +11,9 @@ namespace TradingPlatform.Screening.Criteria
     /// </summary>
     public class NewsCriteria
     {
-        private readonly ILogger<NewsCriteria> _logger;
+        private readonly ILogger _logger;
 
-        public NewsCriteria(ILogger<NewsCriteria> logger)
+        public NewsCriteria(ILogger logger)
         {
             _logger = logger;
         }

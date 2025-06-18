@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
@@ -17,7 +17,7 @@ namespace TradingPlatform.TradingApp.Views.Settings;
 /// </summary>
 public sealed partial class MonitorSelectionView : UserControl
 {
-    private readonly ILogger<MonitorSelectionView> _logger;
+    private readonly ILogger _logger;
     private readonly IGpuDetectionService _gpuDetectionService;
     private readonly IMonitorDetectionService _monitorDetectionService;
     
@@ -32,7 +32,7 @@ public sealed partial class MonitorSelectionView : UserControl
         
         // Get services from DI container (assuming they're registered)
         var serviceProvider = App.Current.Services;
-        _logger = serviceProvider.GetRequiredService<ILogger<MonitorSelectionView>>();
+        _logger = serviceProvider.GetRequiredService<ILogger>();
         _gpuDetectionService = serviceProvider.GetRequiredService<IGpuDetectionService>();
         _monitorDetectionService = serviceProvider.GetRequiredService<IMonitorDetectionService>();
         

@@ -3,7 +3,7 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using Microsoft.Extensions.Options;
 using TradingPlatform.DisplayManagement.Models;
 
@@ -51,7 +51,7 @@ public interface IDisplaySessionService
 /// </summary>
 public class DisplaySessionService : BackgroundService, IDisplaySessionService
 {
-    private readonly ILogger<DisplaySessionService> _logger;
+    private readonly ILogger _logger;
     private readonly DisplaySessionOptions _options;
     private readonly Subject<DisplaySessionChangedEventArgs> _sessionChangedSubject = new();
 
@@ -98,7 +98,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
     public IObservable<DisplaySessionChangedEventArgs> SessionChanged => _sessionChangedSubject.AsObservable();
 
     public DisplaySessionService(
-        ILogger<DisplaySessionService> logger,
+        ILogger logger,
         IOptions<DisplaySessionOptions> options)
     {
         _logger = logger;

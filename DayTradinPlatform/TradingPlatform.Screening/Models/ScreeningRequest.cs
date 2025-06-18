@@ -2,7 +2,7 @@
 
 using System;
 using System.Collections.Generic;
-using Microsoft.Extensions.Logging; // Added for logger injection
+using TradingPlatform.Core.Interfaces; // Added for logger injection
 using TradingPlatform.Core.Models;
 
 namespace TradingPlatform.Screening.Models
@@ -13,9 +13,9 @@ namespace TradingPlatform.Screening.Models
     /// </summary>
     public class ScreeningRequest
     {
-        private readonly ILogger<TradingCriteria> _logger; // Logger for TradingCriteria
+        private readonly ILogger _logger; // Logger for TradingCriteria
 
-        public ScreeningRequest(ILogger<TradingCriteria> logger) // Constructor injection for logger
+        public ScreeningRequest(ILogger logger) // Constructor injection for logger
         {
             _logger = logger;
             Criteria = new TradingCriteria(logger); // Inject logger into TradingCriteria

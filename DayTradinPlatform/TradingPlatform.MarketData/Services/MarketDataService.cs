@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.DataIngestion.Interfaces;
 using TradingPlatform.Messaging.Events;
@@ -17,7 +17,7 @@ public class MarketDataService : IMarketDataService
     private readonly IMarketDataAggregator _marketDataAggregator;
     private readonly IMarketDataCache _cache;
     private readonly IMessageBus _messageBus;
-    private readonly ILogger<MarketDataService> _logger;
+    private readonly ILogger _logger;
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly Dictionary<string, DateTime> _lastUpdateTimes;
     private readonly object _metricsLock = new();
@@ -34,7 +34,7 @@ public class MarketDataService : IMarketDataService
         IMarketDataAggregator marketDataAggregator,
         IMarketDataCache cache,
         IMessageBus messageBus,
-        ILogger<MarketDataService> logger)
+        ILogger logger)
     {
         _dataIngestionService = dataIngestionService ?? throw new ArgumentNullException(nameof(dataIngestionService));
         _marketDataAggregator = marketDataAggregator ?? throw new ArgumentNullException(nameof(marketDataAggregator));

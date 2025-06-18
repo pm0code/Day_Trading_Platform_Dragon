@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Screening.Models;
 
@@ -18,7 +18,7 @@ namespace TradingPlatform.Screening.Engines
     {
         private readonly IMarketDataProvider _marketDataProvider;
         private readonly ScreeningOrchestrator _orchestrator;
-        private readonly ILogger<RealTimeScreeningEngine> _logger;
+        private readonly ILogger _logger;
         private readonly Subject<ScreeningResult> _screeningResults;
         private readonly ConcurrentDictionary<string, ScreeningResult> _lastResults;
         private readonly ConcurrentDictionary<string, DateTime> _lastScreeningTimes;
@@ -29,7 +29,7 @@ namespace TradingPlatform.Screening.Engines
         public RealTimeScreeningEngine(
             IMarketDataProvider marketDataProvider,
             ScreeningOrchestrator orchestrator,
-            ILogger<RealTimeScreeningEngine> logger)
+            ILogger logger)
         {
             _marketDataProvider = marketDataProvider;
             _orchestrator = orchestrator;

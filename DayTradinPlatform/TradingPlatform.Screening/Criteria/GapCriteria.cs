@@ -1,6 +1,6 @@
 // File: TradingPlatform.Screening.Criteria\GapCriteria.cs
 
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Models;
 
@@ -11,9 +11,9 @@ namespace TradingPlatform.Screening.Criteria
     /// </summary>
     public class GapCriteria
     {
-        private readonly ILogger<GapCriteria> _logger;
+        private readonly ILogger _logger;
 
-        public GapCriteria(ILogger<GapCriteria> logger)
+        public GapCriteria(ILogger logger)
         {
             _logger = logger;
         }
@@ -32,7 +32,7 @@ namespace TradingPlatform.Screening.Criteria
                 {
                     result.Passed = false;
                     result.Score = 0m;
-                    result.Reason = "Previous close is zero—cannot compute gap.";
+                    result.Reason = "Previous close is zeroï¿½cannot compute gap.";
                     result.Metrics["GapPercent"] = 0m;
                     return result;
                 }

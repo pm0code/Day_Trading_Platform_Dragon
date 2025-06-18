@@ -1,19 +1,20 @@
 using TradingPlatform.PaperTrading.Models;
 using System.Collections.Concurrent;
 
+using TradingPlatform.Core.Interfaces;
 namespace TradingPlatform.PaperTrading.Services;
 
 public class PortfolioManager : IPortfolioManager
 {
     private readonly IOrderBookSimulator _orderBookSimulator;
-    private readonly ILogger<PortfolioManager> _logger;
+    private readonly ILogger _logger;
     private readonly ConcurrentDictionary<string, Position> _positions = new();
     private decimal _cashBalance = 100000m; // Starting with $100k for paper trading
     private decimal _totalRealizedPnL = 0m;
 
     public PortfolioManager(
         IOrderBookSimulator orderBookSimulator,
-        ILogger<PortfolioManager> logger)
+        ILogger logger)
     {
         _orderBookSimulator = orderBookSimulator;
         _logger = logger;

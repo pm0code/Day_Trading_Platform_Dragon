@@ -1,7 +1,7 @@
 // d:\Projects\C#.Net\DayTradingPlatform-P\DayTradinPlatform\ApiRateLimiter.cs
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.DataIngestion.Interfaces;
 using TradingPlatform.DataIngestion.Models;
 
@@ -10,12 +10,12 @@ namespace TradingPlatform.DataIngestion.RateLimiting
     public class ApiRateLimiter : IRateLimiter
     {
         private readonly IMemoryCache _cache;
-        private readonly ILogger<ApiRateLimiter> _logger;
+        private readonly ILogger _logger;
         private readonly ApiConfiguration _config;
         private readonly ConcurrentDictionary<string, DateTime> _lastRequestTimes;
         private readonly ConcurrentDictionary<string, int> _requestCounts;
 
-        public ApiRateLimiter(IMemoryCache cache, ILogger<ApiRateLimiter> logger, ApiConfiguration config)
+        public ApiRateLimiter(IMemoryCache cache, ILogger logger, ApiConfiguration config)
         {
             _cache = cache;
             _logger = logger;

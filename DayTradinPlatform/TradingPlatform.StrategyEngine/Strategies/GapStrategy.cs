@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.StrategyEngine.Models;
 
 namespace TradingPlatform.StrategyEngine.Strategies;
@@ -9,12 +9,12 @@ namespace TradingPlatform.StrategyEngine.Strategies;
 /// </summary>
 public class GapStrategy : IGapStrategy
 {
-    private readonly ILogger<GapStrategy> _logger;
+    private readonly ILogger _logger;
 
     public string StrategyName => "Gap Trading Strategy";
     public string Description => "Gap-based trading strategy focusing on gap fill probabilities and reversal patterns";
 
-    public GapStrategy(ILogger<GapStrategy> logger)
+    public GapStrategy(ILogger logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }

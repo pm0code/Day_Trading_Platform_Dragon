@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Management;
 using System.Runtime;
 using System.Runtime.InteropServices;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using Microsoft.Extensions.Options;
 using TradingPlatform.WindowsOptimization.Models;
 
@@ -10,7 +10,7 @@ namespace TradingPlatform.WindowsOptimization.Services;
 
 public class WindowsOptimizationService : IWindowsOptimizationService
 {
-    private readonly ILogger<WindowsOptimizationService> _logger;
+    private readonly ILogger _logger;
     private readonly ProcessPriorityConfiguration _config;
 
     [DllImport("kernel32.dll", SetLastError = true)]
@@ -52,7 +52,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
     private const uint ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000;
 
     public WindowsOptimizationService(
-        ILogger<WindowsOptimizationService> logger,
+        ILogger logger,
         IOptions<ProcessPriorityConfiguration> config)
     {
         _logger = logger;

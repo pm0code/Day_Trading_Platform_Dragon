@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.StrategyEngine.Models;
 
 namespace TradingPlatform.StrategyEngine.Strategies;
@@ -9,12 +9,12 @@ namespace TradingPlatform.StrategyEngine.Strategies;
 /// </summary>
 public class MomentumStrategy : IMomentumStrategy
 {
-    private readonly ILogger<MomentumStrategy> _logger;
+    private readonly ILogger _logger;
 
     public string StrategyName => "Momentum Breakout Strategy";
     public string Description => "Momentum-based trading strategy that identifies breakouts with volume confirmation";
 
-    public MomentumStrategy(ILogger<MomentumStrategy> logger)
+    public MomentumStrategy(ILogger logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }

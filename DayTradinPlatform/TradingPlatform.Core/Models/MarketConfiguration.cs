@@ -2,15 +2,15 @@
 
 using System;
 using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 
 namespace TradingPlatform.Core.Models
 {
     public class MarketConfiguration
     {
-        private readonly ILogger<MarketConfiguration> _logger;
+        private readonly ILogger _logger;
 
-        public MarketConfiguration(ILogger<MarketConfiguration> logger)
+        public MarketConfiguration(ILogger logger)
         {
             _logger = logger;
         }
@@ -92,7 +92,7 @@ namespace TradingPlatform.Core.Models
         public static MarketSelector CreateDefault()
         {
             var selector = new MarketSelector();
-            var logger = LoggerFactory.Create(builder => { }).CreateLogger<MarketConfiguration>(); // Create logger for default config
+            var logger = new TradingPlatform.Core.Services.TradingLogger(); // Create logger for default config
 
             selector.AvailableMarkets["US"] = new MarketConfiguration(logger)
             {

@@ -1,6 +1,6 @@
 // File: TradingPlatform.Screening.Criteria\PriceCriteria.cs
 
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Models;
 
@@ -11,9 +11,9 @@ namespace TradingPlatform.Screening.Criteria
     /// </summary>
     public class PriceCriteria
     {
-        private readonly ILogger<PriceCriteria> _logger;
+        private readonly ILogger _logger;
 
-        public PriceCriteria(ILogger<PriceCriteria> logger)
+        public PriceCriteria(ILogger logger)
         {
             _logger = logger;
         }
@@ -50,7 +50,7 @@ namespace TradingPlatform.Screening.Criteria
                     decimal score = 1.0m - (distanceFromMid / (range / 2m));
                     result.Passed = true;
                     result.Score = Math.Max(0.7m, Math.Min(1.0m, score));
-                    result.Reason = $"Price ${price:F2} within range (${criteria.MinimumPrice:F2}–${criteria.MaximumPrice:F2}).";
+                    result.Reason = $"Price ${price:F2} within range (${criteria.MinimumPrice:F2}ï¿½${criteria.MaximumPrice:F2}).";
                 }
                 else
                 {

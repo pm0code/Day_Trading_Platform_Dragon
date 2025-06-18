@@ -3,18 +3,19 @@ using TradingPlatform.Messaging.Interfaces;
 using TradingPlatform.Messaging.Events;
 using System.Collections.Concurrent;
 
+using TradingPlatform.Core.Interfaces;
 namespace TradingPlatform.PaperTrading.Services;
 
 public class OrderProcessingBackgroundService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<OrderProcessingBackgroundService> _logger;
+    private readonly ILogger _logger;
     private readonly TimeSpan _processingInterval = TimeSpan.FromMilliseconds(10); // 100Hz processing
     private readonly ConcurrentQueue<Order> _orderQueue = new();
 
     public OrderProcessingBackgroundService(
         IServiceProvider serviceProvider,
-        ILogger<OrderProcessingBackgroundService> logger)
+        ILogger logger)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
