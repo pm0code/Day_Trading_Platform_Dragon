@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using TradingPlatform.TradingApp.Models;
 using TradingPlatform.TradingApp.Services;
 using TradingPlatform.Logging.Interfaces;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.TradingApp.Views.TradingScreens;
 
@@ -36,7 +37,7 @@ public sealed partial class PortfolioRiskScreen : Window
         };
         _updateTimer.Tick += UpdateTimer_Tick;
         
-        _logger.LogInformation("Portfolio risk screen initialized", _screenType.ToString());
+        TradingLogOrchestrator.Instance.LogInfo("Portfolio risk screen initialized", _screenType.ToString());
         
         InitializeScreen();
     }
@@ -51,11 +52,11 @@ public sealed partial class PortfolioRiskScreen : Window
             
             _updateTimer.Start();
             
-            _logger.LogInformation("Portfolio risk screen initialization completed", _screenType.ToString());
+            TradingLogOrchestrator.Instance.LogInfo("Portfolio risk screen initialization completed", _screenType.ToString());
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to initialize portfolio risk screen", _screenType.ToString(), ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to initialize portfolio risk screen", _screenType.ToString(), ex);
         }
     }
     
@@ -120,7 +121,7 @@ public sealed partial class PortfolioRiskScreen : Window
         // Update risk progress bars
         UpdateRiskProgressBars();
         
-        _logger.LogInformation("Risk metrics updated", _screenType.ToString(), new Dictionary<string, object>
+        TradingLogOrchestrator.Instance.LogInfo("Risk metrics updated", _screenType.ToString(), new Dictionary<string, object>
         {
             ["TotalPnL"] = totalPnL,
             ["DailyPnL"] = dailyPnL,
@@ -208,7 +209,7 @@ public sealed partial class PortfolioRiskScreen : Window
     {
         _updateTimer?.Stop();
         await SaveCurrentPositionAsync();
-        _logger.LogInformation("Portfolio risk screen closed", _screenType.ToString());
+        TradingLogOrchestrator.Instance.LogInfo("Portfolio risk screen closed", _screenType.ToString());
     }
     
     private async Task RestoreWindowPositionAsync()
@@ -242,8 +243,7 @@ public sealed partial class PortfolioRiskScreen : Window
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to restore window position for portfolio risk screen", 
-                _screenType.ToString(), ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to restore window position for portfolio risk screen", _screenType.ToString(), ex);
         }
     }
     
@@ -281,8 +281,7 @@ public sealed partial class PortfolioRiskScreen : Window
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to save window position for portfolio risk screen", 
-                _screenType.ToString(), ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to save window position for portfolio risk screen", _screenType.ToString(), ex);
         }
     }
 }

@@ -4,6 +4,7 @@ using TradingPlatform.Messaging.Events;
 using System.Collections.Concurrent;
 
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 namespace TradingPlatform.PaperTrading.Services;
 
 public class PaperTradingService : IPaperTradingService
@@ -92,14 +93,14 @@ public class PaperTradingService : IPaperTradingService
             });
 
             var elapsed = DateTime.UtcNow - startTime;
-            _logger.LogInformation("Order {OrderId} submitted for {Symbol} in {ElapsedMs}ms", 
+            TradingLogOrchestrator.Instance.LogInfo("Order {OrderId} submitted for {Symbol} in {ElapsedMs}ms", 
                 orderId, orderRequest.Symbol, elapsed.TotalMilliseconds);
 
             return new OrderResult(true, orderId, "Order submitted successfully", OrderStatus.New, DateTime.UtcNow);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error submitting order for {Symbol}", orderRequest.Symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error submitting order for {Symbol}", orderRequest.Symbol);
             return new OrderResult(false, null, $"Internal error: {ex.Message}", OrderStatus.Rejected, DateTime.UtcNow);
         }
     }
@@ -156,13 +157,13 @@ public class PaperTradingService : IPaperTradingService
                 ExecutionTime = DateTime.UtcNow
             });
 
-            _logger.LogInformation("Order {OrderId} cancelled for {Symbol}", orderId, order.Symbol);
+            TradingLogOrchestrator.Instance.LogInfo("Order {OrderId} cancelled for {Symbol}", orderId, order.Symbol);
 
             return new OrderResult(true, orderId, "Order cancelled successfully", OrderStatus.Cancelled, DateTime.UtcNow);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error cancelling order {OrderId}", orderId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error cancelling order {OrderId}", orderId);
             return new OrderResult(false, orderId, $"Error cancelling order: {ex.Message}", OrderStatus.Rejected, DateTime.UtcNow);
         }
     }
@@ -194,13 +195,13 @@ public class PaperTradingService : IPaperTradingService
 
             _orders.TryUpdate(orderId, updatedOrder, existingOrder);
 
-            _logger.LogInformation("Order {OrderId} modified for {Symbol}", orderId, existingOrder.Symbol);
+            TradingLogOrchestrator.Instance.LogInfo("Order {OrderId} modified for {Symbol}", orderId, existingOrder.Symbol);
 
             return Task.FromResult(new OrderResult(true, orderId, "Order modified successfully", updatedOrder.Status, DateTime.UtcNow));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error modifying order {OrderId}", orderId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error modifying order {OrderId}", orderId);
             return Task.FromResult(new OrderResult(false, orderId, $"Error modifying order: {ex.Message}", OrderStatus.Rejected, DateTime.UtcNow));
         }
     }

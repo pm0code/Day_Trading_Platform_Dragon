@@ -3,6 +3,7 @@
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Core.Mathematics;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.Screening.Indicators
 {
@@ -40,7 +41,7 @@ namespace TradingPlatform.Screening.Indicators
             var rs = avgGain / avgLoss;
             var rsi = 100m - (100m / (1m + rs));
 
-            _logger.LogTrace($"RSI calculated: {rsi:F2}");
+            TradingLogOrchestrator.Instance.LogInfo($"RSI calculated: {rsi:F2}");
             return rsi;
         }
 
@@ -54,7 +55,7 @@ namespace TradingPlatform.Screening.Indicators
                 ? priceData.TakeLast(50).Average(d => d.Close)
                 : priceData.Average(d => d.Close);
 
-            _logger.LogTrace($"SMAs calculated: SMA20={sma20:F2}, SMA50={sma50:F2}");
+            TradingLogOrchestrator.Instance.LogInfo($"SMAs calculated: SMA20={sma20:F2}, SMA50={sma50:F2}");
             return (sma20, sma50);
         }
 
@@ -74,7 +75,7 @@ namespace TradingPlatform.Screening.Indicators
             var position = (marketData.Price - lowerBand) / (upperBand - lowerBand);
             position = Math.Max(0m, Math.Min(1m, position));
 
-            _logger.LogTrace($"Bollinger position: {position:F2} (Price: {marketData.Price:F2}, Upper: {upperBand:F2}, Lower: {lowerBand:F2})");
+            TradingLogOrchestrator.Instance.LogInfo($"Bollinger position: {position:F2} (Price: {marketData.Price:F2}, Upper: {upperBand:F2}, Lower: {lowerBand:F2})");
             return position;
         }
 
@@ -191,7 +192,7 @@ namespace TradingPlatform.Screening.Indicators
         {
             if (data == null || data.Count < 2)
             {
-                _logger.LogWarning("CalculateLinearRegressionSlope: Not enough data points. Returning 0.");
+                TradingLogOrchestrator.Instance.LogWarning("CalculateLinearRegressionSlope: Not enough data points. Returning 0.");
                 return 0m;
             }
 
@@ -216,7 +217,7 @@ namespace TradingPlatform.Screening.Indicators
 
             if (denominator == 0m)
             {
-                _logger.LogWarning("CalculateLinearRegressionSlope: Denominator is zero. Returning 0.");
+                TradingLogOrchestrator.Instance.LogWarning("CalculateLinearRegressionSlope: Denominator is zero. Returning 0.");
                 return 0m;
             }
 

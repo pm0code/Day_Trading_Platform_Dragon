@@ -2,6 +2,7 @@ using TradingPlatform.RiskManagement.Services;
 using TradingPlatform.Messaging.Interfaces;
 
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 namespace TradingPlatform.RiskManagement.Services;
 
 public class RiskMonitoringBackgroundService : BackgroundService
@@ -29,7 +30,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Risk Monitoring Background Service started");
+        TradingLogOrchestrator.Instance.LogInfo("Risk Monitoring Background Service started");
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -46,23 +47,23 @@ public class RiskMonitoringBackgroundService : BackgroundService
                 );
 
                 var elapsed = DateTime.UtcNow - startTime;
-                _logger.LogDebug("Risk monitoring cycle completed in {ElapsedMs}ms", elapsed.TotalMilliseconds);
+                TradingLogOrchestrator.Instance.LogInfo("Risk monitoring cycle completed in {ElapsedMs}ms", elapsed.TotalMilliseconds);
 
                 await Task.Delay(_monitoringInterval, stoppingToken);
             }
             catch (OperationCanceledException)
             {
-                _logger.LogInformation("Risk monitoring service is stopping");
+                TradingLogOrchestrator.Instance.LogInfo("Risk monitoring service is stopping");
                 break;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in risk monitoring cycle");
+                TradingLogOrchestrator.Instance.LogError(ex, "Error in risk monitoring cycle");
                 await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken); // Brief delay before retry
             }
         }
 
-        _logger.LogInformation("Risk Monitoring Background Service stopped");
+        TradingLogOrchestrator.Instance.LogInfo("Risk Monitoring Background Service stopped");
     }
 
     private async Task MonitorRiskStatusAsync()
@@ -74,13 +75,13 @@ public class RiskMonitoringBackgroundService : BackgroundService
             // Check if risk level is elevated
             if (riskStatus.RiskLevel >= Models.RiskLevel.High)
             {
-                _logger.LogWarning("Elevated risk level detected: {RiskLevel} - Drawdown: {Drawdown:C}, Exposure: {Exposure:C}", 
+                TradingLogOrchestrator.Instance.LogWarning("Elevated risk level detected: {RiskLevel} - Drawdown: {Drawdown:C}, Exposure: {Exposure:C}", 
                     riskStatus.RiskLevel, riskStatus.CurrentDrawdown, riskStatus.TotalExposure);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error monitoring risk status");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error monitoring risk status");
         }
     }
 
@@ -94,13 +95,13 @@ public class RiskMonitoringBackgroundService : BackgroundService
             {
                 await _alertService.CheckPositionLimitAsync(position.Symbol, position.Quantity);
                 
-                _logger.LogWarning("Position exceeding limits: {Symbol} - Exposure: {Exposure:C}", 
+                TradingLogOrchestrator.Instance.LogWarning("Position exceeding limits: {Symbol} - Exposure: {Exposure:C}", 
                     position.Symbol, position.RiskExposure);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error monitoring position limits");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error monitoring position limits");
         }
     }
 
@@ -112,20 +113,19 @@ public class RiskMonitoringBackgroundService : BackgroundService
             
             if (!complianceStatus.IsCompliant)
             {
-                _logger.LogWarning("Compliance violations detected: {ViolationCount} violations", 
+                TradingLogOrchestrator.Instance.LogWarning("Compliance violations detected: {ViolationCount} violations", 
                     complianceStatus.Violations.Count());
                 
                 foreach (var violation in complianceStatus.Violations.Where(v => v.Severity >= Models.ViolationSeverity.Major))
                 {
-                    _logger.LogError("Major compliance violation: {RuleId} - {Description}", 
-                        violation.RuleId, violation.Description);
+                    TradingLogOrchestrator.Instance.LogError("Major compliance violation: {RuleId} - {Description}", violation.RuleId, violation.Description);
                 }
             }
 
             // Monitor PDT status
             if (complianceStatus.PDTStatus.IsPatternDayTrader && complianceStatus.PDTStatus.DayTradesRemaining <= 1)
             {
-                _logger.LogWarning("PDT day trades running low: {Remaining} remaining", 
+                TradingLogOrchestrator.Instance.LogWarning("PDT day trades running low: {Remaining} remaining", 
                     complianceStatus.PDTStatus.DayTradesRemaining);
             }
 
@@ -137,7 +137,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error monitoring compliance");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error monitoring compliance");
         }
     }
 
@@ -157,7 +157,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking drawdown limits");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error checking drawdown limits");
         }
     }
 }

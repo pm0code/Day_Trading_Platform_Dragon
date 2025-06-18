@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.WindowsOptimization.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.WindowsOptimization.Services;
 
@@ -38,12 +39,12 @@ public class ProcessManager : IProcessManager
                 tradingProcesses.AddRange(processes);
             }
 
-            _logger.LogInformation("Found {Count} trading processes", tradingProcesses.Count);
+            TradingLogOrchestrator.Instance.LogInfo("Found {Count} trading processes", tradingProcesses.Count);
             return tradingProcesses.ToArray();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to get trading processes");
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to get trading processes");
             return Array.Empty<Process>();
         }
     }
@@ -64,7 +65,7 @@ public class ProcessManager : IProcessManager
             var process = Process.Start(startInfo);
             if (process == null)
             {
-                _logger.LogError("Failed to start process: {ProcessPath}", processPath);
+                TradingLogOrchestrator.Instance.LogError("Failed to start process: {ProcessPath}", processPath);
                 return false;
             }
 
@@ -79,13 +80,13 @@ public class ProcessManager : IProcessManager
                 success &= await _optimizationService.SetCpuAffinityAsync(process.Id, config.CpuCoreAffinity);
             }
 
-            _logger.LogInformation("Started and optimized process: {ProcessPath} with PID: {ProcessId}", 
+            TradingLogOrchestrator.Instance.LogInfo("Started and optimized process: {ProcessPath} with PID: {ProcessId}", 
                 processPath, process.Id);
             return success;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to start process with optimization: {ProcessPath}", processPath);
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to start process with optimization: {ProcessPath}", processPath);
             return false;
         }
     }
@@ -97,7 +98,7 @@ public class ProcessManager : IProcessManager
             var processes = Process.GetProcessesByName(processName);
             if (processes.Length == 0)
             {
-                _logger.LogWarning("No processes found with name: {ProcessName}", processName);
+                TradingLogOrchestrator.Instance.LogWarning("No processes found with name: {ProcessName}", processName);
                 return true; // Already stopped
             }
 
@@ -108,24 +109,24 @@ public class ProcessManager : IProcessManager
                     // Try graceful shutdown first
                     if (!process.CloseMainWindow())
                     {
-                        _logger.LogWarning("Failed to send close message to process {ProcessId}", process.Id);
+                        TradingLogOrchestrator.Instance.LogWarning("Failed to send close message to process {ProcessId}", process.Id);
                     }
 
                     // Wait for graceful shutdown
                     if (!process.WaitForExit((int)timeout.TotalMilliseconds))
                     {
-                        _logger.LogWarning("Process {ProcessId} did not exit gracefully, forcing termination", process.Id);
+                        TradingLogOrchestrator.Instance.LogWarning("Process {ProcessId} did not exit gracefully, forcing termination", process.Id);
                         process.Kill();
                         await process.WaitForExitAsync();
                     }
 
-                    _logger.LogInformation("Successfully terminated process: {ProcessName} (PID: {ProcessId})", 
+                    TradingLogOrchestrator.Instance.LogInfo("Successfully terminated process: {ProcessName} (PID: {ProcessId})", 
                         processName, process.Id);
                     return true;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to terminate process {ProcessId}", process.Id);
+                    TradingLogOrchestrator.Instance.LogError(ex, "Failed to terminate process {ProcessId}", process.Id);
                     return false;
                 }
             });
@@ -135,7 +136,7 @@ public class ProcessManager : IProcessManager
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to kill processes gracefully: {ProcessName}", processName);
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to kill processes gracefully: {ProcessName}", processName);
             return false;
         }
     }
@@ -148,14 +149,14 @@ public class ProcessManager : IProcessManager
             var processes = Process.GetProcessesByName(processName);
             if (processes.Length == 0)
             {
-                _logger.LogWarning("No processes found with name: {ProcessName}", processName);
+                TradingLogOrchestrator.Instance.LogWarning("No processes found with name: {ProcessName}", processName);
                 return false;
             }
 
             var processPath = processes[0].MainModule?.FileName;
             if (string.IsNullOrEmpty(processPath))
             {
-                _logger.LogError("Could not determine executable path for process: {ProcessName}", processName);
+                TradingLogOrchestrator.Instance.LogError("Could not determine executable path for process: {ProcessName}", processName);
                 return false;
             }
 
@@ -163,7 +164,7 @@ public class ProcessManager : IProcessManager
             var killSuccess = await KillProcessGracefullyAsync(processName, TimeSpan.FromSeconds(10));
             if (!killSuccess)
             {
-                _logger.LogError("Failed to kill existing processes: {ProcessName}", processName);
+                TradingLogOrchestrator.Instance.LogError("Failed to kill existing processes: {ProcessName}", processName);
                 return false;
             }
 
@@ -174,16 +175,16 @@ public class ProcessManager : IProcessManager
             var startSuccess = await StartProcessWithOptimizationAsync(processPath, config);
             if (!startSuccess)
             {
-                _logger.LogError("Failed to restart process with optimization: {ProcessName}", processName);
+                TradingLogOrchestrator.Instance.LogError("Failed to restart process with optimization: {ProcessName}", processName);
                 return false;
             }
 
-            _logger.LogInformation("Successfully restarted process with optimization: {ProcessName}", processName);
+            TradingLogOrchestrator.Instance.LogInfo("Successfully restarted process with optimization: {ProcessName}", processName);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to restart process with optimization: {ProcessName}", processName);
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to restart process with optimization: {ProcessName}", processName);
             return false;
         }
     }
@@ -203,7 +204,7 @@ public class ProcessManager : IProcessManager
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to get metrics for process: {ProcessName}", processName);
+                    TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to get metrics for process: {ProcessName}", processName);
                     return new { ProcessName = processName, Metrics = (PerformanceMetrics?)null };
                 }
             });
@@ -218,12 +219,12 @@ public class ProcessManager : IProcessManager
                 }
             }
 
-            _logger.LogDebug("Collected metrics for {Count} processes", metrics.Count);
+            TradingLogOrchestrator.Instance.LogInfo("Collected metrics for {Count} processes", metrics.Count);
             return metrics;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to monitor processes");
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to monitor processes");
             return metrics;
         }
     }

@@ -2,6 +2,7 @@ using TradingPlatform.PaperTrading.Models;
 using System.Collections.Concurrent;
 
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 namespace TradingPlatform.PaperTrading.Services;
 
 public class OrderBookSimulator : IOrderBookSimulator
@@ -38,7 +39,7 @@ public class OrderBookSimulator : IOrderBookSimulator
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting order book for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error getting order book for {Symbol}", symbol);
             throw;
         }
     }
@@ -64,7 +65,7 @@ public class OrderBookSimulator : IOrderBookSimulator
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting current price for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error getting current price for {Symbol}", symbol);
             throw;
         }
     }
@@ -102,7 +103,7 @@ public class OrderBookSimulator : IOrderBookSimulator
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating slippage for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating slippage for {Symbol}", symbol);
             return 0.001m; // Default 10 basis points slippage
         }
     }
@@ -121,14 +122,14 @@ public class OrderBookSimulator : IOrderBookSimulator
             // Update current price
             _currentPrices.TryUpdate(symbol, execution.Price, _currentPrices.GetValueOrDefault(symbol, execution.Price));
             
-            _logger.LogDebug("Updated order book for {Symbol} after execution of {Quantity}@{Price}", 
+            TradingLogOrchestrator.Instance.LogInfo("Updated order book for {Symbol} after execution of {Quantity}@{Price}", 
                 symbol, execution.Quantity, execution.Price);
                 
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating order book for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error updating order book for {Symbol}", symbol);
         }
     }
 

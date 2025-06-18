@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.DisplayManagement.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.DisplayManagement.Services;
 
@@ -94,7 +95,7 @@ public class MonitorDetectionService : IMonitorDetectionService
     /// </summary>
     public async Task<List<MonitorConfiguration>> GetConnectedMonitorsAsync()
     {
-        _logger.LogInformation("Detecting connected monitors for DRAGON trading platform");
+        TradingLogOrchestrator.Instance.LogInfo("Detecting connected monitors for DRAGON trading platform");
         
         var monitors = new List<MonitorConfiguration>();
         var monitorIndex = 0;
@@ -125,19 +126,19 @@ public class MonitorDetectionService : IMonitorDetectionService
                     monitors.Add(monitor);
                     monitorIndex++;
 
-                    _logger.LogDebug("Detected monitor: {DisplayName} at {X},{Y} ({Width}x{Height}), Primary: {IsPrimary}", 
+                    TradingLogOrchestrator.Instance.LogInfo("Detected monitor: {DisplayName} at {X},{Y} ({Width}x{Height}), Primary: {IsPrimary}", 
                         monitor.DisplayName, monitor.X, monitor.Y, monitor.Width, monitor.Height, monitor.IsPrimary);
                 }
 
                 return true; // Continue enumeration
             }, IntPtr.Zero);
 
-            _logger.LogInformation("Monitor detection complete. Found {MonitorCount} monitor(s)", monitors.Count);
+            TradingLogOrchestrator.Instance.LogInfo("Monitor detection complete. Found {MonitorCount} monitor(s)", monitors.Count);
             return monitors;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to detect monitors");
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to detect monitors");
             
             // Fallback: create a single default monitor configuration
             return new List<MonitorConfiguration>
@@ -163,7 +164,7 @@ public class MonitorDetectionService : IMonitorDetectionService
     /// </summary>
     public async Task<MonitorSelectionRecommendation> GetMonitorRecommendationAsync()
     {
-        _logger.LogInformation("Generating monitor recommendations for DRAGON trading setup");
+        TradingLogOrchestrator.Instance.LogInfo("Generating monitor recommendations for DRAGON trading setup");
 
         var connectedMonitors = await GetConnectedMonitorsAsync();
         var gpuAssessment = await _gpuDetectionService.GetPerformanceAssessmentAsync();
@@ -184,7 +185,7 @@ public class MonitorDetectionService : IMonitorDetectionService
             AlternativeConfigurations = GenerateAlternativeConfigurations(connectedMonitors.Count, maxGpuSupported)
         };
 
-        _logger.LogInformation("Monitor recommendation: {RecommendedCount} monitors at {Resolution} resolution", 
+        TradingLogOrchestrator.Instance.LogInfo("Monitor recommendation: {RecommendedCount} monitors at {Resolution} resolution", 
             recommendedCount, optimalResolution.DisplayName);
 
         return recommendation;
@@ -210,11 +211,11 @@ public class MonitorDetectionService : IMonitorDetectionService
             
             await File.WriteAllTextAsync(_configurationFilePath, json);
             
-            _logger.LogInformation("Monitor configuration saved to {FilePath}", _configurationFilePath);
+            TradingLogOrchestrator.Instance.LogInfo("Monitor configuration saved to {FilePath}", _configurationFilePath);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to save monitor configuration");
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to save monitor configuration");
             throw;
         }
     }
@@ -228,19 +229,19 @@ public class MonitorDetectionService : IMonitorDetectionService
         {
             if (!File.Exists(_configurationFilePath))
             {
-                _logger.LogInformation("No saved monitor configuration found");
+                TradingLogOrchestrator.Instance.LogInfo("No saved monitor configuration found");
                 return null;
             }
 
             var json = await File.ReadAllTextAsync(_configurationFilePath);
             var configuration = System.Text.Json.JsonSerializer.Deserialize<MultiMonitorConfiguration>(json);
             
-            _logger.LogInformation("Monitor configuration loaded from {FilePath}", _configurationFilePath);
+            TradingLogOrchestrator.Instance.LogInfo("Monitor configuration loaded from {FilePath}", _configurationFilePath);
             return configuration;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to load monitor configuration");
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to load monitor configuration");
             return null;
         }
     }

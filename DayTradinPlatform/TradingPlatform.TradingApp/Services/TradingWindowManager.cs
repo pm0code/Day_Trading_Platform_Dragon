@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using TradingPlatform.Logging.Interfaces;
 using TradingPlatform.TradingApp.Models;
 using TradingPlatform.TradingApp.Views.TradingScreens;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.TradingApp.Services;
 
@@ -24,7 +25,7 @@ public class TradingWindowManager : ITradingWindowManager
         _logger = logger;
         _monitorService = monitorService;
         
-        _logger.LogInformation("Trading window manager initialized", null);
+        TradingLogOrchestrator.Instance.LogInfo("Trading window manager initialized", null);
     }
 
     public async Task InitializeAsync()
@@ -38,7 +39,7 @@ public class TradingWindowManager : ITradingWindowManager
             var (isValid, missingAssignments) = await _monitorService.ValidateScreenAssignmentsAsync();
             if (!isValid)
             {
-                _logger.LogInformation("Auto-configuring monitor assignments for day trading", null, new Dictionary<string, object>
+                TradingLogOrchestrator.Instance.LogInfo("Auto-configuring monitor assignments for day trading", null, new Dictionary<string, object>
                 {
                     ["MissingAssignments"] = missingAssignments.Count
                 });
@@ -46,11 +47,11 @@ public class TradingWindowManager : ITradingWindowManager
                 await _monitorService.AutoConfigureForDayTradingAsync();
             }
             
-            _logger.LogInformation("Trading window manager initialization completed", null);
+            TradingLogOrchestrator.Instance.LogInfo("Trading window manager initialization completed", null);
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to initialize trading window manager", null, ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to initialize trading window manager", null, ex);
             throw;
         }
     }
@@ -63,7 +64,7 @@ public class TradingWindowManager : ITradingWindowManager
             // Check if window is already open
             if (_openWindows.ContainsKey(screenType))
             {
-                _logger.LogWarning("Trading screen already open", screenType.ToString());
+                TradingLogOrchestrator.Instance.LogWarning("Trading screen already open", screenType.ToString());
                 return false;
             }
 
@@ -71,7 +72,7 @@ public class TradingWindowManager : ITradingWindowManager
             var assignedMonitor = await _monitorService.GetAssignedMonitorAsync(screenType);
             if (assignedMonitor == null)
             {
-                _logger.LogError("No monitor assigned for trading screen", screenType.ToString());
+                TradingLogOrchestrator.Instance.LogError("No monitor assigned for trading screen", screenType.ToString());
                 WindowOpened?.Invoke(this, new TradingWindowEventArgs(screenType, null, null, false, "No monitor assigned"));
                 return false;
             }
@@ -88,7 +89,7 @@ public class TradingWindowManager : ITradingWindowManager
 
             if (window == null)
             {
-                _logger.LogError("Failed to create window for trading screen", screenType.ToString());
+                TradingLogOrchestrator.Instance.LogError("Failed to create window for trading screen", screenType.ToString());
                 WindowOpened?.Invoke(this, new TradingWindowEventArgs(screenType, null, assignedMonitor.MonitorId, false, "Failed to create window"));
                 return false;
             }
@@ -105,7 +106,7 @@ public class TradingWindowManager : ITradingWindowManager
             // Show the window
             window.Activate();
 
-            _logger.LogInformation("Trading screen opened successfully", screenType.ToString(), new Dictionary<string, object>
+            TradingLogOrchestrator.Instance.LogInfo("Trading screen opened successfully", screenType.ToString(), new Dictionary<string, object>
             {
                 ["MonitorId"] = assignedMonitor.MonitorId,
                 ["MonitorPosition"] = $"({assignedMonitor.X}, {assignedMonitor.Y})"
@@ -116,7 +117,7 @@ public class TradingWindowManager : ITradingWindowManager
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to open trading screen", screenType.ToString(), ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to open trading screen", screenType.ToString(), ex);
             WindowOpened?.Invoke(this, new TradingWindowEventArgs(screenType, null, null, false, ex.Message));
             return false;
         }
@@ -133,7 +134,7 @@ public class TradingWindowManager : ITradingWindowManager
         {
             if (!_openWindows.TryGetValue(screenType, out var window))
             {
-                _logger.LogWarning("Trading screen not open", screenType.ToString());
+                TradingLogOrchestrator.Instance.LogWarning("Trading screen not open", screenType.ToString());
                 return false;
             }
 
@@ -144,13 +145,13 @@ public class TradingWindowManager : ITradingWindowManager
             window.Close();
             _openWindows.Remove(screenType);
 
-            _logger.LogInformation("Trading screen closed successfully", screenType.ToString());
+            TradingLogOrchestrator.Instance.LogInfo("Trading screen closed successfully", screenType.ToString());
             WindowClosed?.Invoke(this, new TradingWindowEventArgs(screenType, window, null, true));
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to close trading screen", screenType.ToString(), ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to close trading screen", screenType.ToString(), ex);
             WindowClosed?.Invoke(this, new TradingWindowEventArgs(screenType, null, null, false, ex.Message));
             return false;
         }
@@ -162,7 +163,7 @@ public class TradingWindowManager : ITradingWindowManager
 
     public async Task<int> OpenAllTradingScreensAsync()
     {
-        _logger.LogInformation("Opening all trading screens", null);
+        TradingLogOrchestrator.Instance.LogInfo("Opening all trading screens", null);
         
         var successCount = 0;
         var allScreens = new[] 
@@ -183,7 +184,7 @@ public class TradingWindowManager : ITradingWindowManager
             }
         }
 
-        _logger.LogInformation("Opened trading screens", null, new Dictionary<string, object>
+        TradingLogOrchestrator.Instance.LogInfo("Opened trading screens", null, new Dictionary<string, object>
         {
             ["SuccessCount"] = successCount,
             ["TotalScreens"] = allScreens.Length
@@ -194,7 +195,7 @@ public class TradingWindowManager : ITradingWindowManager
 
     public async Task<int> CloseAllTradingScreensAsync()
     {
-        _logger.LogInformation("Closing all trading screens", null);
+        TradingLogOrchestrator.Instance.LogInfo("Closing all trading screens", null);
         
         var successCount = 0;
         var openScreens = _openWindows.Keys.ToList();
@@ -207,7 +208,7 @@ public class TradingWindowManager : ITradingWindowManager
             }
         }
 
-        _logger.LogInformation("Closed trading screens", null, new Dictionary<string, object>
+        TradingLogOrchestrator.Instance.LogInfo("Closed trading screens", null, new Dictionary<string, object>
         {
             ["SuccessCount"] = successCount,
             ["TotalScreens"] = openScreens.Count
@@ -248,7 +249,7 @@ public class TradingWindowManager : ITradingWindowManager
                     }
                 }
                 
-                _logger.LogInformation("Restored window positions", null, new Dictionary<string, object>
+                TradingLogOrchestrator.Instance.LogInfo("Restored window positions", null, new Dictionary<string, object>
                 {
                     ["RestoredCount"] = restoredCount,
                     ["TotalWindows"] = _openWindows.Count
@@ -259,7 +260,7 @@ public class TradingWindowManager : ITradingWindowManager
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to restore window positions", screenType?.ToString() ?? "All", ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to restore window positions", screenType?.ToString() ?? "All", ex);
             return false;
         }
     }
@@ -277,11 +278,11 @@ public class TradingWindowManager : ITradingWindowManager
             }
             catch (Exception ex)
             {
-                _logger.LogError("Failed to save window position", kvp.Key.ToString(), ex);
+                TradingLogOrchestrator.Instance.LogError("Failed to save window position", kvp.Key.ToString(), ex);
             }
         }
         
-        _logger.LogInformation("Saved window positions", null, new Dictionary<string, object>
+        TradingLogOrchestrator.Instance.LogInfo("Saved window positions", null, new Dictionary<string, object>
         {
             ["SavedCount"] = savedCount,
             ["TotalWindows"] = _openWindows.Count
@@ -311,7 +312,7 @@ public class TradingWindowManager : ITradingWindowManager
         {
             if (!_openWindows.TryGetValue(screenType, out var window))
             {
-                _logger.LogWarning("Cannot move non-open trading screen", screenType.ToString());
+                TradingLogOrchestrator.Instance.LogWarning("Cannot move non-open trading screen", screenType.ToString());
                 return false;
             }
 
@@ -324,7 +325,7 @@ public class TradingWindowManager : ITradingWindowManager
             
             if (targetMonitor == null)
             {
-                _logger.LogError("Target monitor not found", screenType.ToString(), new Dictionary<string, object>
+                TradingLogOrchestrator.Instance.LogError("Target monitor not found", screenType.ToString(), new Dictionary<string, object>
                 {
                     ["TargetMonitorId"] = targetMonitorId
                 });
@@ -334,7 +335,7 @@ public class TradingWindowManager : ITradingWindowManager
             // Move window to target monitor
             await PositionWindowOnMonitorAsync(window, targetMonitor, screenType);
 
-            _logger.LogInformation("Moved trading screen to monitor", screenType.ToString(), new Dictionary<string, object>
+            TradingLogOrchestrator.Instance.LogInfo("Moved trading screen to monitor", screenType.ToString(), new Dictionary<string, object>
             {
                 ["TargetMonitorId"] = targetMonitorId,
                 ["MonitorPosition"] = $"({targetMonitor.X}, {targetMonitor.Y})"
@@ -345,7 +346,7 @@ public class TradingWindowManager : ITradingWindowManager
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to move trading screen to monitor", screenType.ToString(), ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to move trading screen to monitor", screenType.ToString(), ex);
             WindowMoved?.Invoke(this, new TradingWindowEventArgs(screenType, null, targetMonitorId, false, ex.Message));
             return false;
         }
@@ -355,7 +356,7 @@ public class TradingWindowManager : ITradingWindowManager
     {
         try
         {
-            _logger.LogInformation("Arranging windows for optimal day trading layout", null);
+            TradingLogOrchestrator.Instance.LogInfo("Arranging windows for optimal day trading layout", null);
 
             // Close all windows first
             await CloseAllTradingScreensAsync();
@@ -368,7 +369,7 @@ public class TradingWindowManager : ITradingWindowManager
 
             var success = arrangedCount == 4;
             
-            _logger.LogInformation("Day trading arrangement completed", null, new Dictionary<string, object>
+            TradingLogOrchestrator.Instance.LogInfo("Day trading arrangement completed", null, new Dictionary<string, object>
             {
                 ["Success"] = success,
                 ["ArrangedWindows"] = arrangedCount
@@ -378,7 +379,7 @@ public class TradingWindowManager : ITradingWindowManager
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to arrange windows for day trading", null, ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to arrange windows for day trading", null, ex);
             return false;
         }
     }
@@ -420,7 +421,7 @@ public class TradingWindowManager : ITradingWindowManager
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to position window on monitor", screenType.ToString(), ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to position window on monitor", screenType.ToString(), ex);
         }
     }
 
@@ -487,7 +488,7 @@ public class TradingWindowManager : ITradingWindowManager
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to save window position", screenType.ToString(), ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to save window position", screenType.ToString(), ex);
         }
     }
 
@@ -520,14 +521,14 @@ public class TradingWindowManager : ITradingWindowManager
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to restore window position", savedPosition.ScreenType.ToString(), ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to restore window position", savedPosition.ScreenType.ToString(), ex);
         }
     }
 
     private void OnWindowClosed(TradingScreenType screenType)
     {
         _openWindows.Remove(screenType);
-        _logger.LogInformation("Trading window closed and removed from tracking", screenType.ToString());
+        TradingLogOrchestrator.Instance.LogInfo("Trading window closed and removed from tracking", screenType.ToString());
         WindowClosed?.Invoke(this, new TradingWindowEventArgs(screenType, null, null, true));
     }
 }

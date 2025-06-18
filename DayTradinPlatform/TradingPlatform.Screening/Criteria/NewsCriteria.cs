@@ -3,6 +3,7 @@
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.Screening.Criteria
 {
@@ -66,12 +67,12 @@ namespace TradingPlatform.Screening.Criteria
                     result.Reason = "No recent news or sentiment detected.";
                 }
 
-                _logger.LogTrace($"News evaluation for {symbol}: Sentiment={sentimentScore:F2}, Catalyst={hasCatalyst}, Score={result.Score:F2}, Passed={result.Passed}");
+                TradingLogOrchestrator.Instance.LogInfo($"News evaluation for {symbol}: Sentiment={sentimentScore:F2}, Catalyst={hasCatalyst}, Score={result.Score:F2}, Passed={result.Passed}");
                 return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error evaluating news criteria for {symbol}");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Error evaluating news criteria for {symbol}");
                 result.Passed = false;
                 result.Score = 0m;
                 result.Reason = $"Evaluation error: {ex.Message}";

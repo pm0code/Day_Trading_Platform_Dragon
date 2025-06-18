@@ -4,6 +4,7 @@ using TradingPlatform.Messaging.Events;
 using System.Collections.Concurrent;
 
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 namespace TradingPlatform.PaperTrading.Services;
 
 public class OrderProcessingBackgroundService : BackgroundService
@@ -23,7 +24,7 @@ public class OrderProcessingBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Order Processing Background Service started");
+        TradingLogOrchestrator.Instance.LogInfo("Order Processing Background Service started");
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -36,7 +37,7 @@ public class OrderProcessingBackgroundService : BackgroundService
                 await UpdateMarketDataAsync(scope.ServiceProvider);
 
                 var elapsed = DateTime.UtcNow - startTime;
-                _logger.LogTrace("Order processing cycle completed in {ElapsedMs}ms", elapsed.TotalMilliseconds);
+                TradingLogOrchestrator.Instance.LogInfo("Order processing cycle completed in {ElapsedMs}ms", elapsed.TotalMilliseconds);
 
                 // Maintain consistent processing frequency
                 var remainingTime = _processingInterval - elapsed;
@@ -47,17 +48,17 @@ public class OrderProcessingBackgroundService : BackgroundService
             }
             catch (OperationCanceledException)
             {
-                _logger.LogInformation("Order processing service is stopping");
+                TradingLogOrchestrator.Instance.LogInfo("Order processing service is stopping");
                 break;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in order processing cycle");
+                TradingLogOrchestrator.Instance.LogError(ex, "Error in order processing cycle");
                 await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken); // Brief delay before retry
             }
         }
 
-        _logger.LogInformation("Order Processing Background Service stopped");
+        TradingLogOrchestrator.Instance.LogInfo("Order Processing Background Service stopped");
     }
 
     private async Task ProcessPendingOrdersAsync(IServiceProvider serviceProvider)
@@ -82,7 +83,7 @@ public class OrderProcessingBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing pending orders");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error processing pending orders");
         }
     }
 
@@ -139,12 +140,12 @@ public class OrderProcessingBackgroundService : BackgroundService
                 ExecutionTime = execution.ExecutionTime
             });
 
-            _logger.LogInformation("Order {OrderId} executed: {Quantity}@{Price} on {Venue}", 
+            TradingLogOrchestrator.Instance.LogInfo("Order {OrderId} executed: {Quantity}@{Price} on {Venue}", 
                 order.OrderId, execution.Quantity, execution.Price, execution.VenueId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing order {OrderId}", order.OrderId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error processing order {OrderId}", order.OrderId);
         }
     }
 
@@ -177,7 +178,7 @@ public class OrderProcessingBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating market data");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error updating market data");
         }
     }
 
@@ -215,11 +216,11 @@ public class OrderProcessingBackgroundService : BackgroundService
                 ExecutionTime = DateTime.UtcNow
             });
 
-            _logger.LogInformation("Order {OrderId} expired for {Symbol}", order.OrderId, order.Symbol);
+            TradingLogOrchestrator.Instance.LogInfo("Order {OrderId} expired for {Symbol}", order.OrderId, order.Symbol);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error expiring order {OrderId}", order.OrderId);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error expiring order {OrderId}", order.OrderId);
         }
     }
 

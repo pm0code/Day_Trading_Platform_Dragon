@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using TradingPlatform.TradingApp.Models;
 using TradingPlatform.TradingApp.Services;
 using TradingPlatform.Logging.Interfaces;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.TradingApp.Views.TradingScreens;
 
@@ -29,7 +30,7 @@ public sealed partial class OrderExecutionScreen : Window
         this.Moved += OnMoved;
         this.Closed += OnClosed;
         
-        _logger.LogInformation("Order execution screen initialized", _screenType.ToString());
+        TradingLogOrchestrator.Instance.LogInfo("Order execution screen initialized", _screenType.ToString());
         
         InitializeScreen();
     }
@@ -41,11 +42,11 @@ public sealed partial class OrderExecutionScreen : Window
             await RestoreWindowPositionAsync();
             InitializeMarketDepth();
             
-            _logger.LogInformation("Order execution screen initialization completed", _screenType.ToString());
+            TradingLogOrchestrator.Instance.LogInfo("Order execution screen initialization completed", _screenType.ToString());
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to initialize order execution screen", _screenType.ToString(), ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to initialize order execution screen", _screenType.ToString(), ex);
         }
     }
     
@@ -83,7 +84,7 @@ public sealed partial class OrderExecutionScreen : Window
     private async void OnClosed(object sender, WindowEventArgs e)
     {
         await SaveCurrentPositionAsync();
-        _logger.LogInformation("Order execution screen closed", _screenType.ToString());
+        TradingLogOrchestrator.Instance.LogInfo("Order execution screen closed", _screenType.ToString());
     }
     
     private async Task RestoreWindowPositionAsync()
@@ -117,8 +118,7 @@ public sealed partial class OrderExecutionScreen : Window
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to restore window position for order execution screen", 
-                _screenType.ToString(), ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to restore window position for order execution screen", _screenType.ToString(), ex);
         }
     }
     
@@ -156,8 +156,7 @@ public sealed partial class OrderExecutionScreen : Window
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to save window position for order execution screen", 
-                _screenType.ToString(), ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to save window position for order execution screen", _screenType.ToString(), ex);
         }
     }
 }

@@ -4,6 +4,7 @@ using TradingPlatform.Messaging.Events;
 using System.Collections.Concurrent;
 
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 namespace TradingPlatform.RiskManagement.Services;
 
 public class PositionMonitor : IPositionMonitor
@@ -61,7 +62,7 @@ public class PositionMonitor : IPositionMonitor
                 LastUpdated = DateTime.UtcNow
             };
 
-            _logger.LogDebug("Position updated for {Symbol}: Qty={Quantity}, Price={Price}, UnrealizedPnL={PnL}", 
+            TradingLogOrchestrator.Instance.LogInfo("Position updated for {Symbol}: Qty={Quantity}, Price={Price}, UnrealizedPnL={PnL}", 
                 position.Symbol, position.Quantity, position.CurrentPrice, newPosition.UnrealizedPnL);
 
             return newPosition;
@@ -84,7 +85,7 @@ public class PositionMonitor : IPositionMonitor
         var positions = await GetAllPositionsAsync();
         var totalExposure = positions.Sum(p => p.RiskExposure);
         
-        _logger.LogDebug("Total portfolio exposure calculated: {TotalExposure:C}", totalExposure);
+        TradingLogOrchestrator.Instance.LogInfo("Total portfolio exposure calculated: {TotalExposure:C}", totalExposure);
         return totalExposure;
     }
 
@@ -93,7 +94,7 @@ public class PositionMonitor : IPositionMonitor
         var position = await GetPositionAsync(symbol);
         var exposure = position?.RiskExposure ?? 0m;
         
-        _logger.LogDebug("Symbol exposure for {Symbol}: {Exposure:C}", symbol, exposure);
+        TradingLogOrchestrator.Instance.LogInfo("Symbol exposure for {Symbol}: {Exposure:C}", symbol, exposure);
         return exposure;
     }
 
@@ -106,7 +107,7 @@ public class PositionMonitor : IPositionMonitor
         
         if (exceedingPositions.Any())
         {
-            _logger.LogWarning("Found {Count} positions exceeding limits", exceedingPositions.Count);
+            TradingLogOrchestrator.Instance.LogWarning("Found {Count} positions exceeding limits", exceedingPositions.Count);
         }
         
         return exceedingPositions;
@@ -133,7 +134,7 @@ public class PositionMonitor : IPositionMonitor
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error handling price update");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error handling price update");
         }
     }
 
@@ -198,13 +199,13 @@ public class PositionMonitor : IPositionMonitor
                     await UpdatePositionAsync(updatedPosition);
                 }
 
-                _logger.LogInformation("Position updated from order execution: {Symbol} {Quantity}@{Price}", 
+                TradingLogOrchestrator.Instance.LogInfo("Position updated from order execution: {Symbol} {Quantity}@{Price}", 
                     symbol, quantity, price);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error handling order execution");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error handling order execution");
         }
     }
 }

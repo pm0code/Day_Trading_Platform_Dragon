@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.Core.Models
 {
@@ -28,7 +29,7 @@ namespace TradingPlatform.Core.Models
             {
                 if (value > MarketClose)
                 {
-                    _logger.LogWarning($"Invalid MarketOpen ({value}) after MarketClose ({MarketClose}) for {MarketCode}. Setting MarketOpen to default (9:30 AM).");
+                    TradingLogOrchestrator.Instance.LogWarning($"Invalid MarketOpen ({value}) after MarketClose ({MarketClose}) for {MarketCode}. Setting MarketOpen to default (9:30 AM).");
                     _marketOpen = new TimeSpan(9, 30, 0);
                 }
                 else
@@ -47,7 +48,7 @@ namespace TradingPlatform.Core.Models
             {
                 if (value < MarketOpen)
                 {
-                    _logger.LogWarning($"Invalid MarketClose ({value}) before MarketOpen ({MarketOpen}) for {MarketCode}. Setting MarketClose to default (4:00 PM).");
+                    TradingLogOrchestrator.Instance.LogWarning($"Invalid MarketClose ({value}) before MarketOpen ({MarketOpen}) for {MarketCode}. Setting MarketClose to default (4:00 PM).");
                     _marketClose = new TimeSpan(16, 0, 0);
                 }
                 else
@@ -72,7 +73,7 @@ namespace TradingPlatform.Core.Models
         {
             if (MarketOpen > MarketClose)
             {
-                _logger.LogWarning($"Invalid configuration for {MarketCode}: MarketOpen is after MarketClose.");
+                TradingLogOrchestrator.Instance.LogWarning($"Invalid configuration for {MarketCode}: MarketOpen is after MarketClose.");
                 return false;
             }
 

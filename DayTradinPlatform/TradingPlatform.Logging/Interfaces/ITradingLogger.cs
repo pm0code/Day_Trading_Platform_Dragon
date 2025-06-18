@@ -1,11 +1,12 @@
 using System.Diagnostics;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 
 namespace TradingPlatform.Logging.Interfaces;
 
 /// <summary>
-/// Enterprise-grade trading-specific logger with performance tracking and structured data
-/// Every trading operation must be logged with correlation IDs, timing, and context
+/// Enterprise-grade trading-specific logger with comprehensive debugging and error tracing
+/// CRITICAL: Every trading operation, method, class, and data movement MUST be logged with full context
+/// All logs saved to /logs directory with timestamps and complete traceability for debugging
 /// </summary>
 public interface ITradingLogger : ILogger
 {
@@ -51,6 +52,30 @@ public interface ITradingLogger : ILogger
     void LogDebugTrace(string message, Dictionary<string, object>? context = null, [System.Runtime.CompilerServices.CallerMemberName] string callerName = "");
     void LogStateTransition(string entity, string fromState, string toState, string reason, string? correlationId = null);
     void LogConfiguration(string component, Dictionary<string, object> configuration);
+    
+    // COMPREHENSIVE DEBUGGING AND ERROR TRACING - NEW METHODS
+    void LogClassInstantiation(string className, object? constructorParams = null, [System.Runtime.CompilerServices.CallerMemberName] string callerName = "");
+    void LogVariableChange(string variableName, object? oldValue, object? newValue, [System.Runtime.CompilerServices.CallerMemberName] string callerName = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0);
+    void LogDataMovement(string source, string destination, object? data, string operation, [System.Runtime.CompilerServices.CallerMemberName] string callerName = "");
+    void LogDatabaseOperation(string operation, string table, object? parameters, TimeSpan? duration = null, bool success = true, string? errorMessage = null);
+    void LogApiCall(string endpoint, string method, object? request, object? response, TimeSpan? duration = null, int? statusCode = null, string? errorMessage = null);
+    void LogCacheOperation(string operation, string key, bool hit, TimeSpan? duration = null, object? data = null);
+    void LogThreadOperation(string operation, int threadId, string threadName, object? context = null);
+    void LogMemoryUsage(string component, long bytesUsed, long bytesAllocated, string? details = null);
+    void LogFileOperation(string operation, string filePath, long? fileSize = null, bool success = true, string? errorMessage = null);
+    void LogNetworkOperation(string operation, string endpoint, long? bytesTransferred = null, TimeSpan? latency = null, bool success = true, string? errorMessage = null);
+    void LogSecurityEvent(string eventType, string details, string? userId = null, string? ipAddress = null, string? riskLevel = null);
+    void LogExceptionDetails(Exception exception, string context, Dictionary<string, object>? additionalData = null, [System.Runtime.CompilerServices.CallerMemberName] string callerName = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0);
+    void LogStackTrace(string reason, [System.Runtime.CompilerServices.CallerMemberName] string callerName = "");
+    void LogSystemResource(string resourceType, double currentValue, double maxValue, string unit, string? threshold = null);
+    void LogApplicationEvent(string eventType, string description, object? metadata = null);
+    void LogUserAction(string userId, string action, object? parameters = null, string? sessionId = null);
+    void LogComponentLifecycle(string component, string state, string? reason = null, object? configuration = null);
+    void LogMessageQueueOperation(string operation, string queue, string? messageId = null, object? message = null, bool success = true, string? errorMessage = null);
+    void LogScheduledTask(string taskName, DateTime scheduledTime, DateTime? actualTime = null, bool success = true, TimeSpan? duration = null, string? errorMessage = null);
+    void LogValidation(string validationType, object? input, bool passed, string[]? errors = null, [System.Runtime.CompilerServices.CallerMemberName] string callerName = "");
+    void LogConfigurationChange(string component, string setting, object? oldValue, object? newValue, string? changedBy = null);
+    void LogAlert(string alertType, string severity, string message, object? context = null, string[]? recommendedActions = null);
     
     // Correlation and Context
     IDisposable BeginScope(string operationName, string? correlationId = null);

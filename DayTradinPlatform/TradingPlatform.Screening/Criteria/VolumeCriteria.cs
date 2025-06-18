@@ -3,6 +3,7 @@
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.Screening.Criteria
 {
@@ -60,12 +61,12 @@ namespace TradingPlatform.Screening.Criteria
                     result.Reason = string.Join("; ", issues);
                 }
 
-                _logger.LogTrace($"Volume evaluation for {marketData.Symbol}: Score={result.Score:F2}, Passed={result.Passed}");
+                TradingLogOrchestrator.Instance.LogInfo($"Volume evaluation for {marketData.Symbol}: Score={result.Score:F2}, Passed={result.Passed}");
                 return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error evaluating volume criteria for {marketData.Symbol}");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Error evaluating volume criteria for {marketData.Symbol}");
                 result.Passed = false;
                 result.Score = 0m;
                 result.Reason = $"Evaluation error: {ex.Message}";

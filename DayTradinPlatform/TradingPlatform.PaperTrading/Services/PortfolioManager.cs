@@ -2,6 +2,7 @@ using TradingPlatform.PaperTrading.Models;
 using System.Collections.Concurrent;
 
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 namespace TradingPlatform.PaperTrading.Services;
 
 public class PortfolioManager : IPortfolioManager
@@ -43,7 +44,7 @@ public class PortfolioManager : IPortfolioManager
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting portfolio");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error getting portfolio");
             throw;
         }
     }
@@ -74,7 +75,7 @@ public class PortfolioManager : IPortfolioManager
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating position for {Symbol}", kvp.Key);
+                TradingLogOrchestrator.Instance.LogError(ex, "Error updating position for {Symbol}", kvp.Key);
                 positionsList.Add(kvp.Value); // Add stale position data
             }
         }
@@ -101,7 +102,7 @@ public class PortfolioManager : IPortfolioManager
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting current position for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error getting current position for {Symbol}", symbol);
             return position;
         }
     }
@@ -136,7 +137,7 @@ public class PortfolioManager : IPortfolioManager
                     
                 _cashBalance += cashImpact;
                 
-                _logger.LogInformation("Created new position for {Symbol}: {Quantity}@{Price}", 
+                TradingLogOrchestrator.Instance.LogInfo("Created new position for {Symbol}: {Quantity}@{Price}", 
                     symbol, newPosition.Quantity, execution.Price);
             }
             else
@@ -206,7 +207,7 @@ public class PortfolioManager : IPortfolioManager
                     
                 _cashBalance += cashImpact;
                 
-                _logger.LogInformation("Updated position for {Symbol}: {OldQty} -> {NewQty}@{Price}", 
+                TradingLogOrchestrator.Instance.LogInfo("Updated position for {Symbol}: {OldQty} -> {NewQty}@{Price}", 
                     symbol, existingPosition.Quantity, newTotalQuantity, newAveragePrice);
             }
             
@@ -214,7 +215,7 @@ public class PortfolioManager : IPortfolioManager
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating position for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error updating position for {Symbol}", symbol);
             throw;
         }
     }
@@ -233,7 +234,7 @@ public class PortfolioManager : IPortfolioManager
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating buying power");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating buying power");
             return _cashBalance; // Conservative fallback
         }
     }
@@ -254,7 +255,7 @@ public class PortfolioManager : IPortfolioManager
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking buying power for {Symbol}", orderRequest.Symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error checking buying power for {Symbol}", orderRequest.Symbol);
             return false; // Conservative approach
         }
     }

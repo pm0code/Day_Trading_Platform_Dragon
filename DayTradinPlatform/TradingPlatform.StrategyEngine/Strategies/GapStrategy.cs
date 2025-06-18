@@ -1,5 +1,6 @@
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.StrategyEngine.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.StrategyEngine.Strategies;
 
@@ -23,7 +24,7 @@ public class GapStrategy : IGapStrategy
     {
         try
         {
-            _logger.LogDebug("Evaluating gap signals for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogInfo("Evaluating gap signals for {Symbol}", symbol);
 
             var gaps = await DetectGapsAsync(symbol, conditions);
             
@@ -48,12 +49,12 @@ public class GapStrategy : IGapStrategy
                 }
             }
 
-            _logger.LogInformation("Generated {SignalCount} gap signals for {Symbol}", signals.Count, symbol);
+            TradingLogOrchestrator.Instance.LogInfo("Generated {SignalCount} gap signals for {Symbol}", signals.Count, symbol);
             return signals.ToArray();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error generating gap signals for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error generating gap signals for {Symbol}", symbol);
             return Array.Empty<TradingSignal>();
         }
     }
@@ -91,7 +92,7 @@ public class GapStrategy : IGapStrategy
 
                 gaps.Add(gap);
 
-                _logger.LogDebug("Detected {GapType} gap for {Symbol}: {GapPercentage:P2} gap, Volume confirmation: {VolumeConfirmation}",
+                TradingLogOrchestrator.Instance.LogInfo("Detected {GapType} gap for {Symbol}: {GapPercentage:P2} gap, Volume confirmation: {VolumeConfirmation}",
                     gapType, symbol, gapPercentage, hasVolumeConfirmation);
             }
 
@@ -99,7 +100,7 @@ public class GapStrategy : IGapStrategy
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error detecting gaps for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error detecting gaps for {Symbol}", symbol);
             return Array.Empty<GapPattern>();
         }
     }
@@ -144,14 +145,14 @@ public class GapStrategy : IGapStrategy
             var finalProbability = baseProbability + sizeAdjustment + volumeAdjustment + marketAdjustment;
             finalProbability = Math.Max(0.0m, Math.Min(1.0m, finalProbability)); // Clamp to 0-1
 
-            _logger.LogDebug("Gap fill probability for {Symbol}: {Probability:P1} (Base: {BaseProbability:P1}, Size: {SizeAdjustment:+0.00;-0.00}, Volume: {VolumeAdjustment:+0.00;-0.00})",
+            TradingLogOrchestrator.Instance.LogInfo("Gap fill probability for {Symbol}: {Probability:P1} (Base: {BaseProbability:P1}, Size: {SizeAdjustment:+0.00;-0.00}, Volume: {VolumeAdjustment:+0.00;-0.00})",
                 symbol, finalProbability, baseProbability, sizeAdjustment, volumeAdjustment);
 
             return finalProbability;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assessing gap fill probability for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error assessing gap fill probability for {Symbol}", symbol);
             return 0.0m;
         }
     }
@@ -288,7 +289,7 @@ public class GapStrategy : IGapStrategy
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating gap signal for {Symbol}", gap.Symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error creating gap signal for {Symbol}", gap.Symbol);
             return null;
         }
     }

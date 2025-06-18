@@ -3,6 +3,7 @@
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.Screening.Criteria
 {
@@ -62,12 +63,12 @@ namespace TradingPlatform.Screening.Criteria
                         result.Reason = $"Price ${price:F2} above maximum (${criteria.MaximumPrice:F2}).";
                 }
 
-                _logger.LogTrace($"Price evaluation for {marketData.Symbol}: Price=${price:F2}, Score={result.Score:F2}, Passed={result.Passed}");
+                TradingLogOrchestrator.Instance.LogInfo($"Price evaluation for {marketData.Symbol}: Price=${price:F2}, Score={result.Score:F2}, Passed={result.Passed}");
                 return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error evaluating price criteria for {marketData.Symbol}");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Error evaluating price criteria for {marketData.Symbol}");
                 result.Passed = false;
                 result.Score = 0m;
                 result.Reason = $"Evaluation error: {ex.Message}";

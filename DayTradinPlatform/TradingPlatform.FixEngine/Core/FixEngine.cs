@@ -6,6 +6,7 @@ using TradingPlatform.FixEngine.Trading;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Observability;
 using Audit.Core;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.FixEngine.Core;
 
@@ -109,9 +110,9 @@ public sealed class FixEngine : IFixEngine
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             
             // Record failed initialization
-            _logger.LogError($"FixEngine initialization failure: Duration={stopwatch.Elapsed.TotalMilliseconds}ms, CorrelationId={correlationId}", ex);
+            TradingLogOrchestrator.Instance.LogError($"FixEngine initialization failure: Duration={stopwatch.Elapsed.TotalMilliseconds}ms, CorrelationId={correlationId}", ex);
             
-            _logger.LogError($"Failed to initialize FIX Engine after {stopwatch.Elapsed.TotalMilliseconds:F2}ms | CorrelationId: {correlationId}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to initialize FIX Engine after {stopwatch.Elapsed.TotalMilliseconds:F2}ms | CorrelationId: {correlationId}", ex);
             return false;
         }
     }
@@ -163,7 +164,7 @@ public sealed class FixEngine : IFixEngine
                 var error = $"Order manager not available for venue: {optimalVenue}";
                 activity?.SetStatus(ActivityStatusCode.Error, error);
                 
-                _logger.LogError($"Order submission failure: OrderId={orderId}, Venue={optimalVenue}, Symbol={request.Symbol}, ErrorType=VenueUnavailable");
+                TradingLogOrchestrator.Instance.LogError($"Order submission failure: OrderId={orderId}, Venue={optimalVenue}, Symbol={request.Symbol}, ErrorType=VenueUnavailable");
                 
                 throw new InvalidOperationException(error);
             }
@@ -213,9 +214,9 @@ public sealed class FixEngine : IFixEngine
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             
             // Record failed order submission audit
-            _logger.LogError($"Order submission failure: OrderId={orderId}, Symbol={request.Symbol}, Duration={stopwatch.Elapsed.TotalMilliseconds}ms, CorrelationId={correlationId}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Order submission failure: OrderId={orderId}, Symbol={request.Symbol}, Duration={stopwatch.Elapsed.TotalMilliseconds}ms, CorrelationId={correlationId}", ex);
             
-            _logger.LogError($"Failed to submit order: {orderId} after {stopwatch.Elapsed.TotalMicroseconds:F2}μs | CorrelationId: {correlationId}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to submit order: {orderId} after {stopwatch.Elapsed.TotalMicroseconds:F2}μs | CorrelationId: {correlationId}", ex);
             throw;
         }
     }
@@ -236,12 +237,12 @@ public sealed class FixEngine : IFixEngine
                 }
             }
             
-            _logger.LogWarning($"Order not found for cancellation: {orderId}");
+            TradingLogOrchestrator.Instance.LogWarning($"Order not found for cancellation: {orderId}");
             return false;
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to cancel order: {orderId}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to cancel order: {orderId}", ex);
             return false;
         }
     }
@@ -271,12 +272,12 @@ public sealed class FixEngine : IFixEngine
                 }
             }
             
-            _logger.LogWarning($"Order not found for modification: {orderId}");
+            TradingLogOrchestrator.Instance.LogWarning($"Order not found for modification: {orderId}");
             return false;
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to modify order: {orderId}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to modify order: {orderId}", ex);
             return false;
         }
     }
@@ -308,7 +309,7 @@ public sealed class FixEngine : IFixEngine
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to subscribe to market data for symbols: {string.Join(",", symbols)}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to subscribe to market data for symbols: {string.Join(", ", symbols)}", ex);
             return false;
         }
     }
@@ -338,7 +339,7 @@ public sealed class FixEngine : IFixEngine
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to unsubscribe from market data for symbols: {string.Join(",", symbols)}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to unsubscribe from market data for symbols: {string.Join(", ", symbols)}", ex);
             return false;
         }
     }
@@ -471,9 +472,9 @@ public sealed class FixEngine : IFixEngine
                 activity?.SetTag("fix.venue.initialization.duration_ms", stopwatch.Elapsed.TotalMilliseconds.ToString("F2"));
                 
                 // Record failed venue connection audit
-                _logger.LogError($"Venue initialization failure: VenueName={venueName}, Duration={stopwatch.Elapsed.TotalMilliseconds}ms, ErrorType=ConnectionFailure, CorrelationId={correlationId}");
+                TradingLogOrchestrator.Instance.LogError($"Venue initialization failure: VenueName={venueName}, Duration={stopwatch.Elapsed.TotalMilliseconds}ms, ErrorType=ConnectionFailure, CorrelationId={correlationId}");
                 
-                _logger.LogError(error);
+                TradingLogOrchestrator.Instance.LogError(error);
             }
         }
         catch (Exception ex)
@@ -482,9 +483,9 @@ public sealed class FixEngine : IFixEngine
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             
             // Record venue initialization failure audit
-            _logger.LogError($"Venue initialization failure: VenueName={venueName}, Duration={stopwatch.Elapsed.TotalMilliseconds}ms, CorrelationId={correlationId}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Venue initialization failure: VenueName={venueName}, Duration={stopwatch.Elapsed.TotalMilliseconds}ms, CorrelationId={correlationId}", ex);
             
-            _logger.LogError($"Failed to initialize venue: {venueName} after {stopwatch.Elapsed.TotalMilliseconds:F2}ms | CorrelationId: {correlationId}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to initialize venue: {venueName} after {stopwatch.Elapsed.TotalMilliseconds:F2}ms | CorrelationId: {correlationId}", ex);
             throw;
         }
     }
@@ -548,17 +549,17 @@ public sealed class FixEngine : IFixEngine
     
     private void OnOrderStatusChanged(object? sender, Core.Order order)
     {
-        _logger.LogDebug($"Order status changed: {order.ClOrdId} -> {order.Status}");
+        TradingLogOrchestrator.Instance.LogInfo($"Order status changed: {order.ClOrdId} -> {order.Status}");
     }
     
     private void OnOrderRejected(object? sender, Core.OrderReject reject)
     {
-        _logger.LogWarning($"Order rejected: {reject.ClOrdId} - {reject.RejectReason}: {reject.RejectText}");
+        TradingLogOrchestrator.Instance.LogWarning($"Order rejected: {reject.ClOrdId} - {reject.RejectReason}: {reject.RejectText}");
     }
     
     private void OnSubscriptionStatusChanged(object? sender, string status)
     {
-        _logger.LogDebug($"Subscription status changed: {status}");
+        TradingLogOrchestrator.Instance.LogInfo($"Subscription status changed: {status}");
     }
     
     private void OnVenueStatusChanged(string venue, string status)
@@ -583,14 +584,14 @@ public sealed class FixEngine : IFixEngine
             {
                 if (!session.IsConnected)
                 {
-                    _logger.LogWarning($"Venue {venue} is disconnected, attempting reconnection");
+                    TradingLogOrchestrator.Instance.LogWarning($"Venue {venue} is disconnected, attempting reconnection");
                     // Could add auto-reconnection logic here
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError("Error during health check", ex);
+            TradingLogOrchestrator.Instance.LogError("Error during health check", ex);
         }
     }
     

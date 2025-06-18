@@ -4,6 +4,7 @@ using TradingPlatform.Messaging.Events;
 using System.Collections.Concurrent;
 
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 namespace TradingPlatform.RiskManagement.Services;
 
 public class RiskAlertService : IRiskAlertService
@@ -37,7 +38,7 @@ public class RiskAlertService : IRiskAlertService
             RequiresAcknowledgment = alert.Severity >= RiskLevel.High
         });
 
-        _logger.LogWarning("Risk alert created: {AlertType} for {Symbol} - {Message}", 
+        TradingLogOrchestrator.Instance.LogWarning("Risk alert created: {AlertType} for {Symbol} - {Message}", 
             alert.Type, alert.Symbol, alert.Message);
 
         // Send notification based on severity
@@ -68,7 +69,7 @@ public class RiskAlertService : IRiskAlertService
                 RequiresAcknowledgment = false
             });
 
-            _logger.LogInformation("Risk alert resolved: {AlertId} for {Symbol}", alertId, alert.Symbol);
+            TradingLogOrchestrator.Instance.LogInfo("Risk alert resolved: {AlertId} for {Symbol}", alertId, alert.Symbol);
         }
     }
 
@@ -158,7 +159,7 @@ public class RiskAlertService : IRiskAlertService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send high priority notification for alert {AlertId}", alert.Id);
+            TradingLogOrchestrator.Instance.LogError(ex, "Failed to send high priority notification for alert {AlertId}", alert.Id);
         }
     }
 }

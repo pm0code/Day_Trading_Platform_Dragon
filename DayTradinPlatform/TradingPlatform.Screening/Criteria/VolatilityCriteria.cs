@@ -3,6 +3,7 @@
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.Screening.Criteria
 {
@@ -63,12 +64,12 @@ namespace TradingPlatform.Screening.Criteria
                     result.Reason = $"ATR ${atr:F2} below threshold (${criteria.MinimumATR:F2}).";
                 }
 
-                _logger.LogTrace($"Volatility evaluation for {marketData.Symbol}: ATR=${atr:F2}, Score={result.Score:F2}, Passed={result.Passed}");
+                TradingLogOrchestrator.Instance.LogInfo($"Volatility evaluation for {marketData.Symbol}: ATR=${atr:F2}, Score={result.Score:F2}, Passed={result.Passed}");
                 return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error evaluating volatility criteria for {marketData?.Symbol ?? "N/A"}");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Error evaluating volatility criteria for {marketData?.Symbol ?? "N/A"}");
                 result.Passed = false;
                 result.Score = 0m;
                 result.Reason = $"Evaluation error: {ex.Message}";

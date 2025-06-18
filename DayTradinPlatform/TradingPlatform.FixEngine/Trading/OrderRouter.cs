@@ -2,6 +2,7 @@ using TradingPlatform.FixEngine.Models;
 using TradingPlatform.FixEngine.Core;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.FixEngine.Trading;
 
@@ -88,7 +89,7 @@ public sealed class OrderRouter : IDisposable
             
             if (session?.IsConnected != true)
             {
-                _logger.LogWarning($"No active session for venue {optimalVenue}, trying fallback");
+                TradingLogOrchestrator.Instance.LogWarning($"No active session for venue {optimalVenue}, trying fallback");
                 optimalVenue = GetFallbackVenue(request, optimalVenue);
                 session = await GetOrCreateSession(optimalVenue);
             }
@@ -282,7 +283,7 @@ public sealed class OrderRouter : IDisposable
             return await session.ConnectAsync(endpoint.host, endpoint.port, TimeSpan.FromSeconds(5));
         }
         
-        _logger.LogWarning($"No endpoint configuration found for venue: {venue}");
+        TradingLogOrchestrator.Instance.LogWarning($"No endpoint configuration found for venue: {venue}");
         return false;
     }
     

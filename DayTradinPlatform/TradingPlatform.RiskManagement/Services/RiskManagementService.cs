@@ -4,6 +4,7 @@ using TradingPlatform.Messaging.Events;
 using System.Collections.Concurrent;
 
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 namespace TradingPlatform.RiskManagement.Services;
 
 public class RiskManagementService : IRiskManagementService
@@ -60,7 +61,7 @@ public class RiskManagementService : IRiskManagementService
             );
 
             var elapsed = DateTime.UtcNow - startTime;
-            _logger.LogInformation("Risk status calculated in {ElapsedMs}ms - Risk Level: {RiskLevel}", 
+            TradingLogOrchestrator.Instance.LogInfo("Risk status calculated in {ElapsedMs}ms - Risk Level: {RiskLevel}", 
                 elapsed.TotalMilliseconds, riskLevel);
 
             await _messageBus.PublishAsync("risk.status.updated", new RiskEvent
@@ -78,7 +79,7 @@ public class RiskManagementService : IRiskManagementService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating risk status");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating risk status");
             throw;
         }
     }
@@ -103,7 +104,7 @@ public class RiskManagementService : IRiskManagementService
             Action = "Configure"
         });
         
-        _logger.LogInformation("Risk limits updated - Max Daily Loss: {MaxDailyLoss}, Max Drawdown: {MaxDrawdown}", 
+        TradingLogOrchestrator.Instance.LogInfo("Risk limits updated - Max Daily Loss: {MaxDailyLoss}, Max Drawdown: {MaxDrawdown}", 
             limits.MaxDailyLoss, limits.MaxDrawdown);
     }
 
@@ -148,14 +149,14 @@ public class RiskManagementService : IRiskManagementService
             }
 
             var elapsed = DateTime.UtcNow - startTime;
-            _logger.LogDebug("Order validation completed in {ElapsedMs}ms for {Symbol}", 
+            TradingLogOrchestrator.Instance.LogInfo("Order validation completed in {ElapsedMs}ms for {Symbol}", 
                 elapsed.TotalMilliseconds, request.Symbol);
 
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error validating order for {Symbol}", request.Symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error validating order for {Symbol}", request.Symbol);
             return false;
         }
     }

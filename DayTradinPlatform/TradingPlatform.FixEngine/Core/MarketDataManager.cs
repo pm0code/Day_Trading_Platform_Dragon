@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using TradingPlatform.FixEngine.Models;
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.FixEngine.Core;
 
@@ -92,14 +93,14 @@ public sealed class MarketDataManager : IDisposable
             {
                 subscription.Status = SubscriptionStatus.Failed;
                 _subscriptions.TryRemove(symbol, out _);
-                _logger.LogError($"Failed to send market data request for {symbol}");
+                TradingLogOrchestrator.Instance.LogError($"Failed to send market data request for {symbol}");
             }
             
             return success;
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error subscribing to market data for {symbol}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Error subscribing to market data for {symbol}", ex);
             _subscriptions.TryRemove(symbol, out _);
             return false;
         }
@@ -112,7 +113,7 @@ public sealed class MarketDataManager : IDisposable
     {
         if (!_subscriptions.TryGetValue(symbol, out var subscription))
         {
-            _logger.LogWarning($"No active subscription found for {symbol}");
+            TradingLogOrchestrator.Instance.LogWarning($"No active subscription found for {symbol}");
             return false;
         }
         
@@ -144,7 +145,7 @@ public sealed class MarketDataManager : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error unsubscribing from market data for {symbol}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Error unsubscribing from market data for {symbol}", ex);
             return false;
         }
     }
@@ -186,7 +187,7 @@ public sealed class MarketDataManager : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error processing market data message: {message.MsgType}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Error processing market data message: {message.MsgType}", ex);
         }
     }
     
@@ -240,7 +241,7 @@ public sealed class MarketDataManager : IDisposable
         
         MarketDataReceived?.Invoke(this, update);
         
-        _logger.LogDebug($"Market data snapshot updated for {symbol}: Bid={snapshot.BidPrice}@{snapshot.BidSize}, " +
+        TradingLogOrchestrator.Instance.LogInfo($"Market data snapshot updated for {symbol}: Bid={snapshot.BidPrice}@{snapshot.BidSize}, " +
             $"Offer={snapshot.OfferPrice}@{snapshot.OfferSize}, Last={snapshot.LastPrice}@{snapshot.LastSize}");
     }
     
@@ -324,7 +325,7 @@ public sealed class MarketDataManager : IDisposable
         var rejectReason = message.GetField(281); // MDReqRejReason
         var text = message.GetField(58); // Text
         
-        _logger.LogWarning($"Market data request rejected - RequestId: {mdReqId}, Reason: {rejectReason}, Text: {text}");
+        TradingLogOrchestrator.Instance.LogWarning($"Market data request rejected - RequestId: {mdReqId}, Reason: {rejectReason}, Text: {text}");
         
         // Find and update subscription status
         var failedSubscription = _subscriptions.Values.FirstOrDefault(s => s.RequestId == mdReqId);
@@ -345,7 +346,7 @@ public sealed class MarketDataManager : IDisposable
             if (subscription.Status == SubscriptionStatus.Active && 
                 now - subscription.SubscriptionTime > staleThreshold)
             {
-                _logger.LogWarning($"Stale subscription detected for {subscription.Symbol}, resubscribing...");
+                TradingLogOrchestrator.Instance.LogWarning($"Stale subscription detected for {subscription.Symbol}, resubscribing...");
                 
                 // Attempt to resubscribe
                 _ = Task.Run(async () => 

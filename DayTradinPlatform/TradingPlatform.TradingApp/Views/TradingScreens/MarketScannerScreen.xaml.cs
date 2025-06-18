@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using TradingPlatform.TradingApp.Models;
 using TradingPlatform.TradingApp.Services;
 using TradingPlatform.Logging.Interfaces;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.TradingApp.Views.TradingScreens;
 
@@ -45,7 +46,7 @@ public sealed partial class MarketScannerScreen : Window
         };
         _newsTimer.Tick += NewsTimer_Tick;
         
-        _logger.LogInformation("Market scanner screen initialized", _screenType.ToString());
+        TradingLogOrchestrator.Instance.LogInfo("Market scanner screen initialized", _screenType.ToString());
         
         InitializeScreen();
     }
@@ -66,11 +67,11 @@ public sealed partial class MarketScannerScreen : Window
             }
             _newsTimer.Start();
             
-            _logger.LogInformation("Market scanner screen initialization completed", _screenType.ToString());
+            TradingLogOrchestrator.Instance.LogInfo("Market scanner screen initialization completed", _screenType.ToString());
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to initialize market scanner screen", _screenType.ToString(), ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to initialize market scanner screen", _screenType.ToString(), ex);
         }
     }
     
@@ -245,7 +246,7 @@ public sealed partial class MarketScannerScreen : Window
         // TODO: Implement actual market scanning logic
         // For now, just update the timestamp
         
-        _logger.LogInformation("Market scan performed", _screenType.ToString(), new Dictionary<string, object>
+        TradingLogOrchestrator.Instance.LogInfo("Market scan performed", _screenType.ToString(), new Dictionary<string, object>
         {
             ["ScanType"] = ScanTypeSelector.SelectedItem?.ToString() ?? "Unknown",
             ["MinVolume"] = MinVolumeFilter.Value,
@@ -264,7 +265,7 @@ public sealed partial class MarketScannerScreen : Window
     private void NewsTimer_Tick(object sender, object e)
     {
         // TODO: Implement news feed updates
-        _logger.LogInformation("News feed updated", _screenType.ToString());
+        TradingLogOrchestrator.Instance.LogInfo("News feed updated", _screenType.ToString());
     }
     
     private async void OnSizeChanged(object sender, WindowSizeChangedEventArgs e)
@@ -282,7 +283,7 @@ public sealed partial class MarketScannerScreen : Window
         _scanTimer?.Stop();
         _newsTimer?.Stop();
         await SaveCurrentPositionAsync();
-        _logger.LogInformation("Market scanner screen closed", _screenType.ToString());
+        TradingLogOrchestrator.Instance.LogInfo("Market scanner screen closed", _screenType.ToString());
     }
     
     private async Task RestoreWindowPositionAsync()
@@ -316,8 +317,7 @@ public sealed partial class MarketScannerScreen : Window
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to restore window position for market scanner screen", 
-                _screenType.ToString(), ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to restore window position for market scanner screen", _screenType.ToString(), ex);
         }
     }
     
@@ -355,8 +355,7 @@ public sealed partial class MarketScannerScreen : Window
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to save window position for market scanner screen", 
-                _screenType.ToString(), ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to save window position for market scanner screen", _screenType.ToString(), ex);
         }
     }
 }

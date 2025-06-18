@@ -1,5 +1,6 @@
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.DisplayManagement.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.DisplayManagement.Services;
 
@@ -22,7 +23,7 @@ public class MockMonitorDetectionService : IMonitorDetectionService
 
     public async Task<List<MonitorConfiguration>> GetConnectedMonitorsAsync()
     {
-        _logger.LogInformation("Mock monitor detection: RDP session detected - showing 1 active monitor");
+        TradingLogOrchestrator.Instance.LogInfo("Mock monitor detection: RDP session detected - showing 1 active monitor");
         
         await Task.Delay(300);
         
@@ -132,7 +133,7 @@ public class MockMonitorDetectionService : IMonitorDetectionService
 
     public async Task SaveMonitorConfigurationAsync(MultiMonitorConfiguration configuration)
     {
-        _logger.LogInformation("Mock save: Monitor configuration with {MonitorCount} monitors", 
+        TradingLogOrchestrator.Instance.LogInfo("Mock save: Monitor configuration with {MonitorCount} monitors", 
             configuration.Monitors.Count);
         
         await Task.Delay(100);

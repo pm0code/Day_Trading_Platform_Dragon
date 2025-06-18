@@ -4,6 +4,7 @@ using TradingPlatform.Logging.Interfaces;
 using TradingPlatform.TradingApp.Models;
 using Windows.Graphics;
 using WinRT.Interop;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.TradingApp.Services;
 
@@ -34,7 +35,7 @@ public class MonitorService : IMonitorService
         _configFilePath = Path.Combine(configDir, "monitor-configuration.json");
         _positionsFilePath = Path.Combine(configDir, "window-positions.json");
         
-        _logger.LogInformation("MonitorService initialized", null, new Dictionary<string, object>
+        TradingLogOrchestrator.Instance.LogInfo("MonitorService initialized", null, new Dictionary<string, object>
         {
             ["ConfigPath"] = _configFilePath,
             ["PositionsPath"] = _positionsFilePath
@@ -43,7 +44,7 @@ public class MonitorService : IMonitorService
 
     public async Task<List<MonitorConfiguration>> DetectMonitorsAsync()
     {
-        _logger.LogInformation("Detecting available monitors", null);
+        TradingLogOrchestrator.Instance.LogInfo("Detecting available monitors", null);
         
         var monitors = new List<MonitorConfiguration>();
         
@@ -72,7 +73,7 @@ public class MonitorService : IMonitorService
                 
                 monitors.Add(monitor);
                 
-                _logger.LogInformation("Detected monitor", null, new Dictionary<string, object>
+                TradingLogOrchestrator.Instance.LogInfo("Detected monitor", null, new Dictionary<string, object>
                 {
                     ["MonitorId"] = monitor.MonitorId,
                     ["DisplayName"] = monitor.DisplayName,
@@ -82,14 +83,14 @@ public class MonitorService : IMonitorService
                 });
             }
             
-            _logger.LogInformation("Monitor detection completed", null, new Dictionary<string, object>
+            TradingLogOrchestrator.Instance.LogInfo("Monitor detection completed", null, new Dictionary<string, object>
             {
                 ["MonitorCount"] = monitors.Count
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to detect monitors", null, ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to detect monitors", null, ex);
             throw;
         }
         
@@ -111,7 +112,7 @@ public class MonitorService : IMonitorService
                 
                 if (_currentConfiguration != null)
                 {
-                    _logger.LogInformation("Loaded monitor configuration from file", null, new Dictionary<string, object>
+                    TradingLogOrchestrator.Instance.LogInfo("Loaded monitor configuration from file", null, new Dictionary<string, object>
                     {
                         ["Version"] = _currentConfiguration.Version,
                         ["MonitorCount"] = _currentConfiguration.Monitors.Count,
@@ -156,7 +157,7 @@ public class MonitorService : IMonitorService
             await File.WriteAllTextAsync(_configFilePath, json);
             _currentConfiguration = configuration;
             
-            _logger.LogInformation("Saved monitor configuration", null, new Dictionary<string, object>
+            TradingLogOrchestrator.Instance.LogInfo("Saved monitor configuration", null, new Dictionary<string, object>
             {
                 ["Version"] = configuration.Version,
                 ["MonitorCount"] = configuration.Monitors.Count,
@@ -201,7 +202,7 @@ public class MonitorService : IMonitorService
         var updatedConfig = config with { LastUpdated = DateTime.UtcNow };
         await SaveConfigurationAsync(updatedConfig);
         
-        _logger.LogInformation("Assigned trading screen to monitor", null, new Dictionary<string, object>
+        TradingLogOrchestrator.Instance.LogInfo("Assigned trading screen to monitor", null, new Dictionary<string, object>
         {
             ["ScreenType"] = screenType.ToString(),
             ["MonitorId"] = monitorId
@@ -231,7 +232,7 @@ public class MonitorService : IMonitorService
         
         await File.WriteAllTextAsync(_positionsFilePath, json);
         
-        _logger.LogInformation("Saved window position", null, new Dictionary<string, object>
+        TradingLogOrchestrator.Instance.LogInfo("Saved window position", null, new Dictionary<string, object>
         {
             ["ScreenType"] = positionInfo.ScreenType.ToString(),
             ["MonitorId"] = positionInfo.MonitorId,
@@ -271,7 +272,7 @@ public class MonitorService : IMonitorService
         
         if (monitors.Count < 4)
         {
-            _logger.LogWarning("Insufficient monitors for 4-screen day trading setup", null, new Dictionary<string, object>
+            TradingLogOrchestrator.Instance.LogWarning("Insufficient monitors for 4-screen day trading setup", null, new Dictionary<string, object>
             {
                 ["AvailableMonitors"] = monitors.Count,
                 ["RequiredMonitors"] = 4
@@ -308,7 +309,7 @@ public class MonitorService : IMonitorService
         if (remainingMonitors.Count >= 3)
             await AssignScreenToMonitorAsync(TradingScreenType.MarketScanner, remainingMonitors[2].MonitorId);
 
-        _logger.LogInformation("Auto-configured monitors for day trading", null, new Dictionary<string, object>
+        TradingLogOrchestrator.Instance.LogInfo("Auto-configured monitors for day trading", null, new Dictionary<string, object>
         {
             ["TotalMonitors"] = monitors.Count,
             ["ConfiguredScreens"] = Math.Min(4, monitors.Count)
@@ -337,7 +338,7 @@ public class MonitorService : IMonitorService
         
         if (!isValid)
         {
-            _logger.LogWarning("Screen assignments validation failed", null, new Dictionary<string, object>
+            TradingLogOrchestrator.Instance.LogWarning("Screen assignments validation failed", null, new Dictionary<string, object>
             {
                 ["MissingAssignments"] = missingAssignments.Select(s => s.ToString()).ToArray(),
                 ["TotalMissing"] = missingAssignments.Count

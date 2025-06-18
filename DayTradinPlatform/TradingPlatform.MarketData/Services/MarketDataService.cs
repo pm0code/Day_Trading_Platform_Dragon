@@ -4,6 +4,7 @@ using TradingPlatform.Core.Models;
 using TradingPlatform.DataIngestion.Interfaces;
 using TradingPlatform.Messaging.Events;
 using TradingPlatform.Messaging.Interfaces;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.MarketData.Services;
 
@@ -60,7 +61,7 @@ public class MarketDataService : IMarketDataService
                 stopwatch.Stop();
                 RecordLatency(stopwatch.Elapsed);
                 
-                _logger.LogDebug("Cache hit for {Symbol} in {ElapsedMicroseconds}μs", 
+                TradingLogOrchestrator.Instance.LogInfo("Cache hit for {Symbol} in {ElapsedMicroseconds}μs", 
                     symbol, stopwatch.Elapsed.TotalMicroseconds);
                 return cachedData;
             }
@@ -95,20 +96,20 @@ public class MarketDataService : IMarketDataService
                 stopwatch.Stop();
                 RecordLatency(stopwatch.Elapsed);
 
-                _logger.LogInformation("Updated market data for {Symbol} in {ElapsedMicroseconds}μs", 
+                TradingLogOrchestrator.Instance.LogInfo("Updated market data for {Symbol} in {ElapsedMicroseconds}μs", 
                     symbol, stopwatch.Elapsed.TotalMicroseconds);
 
                 return freshData;
             }
 
             stopwatch.Stop();
-            _logger.LogWarning("No market data available for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogWarning("No market data available for {Symbol}", symbol);
             return null;
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
-            _logger.LogError(ex, "Error retrieving market data for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error retrieving market data for {Symbol}", symbol);
             return null;
         }
     }
@@ -138,7 +139,7 @@ public class MarketDataService : IMarketDataService
             }
 
             stopwatch.Stop();
-            _logger.LogInformation("Batch request for {SymbolCount} symbols completed in {ElapsedMilliseconds}ms", 
+            TradingLogOrchestrator.Instance.LogInfo("Batch request for {SymbolCount} symbols completed in {ElapsedMilliseconds}ms", 
                 symbols.Length, stopwatch.Elapsed.TotalMilliseconds);
 
             return results;
@@ -146,7 +147,7 @@ public class MarketDataService : IMarketDataService
         catch (Exception ex)
         {
             stopwatch.Stop();
-            _logger.LogError(ex, "Error processing batch market data request");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error processing batch market data request");
             return results;
         }
     }
@@ -161,7 +162,7 @@ public class MarketDataService : IMarketDataService
             var historicalData = await _dataIngestionService.GetHistoricalDataAsync(symbol, interval);
             
             stopwatch.Stop();
-            _logger.LogInformation("Retrieved historical data for {Symbol} ({Interval}) in {ElapsedMilliseconds}ms", 
+            TradingLogOrchestrator.Instance.LogInfo("Retrieved historical data for {Symbol} ({Interval}) in {ElapsedMilliseconds}ms", 
                 symbol, interval, stopwatch.Elapsed.TotalMilliseconds);
 
             return historicalData;
@@ -169,14 +170,14 @@ public class MarketDataService : IMarketDataService
         catch (Exception ex)
         {
             stopwatch.Stop();
-            _logger.LogError(ex, "Error retrieving historical data for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error retrieving historical data for {Symbol}", symbol);
             return null;
         }
     }
 
     public async Task StartBackgroundProcessingAsync()
     {
-        _logger.LogInformation("Starting background Redis Streams processing");
+        TradingLogOrchestrator.Instance.LogInfo("Starting background Redis Streams processing");
 
         try
         {
@@ -190,11 +191,11 @@ public class MarketDataService : IMarketDataService
                 "marketdata-group", "subscription-consumer", 
                 HandleSubscriptionRequest, _cancellationTokenSource.Token);
 
-            _logger.LogInformation("Background processing started successfully");
+            TradingLogOrchestrator.Instance.LogInfo("Background processing started successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error starting background processing");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error starting background processing");
             throw;
         }
     }
@@ -226,7 +227,7 @@ public class MarketDataService : IMarketDataService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting health status");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error getting health status");
             return new MarketDataHealthStatus(false, "Error", TimeSpan.Zero, 0, 0, DateTime.UtcNow, 
                 new[] { ex.Message });
         }
@@ -266,11 +267,11 @@ public class MarketDataService : IMarketDataService
             // Fetch fresh data
             await GetMarketDataAsync(symbol);
             
-            _logger.LogInformation("Refreshed market data for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogInfo("Refreshed market data for {Symbol}", symbol);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error refreshing market data for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error refreshing market data for {Symbol}", symbol);
         }
     }
 
@@ -302,7 +303,7 @@ public class MarketDataService : IMarketDataService
     {
         try
         {
-            _logger.LogDebug("Processing market data request for {Symbol} from {Source}", 
+            TradingLogOrchestrator.Instance.LogInfo("Processing market data request for {Symbol} from {Source}", 
                 request.Symbol, request.Source);
 
             var data = await GetMarketDataAsync(request.Symbol);
@@ -324,7 +325,7 @@ public class MarketDataService : IMarketDataService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error handling market data request for {Symbol}", request.Symbol);
+            TradingLogOrchestrator.Instance.LogError(ex, "Error handling market data request for {Symbol}", request.Symbol);
         }
     }
 
@@ -332,7 +333,7 @@ public class MarketDataService : IMarketDataService
     {
         try
         {
-            _logger.LogInformation("Processing subscription request: {Action} for symbols: {Symbols}", 
+            TradingLogOrchestrator.Instance.LogInfo("Processing subscription request: {Action} for symbols: {Symbols}", 
                 request.Action, string.Join(", ", request.Symbols));
 
             // Implementation would manage real-time subscriptions
@@ -341,7 +342,7 @@ public class MarketDataService : IMarketDataService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error handling subscription request");
+            TradingLogOrchestrator.Instance.LogError(ex, "Error handling subscription request");
         }
     }
 

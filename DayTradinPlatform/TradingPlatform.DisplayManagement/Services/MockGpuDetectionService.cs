@@ -1,5 +1,6 @@
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.DisplayManagement.Models;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.DisplayManagement.Services;
 
@@ -18,7 +19,7 @@ public class MockGpuDetectionService : IGpuDetectionService
 
     public async Task<List<GpuInfo>> GetGpuInformationAsync()
     {
-        _logger.LogInformation("Mock GPU detection: Simulating RTX 4070 Ti + RTX 3060 Ti setup");
+        TradingLogOrchestrator.Instance.LogInfo("Mock GPU detection: Simulating RTX 4070 Ti + RTX 3060 Ti setup");
         
         await Task.Delay(500); // Simulate detection time
         

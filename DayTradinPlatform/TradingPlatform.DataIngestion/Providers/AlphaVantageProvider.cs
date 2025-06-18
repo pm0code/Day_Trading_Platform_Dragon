@@ -11,6 +11,7 @@ using TradingPlatform.Core.Models;
 using TradingPlatform.DataIngestion.Interfaces;
 using TradingPlatform.DataIngestion.Models;
 using System.Text.Json;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.DataIngestion.Providers
 {
@@ -36,14 +37,14 @@ namespace TradingPlatform.DataIngestion.Providers
 
         public async Task<MarketData> GetRealTimeDataAsync(string symbol)
         {
-            _logger.LogInformation($"Fetching real-time data for {symbol} from AlphaVantage");
+            TradingLogOrchestrator.Instance.LogInfo($"Fetching real-time data for {symbol} from AlphaVantage");
 
             // 1. Check Cache
             string cacheKey = $"alphavantage_{symbol}_realtime";
             if (_cache.TryGetValue(cacheKey, out MarketData cachedData) &&
                 cachedData.Timestamp > DateTime.UtcNow.AddSeconds(-_config.Cache.RealTimeCacheSeconds))
             {
-                _logger.LogTrace($"Real-time data for {symbol} retrieved from cache.");
+                TradingLogOrchestrator.Instance.LogInfo($"Real-time data for {symbol} retrieved from cache.");
                 return cachedData;
             }
 
@@ -64,7 +65,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 // 5. Error Handling
                 if (!response.IsSuccessful || string.IsNullOrWhiteSpace(response.Content))
                 {
-                    _logger.LogError($"Error fetching real-time data from AlphaVantage for {symbol}: {response.ErrorMessage}");
+                    TradingLogOrchestrator.Instance.LogError($"Error fetching real-time data from AlphaVantage for {symbol}: {response.ErrorMessage}");
                     return null;
                 }
 
@@ -72,7 +73,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 var jsonResponse = JsonSerializer.Deserialize<AlphaVantageGlobalQuoteResponse>(response.Content);
                 if (jsonResponse?.GlobalQuote == null)
                 {
-                    _logger.LogError($"Failed to deserialize AlphaVantage response for {symbol}");
+                    TradingLogOrchestrator.Instance.LogError($"Failed to deserialize AlphaVantage response for {symbol}");
                     return null;
                 }
 
@@ -81,24 +82,24 @@ namespace TradingPlatform.DataIngestion.Providers
 
                 // 8. Cache the Result
                 _cache.Set(cacheKey, marketData, TimeSpan.FromSeconds(_config.Cache.RealTimeCacheSeconds));
-                _logger.LogTrace($"Successfully retrieved real-time data for {symbol} from AlphaVantage");
+                TradingLogOrchestrator.Instance.LogInfo($"Successfully retrieved real-time data for {symbol} from AlphaVantage");
                 return marketData;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Exception while fetching real-time data for {symbol} from AlphaVantage");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Exception while fetching real-time data for {symbol} from AlphaVantage");
                 return null;
             }
         }
 
         public async Task<List<DailyData>> FetchHistoricalDataAsync(string symbol, DateTime startDate, DateTime endDate)
         {
-            _logger.LogInformation($"Fetching historical data for {symbol} from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
+            TradingLogOrchestrator.Instance.LogInfo($"Fetching historical data for {symbol} from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
 
             string cacheKey = $"alphavantage_{symbol}_historical_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}";
             if (_cache.TryGetValue(cacheKey, out List<DailyData> cachedData))
             {
-                _logger.LogTrace($"Historical data for {symbol} retrieved from cache");
+                TradingLogOrchestrator.Instance.LogInfo($"Historical data for {symbol} retrieved from cache");
                 return cachedData;
             }
 
@@ -116,7 +117,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
                 if (!response.IsSuccessful || string.IsNullOrWhiteSpace(response.Content))
                 {
-                    _logger.LogError($"Failed to fetch historical data for {symbol}: {response.ErrorMessage}");
+                    TradingLogOrchestrator.Instance.LogError($"Failed to fetch historical data for {symbol}: {response.ErrorMessage}");
                     return new List<DailyData>();
                 }
 
@@ -124,7 +125,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 var jsonResponse = JsonSerializer.Deserialize<AlphaVantageTimeSeriesResponse>(response.Content);
                 if (jsonResponse?.TimeSeries == null)
                 {
-                    _logger.LogWarning($"No historical data available for {symbol}");
+                    TradingLogOrchestrator.Instance.LogWarning($"No historical data available for {symbol}");
                     return new List<DailyData>();
                 }
 
@@ -136,20 +137,20 @@ namespace TradingPlatform.DataIngestion.Providers
 
                 // Cache for 1 hour as historical data doesn't change frequently
                 _cache.Set(cacheKey, historicalData, TimeSpan.FromHours(1));
-                _logger.LogInformation($"Retrieved {historicalData.Count} historical records for {symbol}");
+                TradingLogOrchestrator.Instance.LogInfo($"Retrieved {historicalData.Count} historical records for {symbol}");
 
                 return historicalData;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Exception while fetching historical data for {symbol}");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Exception while fetching historical data for {symbol}");
                 return new List<DailyData>();
             }
         }
 
         public async Task<List<MarketData>> GetBatchRealTimeDataAsync(List<string> symbols)
         {
-            _logger.LogInformation($"Fetching batch real-time data for {symbols.Count} symbols from AlphaVantage");
+            TradingLogOrchestrator.Instance.LogInfo($"Fetching batch real-time data for {symbols.Count} symbols from AlphaVantage");
             var results = new List<MarketData>();
 
             // AlphaVantage doesn't support batch requests, so we process individually
@@ -165,13 +166,13 @@ namespace TradingPlatform.DataIngestion.Providers
                 await Task.Delay(TimeSpan.FromSeconds(12));
             }
 
-            _logger.LogInformation($"Successfully retrieved {results.Count}/{symbols.Count} real-time quotes from AlphaVantage");
+            TradingLogOrchestrator.Instance.LogInfo($"Successfully retrieved {results.Count}/{symbols.Count} real-time quotes from AlphaVantage");
             return results;
         }
 
         public IObservable<MarketData> SubscribeRealTimeData(string symbol)
         {
-            _logger.LogInformation($"Setting up real-time subscription for {symbol} using AlphaVantage polling");
+            TradingLogOrchestrator.Instance.LogInfo($"Setting up real-time subscription for {symbol} using AlphaVantage polling");
 
             // AlphaVantage doesn't support WebSocket streaming, so we implement polling-based subscription
             return System.Reactive.Linq.Observable.Create<MarketData>(async observer =>
@@ -192,7 +193,7 @@ namespace TradingPlatform.DataIngestion.Providers
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, $"Error in real-time subscription for {symbol}");
+                            TradingLogOrchestrator.Instance.LogError(ex, $"Error in real-time subscription for {symbol}");
                             observer.OnError(ex);
                             break;
                         }
@@ -210,7 +211,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
         public async Task<MarketData> FetchMarketDataAsync(string symbol)
         {
-            _logger.LogInformation($"Fetching market data for {symbol} from AlphaVantage");
+            TradingLogOrchestrator.Instance.LogInfo($"Fetching market data for {symbol} from AlphaVantage");
 
             // Use GetRealTimeDataAsync as the primary implementation
             return await GetRealTimeDataAsync(symbol);
@@ -218,7 +219,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
         public async Task<List<MarketData>> GetBatchQuotesAsync(List<string> symbols)
         {
-            _logger.LogInformation($"Fetching batch quotes for {symbols.Count} symbols from AlphaVantage");
+            TradingLogOrchestrator.Instance.LogInfo($"Fetching batch quotes for {symbols.Count} symbols from AlphaVantage");
 
             // Use GetBatchRealTimeDataAsync as the primary implementation
             return await GetBatchRealTimeDataAsync(symbols);
@@ -226,7 +227,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
         public async Task<MarketData> GetDailyDataAsync(string symbol, int days)
         {
-            _logger.LogInformation($"Fetching {days} days of data for {symbol} from AlphaVantage");
+            TradingLogOrchestrator.Instance.LogInfo($"Fetching {days} days of data for {symbol} from AlphaVantage");
 
             var endDate = DateTime.Today;
             var startDate = endDate.AddDays(-days);
@@ -257,7 +258,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
         public async Task<MarketData> GetQuoteAsync(string symbol)
         {
-            _logger.LogInformation($"Fetching quote for {symbol} from AlphaVantage");
+            TradingLogOrchestrator.Instance.LogInfo($"Fetching quote for {symbol} from AlphaVantage");
 
             // Use GetRealTimeDataAsync as the primary implementation
             return await GetRealTimeDataAsync(symbol);
@@ -285,7 +286,7 @@ namespace TradingPlatform.DataIngestion.Providers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error mapping AlphaVantage quote data for {quote?.Symbol}");
+                TradingLogOrchestrator.Instance.LogError(ex, $"Error mapping AlphaVantage quote data for {quote?.Symbol}");
                 return null;
             }
         }

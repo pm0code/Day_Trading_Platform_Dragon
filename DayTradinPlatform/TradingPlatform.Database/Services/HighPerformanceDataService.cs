@@ -4,6 +4,7 @@ using System.Threading.Channels;
 using TradingPlatform.Database.Context;
 using TradingPlatform.Database.Models;
 using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.Database.Services;
 
@@ -79,7 +80,7 @@ public class HighPerformanceDataService : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to queue market data record: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to queue market data record: {ex.Message}", ex);
             return false;
         }
     }
@@ -99,7 +100,7 @@ public class HighPerformanceDataService : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to queue execution record: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to queue execution record: {ex.Message}", ex);
             return false;
         }
     }
@@ -119,7 +120,7 @@ public class HighPerformanceDataService : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to queue performance metric: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to queue performance metric: {ex.Message}", ex);
             return false;
         }
     }
@@ -155,7 +156,7 @@ public class HighPerformanceDataService : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to retrieve market data for {symbol}: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to retrieve market data for {symbol}: {ex.Message}", ex);
             return new List<MarketDataRecord>();
         }
     }
@@ -193,7 +194,7 @@ public class HighPerformanceDataService : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to retrieve execution history: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to retrieve execution history: {ex.Message}", ex);
             return new List<ExecutionRecord>();
         }
     }
@@ -232,7 +233,7 @@ public class HighPerformanceDataService : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to calculate latency metrics: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to calculate latency metrics: {ex.Message}", ex);
             return new Dictionary<string, decimal>();
         }
     }
@@ -266,7 +267,7 @@ public class HighPerformanceDataService : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error processing market data batches: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Error processing market data batches: {ex.Message}", ex);
         }
     }
     
@@ -298,7 +299,7 @@ public class HighPerformanceDataService : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error processing execution batches: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Error processing execution batches: {ex.Message}", ex);
         }
     }
     
@@ -330,7 +331,7 @@ public class HighPerformanceDataService : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error processing performance batches: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Error processing performance batches: {ex.Message}", ex);
         }
     }
     
@@ -342,11 +343,11 @@ public class HighPerformanceDataService : IDisposable
             await _context.SaveChangesAsync(_cancellationTokenSource.Token);
             
             Interlocked.Add(ref _marketDataInsertCount, batch.Count);
-            _logger.LogDebug($"Inserted {batch.Count} market data records");
+            TradingLogOrchestrator.Instance.LogInfo($"Inserted {batch.Count} market data records");
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to flush market data batch: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to flush market data batch: {ex.Message}", ex);
         }
     }
     
@@ -358,11 +359,11 @@ public class HighPerformanceDataService : IDisposable
             await _context.SaveChangesAsync(_cancellationTokenSource.Token);
             
             Interlocked.Add(ref _executionInsertCount, batch.Count);
-            _logger.LogDebug($"Inserted {batch.Count} execution records");
+            TradingLogOrchestrator.Instance.LogInfo($"Inserted {batch.Count} execution records");
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to flush execution batch: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to flush execution batch: {ex.Message}", ex);
         }
     }
     
@@ -374,11 +375,11 @@ public class HighPerformanceDataService : IDisposable
             await _context.SaveChangesAsync(_cancellationTokenSource.Token);
             
             Interlocked.Add(ref _performanceInsertCount, batch.Count);
-            _logger.LogDebug($"Inserted {batch.Count} performance metrics");
+            TradingLogOrchestrator.Instance.LogInfo($"Inserted {batch.Count} performance metrics");
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to flush performance batch: {ex.Message}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to flush performance batch: {ex.Message}", ex);
         }
     }
     
