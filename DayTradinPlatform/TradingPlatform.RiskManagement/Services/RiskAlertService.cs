@@ -3,15 +3,16 @@ using TradingPlatform.Messaging.Interfaces;
 using TradingPlatform.Messaging.Events;
 using System.Collections.Concurrent;
 
+using TradingPlatform.Core.Interfaces;
 namespace TradingPlatform.RiskManagement.Services;
 
 public class RiskAlertService : IRiskAlertService
 {
     private readonly IMessageBus _messageBus;
-    private readonly ILogger<RiskAlertService> _logger;
+    private readonly ILogger _logger;
     private readonly ConcurrentDictionary<string, RiskAlert> _activeAlerts = new();
 
-    public RiskAlertService(IMessageBus messageBus, ILogger<RiskAlertService> logger)
+    public RiskAlertService(IMessageBus messageBus, ILogger logger)
     {
         _messageBus = messageBus;
         _logger = logger;

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Testing.Mocks;
 using TradingPlatform.Testing.Utilities;
 using TradingPlatform.Common.Constants;

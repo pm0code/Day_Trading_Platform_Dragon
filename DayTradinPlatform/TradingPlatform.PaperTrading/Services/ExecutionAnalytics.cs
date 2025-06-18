@@ -1,15 +1,16 @@
 using TradingPlatform.PaperTrading.Models;
 using System.Collections.Concurrent;
 
+using TradingPlatform.Core.Interfaces;
 namespace TradingPlatform.PaperTrading.Services;
 
 public class ExecutionAnalytics : IExecutionAnalytics
 {
-    private readonly ILogger<ExecutionAnalytics> _logger;
+    private readonly ILogger _logger;
     private readonly ConcurrentQueue<Execution> _executions = new();
     private readonly ConcurrentDictionary<string, List<Execution>> _executionsBySymbol = new();
 
-    public ExecutionAnalytics(ILogger<ExecutionAnalytics> logger)
+    public ExecutionAnalytics(ILogger logger)
     {
         _logger = logger;
     }
@@ -228,14 +229,14 @@ public class ExecutionAnalytics : IExecutionAnalytics
 
         var avgReturn = returns.Average();
         var variance = returns.Select(r => (r - avgReturn) * (r - avgReturn)).Average();
-        var stdDev = (decimal)Math.Sqrt((double)variance);
+        var stdDev = TradingPlatform.Common.Mathematics.TradingMath.Sqrt(variance);
 
         if (stdDev == 0) return 0m;
 
         var riskFreeRate = 0.02m / 252m; // 2% annual risk-free rate, daily
         var excessReturn = avgReturn - riskFreeRate;
 
-        return (excessReturn / stdDev) * (decimal)Math.Sqrt(252); // Annualized
+        return (excessReturn / stdDev) * TradingPlatform.Common.Mathematics.TradingMath.Sqrt(252m); // Annualized
     }
 
     private decimal CalculateMaxDrawdown(decimal[] tradePnLs)

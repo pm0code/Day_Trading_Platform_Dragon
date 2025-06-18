@@ -1,6 +1,6 @@
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using StackExchange.Redis;
 using TradingPlatform.Messaging.Interfaces;
 using TradingPlatform.Messaging.Services;
@@ -49,7 +49,7 @@ public static class ServiceCollectionExtensions
         // Register Redis connection as singleton
         services.AddSingleton<IConnectionMultiplexer>(provider =>
         {
-            var logger = provider.GetRequiredService<ILogger<IConnectionMultiplexer>>();
+            var logger = provider.GetRequiredService<ILogger>();
             
             try
             {

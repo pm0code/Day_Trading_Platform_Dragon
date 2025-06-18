@@ -3,6 +3,7 @@ using TradingPlatform.Messaging.Interfaces;
 using TradingPlatform.Messaging.Events;
 using System.Collections.Concurrent;
 
+using TradingPlatform.Core.Interfaces;
 namespace TradingPlatform.RiskManagement.Services;
 
 public class RiskManagementService : IRiskManagementService
@@ -11,7 +12,7 @@ public class RiskManagementService : IRiskManagementService
     private readonly IPositionMonitor _positionMonitor;
     private readonly IRiskAlertService _alertService;
     private readonly IMessageBus _messageBus;
-    private readonly ILogger<RiskManagementService> _logger;
+    private readonly ILogger _logger;
     private readonly ConcurrentDictionary<string, RiskLimits> _riskLimits = new();
     private RiskLimits _defaultLimits = null!;
 
@@ -20,7 +21,7 @@ public class RiskManagementService : IRiskManagementService
         IPositionMonitor positionMonitor,
         IRiskAlertService alertService,
         IMessageBus messageBus,
-        ILogger<RiskManagementService> logger)
+        ILogger logger)
     {
         _riskCalculator = riskCalculator;
         _positionMonitor = positionMonitor;

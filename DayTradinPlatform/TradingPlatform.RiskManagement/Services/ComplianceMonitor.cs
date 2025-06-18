@@ -3,16 +3,17 @@ using TradingPlatform.Messaging.Interfaces;
 using TradingPlatform.Messaging.Events;
 using System.Collections.Concurrent;
 
+using TradingPlatform.Core.Interfaces;
 namespace TradingPlatform.RiskManagement.Services;
 
 public class ComplianceMonitor : IComplianceMonitor
 {
     private readonly IMessageBus _messageBus;
-    private readonly ILogger<ComplianceMonitor> _logger;
+    private readonly ILogger _logger;
     private readonly ConcurrentDictionary<string, ComplianceEvent> _complianceEvents = new();
     private readonly ConcurrentDictionary<string, PatternDayTradingStatus> _pdtStatus = new();
 
-    public ComplianceMonitor(IMessageBus messageBus, ILogger<ComplianceMonitor> logger)
+    public ComplianceMonitor(IMessageBus messageBus, ILogger logger)
     {
         _messageBus = messageBus;
         _logger = logger;

@@ -1,6 +1,6 @@
 // File: TradingPlatform.DataIngestion\Providers\FinnhubProvider.cs
 
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using RestSharp;
 using System;

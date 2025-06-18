@@ -2,15 +2,15 @@
 
 using System;
 using System.Collections.Generic;
-using Microsoft.Extensions.Logging; // For logging
+using TradingPlatform.Core.Interfaces; // For logging
 
 namespace TradingPlatform.Core.Models
 {
     public class MarketData
     {
-        private readonly ILogger<MarketData> _logger; // Add logger
+        private readonly ILogger _logger; // Add logger
 
-        public MarketData(ILogger<MarketData> logger) // Inject logger
+        public MarketData(ILogger logger) // Inject logger
         {
             _logger = logger;
         }

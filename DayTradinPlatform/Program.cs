@@ -2,7 +2,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Interfaces; // Example: Add necessary using statements
 using TradingPlatform.Core.Models;
 using TradingPlatform.DataIngestion.Interfaces;

@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Messaging.Events;
 using TradingPlatform.Messaging.Interfaces;
 using TradingPlatform.StrategyEngine.Models;
@@ -16,7 +16,7 @@ public class StrategyExecutionService : IStrategyExecutionService
     private readonly IStrategyManager _strategyManager;
     private readonly ISignalProcessor _signalProcessor;
     private readonly IPerformanceTracker _performanceTracker;
-    private readonly ILogger<StrategyExecutionService> _logger;
+    private readonly ILogger _logger;
     private readonly CancellationTokenSource _cancellationTokenSource;
     
     // Performance tracking
@@ -31,7 +31,7 @@ public class StrategyExecutionService : IStrategyExecutionService
         IStrategyManager strategyManager,
         ISignalProcessor signalProcessor,
         IPerformanceTracker performanceTracker,
-        ILogger<StrategyExecutionService> logger)
+        ILogger logger)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _strategyManager = strategyManager ?? throw new ArgumentNullException(nameof(strategyManager));

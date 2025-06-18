@@ -3,15 +3,16 @@ using TradingPlatform.Messaging.Interfaces;
 using TradingPlatform.Messaging.Events;
 using System.Collections.Concurrent;
 
+using TradingPlatform.Core.Interfaces;
 namespace TradingPlatform.RiskManagement.Services;
 
 public class PositionMonitor : IPositionMonitor
 {
     private readonly IMessageBus _messageBus;
-    private readonly ILogger<PositionMonitor> _logger;
+    private readonly ILogger _logger;
     private readonly ConcurrentDictionary<string, Position> _positions = new();
 
-    public PositionMonitor(IMessageBus messageBus, ILogger<PositionMonitor> logger)
+    public PositionMonitor(IMessageBus messageBus, ILogger logger)
     {
         _messageBus = messageBus;
         _logger = logger;

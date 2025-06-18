@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using StackExchange.Redis;
 using TradingPlatform.Messaging.Interfaces;
 
@@ -17,12 +17,12 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
 {
     private readonly IConnectionMultiplexer _redis;
     private readonly IDatabase _database;
-    private readonly ILogger<RedisMessageBus> _logger;
+    private readonly ILogger _logger;
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly SemaphoreSlim _connectionSemaphore;
     private volatile bool _disposed;
 
-    public RedisMessageBus(IConnectionMultiplexer redis, ILogger<RedisMessageBus> logger)
+    public RedisMessageBus(IConnectionMultiplexer redis, ILogger logger)
     {
         _redis = redis ?? throw new ArgumentNullException(nameof(redis));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

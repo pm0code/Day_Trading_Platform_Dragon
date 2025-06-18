@@ -1,6 +1,6 @@
 using System.Management;
 using System.Runtime.InteropServices;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.DisplayManagement.Models;
 
 namespace TradingPlatform.DisplayManagement.Services;
@@ -37,12 +37,12 @@ public interface IGpuDetectionService
 /// </summary>
 public class GpuDetectionService : IGpuDetectionService
 {
-    private readonly ILogger<GpuDetectionService> _logger;
+    private readonly ILogger _logger;
     private readonly List<GpuInfo> _cachedGpuInfo = new();
     private DateTime _lastCacheUpdate = DateTime.MinValue;
     private readonly TimeSpan _cacheExpiry = TimeSpan.FromMinutes(5);
 
-    public GpuDetectionService(ILogger<GpuDetectionService> logger)
+    public GpuDetectionService(ILogger logger)
     {
         _logger = logger;
     }

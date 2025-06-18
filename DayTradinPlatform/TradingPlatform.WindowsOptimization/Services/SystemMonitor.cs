@@ -1,13 +1,13 @@
 using System.Diagnostics;
 using System.Management;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.WindowsOptimization.Models;
 
 namespace TradingPlatform.WindowsOptimization.Services;
 
 public class SystemMonitor : ISystemMonitor, IDisposable
 {
-    private readonly ILogger<SystemMonitor> _logger;
+    private readonly ILogger _logger;
     private readonly IWindowsOptimizationService _optimizationService;
     private readonly Timer? _monitoringTimer;
     private readonly Dictionary<string, PerformanceCounter> _performanceCounters;
@@ -23,7 +23,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
     private const int DISK_QUEUE_THRESHOLD = 5; // Lower threshold for trading system
 
     public SystemMonitor(
-        ILogger<SystemMonitor> logger,
+        ILogger logger,
         IWindowsOptimizationService optimizationService)
     {
         _logger = logger;

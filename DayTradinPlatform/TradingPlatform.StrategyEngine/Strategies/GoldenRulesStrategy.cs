@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.StrategyEngine.Models;
 
 namespace TradingPlatform.StrategyEngine.Strategies;
@@ -9,13 +9,13 @@ namespace TradingPlatform.StrategyEngine.Strategies;
 /// </summary>
 public class GoldenRulesStrategy : IGoldenRulesStrategy
 {
-    private readonly ILogger<GoldenRulesStrategy> _logger;
+    private readonly ILogger _logger;
     private readonly GoldenRule[] _goldenRules;
 
     public string StrategyName => "Golden Rules Strategy";
     public string Description => "Rule-based trading strategy implementing the 12 Golden Rules of Day Trading for disciplined execution";
 
-    public GoldenRulesStrategy(ILogger<GoldenRulesStrategy> logger)
+    public GoldenRulesStrategy(ILogger logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _goldenRules = InitializeGoldenRules();

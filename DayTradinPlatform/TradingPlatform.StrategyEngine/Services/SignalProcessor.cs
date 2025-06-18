@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.StrategyEngine.Models;
 using TradingPlatform.StrategyEngine.Strategies;
 
@@ -14,7 +14,7 @@ public class SignalProcessor : ISignalProcessor
     private readonly IGoldenRulesStrategy _goldenRulesStrategy;
     private readonly IMomentumStrategy _momentumStrategy;
     private readonly IGapStrategy _gapStrategy;
-    private readonly ILogger<SignalProcessor> _logger;
+    private readonly ILogger _logger;
     private readonly ConcurrentDictionary<string, List<TradingSignal>> _recentSignals;
     private readonly Timer _cleanupTimer;
 
@@ -22,7 +22,7 @@ public class SignalProcessor : ISignalProcessor
         IGoldenRulesStrategy goldenRulesStrategy,
         IMomentumStrategy momentumStrategy,
         IGapStrategy gapStrategy,
-        ILogger<SignalProcessor> logger)
+        ILogger logger)
     {
         _goldenRulesStrategy = goldenRulesStrategy ?? throw new ArgumentNullException(nameof(goldenRulesStrategy));
         _momentumStrategy = momentumStrategy ?? throw new ArgumentNullException(nameof(momentumStrategy));

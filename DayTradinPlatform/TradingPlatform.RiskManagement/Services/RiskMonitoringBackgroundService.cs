@@ -1,6 +1,7 @@
 using TradingPlatform.RiskManagement.Services;
 using TradingPlatform.Messaging.Interfaces;
 
+using TradingPlatform.Core.Interfaces;
 namespace TradingPlatform.RiskManagement.Services;
 
 public class RiskMonitoringBackgroundService : BackgroundService
@@ -9,7 +10,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
     private readonly IRiskAlertService _alertService;
     private readonly IPositionMonitor _positionMonitor;
     private readonly IComplianceMonitor _complianceMonitor;
-    private readonly ILogger<RiskMonitoringBackgroundService> _logger;
+    private readonly ILogger _logger;
     private readonly TimeSpan _monitoringInterval = TimeSpan.FromSeconds(5); // Real-time monitoring
 
     public RiskMonitoringBackgroundService(
@@ -17,7 +18,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
         IRiskAlertService alertService,
         IPositionMonitor positionMonitor,
         IComplianceMonitor complianceMonitor,
-        ILogger<RiskMonitoringBackgroundService> logger)
+        ILogger logger)
     {
         _riskService = riskService;
         _alertService = alertService;

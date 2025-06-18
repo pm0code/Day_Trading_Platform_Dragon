@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Messaging.Events;
 using TradingPlatform.Messaging.Interfaces;
 
@@ -12,12 +12,12 @@ namespace TradingPlatform.MarketData.Services;
 public class SubscriptionManager : ISubscriptionManager
 {
     private readonly IMessageBus _messageBus;
-    private readonly ILogger<SubscriptionManager> _logger;
+    private readonly ILogger _logger;
     private readonly ConcurrentDictionary<string, SubscriptionInfo> _activeSubscriptions;
     private readonly Timer _heartbeatTimer;
     private readonly CancellationTokenSource _cancellationTokenSource;
 
-    public SubscriptionManager(IMessageBus messageBus, ILogger<SubscriptionManager> logger)
+    public SubscriptionManager(IMessageBus messageBus, ILogger logger)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

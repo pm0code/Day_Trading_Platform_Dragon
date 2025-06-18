@@ -1,6 +1,6 @@
 // File: TradingPlatform.Screening\Services\CriteriaConfigurationService.cs
 
-using Microsoft.Extensions.Logging; // Added for logger injection
+using TradingPlatform.Core.Interfaces; // Added for logger injection
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +13,10 @@ namespace TradingPlatform.Screening.Services
     /// </summary>
     public class CriteriaConfigurationService
     {
-        private readonly ILogger<CriteriaConfigurationService> _logger; // Inject logger
+        private readonly ILogger _logger; // Inject logger
         private readonly Dictionary<string, TradingCriteria> _criteriaConfigs = new();
 
-        public CriteriaConfigurationService(ILogger<CriteriaConfigurationService> logger) // Add logger to constructor
+        public CriteriaConfigurationService(ILogger logger) // Add logger to constructor
         {
             _logger = logger;
         }

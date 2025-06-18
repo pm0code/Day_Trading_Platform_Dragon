@@ -1,13 +1,14 @@
 using TradingPlatform.PaperTrading.Models;
 
+using TradingPlatform.Core.Interfaces;
 namespace TradingPlatform.PaperTrading.Services;
 
 public class SlippageCalculator : ISlippageCalculator
 {
-    private readonly ILogger<SlippageCalculator> _logger;
+    private readonly ILogger _logger;
     private readonly Dictionary<string, decimal> _averageDailyVolumes = new();
 
-    public SlippageCalculator(ILogger<SlippageCalculator> logger)
+    public SlippageCalculator(ILogger logger)
     {
         _logger = logger;
         InitializeVolumeData();

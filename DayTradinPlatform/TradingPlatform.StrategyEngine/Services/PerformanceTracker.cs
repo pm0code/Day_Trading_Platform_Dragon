@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.StrategyEngine.Models;
 
 namespace TradingPlatform.StrategyEngine.Services;
@@ -10,12 +10,12 @@ namespace TradingPlatform.StrategyEngine.Services;
 /// </summary>
 public class PerformanceTracker : IPerformanceTracker
 {
-    private readonly ILogger<PerformanceTracker> _logger;
+    private readonly ILogger _logger;
     private readonly ConcurrentDictionary<string, StrategyPerformance> _strategyPerformances;
     private readonly ConcurrentDictionary<string, List<TradeRecord>> _tradeHistory;
     private readonly Timer _metricsUpdateTimer;
 
-    public PerformanceTracker(ILogger<PerformanceTracker> logger)
+    public PerformanceTracker(ILogger logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _strategyPerformances = new ConcurrentDictionary<string, StrategyPerformance>();

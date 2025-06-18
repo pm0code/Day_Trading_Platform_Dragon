@@ -1,16 +1,17 @@
 using TradingPlatform.PaperTrading.Models;
 using System.Collections.Concurrent;
 
+using TradingPlatform.Core.Interfaces;
 namespace TradingPlatform.PaperTrading.Services;
 
 public class OrderBookSimulator : IOrderBookSimulator
 {
-    private readonly ILogger<OrderBookSimulator> _logger;
+    private readonly ILogger _logger;
     private readonly ConcurrentDictionary<string, OrderBook> _orderBooks = new();
     private readonly ConcurrentDictionary<string, decimal> _currentPrices = new();
     private readonly Random _random = new();
 
-    public OrderBookSimulator(ILogger<OrderBookSimulator> logger)
+    public OrderBookSimulator(ILogger logger)
     {
         _logger = logger;
         

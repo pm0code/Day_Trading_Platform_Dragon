@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Testing.Mocks;
 using TradingPlatform.Messaging.Interfaces;
 using TradingPlatform.Common.Constants;
@@ -17,7 +17,7 @@ public static class MessageBusTestHelpers
     /// </summary>
     /// <param name="logger">Optional logger for debugging test issues</param>
     /// <returns>Configured MockMessageBus instance</returns>
-    public static MockMessageBus CreateStandardMock(ILogger<MockMessageBus>? logger = null)
+    public static MockMessageBus CreateStandardMock(ILogger? logger = null)
     {
         var mock = new MockMessageBus(logger);
         mock.SetSimulatedLatency(TimeSpan.FromMicroseconds(50)); // Realistic low latency
@@ -30,7 +30,7 @@ public static class MessageBusTestHelpers
     /// <summary>
     /// Creates a MockMessageBus configured for high-latency testing scenarios.
     /// </summary>
-    public static MockMessageBus CreateHighLatencyMock(TimeSpan latency, ILogger<MockMessageBus>? logger = null)
+    public static MockMessageBus CreateHighLatencyMock(TimeSpan latency, ILogger? logger = null)
     {
         var mock = new MockMessageBus(logger);
         mock.SetSimulatedLatency(latency);
@@ -44,7 +44,7 @@ public static class MessageBusTestHelpers
     /// Creates a MockMessageBus configured for error injection testing.
     /// </summary>
     /// <param name="errorRate">Probability (0-1) of operations failing</param>
-    public static MockMessageBus CreateErrorInjectingMock(double errorRate, ILogger<MockMessageBus>? logger = null)
+    public static MockMessageBus CreateErrorInjectingMock(double errorRate, ILogger? logger = null)
     {
         var mock = new MockMessageBus(logger);
         mock.SetSimulatedLatency(TimeSpan.FromMicroseconds(50));
@@ -57,7 +57,7 @@ public static class MessageBusTestHelpers
     /// <summary>
     /// Creates a MockMessageBus configured for unhealthy system testing.
     /// </summary>
-    public static MockMessageBus CreateUnhealthyMock(ILogger<MockMessageBus>? logger = null)
+    public static MockMessageBus CreateUnhealthyMock(ILogger? logger = null)
     {
         var mock = new MockMessageBus(logger);
         mock.SetSimulatedLatency(TimeSpan.FromMilliseconds(100)); // High latency when unhealthy
@@ -70,7 +70,7 @@ public static class MessageBusTestHelpers
     /// <summary>
     /// Creates a MockMessageBus optimized for performance testing scenarios.
     /// </summary>
-    public static MockMessageBus CreatePerformanceMock(ILogger<MockMessageBus>? logger = null)
+    public static MockMessageBus CreatePerformanceMock(ILogger? logger = null)
     {
         var mock = new MockMessageBus(logger);
         mock.SetSimulatedLatency(TimeSpan.FromMicroseconds(10)); // Ultra-low latency
@@ -92,7 +92,7 @@ public static class MessageBusTestHelpers
     {
         return services.AddSingleton<IMessageBus>(provider =>
         {
-            var logger = provider.GetService<ILogger<MockMessageBus>>();
+            var logger = provider.GetService<ILogger>();
             var mock = CreateStandardMock(logger);
             configureAction?.Invoke(mock);
             return mock;
@@ -186,7 +186,7 @@ public static class MessageBusTestHelpers
     /// <param name="scenario">Predefined test scenario</param>
     /// <param name="logger">Optional logger</param>
     /// <returns>Configured MockMessageBus for the scenario</returns>
-    public static MockMessageBus CreateScenarioMock(TestScenario scenario, ILogger<MockMessageBus>? logger = null)
+    public static MockMessageBus CreateScenarioMock(TestScenario scenario, ILogger? logger = null)
     {
         return scenario switch
         {

@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using RestSharp;
 using TradingPlatform.Core.Models;
@@ -17,12 +17,12 @@ namespace TradingPlatform.DataIngestion.Providers
     public class AlphaVantageProvider : IAlphaVantageProvider
     {
         private readonly RestClient _client;
-        private readonly ILogger<AlphaVantageProvider> _logger;
+        private readonly ILogger _logger;
         private readonly IMemoryCache _cache;
         private readonly IRateLimiter _rateLimiter;
         private readonly ApiConfiguration _config;
 
-        public AlphaVantageProvider(ILogger<AlphaVantageProvider> logger,
+        public AlphaVantageProvider(ILogger logger,
             IMemoryCache cache,
             IRateLimiter rateLimiter,
             ApiConfiguration config)

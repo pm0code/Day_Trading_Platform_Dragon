@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 
 namespace TradingPlatform.Gateway.Services;
 
@@ -10,11 +10,11 @@ namespace TradingPlatform.Gateway.Services;
 /// </summary>
 public class ProcessManager : IProcessManager
 {
-    private readonly ILogger<ProcessManager> _logger;
+    private readonly ILogger _logger;
     private readonly Dictionary<string, Process> _managedProcesses;
     private readonly Dictionary<string, ServiceConfiguration> _serviceConfigurations;
 
-    public ProcessManager(ILogger<ProcessManager> logger)
+    public ProcessManager(ILogger logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _managedProcesses = new Dictionary<string, Process>();

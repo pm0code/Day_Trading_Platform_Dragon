@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.DisplayManagement.Models;
 
 namespace TradingPlatform.DisplayManagement.Services;
@@ -9,9 +9,9 @@ namespace TradingPlatform.DisplayManagement.Services;
 /// </summary>
 public class MockGpuDetectionService : IGpuDetectionService
 {
-    private readonly ILogger<MockGpuDetectionService> _logger;
+    private readonly ILogger _logger;
 
-    public MockGpuDetectionService(ILogger<MockGpuDetectionService> logger)
+    public MockGpuDetectionService(ILogger logger)
     {
         _logger = logger;
     }

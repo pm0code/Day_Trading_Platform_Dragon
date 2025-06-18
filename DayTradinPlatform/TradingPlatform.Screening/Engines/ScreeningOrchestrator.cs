@@ -1,6 +1,6 @@
 // File: TradingPlatform.Screening.Engines\ScreeningOrchestrator.cs
 
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Interfaces;
 using TradingPlatform.Screening.Models;
@@ -13,9 +13,9 @@ namespace TradingPlatform.Screening.Engines
     public class ScreeningOrchestrator
     {
         private readonly IEnumerable<ICriteriaEvaluator> _criteriaEvaluators;
-        private readonly ILogger<ScreeningOrchestrator> _logger;
+        private readonly ILogger _logger;
 
-        public ScreeningOrchestrator(IEnumerable<ICriteriaEvaluator> criteriaEvaluators, ILogger<ScreeningOrchestrator> logger)
+        public ScreeningOrchestrator(IEnumerable<ICriteriaEvaluator> criteriaEvaluators, ILogger logger)
         {
             _criteriaEvaluators = criteriaEvaluators;
             _logger = logger;

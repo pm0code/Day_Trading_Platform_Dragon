@@ -1,6 +1,6 @@
 // File: TradingPlatform.Screening.Criteria\VolatilityCriteria.cs
 
-using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Models;
 
@@ -11,9 +11,9 @@ namespace TradingPlatform.Screening.Criteria
     /// </summary>
     public class VolatilityCriteria
     {
-        private readonly ILogger<VolatilityCriteria> _logger;
+        private readonly ILogger _logger;
 
-        public VolatilityCriteria(ILogger<VolatilityCriteria> logger)
+        public VolatilityCriteria(ILogger logger)
         {
             _logger = logger;
         }
