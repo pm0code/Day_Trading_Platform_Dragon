@@ -146,3 +146,8 @@ Key documentation files in the MainDocs directory:
 - Uses nullable reference types (`<Nullable>enable`)
 - All projects use implicit usings
 - The `TradingPlatform.Utilities` project includes PowerShell scripts for service registration automation
+
+## Additional Memories
+
+• Every time you want to run a PS script on DRAGON, open a PS window with admin rights so I can see the execution of those commands. Do not close that window. I'll do it after my review.
+• Remember that Windows does not have rsync. use scp instead

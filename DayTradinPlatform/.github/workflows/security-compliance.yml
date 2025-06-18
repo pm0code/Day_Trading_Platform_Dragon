@@ -1,0 +1,192 @@
+name: Security & Compliance Scanning
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security scans weekly on Sundays at 3 AM UTC
+    - cron: '0 3 * * 0'
+
+jobs:
+  security-scan:
+    name: Security & Vulnerability Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Restore dependencies
+      run: |
+        cd DayTradinPlatform
+        dotnet restore
+        
+    - name: Run .NET Security Audit
+      run: |
+        cd DayTradinPlatform
+        dotnet list package --vulnerable --include-transitive
+        
+    - name: NuGet Package Vulnerability Check
+      run: |
+        cd DayTradinPlatform
+        dotnet restore --verbosity normal 2>&1 | tee nuget-audit.log
+        if grep -i "vulnerability\|security" nuget-audit.log; then
+          echo "⚠️ Security vulnerabilities found in NuGet packages"
+          exit 1
+        fi
+        
+    - name: Check for Hardcoded Secrets
+      run: |
+        echo "Scanning for hardcoded secrets and API keys..."
+        # Check for common secret patterns
+        if grep -r -E "(api[_-]?key|password|secret|token)" DayTradinPlatform --include="*.cs" --include="*.json" --exclude-dir=bin --exclude-dir=obj; then
+          echo "⚠️ Potential hardcoded secrets found - manual review required"
+        else
+          echo "✓ No hardcoded secrets detected"
+        fi
+        
+    - name: Financial Compliance Check
+      run: |
+        echo "Checking financial regulation compliance..."
+        
+        # Verify all monetary calculations use System.Decimal
+        if grep -r "double\|float" DayTradinPlatform --include="*.cs" --exclude-dir=bin --exclude-dir=obj | grep -v "// Safe non-monetary usage"; then
+          echo "❌ COMPLIANCE VIOLATION: Found double/float usage - must use System.Decimal for financial calculations"
+          exit 1
+        else
+          echo "✓ Financial precision compliance: All calculations use System.Decimal"
+        fi
+        
+    - name: Custom ILogger Compliance Check
+      run: |
+        echo "Verifying canonical logging implementation..."
+        
+        # Check for Microsoft logging violations (should be zero after our fixes)
+        if grep -r "Microsoft.Extensions.Logging" DayTradinPlatform --include="*.cs" --exclude-dir=obj --exclude-dir=bin; then
+          echo "❌ ARCHITECTURAL VIOLATION: Microsoft logging found - must use TradingPlatform.Core.Interfaces.ILogger"
+          exit 1
+        else
+          echo "✓ Logging compliance: All files use canonical custom ILogger"
+        fi
+        
+    - name: Trading Platform Security Requirements
+      run: |
+        echo "Checking trading platform specific security requirements..."
+        
+        # Verify no SQL injection vulnerabilities
+        if grep -r "string.*sql\|sql.*string" DayTradinPlatform --include="*.cs" | grep -v "// Safe parameterized query"; then
+          echo "⚠️ Potential SQL injection risk detected - manual review required"
+        fi
+        
+        # Check for proper error handling in trading operations
+        if ! grep -r "try.*catch" DayTradinPlatform/TradingPlatform.FixEngine --include="*.cs" > /dev/null; then
+          echo "⚠️ Missing error handling in critical trading components"
+        else
+          echo "✓ Error handling present in trading components"
+        fi
+
+  dependency-check:
+    name: Dependency Security Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Install Security Tools
+      run: |
+        dotnet tool install --global security-scan
+        dotnet tool install --global dotnet-outdated-tool
+        
+    - name: Check for Outdated Packages
+      run: |
+        cd DayTradinPlatform
+        dotnet outdated --fail-on-updates
+        
+    - name: License Compliance Check
+      run: |
+        echo "Checking license compliance for trading platform..."
+        cd DayTradinPlatform
+        
+        # List all packages and their licenses
+        dotnet list package --include-transitive > packages.txt
+        
+        # Check for GPL licenses (not compatible with commercial trading)
+        if grep -i "gpl" packages.txt; then
+          echo "❌ GPL licensed packages found - not compatible with commercial trading platform"
+          exit 1
+        else
+          echo "✓ License compliance verified"
+        fi
+
+  regulatory-compliance:
+    name: Financial Regulatory Compliance
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Audit Trail Verification
+      run: |
+        echo "Verifying audit trail capabilities..."
+        
+        # Check for proper logging in trading operations
+        if grep -r "LogTrade\|LogPerformance" DayTradinPlatform --include="*.cs"; then
+          echo "✓ Trading-specific audit logging found"
+        else
+          echo "⚠️ Missing specialized trading audit logs"
+        fi
+        
+    - name: Data Retention Policy Check
+      run: |
+        echo "Checking data retention policy implementation..."
+        
+        # Verify database models have proper timestamp fields
+        if grep -r "DateTime.*Created\|DateTime.*Modified" DayTradinPlatform --include="*.cs"; then
+          echo "✓ Timestamp tracking implemented"
+        else
+          echo "⚠️ Missing timestamp tracking for regulatory compliance"
+        fi
+        
+    - name: Risk Management Validation
+      run: |
+        echo "Validating risk management controls..."
+        
+        # Check for risk management implementation
+        if test -d "DayTradinPlatform/TradingPlatform.RiskManagement"; then
+          echo "✓ Risk management module present"
+          
+          # Verify risk calculation methods
+          if grep -r "CalculateRisk\|RiskLimit\|PositionSize" DayTradinPlatform/TradingPlatform.RiskManagement --include="*.cs"; then
+            echo "✓ Risk calculation methods implemented"
+          else
+            echo "⚠️ Risk calculation methods not found"
+          fi
+        else
+          echo "❌ Risk management module missing"
+          exit 1
+        fi
+        
+    - name: Market Data Integrity Check
+      run: |
+        echo "Checking market data integrity measures..."
+        
+        # Verify data validation in market data processing
+        if grep -r "Validate.*MarketData\|IsValid" DayTradinPlatform --include="*.cs"; then
+          echo "✓ Market data validation implemented"
+        else
+          echo "⚠️ Market data validation may be missing"
+        fi

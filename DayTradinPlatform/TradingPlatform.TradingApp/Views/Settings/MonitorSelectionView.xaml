@@ -112,6 +112,29 @@
                 <StackPanel>
                     <TextBlock Text="Monitor Selection" Style="{StaticResource HeaderTextStyle}"/>
                     
+                    <!-- RDP/Connection Status -->
+                    <Border Name="ConnectionStatusPanel" 
+                           Background="#2D3748" 
+                           BorderBrush="#4A5568" 
+                           BorderThickness="1" 
+                           CornerRadius="4" 
+                           Padding="12" 
+                           Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Name="ConnectionStatusTitle" 
+                                      Text="🌐 RDP Session Detected" 
+                                      Foreground="#63B3ED" 
+                                      FontWeight="Bold" 
+                                      FontSize="14"/>
+                            <TextBlock Name="ConnectionStatusDescription" 
+                                      Text="Currently connected via Remote Desktop. Hardware supports up to 8 monitors, but only 1 display is available in this RDP session."
+                                      Foreground="#A0AEC0" 
+                                      Margin="0,4,0,0" 
+                                      TextWrapping="Wrap"
+                                      FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+                    
                     <!-- Current Monitor Count Selection -->
                     <Grid Margin="0,0,0,20">
                         <Grid.ColumnDefinitions>

@@ -1,8 +1,8 @@
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
-using TradingPlatform.TradingApp.Models;
+using TradingPlatform.DisplayManagement.Models;
 
-namespace TradingPlatform.TradingApp.Services;
+namespace TradingPlatform.DisplayManagement.Services;
 
 /// <summary>
 /// Service for detecting and managing monitor configurations for DRAGON trading platform
@@ -102,7 +102,7 @@ public class MonitorDetectionService : IMonitorDetectionService
         try
         {
             // Use Windows API to enumerate monitors
-            EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, (hMonitor, hdcMonitor, ref Rect lprcMonitor, dwData) =>
+            EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, (IntPtr hMonitor, IntPtr hdcMonitor, ref Rect lprcMonitor, IntPtr dwData) =>
             {
                 var monitorInfo = new MonitorInfoEx();
                 monitorInfo.Size = Marshal.SizeOf(monitorInfo);

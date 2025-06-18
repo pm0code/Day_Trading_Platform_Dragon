@@ -1,9 +1,9 @@
 using System.Management;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
-using TradingPlatform.TradingApp.Models;
+using TradingPlatform.DisplayManagement.Models;
 
-namespace TradingPlatform.TradingApp.Services;
+namespace TradingPlatform.DisplayManagement.Services;
 
 /// <summary>
 /// Service for detecting GPU capabilities and recommending maximum monitor configurations
@@ -143,7 +143,7 @@ public class GpuDetectionService : IGpuDetectionService
                 OverallRating = PerformanceRating.Poor,
                 RecommendedMonitors = 1,
                 TradingWorkloadSupport = "No GPU detected - limited multi-monitor capability",
-                Limitations = new[] { "No dedicated GPU found", "Integrated graphics may limit performance" }
+                Limitations = new List<string> { "No dedicated GPU found", "Integrated graphics may limit performance" }
             };
         }
 

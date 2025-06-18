@@ -61,6 +61,7 @@
       <ProjectReference Include="..\TradingPlatform.Core\TradingPlatform.Core.csproj" />
       <ProjectReference Include="..\TradingPlatform.Logging\TradingPlatform.Logging.csproj" />
       <ProjectReference Include="..\TradingPlatform.MarketData\TradingPlatform.MarketData.csproj" />
+      <ProjectReference Include="..\TradingPlatform.DisplayManagement\TradingPlatform.DisplayManagement.csproj" />
     </ItemGroup>
 
     <!-- 
