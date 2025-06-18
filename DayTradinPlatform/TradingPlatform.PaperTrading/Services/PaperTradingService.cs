@@ -166,18 +166,18 @@ public class PaperTradingService : IPaperTradingService
         }
     }
 
-    public async Task<OrderResult> ModifyOrderAsync(string orderId, OrderRequest modifiedOrder)
+    public Task<OrderResult> ModifyOrderAsync(string orderId, OrderRequest modifiedOrder)
     {
         try
         {
             if (!_orders.TryGetValue(orderId, out var existingOrder))
             {
-                return new OrderResult(false, orderId, "Order not found", OrderStatus.Rejected, DateTime.UtcNow);
+                return Task.FromResult(new OrderResult(false, orderId, "Order not found", OrderStatus.Rejected, DateTime.UtcNow));
             }
 
             if (existingOrder.Status != OrderStatus.New && existingOrder.Status != OrderStatus.PartiallyFilled)
             {
-                return new OrderResult(false, orderId, "Cannot modify order in current status", existingOrder.Status, DateTime.UtcNow);
+                return Task.FromResult(new OrderResult(false, orderId, "Cannot modify order in current status", existingOrder.Status, DateTime.UtcNow));
             }
 
             // Create modified order
@@ -195,12 +195,12 @@ public class PaperTradingService : IPaperTradingService
 
             _logger.LogInformation("Order {OrderId} modified for {Symbol}", orderId, existingOrder.Symbol);
 
-            return new OrderResult(true, orderId, "Order modified successfully", updatedOrder.Status, DateTime.UtcNow);
+            return Task.FromResult(new OrderResult(true, orderId, "Order modified successfully", updatedOrder.Status, DateTime.UtcNow));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error modifying order {OrderId}", orderId);
-            return new OrderResult(false, orderId, $"Error modifying order: {ex.Message}", OrderStatus.Rejected, DateTime.UtcNow);
+            return Task.FromResult(new OrderResult(false, orderId, $"Error modifying order: {ex.Message}", OrderStatus.Rejected, DateTime.UtcNow));
         }
     }
 

@@ -105,7 +105,7 @@ public class PortfolioManager : IPortfolioManager
         }
     }
 
-    public async Task UpdatePositionAsync(string symbol, Execution execution)
+    public Task UpdatePositionAsync(string symbol, Execution execution)
     {
         try
         {
@@ -208,6 +208,8 @@ public class PortfolioManager : IPortfolioManager
                 _logger.LogInformation("Updated position for {Symbol}: {OldQty} -> {NewQty}@{Price}", 
                     symbol, existingPosition.Quantity, newTotalQuantity, newAveragePrice);
             }
+            
+            return Task.CompletedTask;
         }
         catch (Exception ex)
         {

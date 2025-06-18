@@ -6,8 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TradingPlatform.TradingApp.Models;
-using TradingPlatform.TradingApp.Services;
+using TradingPlatform.DisplayManagement.Models;
+using TradingPlatform.DisplayManagement.Services;
 
 namespace TradingPlatform.TradingApp.Views.Settings;
 
@@ -243,14 +243,64 @@ public sealed partial class MonitorSelectionView : UserControl
         var count = (int)MonitorCountSlider.Value;
         MonitorCountText.Text = $"{count} Monitor{(count > 1 ? "s" : "")}";
         
+        var isRdpSession = IsRunningViaRdp();
+        var connectedCount = _connectedMonitors.Count;
+        
         var status = count switch
         {
-            var c when c == _connectedMonitors.Count => " (Current Setup)",
-            var c when c == _currentRecommendation.RecommendedMonitorCount => " (Recommended)",
-            var c when c > _currentRecommendation.MaximumSupportedMonitors => " (⚠️ May Exceed GPU Capacity)",
+            var c when isRdpSession && c == 1 => " (RDP - Current Available)",
+            var c when isRdpSession && c > 1 => " (RDP - Simulated for Testing)",
+            var c when c == connectedCount => " (Currently Connected)",
+            var c when c == _currentRecommendation.RecommendedMonitorCount => " (Hardware Recommended)",
+            var c when c > _currentRecommendation.MaximumSupportedMonitors => " (⚠️ Exceeds GPU Capacity)",
             _ => ""
         };
         MonitorCountStatus.Text = status;
+        
+        // Update connection status panel
+        UpdateConnectionStatusPanel();
+    }
+    
+    /// <summary>
+    /// Update the connection status panel based on current session type
+    /// </summary>
+    private void UpdateConnectionStatusPanel()
+    {
+        var isRdpSession = IsRunningViaRdp();
+        var maxSupported = _currentRecommendation.MaximumSupportedMonitors;
+        
+        if (isRdpSession)
+        {
+            ConnectionStatusTitle.Text = "🌐 RDP Session Detected";
+            ConnectionStatusDescription.Text = $"Connected via Remote Desktop. Hardware supports up to {maxSupported} monitors, but only 1 display is available in this RDP session. Use the slider to preview different monitor configurations for when you connect directly to the DRAGON system.";
+            ConnectionStatusPanel.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 45, 55, 72)); // Blue tint
+            ConnectionStatusPanel.BorderBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 74, 85, 104));
+        }
+        else
+        {
+            ConnectionStatusTitle.Text = "🖥️ Direct Hardware Connection";
+            ConnectionStatusDescription.Text = $"Connected directly to DRAGON system. {_connectedMonitors.Count} monitor(s) currently connected. Hardware supports up to {maxSupported} monitors total.";
+            ConnectionStatusPanel.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 26, 75, 58)); // Green tint
+            ConnectionStatusPanel.BorderBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 0, 212, 170));
+        }
+    }
+    
+    /// <summary>
+    /// Detect if running via RDP session
+    /// </summary>
+    private bool IsRunningViaRdp()
+    {
+        try
+        {
+            var sessionName = Environment.GetEnvironmentVariable("SESSIONNAME");
+            return !string.IsNullOrEmpty(sessionName) && 
+                   (sessionName.StartsWith("RDP-", StringComparison.OrdinalIgnoreCase) ||
+                    !sessionName.Equals("Console", StringComparison.OrdinalIgnoreCase));
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     /// <summary>
@@ -261,14 +311,24 @@ public sealed partial class MonitorSelectionView : UserControl
         var selectedCount = (int)MonitorCountSlider.Value;
         var recommended = _currentRecommendation.RecommendedMonitorCount;
         var maximum = _currentRecommendation.MaximumSupportedMonitors;
+        var isRdpSession = IsRunningViaRdp();
 
         string title, description;
         Microsoft.UI.Colors backgroundColor, borderColor;
 
-        if (selectedCount <= recommended)
+        if (isRdpSession && selectedCount > 1)
+        {
+            title = "🧪 Testing Mode - RDP Session";
+            description = $"Simulating {selectedCount} monitor configuration for testing. When connected directly to DRAGON hardware, this setup would provide {GetPerformanceDescription(selectedCount, recommended, maximum)}";
+            backgroundColor = Microsoft.UI.Colors.DarkBlue;
+            borderColor = Microsoft.UI.Colors.CornflowerBlue;
+        }
+        else if (selectedCount <= recommended)
         {
             title = "✅ Optimal Performance Expected";
-            description = "This configuration provides excellent trading performance with your current GPU setup.";
+            description = isRdpSession ? 
+                "Current RDP session using 1 monitor. This configuration would provide excellent trading performance on direct hardware connection." :
+                "This configuration provides excellent trading performance with your current GPU setup.";
             backgroundColor = Microsoft.UI.Colors.DarkGreen;
             borderColor = Microsoft.UI.Colors.Green;
         }
@@ -291,6 +351,19 @@ public sealed partial class MonitorSelectionView : UserControl
         PerformanceDescription.Text = description;
         PerformanceIndicator.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(backgroundColor) { Opacity = 0.3 };
         PerformanceIndicator.BorderBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(borderColor);
+    }
+    
+    /// <summary>
+    /// Get performance description for a given monitor count
+    /// </summary>
+    private string GetPerformanceDescription(int count, int recommended, int maximum)
+    {
+        return count switch
+        {
+            var c when c <= recommended => "excellent performance",
+            var c when c <= maximum => "moderate performance with some impact during high activity",
+            _ => "significant performance issues"
+        };
     }
 
     /// <summary>

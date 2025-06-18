@@ -98,7 +98,7 @@ public class OrderExecutionEngine : IOrderExecutionEngine
         try
         {
             var orderValue = order.Quantity * (order.LimitPrice ?? GetMidPrice(orderBook));
-            var marketCap = 1000000000m; // Simplified - would get from market data
+            // var marketCap = 1000000000m; // Simplified - would get from market data (unused for now)
             var adv = 5000000m; // Average daily volume - would get from market data
             
             // Market impact model based on order size relative to market

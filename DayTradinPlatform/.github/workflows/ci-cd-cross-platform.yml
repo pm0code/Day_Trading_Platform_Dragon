@@ -1,0 +1,240 @@
+name: Day Trading Platform - Cross-Platform CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  SOLUTION_FILE: 'DayTradinPlatform/DayTradinPlatform.sln'
+
+jobs:
+  # Linux Development Environment Build
+  linux-build:
+    name: Linux Development Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore dependencies
+      run: |
+        cd DayTradinPlatform
+        dotnet restore
+        
+    - name: Build solution (Debug)
+      run: |
+        cd DayTradinPlatform
+        dotnet build --configuration Debug --no-restore
+        
+    - name: Run tests
+      run: |
+        cd DayTradinPlatform
+        dotnet test --configuration Debug --no-build --verbosity normal
+        
+    - name: Generate build artifacts
+      run: |
+        cd DayTradinPlatform
+        dotnet publish --configuration Debug --no-build --output ./artifacts/linux-debug
+        
+    - name: Upload Linux artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-debug-build
+        path: DayTradinPlatform/artifacts/linux-debug/
+
+  # Windows DRAGON Environment Build  
+  windows-dragon-build:
+    name: Windows DRAGON Production Build
+    runs-on: self-hosted
+    if: runner.os == 'Windows'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET on Windows
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore dependencies (Windows)
+      run: |
+        cd DayTradinPlatform
+        dotnet restore --runtime win-x64
+        
+    - name: Build solution (Release x64)
+      run: |
+        cd DayTradinPlatform
+        dotnet build --configuration Release --runtime win-x64 --no-restore
+        
+    - name: Run Windows-specific tests
+      run: |
+        cd DayTradinPlatform
+        dotnet test --configuration Release --runtime win-x64 --no-build
+        
+    - name: Publish Windows x64 Release
+      run: |
+        cd DayTradinPlatform
+        dotnet publish --configuration Release --runtime win-x64 --self-contained --output ./artifacts/windows-x64-release
+        
+    - name: Upload Windows artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-x64-release-build
+        path: DayTradinPlatform/artifacts/windows-x64-release/
+
+  # Code Quality and Security Checks
+  code-quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+    needs: linux-build
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore dependencies
+      run: |
+        cd DayTradinPlatform
+        dotnet restore
+        
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v3
+      with:
+        languages: csharp
+        
+    - name: Build for CodeQL
+      run: |
+        cd DayTradinPlatform
+        dotnet build --configuration Release
+        
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      
+    - name: Check logging consistency (Custom ILogger)
+      run: |
+        echo "Checking for Microsoft logging violations..."
+        if grep -r "Microsoft.Extensions.Logging" DayTradinPlatform --include="*.cs" --exclude-dir=obj --exclude-dir=bin; then
+          echo "❌ VIOLATION: Microsoft logging found - must use TradingPlatform.Core.Interfaces.ILogger"
+          exit 1
+        else
+          echo "✅ SUCCESS: All files use canonical custom ILogger"
+        fi
+
+  # Integration Testing
+  integration-tests:
+    name: Integration Testing
+    runs-on: ubuntu-latest
+    needs: [linux-build, code-quality]
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: tradingplatform_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore dependencies
+      run: |
+        cd DayTradinPlatform
+        dotnet restore
+        
+    - name: Run integration tests
+      run: |
+        cd DayTradinPlatform
+        dotnet test --configuration Release --filter "Category=Integration" --verbosity normal
+      env:
+        REDIS_CONNECTION: localhost:6379
+        POSTGRES_CONNECTION: "Host=localhost;Port=5432;Database=tradingplatform_test;Username=postgres;Password=testpassword"
+
+  # Performance Testing
+  performance-tests:
+    name: Ultra-Low Latency Performance Tests
+    runs-on: self-hosted
+    if: runner.os == 'Windows'
+    needs: windows-dragon-build
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Run performance benchmarks
+      run: |
+        cd DayTradinPlatform
+        dotnet run --project TradingPlatform.Testing --configuration Release -- --benchmark
+        
+    - name: Verify <100μs latency targets
+      run: |
+        echo "Verifying ultra-low latency performance targets..."
+        # Add performance validation logic here
+        
+    - name: Upload performance results
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-test-results
+        path: DayTradinPlatform/performance-results/
+
+  # Deployment Pipeline
+  deploy:
+    name: Deploy to Environments
+    runs-on: ubuntu-latest
+    needs: [windows-dragon-build, integration-tests, performance-tests]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Download Windows artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: windows-x64-release-build
+        path: ./deployment/windows/
+        
+    - name: Download Linux artifacts  
+      uses: actions/download-artifact@v4
+      with:
+        name: linux-debug-build
+        path: ./deployment/linux/
+        
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Add deployment logic here
+        
+    - name: Deploy to production (manual approval)
+      if: github.event_name == 'push'
+      run: |
+        echo "Production deployment ready - requires manual approval"
+        # Add production deployment logic here

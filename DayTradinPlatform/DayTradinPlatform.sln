@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Common", "T
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Testing", "TradingPlatform.Testing\TradingPlatform.Testing.csproj", "{A1B2C3D4-5E6F-7890-1234-56789ABCDEF1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.DisplayManagement", "TradingPlatform.DisplayManagement\TradingPlatform.DisplayManagement.csproj", "{B16CC41B-1EFE-4A48-B635-A7FB1333FB2D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -111,6 +113,10 @@ Global
 		{A1B2C3D4-5E6F-7890-1234-56789ABCDEF1}.Debug|x64.Build.0 = Debug|x64
 		{A1B2C3D4-5E6F-7890-1234-56789ABCDEF1}.Release|x64.ActiveCfg = Release|x64
 		{A1B2C3D4-5E6F-7890-1234-56789ABCDEF1}.Release|x64.Build.0 = Release|x64
+		{B16CC41B-1EFE-4A48-B635-A7FB1333FB2D}.Debug|x64.ActiveCfg = Debug|x64
+		{B16CC41B-1EFE-4A48-B635-A7FB1333FB2D}.Debug|x64.Build.0 = Debug|x64
+		{B16CC41B-1EFE-4A48-B635-A7FB1333FB2D}.Release|x64.ActiveCfg = Release|x64
+		{B16CC41B-1EFE-4A48-B635-A7FB1333FB2D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

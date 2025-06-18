@@ -6,6 +6,7 @@ using TradingPlatform.Logging.Interfaces;
 using TradingPlatform.Logging.Services;
 using TradingPlatform.TradingApp.Services;
 using TradingPlatform.TradingApp.Views;
+using TradingPlatform.DisplayManagement.Extensions;
 
 namespace TradingPlatform.TradingApp
 {
@@ -16,6 +17,16 @@ namespace TradingPlatform.TradingApp
     {
         private Window? _window;
         private IHost? _host;
+
+        /// <summary>
+        /// Current application instance
+        /// </summary>
+        public static new App Current => (App)Application.Current;
+
+        /// <summary>
+        /// Application services
+        /// </summary>
+        public IServiceProvider Services => _host?.Services ?? throw new InvalidOperationException("Services not initialized");
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -50,6 +61,9 @@ namespace TradingPlatform.TradingApp
             
             // Configure logging
             LoggingConfiguration.ConfigureLogging(builder.Services, "TradingPlatform.TradingApp");
+            
+            // Register centralized display management services
+            builder.Services.AddDisplayManagement(builder.Configuration);
             
             // Register trading platform services
             builder.Services.AddSingleton<ITradingLogger, TradingLogger>();

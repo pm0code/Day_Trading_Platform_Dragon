@@ -67,7 +67,7 @@ public class ExecutionAnalytics : IExecutionAnalytics
         }
     }
 
-    public async Task<ExecutionAnalytics> GetExecutionAnalyticsAsync()
+    public async Task<Models.ExecutionAnalytics> GetExecutionAnalyticsAsync()
     {
         try
         {
@@ -88,15 +88,15 @@ public class ExecutionAnalytics : IExecutionAnalytics
             var periodStart = executions.Min(e => e.ExecutionTime);
             var periodEnd = executions.Max(e => e.ExecutionTime);
 
-            return await Task.FromResult(new ExecutionAnalytics(
-                AverageSlippage: averageSlippage,
-                TotalCommissions: totalCommissions,
-                AverageExecutionTime: averageExecutionTime,
-                FillRate: fillRate,
-                SlippageBySymbol: slippageBySymbol,
-                VenueMetrics: venueMetrics,
-                AnalysisPeriodStart: periodStart,
-                AnalysisPeriodEnd: periodEnd
+            return await Task.FromResult(new Models.ExecutionAnalytics(
+                averageSlippage,
+                totalCommissions,
+                averageExecutionTime,
+                fillRate,
+                slippageBySymbol,
+                venueMetrics,
+                periodStart,
+                periodEnd
             ));
         }
         catch (Exception ex)
@@ -327,9 +327,9 @@ public class ExecutionAnalytics : IExecutionAnalytics
         return new PerformanceMetrics(0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0, 0, 0, DateTime.UtcNow, DateTime.UtcNow);
     }
 
-    private ExecutionAnalytics CreateEmptyExecutionAnalytics()
+    private Models.ExecutionAnalytics CreateEmptyExecutionAnalytics()
     {
-        return new ExecutionAnalytics(0m, 0m, TimeSpan.Zero, 0m, 
+        return new Models.ExecutionAnalytics(0m, 0m, TimeSpan.Zero, 0m, 
             Array.Empty<SlippageMetric>(), Array.Empty<VenueMetric>(), DateTime.UtcNow, DateTime.UtcNow);
     }
 }

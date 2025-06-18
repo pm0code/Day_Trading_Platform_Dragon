@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace TradingPlatform.TradingApp.Models;
+namespace TradingPlatform.DisplayManagement.Models;
 
 /// <summary>
 /// Configuration for individual monitor/screen setup
@@ -185,3 +185,4 @@ public enum WindowState
     Minimized = 1,
     Maximized = 2
 }
+

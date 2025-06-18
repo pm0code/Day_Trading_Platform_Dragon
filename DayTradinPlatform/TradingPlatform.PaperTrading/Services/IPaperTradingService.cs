@@ -40,7 +40,7 @@ public interface IOrderBookSimulator
 public interface IExecutionAnalytics
 {
     Task<PerformanceMetrics> GetPerformanceMetricsAsync();
-    Task<ExecutionAnalytics> GetExecutionAnalyticsAsync();
+    Task<Models.ExecutionAnalytics> GetExecutionAnalyticsAsync();
     Task<IEnumerable<Execution>> GetExecutionHistoryAsync();
     Task<IEnumerable<Execution>> GetExecutionsBySymbolAsync(string symbol);
     Task RecordExecutionAsync(Execution execution);

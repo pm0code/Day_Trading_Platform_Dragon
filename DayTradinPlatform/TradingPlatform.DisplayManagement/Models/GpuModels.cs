@@ -1,4 +1,4 @@
-namespace TradingPlatform.TradingApp.Models;
+namespace TradingPlatform.DisplayManagement.Models;
 
 /// <summary>
 /// Detailed information about a system GPU for DRAGON trading platform monitor configuration
@@ -115,7 +115,7 @@ public record MonitorConfigurationValidation
     /// <summary>
     /// Whether the configuration is fully supported by current hardware
     /// </summary>
-    public bool IsSupported { get; init; } = true;
+    public bool IsSupported { get; set; } = true;
 
     /// <summary>
     /// Number of monitors in the proposed configuration
@@ -303,32 +303,6 @@ public record MonitorSelectionRecommendation
 }
 
 /// <summary>
-/// Monitor resolution specification
-/// </summary>
-public record Resolution(int Width, int Height)
-{
-    /// <summary>
-    /// Common resolution display name
-    /// </summary>
-    public string DisplayName => $"{Width}x{Height}";
-
-    /// <summary>
-    /// Total pixel count
-    /// </summary>
-    public long TotalPixels => (long)Width * Height;
-
-    /// <summary>
-    /// Common resolution names
-    /// </summary>
-    public static readonly Resolution HD = new(1280, 720);
-    public static readonly Resolution FullHD = new(1920, 1080);
-    public static readonly Resolution QHD = new(2560, 1440);
-    public static readonly Resolution UHD4K = new(3840, 2160);
-    public static readonly Resolution UHD5K = new(5120, 2880);
-    public static readonly Resolution UHD8K = new(7680, 4320);
-}
-
-/// <summary>
 /// Trading screen layout configuration
 /// </summary>
 public record TradingScreenLayout
@@ -362,4 +336,40 @@ public record TradingScreenLayout
     /// Minimum resolution recommended for this screen type
     /// </summary>
     public Resolution MinimumResolution { get; init; } = Resolution.FullHD;
+}
+
+/// <summary>
+/// Resolution specification
+/// </summary>
+public record Resolution(int Width, int Height)
+{
+    /// <summary>
+    /// Common resolution display name
+    /// </summary>
+    public string DisplayName => $"{Width}x{Height}";
+
+    /// <summary>
+    /// Total pixel count
+    /// </summary>
+    public long TotalPixels => (long)Width * Height;
+
+    /// <summary>
+    /// Aspect ratio
+    /// </summary>
+    public double AspectRatio => Width / (double)Height;
+
+    /// <summary>
+    /// Whether this is a high-resolution display
+    /// </summary>
+    public bool IsHighResolution => TotalPixels >= 2073600; // 1440p+
+
+    /// <summary>
+    /// Common resolution names
+    /// </summary>
+    public static readonly Resolution HD = new(1280, 720);
+    public static readonly Resolution FullHD = new(1920, 1080);
+    public static readonly Resolution QHD = new(2560, 1440);
+    public static readonly Resolution UHD4K = new(3840, 2160);
+    public static readonly Resolution UHD5K = new(5120, 2880);
+    public static readonly Resolution UHD8K = new(7680, 4320);
 }
