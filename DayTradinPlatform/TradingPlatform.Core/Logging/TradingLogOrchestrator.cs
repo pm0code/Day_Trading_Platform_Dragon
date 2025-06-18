@@ -1,5 +1,6 @@
-// TradingPlatform.Core.Logging.TradingLogOrchestrator - CANONICAL LOGGING SOLUTION
-// ZERO Microsoft.Extensions.Logging dependencies - Complete custom implementation
+// TradingPlatform.Core.Logging.TradingLogOrchestrator - ENHANCED CANONICAL LOGGING SOLUTION
+// COMPREHENSIVE CONFIGURABLE LOGGING: Critical/Project-specific/All methods
+// STRUCTURED JSON with nanosecond timestamps, tiered storage, AI/ML integration
 // NON-BLOCKING, MULTI-THREADED, HIGH-PERFORMANCE orchestration for ultra-low latency trading
 // ALL LOGGING MUST GO THROUGH THIS ORCHESTRATOR - NO EXCEPTIONS
 
@@ -8,6 +9,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Channels;
+using System.IO.Compression;
 using TradingPlatform.Core.Interfaces;
 
 namespace TradingPlatform.Core.Logging;
