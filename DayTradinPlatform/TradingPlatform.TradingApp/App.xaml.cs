@@ -69,6 +69,7 @@ namespace TradingPlatform.TradingApp
             builder.Services.AddSingleton<ITradingLogger, TradingLogger>();
             builder.Services.AddSingleton<IMonitorService, MonitorService>();
             builder.Services.AddSingleton<ITradingWindowManager, TradingWindowManager>();
+            builder.Services.AddSingleton<ILogAnalyticsService, LogAnalyticsService>();
             
             _host = builder.Build();
         }

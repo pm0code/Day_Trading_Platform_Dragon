@@ -1,0 +1,531 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window x:Class="TradingPlatform.TradingApp.Views.TradingScreens.LogAnalyzerScreen"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="AI Log Analyzer - Trading Platform"
+        Width="1920"
+        Height="1080">
+    
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header Bar with Controls -->
+        <Border Grid.Row="0" Background="{ThemeResource SystemControlAcrylicWindowBrush}" 
+                Padding="16,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE9F5;" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                    <TextBlock Text="AI Log Analyzer &amp; Performance Monitor" 
+                               Style="{StaticResource SubtitleTextBlockStyle}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" 
+                           HorizontalAlignment="Center" Spacing="12">
+                    <ComboBox x:Name="LogScopeSelector" 
+                              PlaceholderText="Logging Scope"
+                              MinWidth="150"
+                              SelectionChanged="LogScopeSelector_SelectionChanged">
+                        <ComboBoxItem Content="Critical Only" IsSelected="True"/>
+                        <ComboBoxItem Content="Project Specific"/>
+                        <ComboBoxItem Content="All Logs"/>
+                    </ComboBox>
+                    <ComboBox x:Name="LogLevelFilter" 
+                              PlaceholderText="Log Level"
+                              MinWidth="120">
+                        <ComboBoxItem Content="All Levels" IsSelected="True"/>
+                        <ComboBoxItem Content="Critical"/>
+                        <ComboBoxItem Content="Error"/>
+                        <ComboBoxItem Content="Warning"/>
+                        <ComboBoxItem Content="Info"/>
+                        <ComboBoxItem Content="Debug"/>
+                    </ComboBox>
+                    <TextBox x:Name="SearchBox" 
+                             PlaceholderText="Search logs..."
+                             Width="200"
+                             TextChanged="SearchBox_TextChanged"/>
+                    <Button x:Name="ClearLogsButton" 
+                            Content="🗑️ Clear"
+                            Click="ClearLogsButton_Click"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                    <ToggleButton x:Name="RealTimeToggle" 
+                                  Content="📡 Live"
+                                  IsChecked="True"
+                                  Checked="RealTimeToggle_Checked"
+                                  Unchecked="RealTimeToggle_Unchecked"/>
+                    <ToggleButton x:Name="AiAnalysisToggle" 
+                                  Content="🤖 AI Analysis"
+                                  IsChecked="True"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Margin="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="400"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Left Panel: Performance Dashboard and Log Stream -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="200"/>
+                    <RowDefinition Height="8"/>
+                    <RowDefinition Height="150"/>
+                    <RowDefinition Height="8"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Real-time Performance Metrics -->
+                <Border Grid.Row="0" 
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" 
+                        Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Text="Real-time Performance Metrics" 
+                                   Style="{StaticResource SubtitleTextBlockStyle}" 
+                                   Margin="0,0,0,8"/>
+                        
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Trading Latency -->
+                            <Border Grid.Column="0" 
+                                    Background="Green" Opacity="0.1" 
+                                    CornerRadius="8" Margin="4" Padding="12">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <TextBlock Text="Trading Latency" 
+                                               FontSize="12" 
+                                               HorizontalAlignment="Center" 
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <TextBlock x:Name="TradingLatencyText" 
+                                               Text="85μs" 
+                                               FontSize="24" 
+                                               FontWeight="Bold" 
+                                               HorizontalAlignment="Center"
+                                               Foreground="Green"/>
+                                    <TextBlock Text="Target: <100μs" 
+                                               FontSize="10" 
+                                               HorizontalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- Order Execution -->
+                            <Border Grid.Column="1" 
+                                    Background="Orange" Opacity="0.1" 
+                                    CornerRadius="8" Margin="4" Padding="12">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <TextBlock Text="Order Execution" 
+                                               FontSize="12" 
+                                               HorizontalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <TextBlock x:Name="OrderExecutionText" 
+                                               Text="92μs" 
+                                               FontSize="24" 
+                                               FontWeight="Bold" 
+                                               HorizontalAlignment="Center"
+                                               Foreground="Orange"/>
+                                    <TextBlock Text="Target: <75μs" 
+                                               FontSize="10" 
+                                               HorizontalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- System Health -->
+                            <Border Grid.Column="2" 
+                                    Background="Blue" Opacity="0.1" 
+                                    CornerRadius="8" Margin="4" Padding="12">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <TextBlock Text="System Health" 
+                                               FontSize="12" 
+                                               HorizontalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <TextBlock x:Name="SystemHealthText" 
+                                               Text="98%" 
+                                               FontSize="24" 
+                                               FontWeight="Bold" 
+                                               HorizontalAlignment="Center"
+                                               Foreground="Blue"/>
+                                    <TextBlock Text="CPU: 45% | RAM: 62%" 
+                                               FontSize="10" 
+                                               HorizontalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- AI Anomaly Score -->
+                            <Border Grid.Column="3" 
+                                    Background="Purple" Opacity="0.1" 
+                                    CornerRadius="8" Margin="4" Padding="12">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <TextBlock Text="AI Anomaly Score" 
+                                               FontSize="12" 
+                                               HorizontalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <TextBlock x:Name="AnomalyScoreText" 
+                                               Text="0.12" 
+                                               FontSize="24" 
+                                               FontWeight="Bold" 
+                                               HorizontalAlignment="Center"
+                                               Foreground="Purple"/>
+                                    <TextBlock Text="Normal: <0.3" 
+                                               FontSize="10" 
+                                               HorizontalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+                
+                <!-- Performance Chart -->
+                <Border Grid.Row="2" 
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" 
+                        Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Text="Performance Trend (Last 60 Minutes)" 
+                                   Style="{StaticResource SubtitleTextBlockStyle}" 
+                                   Margin="0,0,0,8"/>
+                        
+                        <!-- Placeholder for performance chart -->
+                        <Canvas Grid.Row="1" x:Name="PerformanceChart" Background="Black" Opacity="0.1">
+                            <TextBlock Text="📈 Real-time Performance Chart" 
+                                       Canvas.Left="50" 
+                                       Canvas.Top="50"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </Canvas>
+                    </Grid>
+                </Border>
+                
+                <!-- Live Log Stream -->
+                <Border Grid.Row="4" 
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" 
+                        Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Column="0" Text="Live Log Stream" 
+                                       Style="{StaticResource SubtitleTextBlockStyle}" 
+                                       Margin="0,0,0,8"/>
+                            
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                <TextBlock x:Name="LogCountText" 
+                                           Text="Logs: 0" 
+                                           VerticalAlignment="Center"
+                                           FontSize="12"/>
+                                <Button x:Name="ExportLogsButton" 
+                                        Content="💾" 
+                                        FontSize="14"
+                                        Padding="8,4"
+                                        Click="ExportLogsButton_Click"
+                                        ToolTipService.ToolTip="Export Logs"/>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <ListView Grid.Row="1" x:Name="LogStreamList" 
+                                  SelectionMode="Single"
+                                  SelectionChanged="LogStreamList_SelectionChanged">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="8,4" Margin="0,1">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="120"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="80"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <TextBlock Grid.Column="0" 
+                                                   Text="{Binding Timestamp}" 
+                                                   FontFamily="Consolas"
+                                                   FontSize="11"/>
+                                        <Border Grid.Column="1" 
+                                                Background="{Binding LevelColor}" 
+                                                CornerRadius="4" 
+                                                Padding="4,2"
+                                                Margin="2,0">
+                                            <TextBlock Text="{Binding Level}" 
+                                                       Foreground="White" 
+                                                       FontSize="10" 
+                                                       FontWeight="Bold"
+                                                       HorizontalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="2" 
+                                                   Text="{Binding Source}" 
+                                                   FontSize="11"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <TextBlock Grid.Column="3" 
+                                                   Text="{Binding Message}" 
+                                                   FontSize="11"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Grid.Column="4" 
+                                                   Text="{Binding AnomalyScore}" 
+                                                   FontSize="11"
+                                                   Foreground="{Binding AnomalyColor}"
+                                                   HorizontalAlignment="Center"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+                </Border>
+            </Grid>
+            
+            <!-- Splitter -->
+            <Border Grid.Column="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+            
+            <!-- Right Panel: Alerts and Analysis -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="8"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="8"/>
+                    <RowDefinition Height="200"/>
+                </Grid.RowDefinitions>
+                
+                <!-- AI-Powered Alerts -->
+                <Border Grid.Row="0" 
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" 
+                        Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+                            <FontIcon Glyph="&#xE7BA;" Foreground="Orange"/>
+                            <TextBlock Text="AI-Powered Alerts" 
+                                       Style="{StaticResource SubtitleTextBlockStyle}"/>
+                            <Border Background="Red" CornerRadius="10" Padding="6,2">
+                                <TextBlock x:Name="AlertBadge" 
+                                           Text="3" 
+                                           Foreground="White" 
+                                           FontSize="12" 
+                                           FontWeight="Bold"/>
+                            </Border>
+                        </StackPanel>
+                        
+                        <ListView Grid.Row="1" x:Name="AlertsList">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{Binding SeverityColor}" 
+                                            Opacity="0.1" 
+                                            CornerRadius="8" 
+                                            Padding="12,8" 
+                                            Margin="0,2">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            
+                                            <Grid Grid.Row="0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                
+                                                <TextBlock Grid.Column="0" 
+                                                           Text="{Binding Title}" 
+                                                           FontWeight="Bold" 
+                                                           FontSize="12"/>
+                                                <Border Grid.Column="1" 
+                                                        Background="{Binding SeverityColor}" 
+                                                        CornerRadius="4" 
+                                                        Padding="4,2">
+                                                    <TextBlock Text="{Binding Severity}" 
+                                                               Foreground="White" 
+                                                               FontSize="10"/>
+                                                </Border>
+                                            </Grid>
+                                            
+                                            <TextBlock Grid.Row="1" 
+                                                       Text="{Binding Description}" 
+                                                       FontSize="11" 
+                                                       Margin="0,4,0,0"
+                                                       TextWrapping="Wrap"/>
+                                            
+                                            <TextBlock Grid.Row="2" 
+                                                       Text="{Binding Timestamp}" 
+                                                       FontSize="10" 
+                                                       Margin="0,4,0,0"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+                </Border>
+                
+                <!-- Pattern Analysis -->
+                <Border Grid.Row="2" 
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" 
+                        Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+                            <FontIcon Glyph="&#xE950;" Foreground="Purple"/>
+                            <TextBlock Text="Pattern Analysis" 
+                                       Style="{StaticResource SubtitleTextBlockStyle}"/>
+                        </StackPanel>
+                        
+                        <ScrollViewer Grid.Row="1">
+                            <StackPanel x:Name="PatternAnalysisPanel" Spacing="8">
+                                <!-- Pattern analysis items will be populated here -->
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+                
+                <!-- Configuration Panel -->
+                <Border Grid.Row="4" 
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" 
+                        Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+                            <FontIcon Glyph="&#xE713;" Foreground="Blue"/>
+                            <TextBlock Text="Configuration" 
+                                       Style="{StaticResource SubtitleTextBlockStyle}"/>
+                        </StackPanel>
+                        
+                        <ScrollViewer Grid.Row="1">
+                            <StackPanel Spacing="8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="60"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Trading Threshold (μs)" FontSize="12"/>
+                                    <NumberBox Grid.Column="1" x:Name="TradingThresholdBox" 
+                                               Value="100" Minimum="50" Maximum="500"
+                                               FontSize="11" Padding="4"/>
+                                </Grid>
+                                
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="60"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="AI Sensitivity" FontSize="12"/>
+                                    <NumberBox Grid.Column="1" x:Name="AiSensitivityBox" 
+                                               Value="0.8" Minimum="0.1" Maximum="1.0"
+                                               FontSize="11" Padding="4"/>
+                                </Grid>
+                                
+                                <CheckBox x:Name="EnableMethodLoggingBox" 
+                                          Content="Method Lifecycle Logging" 
+                                          FontSize="12" 
+                                          IsChecked="False"/>
+                                
+                                <CheckBox x:Name="EnableParameterLoggingBox" 
+                                          Content="Parameter Logging" 
+                                          FontSize="12" 
+                                          IsChecked="False"/>
+                                
+                                <Button x:Name="ApplyConfigButton" 
+                                        Content="Apply Configuration" 
+                                        Width="150" 
+                                        HorizontalAlignment="Center"
+                                        Click="ApplyConfigButton_Click"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+        
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="{ThemeResource SystemControlAcrylicWindowBrush}" 
+                Padding="16,4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16">
+                    <TextBlock x:Name="ConnectionStatusText" 
+                               Text="🟢 Connected to Log Stream"
+                               VerticalAlignment="Center"
+                               FontSize="12"/>
+                    <TextBlock x:Name="ProcessingRateText" 
+                               Text="Processing: 1,250 logs/sec"
+                               VerticalAlignment="Center"
+                               FontSize="12"/>
+                    <TextBlock x:Name="StorageInfoText" 
+                               Text="Storage: Hot (24h) | Warm (30d) | Cold (7y)"
+                               VerticalAlignment="Center"
+                               FontSize="12"/>
+                    <TextBlock x:Name="AiStatusText" 
+                               Text="🤖 AI Analysis: Active"
+                               VerticalAlignment="Center"
+                               FontSize="12"/>
+                </StackPanel>
+                
+                <TextBlock Grid.Column="1" 
+                           Text="Log Analyzer - Multi-Monitor Ready"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
