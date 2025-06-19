@@ -7,6 +7,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
 using System.IO.Compression;
@@ -928,54 +929,6 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
 
 #region Supporting Infrastructure
 
-/// <summary>
-/// Optimized log levels for trading platform
-/// </summary>
-internal enum LogLevel
-{
-    Debug = 0,
-    Info = 1,
-    Warning = 2,
-    Error = 3,
-    Critical = 4,
-    Trade = 10,      // Regulatory compliance level
-    Position = 11,   // Position tracking level
-    Performance = 12, // Performance monitoring level
-    Health = 13,     // System health level
-    Risk = 14,       // Risk management level
-    MarketData = 15, // Market data level
-    DataPipeline = 16 // Data pipeline level
-}
-
-/// <summary>
-/// High-performance log entry structure
-/// </summary>
-internal class LogEntry
-{
-    public DateTime Timestamp { get; set; }
-    public LogLevel Level { get; set; }
-    public string Message { get; set; } = string.Empty;
-    public Exception? Exception { get; set; }
-    public string MemberName { get; set; } = string.Empty;
-    public string SourceFile { get; set; } = string.Empty;
-    public int LineNumber { get; set; }
-    public string CorrelationId { get; set; } = string.Empty;
-    public string ServiceName { get; set; } = string.Empty;
-    public int ThreadId { get; set; }
-    public object? Data { get; set; }
-}
-
-/// <summary>
-/// Thread-safe performance statistics
-/// </summary>
-internal class PerformanceStats
-{
-    public long Count;
-    public double TotalValue;
-    public double MinValue;
-    public double MaxValue;
-    public double AverageValue => Count > 0 ? TotalValue / Count : 0;
-}
 
 /// <summary>
 /// High-performance object pool for memory efficiency
