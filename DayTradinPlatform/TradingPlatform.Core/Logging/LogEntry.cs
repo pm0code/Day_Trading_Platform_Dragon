@@ -322,10 +322,10 @@ public sealed class TradingContext
 public sealed class SystemContext
 {
     [JsonPropertyName("machine_name")]
-    public string MachineName { get; init; } = Environment.MachineName;
+    public string MachineName { get; init; } = System.Environment.MachineName;
     
     [JsonPropertyName("process_id")]
-    public int ProcessId { get; init; } = Environment.ProcessId;
+    public int ProcessId { get; init; } = System.Environment.ProcessId;
     
     [JsonPropertyName("environment")]
     public string? Environment { get; init; } = System.Environment.GetEnvironmentVariable("ENVIRONMENT");

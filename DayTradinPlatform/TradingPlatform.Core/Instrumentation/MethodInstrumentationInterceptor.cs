@@ -413,7 +413,7 @@ public class MethodExecutionContext
 /// <summary>
 /// Cached method instrumentation information
 /// </summary>
-internal class MethodInstrumentationInfo
+public class MethodInstrumentationInfo
 {
     public string MethodName { get; set; } = string.Empty;
     public string SourceFilePath { get; set; } = string.Empty;

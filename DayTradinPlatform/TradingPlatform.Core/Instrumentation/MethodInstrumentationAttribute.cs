@@ -13,7 +13,7 @@ namespace TradingPlatform.Core.Instrumentation;
 /// Integrates with Enhanced TradingLogOrchestrator for complete observability
 /// </summary>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = false)]
-public sealed class MethodInstrumentationAttribute : Attribute
+public class MethodInstrumentationAttribute : Attribute
 {
     /// <summary>
     /// Instrumentation level determining what gets logged

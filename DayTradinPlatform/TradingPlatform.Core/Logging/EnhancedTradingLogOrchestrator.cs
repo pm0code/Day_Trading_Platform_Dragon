@@ -621,6 +621,52 @@ public sealed class EnhancedTradingLogOrchestrator : ILogger, IDisposable
     }
     
     #endregion
+    
+    #region Missing ILogger Interface Implementations
+    
+    public void LogPositionChange(string symbol, decimal oldPosition, decimal newPosition, string reason, decimal? pnlImpact = null, object? riskImpact = null, [CallerMemberName] string memberName = "") 
+    {
+        var logEntry = CreateLogEntry("PositionChange", $"Position change for {symbol}: {oldPosition} -> {newPosition} ({reason})", memberName);
+        logEntry.TradingContext = new { Symbol = symbol, OldPosition = oldPosition, NewPosition = newPosition, Reason = reason, PnlImpact = pnlImpact, RiskImpact = riskImpact };
+        ProcessLogEntry(logEntry);
+    }
+
+    public void LogPerformance(string operation, TimeSpan duration, bool success = true, double? throughput = null, object? resourceUsage = null, object? businessMetrics = null, TimeSpan? comparisonTarget = null, [CallerMemberName] string memberName = "") 
+    {
+        var logEntry = CreateLogEntry("Performance", $"Operation {operation} completed in {duration.TotalMilliseconds}ms (success: {success})", memberName);
+        logEntry.PerformanceContext = new { Operation = operation, Duration = duration, Success = success, Throughput = throughput, ResourceUsage = resourceUsage, BusinessMetrics = businessMetrics, ComparisonTarget = comparisonTarget };
+        ProcessLogEntry(logEntry);
+    }
+
+    public void LogHealth(string component, string status, object? metrics = null, string[]? alerts = null, string[]? recommendedActions = null, [CallerMemberName] string memberName = "") 
+    {
+        var logEntry = CreateLogEntry("Health", $"Component {component} status: {status}", memberName);
+        logEntry.SystemContext = new { Component = component, Status = status, Metrics = metrics, Alerts = alerts, RecommendedActions = recommendedActions };
+        ProcessLogEntry(logEntry);
+    }
+
+    public void LogRisk(string riskType, string severity, string description, decimal? currentExposure = null, decimal? riskLimit = null, string[]? mitigationActions = null, string? regulatoryImplications = null, [CallerMemberName] string memberName = "") 
+    {
+        var logEntry = CreateLogEntry("Risk", $"Risk event ({riskType}): {description} [Severity: {severity}]", memberName);
+        logEntry.TradingContext = new { RiskType = riskType, Severity = severity, Description = description, CurrentExposure = currentExposure, RiskLimit = riskLimit, MitigationActions = mitigationActions, RegulatoryImplications = regulatoryImplications };
+        ProcessLogEntry(logEntry);
+    }
+
+    public void LogDataPipeline(string pipeline, string stage, int recordsProcessed, object? dataQuality = null, object? latencyMetrics = null, string[]? errors = null, [CallerMemberName] string memberName = "") 
+    {
+        var logEntry = CreateLogEntry("DataPipeline", $"Pipeline {pipeline} stage {stage} processed {recordsProcessed} records", memberName);
+        logEntry.SystemContext = new { Pipeline = pipeline, Stage = stage, RecordsProcessed = recordsProcessed, DataQuality = dataQuality, LatencyMetrics = latencyMetrics, Errors = errors };
+        ProcessLogEntry(logEntry);
+    }
+
+    public void LogMarketData(string symbol, string dataType, string source, TimeSpan? latency = null, string? quality = null, object? volume = null, [CallerMemberName] string memberName = "") 
+    {
+        var logEntry = CreateLogEntry("MarketData", $"Market data for {symbol} ({dataType}) from {source}", memberName);
+        logEntry.TradingContext = new { Symbol = symbol, DataType = dataType, Source = source, Latency = latency, Quality = quality, Volume = volume };
+        ProcessLogEntry(logEntry);
+    }
+    
+    #endregion
 }
 
 /// <summary>
