@@ -604,14 +604,20 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
             Timestamp = timestamp,
             Level = level,
             Message = message,
-            Exception = exception,
-            MemberName = memberName,
-            SourceFile = Path.GetFileName(sourceFilePath),
-            LineNumber = lineNumber,
+            Exception = exception != null ? ExceptionContext.FromException(exception) : null,
+            Source = new SourceContext 
+            {
+                MethodName = memberName,
+                FilePath = Path.GetFileName(sourceFilePath),
+                LineNumber = lineNumber,
+                Service = _serviceName
+            },
+            Thread = new ThreadContext
+            {
+                ThreadId = Environment.CurrentManagedThreadId
+            },
             CorrelationId = correlationId,
-            ServiceName = _serviceName,
-            ThreadId = Environment.CurrentManagedThreadId,
-            Data = data
+            AdditionalData = data != null ? new Dictionary<string, object> { ["Data"] = data } : null
         };
 
         // NON-BLOCKING write to channel - if full, will async wait
@@ -847,15 +853,11 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
         Task.Run(() =>
         {
             _performanceStats.AddOrUpdate(metricName,
-                new PerformanceStats { Count = 1, TotalValue = value, MinValue = value, MaxValue = value },
-                (key, existing) =>
-                {
-                    Interlocked.Increment(ref existing.Count);
-                    existing.TotalValue += value;
-                    existing.MinValue = Math.Min(existing.MinValue, value);
-                    existing.MaxValue = Math.Max(existing.MaxValue, value);
-                    return existing;
-                });
+                new PerformanceStats(),
+                (key, existing) => existing);
+            
+            // Update the stats using the thread-safe method
+            _performanceStats[metricName].UpdateStats(value);
         });
     }
 
