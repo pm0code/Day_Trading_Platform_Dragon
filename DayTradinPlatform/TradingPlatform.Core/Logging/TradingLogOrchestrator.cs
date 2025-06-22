@@ -223,7 +223,7 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
                      $"Execution: {executionTime?.TotalMicroseconds}μs ({performanceStatus}) | " +
                      $"Notional: ${quantity * price:F2} | Correlation: {correlationId}";
 
-        EnqueueLogEntry(LogLevel.Trade, message, null, memberName, "", 0, tradeData);
+        EnqueueLogEntry(LogLevel.Info, message, null, memberName, "", 0, tradeData);
         
         // NON-BLOCKING performance tracking
         if (executionTime.HasValue)
@@ -262,7 +262,7 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
         var message = $"POSITION CHANGE: {symbol} {oldPosition} → {newPosition} (Δ{positionChange}) | " +
                      $"Reason: {reason} | P&L Impact: ${pnlImpact:F2} | Correlation: {correlationId}";
 
-        EnqueueLogEntry(LogLevel.Position, message, null, memberName, "", 0, positionData);
+        EnqueueLogEntry(LogLevel.Info, message, null, memberName, "", 0, positionData);
     }
 
     /// <summary>
@@ -303,7 +303,7 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
                      $"Success: {success} | Target: {percentOfTarget}" +
                      (throughput.HasValue ? $" | Throughput: {throughput}/sec" : "");
 
-        EnqueueLogEntry(LogLevel.Performance, message, null, memberName, "", 0, performanceData);
+        EnqueueLogEntry(LogLevel.Debug, message, null, memberName, "", 0, performanceData);
         
         TrackPerformanceAsync(operation, duration.TotalMicroseconds, "microseconds");
     }
@@ -340,7 +340,7 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
                      (alerts?.Any() == true ? $" | Alerts: [{string.Join(", ", alerts)}]" : "") +
                      (recommendedActions?.Any() == true ? $" | Actions: [{string.Join(", ", recommendedActions)}]" : "");
 
-        EnqueueLogEntry(LogLevel.Health, message, null, memberName, "", 0, healthData);
+        EnqueueLogEntry(LogLevel.Info, message, null, memberName, "", 0, healthData);
     }
     
     /// <summary>
@@ -385,7 +385,7 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
                      (mitigationActions?.Any() == true ? $" | Mitigations: [{string.Join(", ", mitigationActions)}]" : "") +
                      $" | Regulatory: {regulatoryImplications}";
 
-        EnqueueLogEntry(LogLevel.Risk, message, null, memberName, "", 0, riskData);
+        EnqueueLogEntry(LogLevel.Warning, message, null, memberName, "", 0, riskData);
     }
     
     /// <summary>
@@ -415,7 +415,7 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
         var message = $"DATA PIPELINE: {pipelineIcon} {pipeline} [{stage}] processed {recordsProcessed} records" +
                      (errors?.Any() == true ? $" | Errors({errors.Length}): [{string.Join(", ", errors)}]" : "");
 
-        EnqueueLogEntry(LogLevel.DataPipeline, message, null, memberName, "", 0, pipelineData);
+        EnqueueLogEntry(LogLevel.Info, message, null, memberName, "", 0, pipelineData);
     }
     
     /// <summary>
@@ -452,7 +452,7 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
                      $"Quality: {qualityIcon} {quality}" +
                      (latency.HasValue ? $" | Latency: {latency.Value.TotalMicroseconds}μs" : "");
 
-        EnqueueLogEntry(LogLevel.MarketData, message, null, memberName, "", 0, marketDataObject);
+        EnqueueLogEntry(LogLevel.Info, message, null, memberName, "", 0, marketDataObject);
     }
     
     /// <summary>
@@ -739,12 +739,12 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
         // Multiple specialized log files for different purposes
         var logFiles = new Dictionary<string, List<LogEntry>>
         {
-            [$"trading-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Trade || e.Level == LogLevel.Position).ToList(),
-            [$"performance-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Performance).ToList(),
+            [$"trading-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Info || e.Level == LogLevel.Info).ToList(),
+            [$"performance-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Debug).ToList(),
             [$"errors-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Error || e.Level == LogLevel.Critical).ToList(),
             [$"debug-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Debug).ToList(),
-            [$"risk-compliance-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Risk).ToList(),
-            [$"market-data-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.MarketData).ToList(),
+            [$"risk-compliance-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Warning).ToList(),
+            [$"market-data-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Info).ToList(),
             [$"comprehensive-{date:yyyy-MM-dd}.log"] = entries // All logs for complete audit trail
         };
 
@@ -804,24 +804,24 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
         // Core log line with all essential information
         sb.Append($"[{entry.Timestamp:yyyy-MM-dd HH:mm:ss.fff}] ");
         sb.Append($"[{entry.Level.ToString().ToUpper()}] ");
-        sb.Append($"[{entry.ServiceName}] ");
-        sb.Append($"[{entry.MemberName}");
+        sb.Append($"[{entry.Source.Service}] ");
+        sb.Append($"[{entry.Source.MethodName ?? "Unknown"}");
         
-        if (!string.IsNullOrEmpty(entry.SourceFile))
-            sb.Append($":{entry.SourceFile}");
+        if (!string.IsNullOrEmpty(entry.Source.FilePath))
+            sb.Append($":{Path.GetFileName(entry.Source.FilePath)}");
             
-        if (entry.LineNumber > 0)
-            sb.Append($":{entry.LineNumber}");
+        if (entry.Source.LineNumber > 0)
+            sb.Append($":{entry.Source.LineNumber}");
             
         sb.Append("] ");
-        sb.Append($"[T{entry.ThreadId}] ");
+        sb.Append($"[T{entry.Thread.ThreadId}] ");
         sb.Append($"[{entry.CorrelationId}] ");
         sb.AppendLine(entry.Message);
 
         // Exception details if present
         if (entry.Exception != null)
         {
-            sb.AppendLine($"    EXCEPTION: {entry.Exception.GetType().Name}: {entry.Exception.Message}");
+            sb.AppendLine($"    EXCEPTION: {entry.Exception.Type}: {entry.Exception.Message}");
             if (!string.IsNullOrEmpty(entry.Exception.StackTrace))
             {
                 sb.AppendLine($"    STACK TRACE: {entry.Exception.StackTrace}");
@@ -829,16 +829,16 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
         }
 
         // Structured data if present
-        if (entry.Data != null)
+        if (entry.AdditionalData != null)
         {
             try
             {
-                var jsonData = JsonSerializer.Serialize(entry.Data, new JsonSerializerOptions { WriteIndented = false });
+                var jsonData = JsonSerializer.Serialize(entry.AdditionalData, new JsonSerializerOptions { WriteIndented = false });
                 sb.AppendLine($"    DATA: {jsonData}");
             }
             catch
             {
-                sb.AppendLine($"    DATA: {entry.Data}");
+                sb.AppendLine($"    DATA: {entry.AdditionalData}");
             }
         }
 

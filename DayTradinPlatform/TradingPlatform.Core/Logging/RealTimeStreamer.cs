@@ -201,7 +201,7 @@ internal class RealTimeStreamer : IDisposable
             {
                 if (kvp.Value.State == WebSocketState.Open)
                 {
-                    kvp.Value.CloseAsync(WebSocketCloseStatus.GoingAway, "Server shutdown", CancellationToken.None).Wait(1000);
+                    kvp.Value.CloseAsync(WebSocketCloseStatus.NormalClosure, "Server shutdown", CancellationToken.None).Wait(1000);
                 }
                 kvp.Value.Dispose();
             }

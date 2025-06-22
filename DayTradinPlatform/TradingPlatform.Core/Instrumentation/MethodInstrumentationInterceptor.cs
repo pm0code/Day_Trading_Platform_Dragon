@@ -17,7 +17,7 @@ namespace TradingPlatform.Core.Instrumentation;
 /// </summary>
 public static class MethodInstrumentationInterceptor
 {
-    private static readonly EnhancedTradingLogOrchestrator _logger = EnhancedTradingLogOrchestrator.Instance;
+    private static readonly TradingLogOrchestrator _logger = TradingLogOrchestrator.Instance;
     private static readonly Dictionary<string, MethodInstrumentationInfo> _methodCache = new();
     private static readonly object _cacheLock = new object();
 
@@ -121,7 +121,7 @@ public static class MethodInstrumentationInterceptor
         params object?[] parameters)
     {
         var context = EnterMethod(memberName, sourceFilePath, sourceLineNumber, parameters);
-        T result;
+        T result = default(T)!;
         Exception? exception = null;
 
         try
@@ -159,7 +159,7 @@ public static class MethodInstrumentationInterceptor
         params object?[] parameters)
     {
         var context = EnterMethod(memberName, sourceFilePath, sourceLineNumber, parameters);
-        T result;
+        T result = default(T)!;
         Exception? exception = null;
 
         try
@@ -248,7 +248,7 @@ public static class MethodInstrumentationInterceptor
 
     private static bool ShouldInstrument(MethodInstrumentationInfo methodInfo)
     {
-        var config = EnhancedTradingLogOrchestrator.Instance.GetConfiguration();
+        var config = TradingLogOrchestrator.Instance.GetConfiguration();
         
         // Check global instrumentation level
         if (methodInfo.Attribute?.Level == InstrumentationLevel.None)
@@ -267,7 +267,7 @@ public static class MethodInstrumentationInterceptor
 
     private static bool IsEnabledProject(string sourceFilePath)
     {
-        var config = EnhancedTradingLogOrchestrator.Instance.GetConfiguration();
+        var config = TradingLogOrchestrator.Instance.GetConfiguration();
         return config.EnabledProjects.Any(p => sourceFilePath.Contains(p, StringComparison.OrdinalIgnoreCase));
     }
 
@@ -373,8 +373,8 @@ public static class MethodInstrumentationInterceptor
 
         return new TradingContext
         {
-            Operation = context.MethodName,
-            CorrelationId = context.CorrelationId
+            Action = context.MethodName,
+            OrderId = context.CorrelationId
         };
     }
 
@@ -382,8 +382,9 @@ public static class MethodInstrumentationInterceptor
     {
         return new PerformanceContext
         {
-            ExecutionTimeMicroseconds = executionMicroseconds,
-            ThreadId = Environment.CurrentManagedThreadId
+            DurationNanoseconds = executionMicroseconds * 1000, // Convert microseconds to nanoseconds
+            DurationMilliseconds = executionMicroseconds / 1000.0, // Convert microseconds to milliseconds
+            Operation = context.MethodName
         };
     }
 

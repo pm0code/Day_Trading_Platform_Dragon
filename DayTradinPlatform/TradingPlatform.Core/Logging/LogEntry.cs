@@ -377,7 +377,7 @@ public sealed class ExceptionContext
             Message = exception.Message,
             StackTrace = exception.StackTrace,
             Source = exception.Source,
-            TargetSite = exception.TargetMethod?.Name,
+            TargetSite = exception.TargetSite?.Name,
             InnerException = exception.InnerException != null 
                 ? FromException(exception.InnerException) 
                 : null,
