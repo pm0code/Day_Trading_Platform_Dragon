@@ -151,3 +151,16 @@ Key documentation files in the MainDocs directory:
 
 • Every time you want to run a PS script on DRAGON, open a PS window with admin rights so I can see the execution of those commands. Do not close that window. I'll do it after my review.
 • Remember that Windows does not have rsync. use scp instead
+• All work has to be done on DRAGON at IP address 192.168.1.35, as this is a Windows project and the current machine is Ubuntu Linux.
+
+## Machine Credentials
+
+• DRAGON is a Windows 11 X64 machine @ 192.168.1.35
+• RYZEN is an Ubuntu Linux machine @ 192.168.1.36
+• For both machines:
+  - User: admin
+  - Password: 1qwertyuio0
+
+## Model Guidance
+
+• /model opus: Always use Opus for complex code generation, architectural design, and detailed technical tasks requiring high precision and advanced reasoning

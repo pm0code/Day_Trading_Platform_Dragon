@@ -160,6 +160,17 @@ public class TradingLogger : ILogger, ITradingLogger
         _orchestrator.LogMethodExit(result, executionTime, success, memberName);
     }
 
+    // Explicit interface implementation for ITradingLogger
+    void ITradingLogger.LogMethodEntry(string methodName, object? parameters, string callerName)
+    {
+        _orchestrator.LogMethodEntry(parameters, methodName, sourceFilePath: string.Empty);
+    }
+
+    void ITradingLogger.LogMethodExit(string methodName, TimeSpan duration, object? result, string callerName)
+    {
+        _orchestrator.LogMethodExit(result, duration, true, methodName);
+    }
+
     #endregion
 
     #region ITradingLogger Interface - Delegated to TradingLogOrchestrator
