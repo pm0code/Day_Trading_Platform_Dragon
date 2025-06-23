@@ -11,17 +11,17 @@ namespace TradingPlatform.Screening.Models
         /// Real-time screening with continuous updates
         /// </summary>
         RealTime,
-        
+
         /// <summary>
         /// Batch screening at scheduled intervals
         /// </summary>
         Batch,
-        
+
         /// <summary>
         /// Historical screening for backtesting
         /// </summary>
         Historical,
-        
+
         /// <summary>
         /// On-demand single screening
         /// </summary>
@@ -37,22 +37,22 @@ namespace TradingPlatform.Screening.Models
         /// Screening is pending execution
         /// </summary>
         Pending,
-        
+
         /// <summary>
         /// Screening is currently running
         /// </summary>
         Running,
-        
+
         /// <summary>
         /// Screening completed successfully
         /// </summary>
         Completed,
-        
+
         /// <summary>
         /// Screening failed with errors
         /// </summary>
         Failed,
-        
+
         /// <summary>
         /// Screening was cancelled by user
         /// </summary>

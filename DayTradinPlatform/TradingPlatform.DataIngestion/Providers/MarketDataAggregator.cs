@@ -370,19 +370,19 @@ namespace TradingPlatform.DataIngestion.Providers
         }
 
         // ========== INTERFACE IMPLEMENTATION METHODS ==========
-        
+
         public async Task<MarketData> GetMarketDataAsync(string symbol)
         {
             // Use the existing GetRealTimeDataAsync implementation
             return await GetRealTimeDataAsync(symbol);
         }
-        
+
         public async Task<List<MarketData>> GetBatchMarketDataAsync(List<string> symbols)
         {
             // Use the existing GetMultipleQuotesAsync implementation
             return await GetMultipleQuotesAsync(symbols);
         }
-        
+
         // ========== LEGACY COMPATIBILITY METHODS ==========
 
         public async Task<MarketData?> GetRealTimeDataAsync(string symbol)
@@ -428,7 +428,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 {
                     try
                     {
-                        var data = await TryGetDataFromProvider("AlphaVantage", 
+                        var data = await TryGetDataFromProvider("AlphaVantage",
                             async () => await _alphaVantageProvider.GetGlobalQuoteAsync(symbol));
                         if (data != null)
                         {
@@ -440,7 +440,7 @@ namespace TradingPlatform.DataIngestion.Providers
                         TradingLogOrchestrator.Instance.LogError($"Error fetching AlphaVantage data for {symbol}", ex);
                     }
                 }
-                
+
                 if (results.Any())
                 {
                     TradingLogOrchestrator.Instance.LogInfo($"Retrieved {results.Count} quotes from AlphaVantage");

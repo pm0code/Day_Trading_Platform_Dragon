@@ -53,13 +53,13 @@ public static class TradingMath
             decimal x = value - 1m;
             decimal result = 0m;
             decimal term = x;
-            
+
             for (int n = 1; n <= 50 && Math.Abs(term) > EPSILON; n++)
             {
                 result += term / n * (n % 2 == 1 ? 1 : -1);
                 term *= x;
             }
-            
+
             return Math.Round(result, DEFAULT_PRECISION, MidpointRounding.ToEven);
         }
 
@@ -94,12 +94,12 @@ public static class TradingMath
         if (exitPrice <= 0m) throw new ArgumentException("Exit price must be positive");
         if (quantity <= 0m) throw new ArgumentException("Quantity must be positive");
 
-        decimal grossPnL = isLong 
+        decimal grossPnL = isLong
             ? (exitPrice - entryPrice) * quantity
             : (entryPrice - exitPrice) * quantity;
 
         decimal totalCommission = commissionPerShare * quantity * 2m; // Entry + Exit
-        
+
         return RoundFinancial(grossPnL - totalCommission);
     }
 
@@ -136,8 +136,8 @@ public static class TradingMath
         if (!pnlList.Any()) return 0m;
 
         // Convert to cumulative if needed
-        var cumulativePnL = isCumulative 
-            ? pnlList 
+        var cumulativePnL = isCumulative
+            ? pnlList
             : pnlList.Aggregate(new List<decimal>(), (acc, value) =>
             {
                 acc.Add((acc.LastOrDefault() + value));
@@ -181,7 +181,7 @@ public static class TradingMath
 
         decimal averageReturn = returnsList.Average();
         decimal standardDeviation = StandardDeviation(returnsList);
-        
+
         if (standardDeviation == 0m) return 0m;
 
         decimal dailyRiskFreeRate = riskFreeRate / tradingDaysPerYear / 100m;
@@ -387,7 +387,7 @@ public static class TradingMath
         }
 
         decimal denominator = Sqrt(sumSquares1 * sumSquares2);
-        
+
         return denominator == 0m ? 0m : RoundFinancial(numerator / denominator, 4);
     }
 

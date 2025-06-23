@@ -30,7 +30,7 @@ public static class ServiceCollectionExtensions
 
         // Configure Redis with trading-optimized settings
         var configOptions = ConfigurationOptions.Parse(connectionString);
-        
+
         // Performance optimizations for trading applications
         configOptions.AsyncTimeout = 1000; // 1 second timeout
         configOptions.ConnectTimeout = 5000; // 5 second connect timeout
@@ -39,10 +39,10 @@ public static class ServiceCollectionExtensions
         configOptions.KeepAlive = 60; // Keep connection alive
         configOptions.ReconnectRetryPolicy = new ExponentialRetry(250); // Fast reconnect
         configOptions.AbortOnConnectFail = false; // Allow retry on initial connect failure
-        
+
         // Connection pool optimization
         configOptions.ChannelPrefix = RedisChannel.Literal("trading:"); // Namespace for trading channels
-        
+
         // Apply custom configuration if provided
         configureOptions?.Invoke(configOptions);
 
@@ -50,15 +50,15 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IConnectionMultiplexer>(provider =>
         {
             var logger = provider.GetRequiredService<ITradingLogger>();
-            
+
             try
             {
                 var connection = ConnectionMultiplexer.Connect(configOptions);
-                
+
                 // Log connection events for monitoring
                 connection.ConnectionFailed += (sender, args) =>
                 {
-                    logger.LogError("Redis connection failed", null, "Redis connection", null, null, 
+                    logger.LogError("Redis connection failed", null, "Redis connection", null, null,
                         new { EndPoint = args.EndPoint?.ToString(), FailureType = args.FailureType.ToString() });
                 };
 
@@ -69,18 +69,18 @@ public static class ServiceCollectionExtensions
 
                 connection.ErrorMessage += (sender, args) =>
                 {
-                    logger.LogError("Redis error occurred", null, "Redis operation", null, null, 
+                    logger.LogError("Redis error occurred", null, "Redis operation", null, null,
                         new { EndPoint = args.EndPoint?.ToString(), Message = args.Message });
                 };
 
-                logger.LogInfo("Redis connection established to {EndPoints}", 
+                logger.LogInfo("Redis connection established to {EndPoints}",
                     string.Join(", ", connection.GetEndPoints().Select(ep => ep.ToString())));
 
                 return connection;
             }
             catch (Exception ex)
             {
-                logger.LogError("Failed to connect to Redis", ex, "Redis connection", null, null, 
+                logger.LogError("Failed to connect to Redis", ex, "Redis connection", null, null,
                     new { ConnectionString = connectionString });
                 throw;
             }
@@ -118,7 +118,7 @@ public static class ServiceCollectionExtensions
         }
 
         var connectionString = string.Join(",", clusterEndpoints);
-        
+
         return services.AddRedisMessageBus(connectionString, options =>
         {
             // Production optimizations
@@ -126,9 +126,9 @@ public static class ServiceCollectionExtensions
             options.Ssl = true; // Secure connections in production
             options.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
             options.ConnectRetry = 3; // Retry connection attempts
-            options.CommandMap = CommandMap.Create(new HashSet<string> 
-            { 
-                "INFO", "CONFIG", "CLUSTER", "PING", "ECHO", "CLIENT" 
+            options.CommandMap = CommandMap.Create(new HashSet<string>
+            {
+                "INFO", "CONFIG", "CLUSTER", "PING", "ECHO", "CLIENT"
             }, available: false); // Disable admin commands for security
         });
     }

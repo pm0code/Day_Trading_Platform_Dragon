@@ -18,7 +18,7 @@ namespace TradingPlatform.Logging.Configuration;
 public static class LoggingConfiguration
 {
     private static readonly string LogsDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
-    
+
     static LoggingConfiguration()
     {
         // Ensure logs directory exists
@@ -35,7 +35,7 @@ public static class LoggingConfiguration
         {
             var environment = context.HostingEnvironment.EnvironmentName;
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-            
+
             configuration
                 .ReadFrom.Configuration(context.Configuration)
                 .ReadFrom.Services(services)
@@ -47,12 +47,12 @@ public static class LoggingConfiguration
                 .Enrich.WithThreadId()
                 .Enrich.WithEnvironmentName()
                 .Enrich.WithCorrelationId()
-                
+
                 // Console output for development and debugging
                 .WriteTo.Console(
                     outputTemplate: "[{Timestamp:HH:mm:ss.fff} {Level:u3}] [{Service}] {SourceContext}: {Message:lj} {Properties}{NewLine}{Exception}",
                     restrictedToMinimumLevel: LogEventLevel.Debug)
-                
+
                 // Main application log - all events
                 .WriteTo.File(
                     path: Path.Combine(LogsDirectory, $"{serviceName}_{timestamp}_application.log"),
@@ -60,7 +60,7 @@ public static class LoggingConfiguration
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: 30,
                     restrictedToMinimumLevel: LogEventLevel.Information)
-                
+
                 // Trading operations log - trading-specific events only
                 .WriteTo.Logger(lg => lg
                     .Filter.ByIncludingOnly(e => e.Properties.ContainsKey("OperationType"))
@@ -69,7 +69,7 @@ public static class LoggingConfiguration
                         outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{OperationType}] {Message:lj} {Properties}{NewLine}",
                         rollingInterval: RollingInterval.Day,
                         retainedFileCountLimit: 60))
-                
+
                 // Performance metrics log - structured JSON for analysis
                 .WriteTo.Logger(lg => lg
                     .Filter.ByIncludingOnly(e => e.MessageTemplate.Text.StartsWith("PERFORMANCE_METRIC"))
@@ -78,7 +78,7 @@ public static class LoggingConfiguration
                         path: Path.Combine(LogsDirectory, $"{serviceName}_{timestamp}_performance.json"),
                         rollingInterval: RollingInterval.Hour,
                         retainedFileCountLimit: 168)) // 7 days of hourly files
-                
+
                 // Error log - errors and warnings only
                 .WriteTo.Logger(lg => lg
                     .Filter.ByIncludingOnly(e => e.Level >= LogEventLevel.Warning)
@@ -87,7 +87,7 @@ public static class LoggingConfiguration
                         outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] [{Service}] {SourceContext}: {Message:lj} {Properties}{NewLine}{Exception}",
                         rollingInterval: RollingInterval.Day,
                         retainedFileCountLimit: 90))
-                
+
                 // Debug log - verbose debugging (only in development)
                 .WriteTo.Logger(lg => lg
                     .Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Debug && environment == "Development")
@@ -96,10 +96,10 @@ public static class LoggingConfiguration
                         outputTemplate: "[{Timestamp:HH:mm:ss.fff}] [{ThreadId}] {SourceContext}.{Method}: {Message:lj} {Properties}{NewLine}",
                         rollingInterval: RollingInterval.Hour,
                         retainedFileCountLimit: 24))
-                
+
                 // Audit log - critical trading operations
                 .WriteTo.Logger(lg => lg
-                    .Filter.ByIncludingOnly(e => 
+                    .Filter.ByIncludingOnly(e =>
                         e.MessageTemplate.Text.StartsWith("ORDER_") ||
                         e.MessageTemplate.Text.StartsWith("STRATEGY_") ||
                         e.MessageTemplate.Text.StartsWith("RISK_") ||
@@ -109,10 +109,10 @@ public static class LoggingConfiguration
                         outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] {Message:lj} {Properties}{NewLine}",
                         rollingInterval: RollingInterval.Day,
                         retainedFileCountLimit: 365)) // Keep audit logs for 1 year
-                
+
                 // Latency monitoring log - ultra-low latency performance tracking
                 .WriteTo.Logger(lg => lg
-                    .Filter.ByIncludingOnly(e => 
+                    .Filter.ByIncludingOnly(e =>
                         e.MessageTemplate.Text.Contains("LATENCY") ||
                         e.Properties.ContainsKey("LatencyMs") ||
                         e.Properties.ContainsKey("Duration"))
@@ -121,10 +121,10 @@ public static class LoggingConfiguration
                         path: Path.Combine(LogsDirectory, $"{serviceName}_{timestamp}_latency.json"),
                         rollingInterval: RollingInterval.Hour,
                         retainedFileCountLimit: 72)) // 3 days of hourly latency data
-                
+
                 // Health monitoring log - system health and metrics
                 .WriteTo.Logger(lg => lg
-                    .Filter.ByIncludingOnly(e => 
+                    .Filter.ByIncludingOnly(e =>
                         e.MessageTemplate.Text.StartsWith("SYSTEM_") ||
                         e.MessageTemplate.Text.StartsWith("HEALTH_") ||
                         e.MessageTemplate.Text.StartsWith("RESOURCE_"))
@@ -140,7 +140,7 @@ public static class LoggingConfiguration
                 var elasticsearchUrl = context.Configuration.GetConnectionString("Elasticsearch");
                 if (!string.IsNullOrEmpty(elasticsearchUrl))
                 {
-                    configuration.WriteTo.Elasticsearch(elasticsearchUrl, 
+                    configuration.WriteTo.Elasticsearch(elasticsearchUrl,
                         indexFormat: $"trading-{serviceName}-{DateTime.UtcNow:yyyy-MM}");
                 }
             }
@@ -163,16 +163,16 @@ public static class LoggingConfiguration
     public static IServiceCollection AddTradingLogging(this IServiceCollection services, string serviceName)
     {
         // Register core logging services using CANONICAL TradingLogOrchestrator
-        services.AddSingleton<Core.Interfaces.ITradingLogger>(provider => 
+        services.AddSingleton<Core.Interfaces.ITradingLogger>(provider =>
             TradingLogOrchestrator.Instance);
-        services.AddSingleton<ITradingOperationsLogger>(provider => 
+        services.AddSingleton<ITradingOperationsLogger>(provider =>
             new TradingLogger(serviceName));
-        
+
         services.AddSingleton<IPerformanceLogger, PerformanceLogger>();
-        
+
         // Add logging context enrichers
         services.AddSingleton<LoggingLevelSwitch>();
-        
+
         return services;
     }
 
@@ -204,7 +204,7 @@ public static class LoggingConfiguration
         {
             var cutoffDate = DateTime.Now.AddDays(-retentionDays);
             var logFiles = Directory.GetFiles(LogsDirectory, "*.log", SearchOption.AllDirectories);
-            
+
             foreach (var logFile in logFiles)
             {
                 var fileInfo = new FileInfo(logFile);

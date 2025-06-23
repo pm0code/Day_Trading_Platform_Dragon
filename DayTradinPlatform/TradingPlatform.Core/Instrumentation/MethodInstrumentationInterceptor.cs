@@ -37,9 +37,9 @@ public static class MethodInstrumentationInterceptor
         params object?[] parameters)
     {
         var methodInfo = GetOrCreateMethodInfo(memberName, sourceFilePath, sourceLineNumber);
-        
+
         // Skip instrumentation if configured to suppress
-        if (methodInfo.Attribute?.SuppressLogging == true || 
+        if (methodInfo.Attribute?.SuppressLogging == true ||
             !ShouldInstrument(methodInfo))
         {
             return new MethodExecutionContext { ShouldLog = false };
@@ -184,7 +184,7 @@ public static class MethodInstrumentationInterceptor
     private static MethodInstrumentationInfo GetOrCreateMethodInfo(string memberName, string sourceFilePath, int sourceLineNumber)
     {
         var key = $"{sourceFilePath}:{memberName}:{sourceLineNumber}";
-        
+
         if (_methodCache.TryGetValue(key, out var info))
             return info;
 
@@ -223,7 +223,7 @@ public static class MethodInstrumentationInterceptor
         {
             // Extract namespace and class from file path
             var fileName = Path.GetFileNameWithoutExtension(sourceFilePath);
-            
+
             // Try to find the method via reflection
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             foreach (var assembly in assemblies)
@@ -273,7 +273,7 @@ public static class MethodInstrumentationInterceptor
         );
     }
 
-    private static void LogMethodExit(MethodExecutionContext context, long executionMicroseconds, 
+    private static void LogMethodExit(MethodExecutionContext context, long executionMicroseconds,
         object? returnValue, Exception? exception, bool isPerformanceViolation)
     {
         var tradingContext = CreateTradingContext(context);
@@ -287,7 +287,8 @@ public static class MethodInstrumentationInterceptor
                 context.MethodName, // operationContext
                 "Method execution failed", // userImpact
                 "Check method implementation and input parameters", // troubleshootingHints
-                new { 
+                new
+                {
                     ExecutionTime = $"{executionMicroseconds}μs",
                     CorrelationId = context.CorrelationId,
                     ReturnValue = returnValue
@@ -307,7 +308,7 @@ public static class MethodInstrumentationInterceptor
                 true, // success
                 context.MethodName
             );
-            
+
             // Log performance warning separately if needed
             if (isPerformanceViolation)
             {
@@ -315,7 +316,8 @@ public static class MethodInstrumentationInterceptor
                     $"Method {context.MethodName} exceeded performance threshold: {executionMicroseconds}μs",
                     "Performance degradation detected", // impact
                     "Review method implementation for optimization opportunities", // recommendedAction
-                    new { 
+                    new
+                    {
                         Method = context.MethodName,
                         ExecutionMicroseconds = executionMicroseconds,
                         Threshold = context.InstrumentationInfo.Attribute?.ExpectedMaxExecutionMicroseconds ?? 1000

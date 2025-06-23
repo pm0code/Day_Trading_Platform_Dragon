@@ -92,7 +92,7 @@ public static class TradingValidationExtensions
                 // For short positions, stop should be above entry
                 return isLongPosition ? stopPrice < entryPrice : stopPrice > entryPrice;
             })
-            .WithMessage(isLongPosition 
+            .WithMessage(isLongPosition
                 ? "Stop price must be below entry price for long positions"
                 : "Stop price must be above entry price for short positions");
     }
@@ -120,7 +120,7 @@ public static class TradingValidationExtensions
             .LessThanOrEqualTo(maxQuantity)
             .WithMessage($"Quantity cannot exceed {maxQuantity:N0}")
             .Must(quantity => quantity.IsValidQuantity(allowFractional))
-            .WithMessage(allowFractional 
+            .WithMessage(allowFractional
                 ? "Quantity must be a positive number"
                 : "Quantity must be a positive whole number");
     }
@@ -146,7 +146,7 @@ public static class TradingValidationExtensions
             {
                 var accountValue = accountValueSelector(instance);
                 var price = priceSelector(instance);
-                
+
                 if (accountValue <= 0 || price <= 0) return false;
 
                 var positionValue = quantity * price;
@@ -265,7 +265,7 @@ public static class TradingValidationExtensions
         bool allowFuture = false)
     {
         var maxTimestamp = maxAge ?? TimeSpan.FromHours(1);
-        
+
         return ruleBuilder
             .GreaterThan(DateTime.UtcNow.AddYears(-5))
             .WithMessage("Timestamp cannot be more than 5 years in the past")
@@ -378,7 +378,7 @@ public static class TradingValidationExtensions
                 var open = openSelector(instance);
 
                 // Validate price relationships
-                return high >= low && 
+                return high >= low &&
                        closePrice >= low && closePrice <= high &&
                        open >= low && open <= high;
             })

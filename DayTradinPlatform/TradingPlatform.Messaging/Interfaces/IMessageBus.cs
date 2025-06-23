@@ -29,7 +29,7 @@ public interface IMessageBus
     /// <param name="consumerName">Unique consumer identifier</param>
     /// <param name="handler">Message processing callback</param>
     /// <param name="cancellationToken">Cancellation token for graceful shutdown</param>
-    Task SubscribeAsync<T>(string stream, string consumerGroup, string consumerName, 
+    Task SubscribeAsync<T>(string stream, string consumerGroup, string consumerName,
         Func<T, Task> handler, CancellationToken cancellationToken = default) where T : class;
 
     /// <summary>

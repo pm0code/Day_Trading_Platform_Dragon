@@ -19,7 +19,7 @@ public class StrategyExecutionService : IStrategyExecutionService
     private readonly IPerformanceTracker _performanceTracker;
     private readonly ITradingLogger _logger;
     private readonly CancellationTokenSource _cancellationTokenSource;
-    
+
     // Performance tracking
     private long _signalsProcessed;
     private long _totalExecutions;
@@ -49,13 +49,13 @@ public class StrategyExecutionService : IStrategyExecutionService
         try
         {
             // Subscribe to market data events for strategy processing
-            await _messageBus.SubscribeAsync<MarketDataEvent>("market-data", 
-                "strategy-group", "strategy-consumer", 
+            await _messageBus.SubscribeAsync<MarketDataEvent>("market-data",
+                "strategy-group", "strategy-consumer",
                 HandleMarketDataEvent, _cancellationTokenSource.Token);
 
             // Subscribe to strategy control events from Gateway
-            await _messageBus.SubscribeAsync<StrategyEvent>("strategies", 
-                "strategy-group", "control-consumer", 
+            await _messageBus.SubscribeAsync<StrategyEvent>("strategies",
+                "strategy-group", "control-consumer",
                 HandleStrategyControlEvent, _cancellationTokenSource.Token);
 
             TradingLogOrchestrator.Instance.LogInfo("Background processing started successfully");
@@ -70,7 +70,7 @@ public class StrategyExecutionService : IStrategyExecutionService
     public async Task<ExecutionMetrics> GetExecutionMetricsAsync()
     {
         await Task.CompletedTask;
-        
+
         lock (_metricsLock)
         {
             var uptime = DateTime.UtcNow - _startTime;
@@ -96,14 +96,14 @@ public class StrategyExecutionService : IStrategyExecutionService
         {
             var isHealthy = await _messageBus.IsHealthyAsync();
             var activeStrategies = await _strategyManager.GetActiveStrategiesAsync();
-            
+
             var issues = new List<string>();
-            
+
             // Check for performance issues
             var latencyStats = await GetLatencyStatsAsync();
             if (latencyStats.Average.TotalMilliseconds > 50) // Target: <50ms execution
                 issues.Add($"High execution latency: {latencyStats.Average.TotalMilliseconds:F1}ms");
-            
+
             if (activeStrategies.Length == 0)
                 issues.Add("No active strategies running");
 
@@ -119,7 +119,7 @@ public class StrategyExecutionService : IStrategyExecutionService
         catch (Exception ex)
         {
             TradingLogOrchestrator.Instance.LogError("Error getting health status", ex);
-            return new StrategyHealthStatus(false, "Error", 0, 0, TimeSpan.Zero, DateTime.UtcNow, 
+            return new StrategyHealthStatus(false, "Error", 0, 0, TimeSpan.Zero, DateTime.UtcNow,
                 new[] { ex.Message });
         }
     }
@@ -127,7 +127,7 @@ public class StrategyExecutionService : IStrategyExecutionService
     public async Task<StrategyResult> ExecuteStrategyAsync(string strategyId, MarketConditions conditions)
     {
         var stopwatch = Stopwatch.StartNew();
-        
+
         try
         {
             // Get strategy configuration
@@ -144,7 +144,7 @@ public class StrategyExecutionService : IStrategyExecutionService
 
             // Process market data and generate signals
             var signals = await _signalProcessor.ProcessMarketDataAsync(conditions.Symbol, conditions);
-            
+
             if (signals.Length > 0)
             {
                 TradingLogOrchestrator.Instance.LogInfo($"Generated {signals.Length} signals for strategy {strategyId} on {conditions.Symbol}");
@@ -154,7 +154,7 @@ public class StrategyExecutionService : IStrategyExecutionService
                 {
                     // Validate signal against risk parameters
                     var riskAssessment = await _signalProcessor.ValidateSignalAsync(signal);
-                    
+
                     if (riskAssessment.IsAcceptable)
                     {
                         // Publish signal for order execution
@@ -166,7 +166,7 @@ public class StrategyExecutionService : IStrategyExecutionService
                         };
 
                         await _messageBus.PublishAsync("strategies", signalEvent);
-                        
+
                         Interlocked.Increment(ref _signalsProcessed);
                     }
                     else
@@ -188,9 +188,9 @@ public class StrategyExecutionService : IStrategyExecutionService
 
             TradingLogOrchestrator.Instance.LogInfo($"Strategy {strategyId} executed in {stopwatch.Elapsed.TotalMicroseconds}μs");
 
-            return new StrategyResult(true, $"Strategy {strategyId} executed successfully", 
-                null, new Dictionary<string, object> 
-                { 
+            return new StrategyResult(true, $"Strategy {strategyId} executed successfully",
+                null, new Dictionary<string, object>
+                {
                     ["SignalCount"] = signals.Length,
                     ["ExecutionTime"] = stopwatch.Elapsed
                 });
@@ -206,12 +206,12 @@ public class StrategyExecutionService : IStrategyExecutionService
     public async Task<LatencyStats> GetLatencyStatsAsync()
     {
         await Task.CompletedTask;
-        
+
         lock (_metricsLock)
         {
             if (_executionLatencies.Count == 0)
             {
-                return new LatencyStats(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 
+                return new LatencyStats(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero,
                     TimeSpan.Zero, TimeSpan.Zero, 0, DateTime.UtcNow);
             }
 
@@ -246,7 +246,7 @@ public class StrategyExecutionService : IStrategyExecutionService
 
             // Get active strategies that trade this symbol
             var activeStrategies = await _strategyManager.GetActiveStrategiesAsync();
-            
+
             foreach (var strategy in activeStrategies.Where(s => s.Status == StrategyStatus.Running))
             {
                 // Execute strategy for this market data
@@ -289,7 +289,7 @@ public class StrategyExecutionService : IStrategyExecutionService
         lock (_metricsLock)
         {
             _executionLatencies.Add(latency);
-            
+
             // Keep only last 1000 samples for memory efficiency
             if (_executionLatencies.Count > 1000)
             {

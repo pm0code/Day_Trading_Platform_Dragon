@@ -21,7 +21,7 @@ public class RiskCalculator : IRiskCalculator
         returnsList.Sort();
         var index = (int)Math.Ceiling((1m - confidenceLevel) * returnsList.Count) - 1;
         index = Math.Max(0, Math.Min(index, returnsList.Count - 1));
-        
+
         var var95 = Math.Abs(returnsList[index]);
         TradingLogOrchestrator.Instance.LogInfo($"VaR calculated: {var95} at {confidenceLevel * 100}% confidence");
         return var95;
@@ -34,12 +34,12 @@ public class RiskCalculator : IRiskCalculator
 
         returnsList.Sort();
         var cutoff = (int)Math.Ceiling((1m - confidenceLevel) * returnsList.Count);
-        
+
         if (cutoff <= 0) return 0m;
-        
+
         var tailReturns = returnsList.Take(cutoff);
         var expectedShortfall = Math.Abs(tailReturns.Average());
-        
+
         TradingLogOrchestrator.Instance.LogInfo($"Expected Shortfall calculated: {expectedShortfall} at {confidenceLevel * 100}% confidence");
         return expectedShortfall;
     }
@@ -92,7 +92,7 @@ public class RiskCalculator : IRiskCalculator
 
         var riskAmount = accountBalance * riskPerTrade;
         var positionSize = riskAmount / stopLoss;
-        
+
         TradingLogOrchestrator.Instance.LogInfo($"Position size calculated: {positionSize} (Risk: {riskAmount}, Stop: {stopLoss})");
         return positionSize;
     }
@@ -100,7 +100,7 @@ public class RiskCalculator : IRiskCalculator
     public RiskMetrics CalculatePortfolioRisk(IEnumerable<Position> positions)
     {
         var positionsList = positions.ToList();
-        
+
         if (!positionsList.Any())
         {
             return new RiskMetrics(0m, 0m, 0m, 0m, 0m, 0m, 0m, DateTime.UtcNow);
@@ -108,14 +108,14 @@ public class RiskCalculator : IRiskCalculator
 
         var returns = CalculatePositionReturns(positionsList);
         var portfolioValues = positionsList.Select(p => p.MarketValue);
-        
+
         var var95 = CalculateVaR(returns, 0.95m);
         var var99 = CalculateVaR(returns, 0.99m);
         var expectedShortfall = CalculateExpectedShortfall(returns, 0.95m);
         var maxDrawdown = CalculateMaxDrawdown(portfolioValues);
         var sharpeRatio = CalculateSharpeRatio(returns, 0.02m); // Assuming 2% risk-free rate
         var volatility = CalculateStandardDeviation(returns);
-        
+
         // Simplified beta calculation (would need market data for proper calculation)
         var beta = 1.0m;
 
@@ -152,7 +152,7 @@ public class RiskCalculator : IRiskCalculator
         var mean = valuesList.Average();
         var sumSquaredDifferences = valuesList.Sum(v => (v - mean) * (v - mean));
         var variance = sumSquaredDifferences / (valuesList.Count - 1);
-        
+
         // Using decimal square root approximation
         return (decimal)Math.Sqrt((double)variance);
     }

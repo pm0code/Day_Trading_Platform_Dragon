@@ -15,44 +15,44 @@ public interface ITradingOperationsLogger : Core.Interfaces.ITradingLogger
     void LogOrderExecution(string orderId, string symbol, decimal executedQuantity, decimal executedPrice, TimeSpan latency, string correlationId);
     void LogOrderRejection(string orderId, string symbol, string reason, string correlationId);
     void LogOrderCancellation(string orderId, string symbol, string reason, string correlationId);
-    
+
     // Market Data Logging
     void LogMarketDataReceived(string symbol, decimal price, long volume, DateTime timestamp, TimeSpan latency);
     void LogMarketDataCacheHit(string symbol, TimeSpan retrievalTime);
     void LogMarketDataCacheMiss(string symbol, TimeSpan retrievalTime);
     void LogMarketDataProviderLatency(string provider, string symbol, TimeSpan latency);
-    
+
     // Strategy Execution Logging
     void LogStrategySignal(string strategyName, string symbol, string signal, decimal confidence, string reason, string correlationId);
     void LogStrategyExecution(string strategyName, string symbol, TimeSpan executionTime, bool success, string correlationId);
     void LogStrategyPerformance(string strategyName, decimal pnl, decimal sharpeRatio, int tradesCount, string correlationId);
-    
+
     // Risk Management Logging
     void LogRiskCheck(string riskType, string symbol, decimal value, decimal limit, bool passed, string correlationId);
     void LogRiskAlert(string alertType, string symbol, decimal currentValue, decimal threshold, string severity, string correlationId);
     void LogComplianceCheck(string complianceType, string result, string details, string correlationId);
-    
+
     // Performance Logging
     void LogMethodEntry(string methodName, object? parameters = null, [System.Runtime.CompilerServices.CallerMemberName] string callerName = "");
     void LogMethodExit(string methodName, TimeSpan duration, object? result = null, [System.Runtime.CompilerServices.CallerMemberName] string callerName = "");
     void LogPerformanceMetric(string metricName, double value, string unit, Dictionary<string, object>? tags = null);
     void LogLatencyViolation(string operation, TimeSpan actualLatency, TimeSpan expectedLatency, string correlationId);
-    
+
     // System Health Logging
     void LogSystemMetric(string metricName, double value, string unit);
     void LogHealthCheck(string serviceName, bool healthy, TimeSpan responseTime, string? details = null);
     void LogResourceUsage(string resource, double usage, double capacity, string unit);
-    
+
     // Error and Exception Logging
     void LogTradingError(string operation, Exception exception, string? correlationId = null, Dictionary<string, object>? context = null);
     void LogCriticalError(string operation, Exception exception, string? correlationId = null, Dictionary<string, object>? context = null);
     void LogBusinessRuleViolation(string rule, string details, string? correlationId = null);
-    
+
     // Debug and Diagnostic Logging
     void LogDebugTrace(string message, Dictionary<string, object>? context = null, [System.Runtime.CompilerServices.CallerMemberName] string callerName = "");
     void LogStateTransition(string entity, string fromState, string toState, string reason, string? correlationId = null);
     void LogConfiguration(string component, Dictionary<string, object> configuration);
-    
+
     // COMPREHENSIVE DEBUGGING AND ERROR TRACING - NEW METHODS
     void LogClassInstantiation(string className, object? constructorParams = null, [System.Runtime.CompilerServices.CallerMemberName] string callerName = "");
     void LogVariableChange(string variableName, object? oldValue, object? newValue, [System.Runtime.CompilerServices.CallerMemberName] string callerName = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0);
@@ -76,7 +76,7 @@ public interface ITradingOperationsLogger : Core.Interfaces.ITradingLogger
     void LogValidation(string validationType, object? input, bool passed, string[]? errors = null, [System.Runtime.CompilerServices.CallerMemberName] string callerName = "");
     void LogConfigurationChange(string component, string setting, object? oldValue, object? newValue, string? changedBy = null);
     void LogAlert(string alertType, string severity, string message, object? context = null, string[]? recommendedActions = null);
-    
+
     // Correlation and Context
     IDisposable BeginScope(string operationName, string? correlationId = null);
     IDisposable BeginScope(Dictionary<string, object> properties);

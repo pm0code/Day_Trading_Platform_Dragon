@@ -47,7 +47,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
             TradingLogOrchestrator.Instance.LogInfo($"Starting system monitoring with interval: {interval} on DRAGON i9-14900K platform");
 
             // Start monitoring timer
-            var timer = new Timer(async _ => await MonitorSystemPerformanceAsync(), 
+            var timer = new Timer(async _ => await MonitorSystemPerformanceAsync(),
                 null, TimeSpan.Zero, interval);
 
             await Task.CompletedTask;
@@ -87,7 +87,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         try
         {
             var metrics = await GetRealTimeMetricsAsync();
-            
+
             var cpuUsage = metrics.GetValueOrDefault("CpuUsagePercent", 100.0);
             var availableMemoryMB = metrics.GetValueOrDefault("AvailableMemoryMB", 0.0);
             var diskQueueLength = metrics.GetValueOrDefault("DiskQueueLength", 100.0);
@@ -256,7 +256,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
             criticalChecks["GPU1"] = gpuHealthy.Item2;
 
             var allCritical = criticalChecks.All(kvp => kvp.Value);
-            
+
             if (!allCritical)
             {
                 var failedChecks = criticalChecks.Where(kvp => !kvp.Value).Select(kvp => kvp.Key);
@@ -284,7 +284,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         {
             // CPU counters for i9-14900K
             counters["CPU"] = new PerformanceCounter("Processor", "% Processor Time", "_Total");
-            
+
             // Try to get P-Core and E-Core specific counters (may not be available on all systems)
             try
             {
@@ -299,7 +299,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
             // DDR5 Memory counters (32GB)
             counters["AvailableMemory"] = new PerformanceCounter("Memory", "Available MBytes");
             counters["CommittedMemory"] = new PerformanceCounter("Memory", "% Committed Bytes In Use");
-            
+
             try
             {
                 counters["MemoryBandwidth"] = new PerformanceCounter("Memory", "Cache Faults/sec");
@@ -333,12 +333,12 @@ public class SystemMonitor : ISystemMonitor, IDisposable
                 var gpuInstances = new PerformanceCounterCategory("GPU Engine").GetInstanceNames()
                     .Where(name => name.Contains("NVIDIA") || name.Contains("Graphics"))
                     .ToList();
-                
+
                 if (gpuInstances.Count > 0)
                 {
                     // Primary GPU (RTX 4080/4090 class)
                     counters["GPU0Usage"] = new PerformanceCounter("GPU Engine", "Utilization Percentage", gpuInstances[0]);
-                    
+
                     // Secondary GPU (RTX 3060 Ti)
                     if (gpuInstances.Count > 1)
                     {
@@ -367,12 +367,12 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         {
             var category = new PerformanceCounterCategory("Network Interface");
             var instances = category.GetInstanceNames()
-                .Where(name => !name.Contains("Loopback") && 
-                              !name.Contains("Teredo") && 
+                .Where(name => !name.Contains("Loopback") &&
+                              !name.Contains("Teredo") &&
                               !name.Contains("isatap") &&
                               name.Length > 5) // Filter out virtual adapters
                 .FirstOrDefault();
-            
+
             return instances ?? string.Empty;
         }
         catch (Exception ex)
@@ -418,17 +418,17 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         try
         {
             var stopwatch = Stopwatch.StartNew();
-            
+
             // Perform a system call to test responsiveness on high-performance hardware
             var processes = Process.GetProcesses();
             var processCount = processes.Length;
-            
+
             stopwatch.Stop();
             var responseTime = stopwatch.Elapsed.TotalMicroseconds;
 
             // DRAGON system should respond within 50μs for basic operations
             var isResponsive = responseTime < 50.0;
-            
+
             TradingLogOrchestrator.Instance.LogInfo($"DRAGON system responsiveness check: {responseTime}μs, Responsive: {isResponsive}");
 
             return isResponsive;
@@ -490,7 +490,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
             // Check dual NVIDIA GPU availability (primary + RTX 3060 Ti)
             var gpu0Healthy = false;
             var gpu1Healthy = false;
-            
+
             // Check primary GPU
             if (_performanceCounters.TryGetValue("GPU0Usage", out var gpu0Counter))
             {
@@ -511,7 +511,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
                 using var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController WHERE Name LIKE '%NVIDIA%'");
                 var collection = searcher.Get();
                 var gpuCount = collection.Count;
-                
+
                 if (!gpu0Healthy && gpuCount > 0) gpu0Healthy = true;
                 if (!gpu1Healthy && gpuCount > 1) gpu1Healthy = true;
             }
@@ -534,7 +534,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         try
         {
             _isMonitoring = false;
-            
+
             foreach (var counter in _performanceCounters.Values)
             {
                 counter?.Dispose();

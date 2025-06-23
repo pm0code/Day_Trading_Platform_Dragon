@@ -22,7 +22,7 @@ public class MarketDataService : IMarketDataService
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly Dictionary<string, DateTime> _lastUpdateTimes;
     private readonly object _metricsLock = new();
-    
+
     // Performance tracking
     private long _totalRequests;
     private long _cacheHits;
@@ -60,7 +60,7 @@ public class MarketDataService : IMarketDataService
                 Interlocked.Increment(ref _cacheHits);
                 stopwatch.Stop();
                 RecordLatency(stopwatch.Elapsed);
-                
+
                 TradingLogOrchestrator.Instance.LogInfo($"Cache hit for {symbol} in {stopwatch.Elapsed.TotalMicroseconds}μs");
                 return cachedData;
             }
@@ -73,7 +73,7 @@ public class MarketDataService : IMarketDataService
             {
                 // Cache with 5-second TTL for high-frequency trading
                 await _cache.SetAsync(symbol, freshData, TimeSpan.FromSeconds(5));
-                
+
                 // Update last update time
                 lock (_lastUpdateTimes)
                 {
@@ -168,7 +168,7 @@ public class MarketDataService : IMarketDataService
             };
 
             var dailyDataList = await _dataIngestionService.GetHistoricalDataAsync(symbol, startDate, endDate);
-            
+
             // Convert List<DailyData> to HistoricalData
             var historicalData = new HistoricalData
             {
@@ -177,7 +177,7 @@ public class MarketDataService : IMarketDataService
                 StartDate = startDate,
                 EndDate = endDate
             };
-            
+
             stopwatch.Stop();
             TradingLogOrchestrator.Instance.LogInfo($"Retrieved historical data for {symbol} ({interval}) in {stopwatch.Elapsed.TotalMilliseconds}ms");
 
@@ -198,13 +198,13 @@ public class MarketDataService : IMarketDataService
         try
         {
             // Subscribe to market data requests from Gateway
-            await _messageBus.SubscribeAsync<MarketDataRequestEvent>("market-data-requests", 
-                "marketdata-group", "marketdata-consumer", 
+            await _messageBus.SubscribeAsync<MarketDataRequestEvent>("market-data-requests",
+                "marketdata-group", "marketdata-consumer",
                 HandleMarketDataRequest, _cancellationTokenSource.Token);
 
             // Subscribe to subscription management requests
-            await _messageBus.SubscribeAsync<MarketDataSubscriptionEvent>("market-data-subscriptions", 
-                "marketdata-group", "subscription-consumer", 
+            await _messageBus.SubscribeAsync<MarketDataSubscriptionEvent>("market-data-subscriptions",
+                "marketdata-group", "subscription-consumer",
                 HandleSubscriptionRequest, _cancellationTokenSource.Token);
 
             TradingLogOrchestrator.Instance.LogInfo("Background processing started successfully");
@@ -225,10 +225,10 @@ public class MarketDataService : IMarketDataService
             var cacheStats = await _cache.GetStatsAsync();
 
             var issues = new List<string>();
-            
+
             if (providerLatency.TotalMilliseconds > 1000)
                 issues.Add($"High provider latency: {providerLatency.TotalMilliseconds:F1}ms");
-            
+
             if (cacheStats.HitRate < 0.8)
                 issues.Add($"Low cache hit rate: {cacheStats.HitRate:P1}");
 
@@ -244,7 +244,7 @@ public class MarketDataService : IMarketDataService
         catch (Exception ex)
         {
             TradingLogOrchestrator.Instance.LogError("Error getting health status", ex);
-            return new MarketDataHealthStatus(false, "Error", TimeSpan.Zero, 0, 0, DateTime.UtcNow, 
+            return new MarketDataHealthStatus(false, "Error", TimeSpan.Zero, 0, 0, DateTime.UtcNow,
                 new[] { ex.Message });
         }
     }
@@ -253,13 +253,13 @@ public class MarketDataService : IMarketDataService
     {
         var cacheStats = await _cache.GetStatsAsync();
         var uptime = DateTime.UtcNow - _startTime;
-        
+
         lock (_metricsLock)
         {
             var rps = _totalRequests > 0 ? _totalRequests / Math.Max(1, uptime.TotalSeconds) : 0;
-            var avgLatency = _latencySamples.Count > 0 ? 
+            var avgLatency = _latencySamples.Count > 0 ?
                 TimeSpan.FromTicks((long)_latencySamples.Average(l => l.Ticks)) : TimeSpan.Zero;
-            var maxLatency = _latencySamples.Count > 0 ? 
+            var maxLatency = _latencySamples.Count > 0 ?
                 _latencySamples.Max() : TimeSpan.Zero;
 
             return new MarketDataMetrics(
@@ -279,10 +279,10 @@ public class MarketDataService : IMarketDataService
         {
             // Invalidate cache to force fresh fetch
             await _cache.InvalidateAsync(symbol);
-            
+
             // Fetch fresh data
             await GetMarketDataAsync(symbol);
-            
+
             TradingLogOrchestrator.Instance.LogInfo($"Refreshed market data for {symbol}");
         }
         catch (Exception ex)
@@ -294,12 +294,12 @@ public class MarketDataService : IMarketDataService
     public async Task<LatencyStats> GetLatencyStatsAsync()
     {
         await Task.CompletedTask;
-        
+
         lock (_metricsLock)
         {
             if (_latencySamples.Count == 0)
             {
-                return new LatencyStats(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 
+                return new LatencyStats(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero,
                     TimeSpan.Zero, TimeSpan.Zero, 0, DateTime.UtcNow);
             }
 
@@ -322,7 +322,7 @@ public class MarketDataService : IMarketDataService
             TradingLogOrchestrator.Instance.LogInfo($"Processing market data request for {request.Symbol} from {request.Source}");
 
             var data = await GetMarketDataAsync(request.Symbol);
-            
+
             if (data != null)
             {
                 var responseEvent = new MarketDataEvent
@@ -371,7 +371,7 @@ public class MarketDataService : IMarketDataService
         lock (_metricsLock)
         {
             _latencySamples.Add(latency);
-            
+
             // Keep only last 1000 samples for memory efficiency
             if (_latencySamples.Count > 1000)
             {

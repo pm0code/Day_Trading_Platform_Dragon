@@ -71,8 +71,8 @@ public readonly struct TradingResult<T>
     /// </summary>
     public TradingResult<TOut> Map<TOut>(Func<T, TOut> mapper)
     {
-        return IsSuccess 
-            ? TradingResult<TOut>.Success(mapper(Value)) 
+        return IsSuccess
+            ? TradingResult<TOut>.Success(mapper(Value))
             : TradingResult<TOut>.Failure(Error);
     }
 
@@ -82,8 +82,8 @@ public readonly struct TradingResult<T>
     /// </summary>
     public TradingResult<TOut> Bind<TOut>(Func<T, TradingResult<TOut>> binder)
     {
-        return IsSuccess 
-            ? binder(Value) 
+        return IsSuccess
+            ? binder(Value)
             : TradingResult<TOut>.Failure(Error);
     }
 
@@ -141,8 +141,8 @@ public readonly struct TradingResult<T>
 
     public override string ToString()
     {
-        return IsSuccess 
-            ? $"Success: {Value}" 
+        return IsSuccess
+            ? $"Success: {Value}"
             : $"Failure: {Error}";
     }
 }
@@ -204,8 +204,8 @@ public readonly struct TradingResult
     /// </summary>
     public TradingResult<T> Map<T>(Func<T> valueFactory)
     {
-        return IsSuccess 
-            ? TradingResult<T>.Success(valueFactory()) 
+        return IsSuccess
+            ? TradingResult<T>.Success(valueFactory())
             : TradingResult<T>.Failure(Error);
     }
 
@@ -292,7 +292,7 @@ public record TradingError
         get
         {
             if (Exception == null) return Message;
-            
+
             var messages = new List<string> { Message };
             var ex = Exception;
             while (ex != null)
@@ -372,7 +372,7 @@ public class TradingOperationException : Exception
     /// </summary>
     public TradingError TradingError { get; }
 
-    public TradingOperationException(TradingError tradingError) 
+    public TradingOperationException(TradingError tradingError)
         : base(tradingError.FullMessage, tradingError.Exception)
     {
         TradingError = tradingError;

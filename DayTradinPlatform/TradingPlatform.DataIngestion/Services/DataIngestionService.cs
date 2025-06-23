@@ -52,12 +52,12 @@ namespace TradingPlatform.DataIngestion.Services
         {
             var cacheKey = $"historical_{symbol}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}";
             var cachedData = await _cacheService.GetAsync<List<DailyData>>(cacheKey);
-            
+
             if (cachedData != null)
             {
                 return cachedData;
             }
-            
+
             // Try AlphaVantage first
             try
             {
@@ -74,15 +74,15 @@ namespace TradingPlatform.DataIngestion.Services
             {
                 _logger.LogError($"Error fetching historical data from AlphaVantage for {symbol}", ex);
             }
-            
+
             // Fallback to Finnhub
             try
             {
                 // Finnhub doesn't have a direct historical data method in the interface
                 // Use candle data for historical information
                 var candleData = await _finnhubProvider.GetCandleDataAsync(symbol, "D", startDate, endDate);
-                var data = candleData != null ? new List<DailyData> { new DailyData 
-                { 
+                var data = candleData != null ? new List<DailyData> { new DailyData
+                {
                     Symbol = symbol,
                     Date = endDate,
                     Open = candleData.Open,
@@ -102,7 +102,7 @@ namespace TradingPlatform.DataIngestion.Services
             {
                 _logger.LogError($"Error fetching historical data from Finnhub for {symbol}", ex);
             }
-            
+
             return new List<DailyData>();
         }
 
@@ -120,7 +120,7 @@ namespace TradingPlatform.DataIngestion.Services
                     _logger.LogError($"AlphaVantage stream error for {symbol}", ex);
                     return Observable.Empty<MarketData>();
                 });
-                
+
             var finnhubStream = Observable.Create<MarketData>(async observer =>
             {
                 while (true)
@@ -140,7 +140,7 @@ namespace TradingPlatform.DataIngestion.Services
                     }
                 }
             });
-            
+
             // Merge both streams and return the most recent data
             return alphaVantageStream.Merge(finnhubStream)
                 .DistinctUntilChanged(x => x.Price);
@@ -151,18 +151,18 @@ namespace TradingPlatform.DataIngestion.Services
             // Check cache first
             var cacheKey = $"marketdata_{symbol}";
             var cachedData = await _cacheService.GetAsync<MarketData>(cacheKey);
-            
+
             if (cachedData != null && cachedData.Timestamp > DateTime.UtcNow.AddMinutes(-_config.Cache.QuoteCacheMinutes))
             {
                 return cachedData;
             }
-            
+
             // Use aggregator for intelligent data retrieval
             if (_aggregator != null)
             {
                 return await _aggregator.GetMarketDataAsync(symbol);
             }
-            
+
             // Fallback to direct provider calls if aggregator is not available
             try
             {
@@ -177,7 +177,7 @@ namespace TradingPlatform.DataIngestion.Services
             {
                 _logger.LogError($"Error fetching data from Finnhub for {symbol}", ex);
             }
-            
+
             try
             {
                 var data = await _alphaVantageProvider.GetGlobalQuoteAsync(symbol);
@@ -191,7 +191,7 @@ namespace TradingPlatform.DataIngestion.Services
             {
                 _logger.LogError($"Error fetching data from AlphaVantage for {symbol}", ex);
             }
-            
+
             return null;
         }
 
@@ -201,10 +201,10 @@ namespace TradingPlatform.DataIngestion.Services
             {
                 return await _aggregator.GetBatchMarketDataAsync(symbols);
             }
-            
+
             // Fallback implementation if aggregator is not available
             var results = new List<MarketData>();
-            
+
             foreach (var symbol in symbols)
             {
                 try
@@ -220,7 +220,7 @@ namespace TradingPlatform.DataIngestion.Services
                     _logger.LogError($"Error fetching data for {symbol}", ex);
                 }
             }
-            
+
             return results;
         }
     }

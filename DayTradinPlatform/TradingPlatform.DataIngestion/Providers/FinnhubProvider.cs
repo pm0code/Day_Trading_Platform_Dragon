@@ -22,7 +22,7 @@ namespace TradingPlatform.DataIngestion.Providers
         private readonly IMemoryCache _cache;
         private readonly IRateLimiter _rateLimiter;
         private readonly ApiConfiguration _config;
-        
+
         public string ProviderName => "Finnhub";
 
         public FinnhubProvider(ITradingLogger logger, IMemoryCache cache,
@@ -154,7 +154,8 @@ namespace TradingPlatform.DataIngestion.Providers
 
                 var marketData = new MarketData(_logger)
                 {
-                    Symbol = symbol, Price = jsonResponse.Close.Last(),
+                    Symbol = symbol,
+                    Price = jsonResponse.Close.Last(),
                     Open = jsonResponse.Open.Last(),
                     High = jsonResponse.High.Last(),
                     Low = jsonResponse.Low.Last(),
@@ -443,41 +444,41 @@ namespace TradingPlatform.DataIngestion.Providers
 
             return isWeekday && isMarketHours;
         }
-        
+
         // ========== IFinnhubProvider SPECIFIC METHODS ==========
-        
+
         public async Task<CompanyProfile> GetCompanyProfileAsync(string symbol)
         {
             TradingLogOrchestrator.Instance.LogInfo($"Fetching company profile for {symbol}");
-            
+
             string cacheKey = $"finnhub_{symbol}_profile";
             if (_cache.TryGetValue(cacheKey, out CompanyProfile cachedProfile))
             {
                 return cachedProfile;
             }
-            
+
             await _rateLimiter.WaitForPermitAsync();
-            
+
             try
             {
                 var request = new RestRequest("/stock/profile2")
                     .AddParameter("symbol", symbol)
                     .AddParameter("token", _config.Finnhub.ApiKey);
-                    
+
                 RestResponse response = await _client.ExecuteAsync(request);
-                
+
                 if (!response.IsSuccessful || string.IsNullOrWhiteSpace(response.Content))
                 {
                     return new CompanyProfile { Symbol = symbol };
                 }
-                
+
                 var profile = JsonSerializer.Deserialize<CompanyProfile>(response.Content);
                 if (profile != null)
                 {
                     profile.Symbol = symbol;
                     _cache.Set(cacheKey, profile, TimeSpan.FromHours(24));
                 }
-                
+
                 return profile ?? new CompanyProfile { Symbol = symbol };
             }
             catch (Exception ex)
@@ -486,39 +487,39 @@ namespace TradingPlatform.DataIngestion.Providers
                 return new CompanyProfile { Symbol = symbol };
             }
         }
-        
+
         public async Task<CompanyFinancials> GetCompanyFinancialsAsync(string symbol)
         {
             TradingLogOrchestrator.Instance.LogInfo($"Fetching company financials for {symbol}");
-            
+
             string cacheKey = $"finnhub_{symbol}_financials";
             if (_cache.TryGetValue(cacheKey, out CompanyFinancials cachedFinancials))
             {
                 return cachedFinancials;
             }
-            
+
             await _rateLimiter.WaitForPermitAsync();
-            
+
             try
             {
                 var request = new RestRequest("/stock/financials-reported")
                     .AddParameter("symbol", symbol)
                     .AddParameter("token", _config.Finnhub.ApiKey);
-                    
+
                 RestResponse response = await _client.ExecuteAsync(request);
-                
+
                 if (!response.IsSuccessful || string.IsNullOrWhiteSpace(response.Content))
                 {
                     return new CompanyFinancials { Symbol = symbol };
                 }
-                
+
                 var financials = JsonSerializer.Deserialize<CompanyFinancials>(response.Content);
                 if (financials != null)
                 {
                     financials.Symbol = symbol;
                     _cache.Set(cacheKey, financials, TimeSpan.FromHours(24));
                 }
-                
+
                 return financials ?? new CompanyFinancials { Symbol = symbol };
             }
             catch (Exception ex)
@@ -527,19 +528,19 @@ namespace TradingPlatform.DataIngestion.Providers
                 return new CompanyFinancials { Symbol = symbol };
             }
         }
-        
+
         public async Task<List<NewsItem>> GetCompanyNewsAsync(string symbol, DateTime from, DateTime to)
         {
             TradingLogOrchestrator.Instance.LogInfo($"Fetching company news for {symbol} from {from:yyyy-MM-dd} to {to:yyyy-MM-dd}");
-            
+
             string cacheKey = $"finnhub_{symbol}_company_news_{from:yyyyMMdd}_{to:yyyyMMdd}";
             if (_cache.TryGetValue(cacheKey, out List<NewsItem> cachedNews))
             {
                 return cachedNews;
             }
-            
+
             await _rateLimiter.WaitForPermitAsync();
-            
+
             try
             {
                 var request = new RestRequest("/company-news")
@@ -547,22 +548,22 @@ namespace TradingPlatform.DataIngestion.Providers
                     .AddParameter("from", from.ToString("yyyy-MM-dd"))
                     .AddParameter("to", to.ToString("yyyy-MM-dd"))
                     .AddParameter("token", _config.Finnhub.ApiKey);
-                    
+
                 RestResponse response = await _client.ExecuteAsync(request);
-                
+
                 if (!response.IsSuccessful || string.IsNullOrWhiteSpace(response.Content))
                 {
                     TradingLogOrchestrator.Instance.LogWarning($"Failed to get company news: {response.ErrorMessage}");
                     return new List<NewsItem>();
                 }
-                
+
                 var newsResponse = JsonSerializer.Deserialize<List<FinnhubNewsItem>>(response.Content);
                 var newsItems = newsResponse?.Select(MapToNewsItem).ToList() ?? new List<NewsItem>();
-                
+
                 // Cache for 30 minutes
                 _cache.Set(cacheKey, newsItems, TimeSpan.FromMinutes(30));
                 TradingLogOrchestrator.Instance.LogInfo($"Retrieved {newsItems.Count} company news items for {symbol}");
-                
+
                 return newsItems;
             }
             catch (Exception ex)
@@ -571,19 +572,19 @@ namespace TradingPlatform.DataIngestion.Providers
                 return new List<NewsItem>();
             }
         }
-        
+
         public async Task<Dictionary<string, decimal>> GetTechnicalIndicatorsAsync(string symbol, string indicator)
         {
             TradingLogOrchestrator.Instance.LogInfo($"Fetching technical indicator {indicator} for {symbol}");
-            
+
             string cacheKey = $"finnhub_{symbol}_indicator_{indicator}";
             if (_cache.TryGetValue(cacheKey, out Dictionary<string, decimal> cachedIndicators))
             {
                 return cachedIndicators;
             }
-            
+
             await _rateLimiter.WaitForPermitAsync();
-            
+
             try
             {
                 var request = new RestRequest("/indicator")
@@ -593,17 +594,17 @@ namespace TradingPlatform.DataIngestion.Providers
                     .AddParameter("from", ((DateTimeOffset)DateTime.UtcNow.AddDays(-30)).ToUnixTimeSeconds())
                     .AddParameter("to", ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds())
                     .AddParameter("token", _config.Finnhub.ApiKey);
-                    
+
                 RestResponse response = await _client.ExecuteAsync(request);
-                
+
                 if (!response.IsSuccessful || string.IsNullOrWhiteSpace(response.Content))
                 {
                     return new Dictionary<string, decimal>();
                 }
-                
+
                 // TODO: Implement proper JSON parsing for technical indicators
                 var indicators = new Dictionary<string, decimal>();
-                
+
                 _cache.Set(cacheKey, indicators, TimeSpan.FromMinutes(15));
                 return indicators;
             }
@@ -613,16 +614,16 @@ namespace TradingPlatform.DataIngestion.Providers
                 return new Dictionary<string, decimal>();
             }
         }
-        
+
         // ========== IMarketDataProvider INTERFACE METHODS ==========
-        
+
         public async Task<ApiResponse<bool>> TestConnectionAsync()
         {
             try
             {
                 // Test with market status endpoint
                 var isOpen = await IsMarketOpenAsync();
-                
+
                 return new ApiResponse<bool>
                 {
                     Success = true,
@@ -642,14 +643,14 @@ namespace TradingPlatform.DataIngestion.Providers
                 };
             }
         }
-        
+
         public async Task<ApiResponse<ProviderStatus>> GetProviderStatusAsync()
         {
             try
             {
                 var connectionTest = await TestConnectionAsync();
                 var remainingCalls = await GetRemainingCallsAsync();
-                
+
                 var status = new ProviderStatus
                 {
                     ProviderName = ProviderName,
@@ -662,7 +663,7 @@ namespace TradingPlatform.DataIngestion.Providers
                     LastSuccessfulCall = DateTime.UtcNow,
                     HealthStatus = connectionTest.Success ? "Healthy" : "Unhealthy"
                 };
-                
+
                 return new ApiResponse<ProviderStatus>
                 {
                     Success = true,
@@ -680,11 +681,11 @@ namespace TradingPlatform.DataIngestion.Providers
                 };
             }
         }
-        
+
         public async Task<MarketData?> GetRealTimeDataAsync(string symbol)
         {
             TradingLogOrchestrator.Instance.LogInfo($"Fetching real-time data for {symbol}");
-            
+
             string cacheKey = $"finnhub_{symbol}_realtime";
             if (_cache.TryGetValue(cacheKey, out MarketData cachedData))
             {
@@ -694,29 +695,29 @@ namespace TradingPlatform.DataIngestion.Providers
                     return cachedData;
                 }
             }
-            
+
             await _rateLimiter.WaitForPermitAsync();
-            
+
             try
             {
                 var request = new RestRequest("/quote")
                     .AddParameter("symbol", symbol)
                     .AddParameter("token", _config.Finnhub.ApiKey);
-                    
+
                 RestResponse response = await _client.ExecuteAsync(request);
-                
+
                 if (!response.IsSuccessful || string.IsNullOrWhiteSpace(response.Content))
                 {
                     TradingLogOrchestrator.Instance.LogWarning($"Failed to fetch real-time data for {symbol}: {response.StatusCode}");
                     return null;
                 }
-                
+
                 var quote = JsonSerializer.Deserialize<FinnhubQuoteResponse>(response.Content);
                 if (quote == null)
                 {
                     return null;
                 }
-                
+
                 var marketData = new MarketData(_logger)
                 {
                     Symbol = symbol,
@@ -730,10 +731,10 @@ namespace TradingPlatform.DataIngestion.Providers
                     Volume = 0, // Finnhub quote endpoint doesn't include volume
                     Timestamp = DateTime.UtcNow
                 };
-                
+
                 // Cache for 1 minute
                 _cache.Set(cacheKey, marketData, TimeSpan.FromMinutes(1));
-                
+
                 return marketData;
             }
             catch (Exception ex)

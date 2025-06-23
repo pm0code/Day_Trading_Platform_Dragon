@@ -28,7 +28,7 @@ public class RiskAlertService : IRiskAlertService
     public async Task CreateAlertAsync(RiskAlert alert)
     {
         _activeAlerts.TryAdd(alert.Id, alert);
-        
+
         await _messageBus.PublishAsync("risk.alert.created", new AlertEvent
         {
             AlertType = alert.Type.ToString(),
@@ -51,14 +51,14 @@ public class RiskAlertService : IRiskAlertService
     {
         if (_activeAlerts.TryGetValue(alertId, out var alert))
         {
-            var resolvedAlert = alert with 
-            { 
-                IsResolved = true, 
-                ResolvedAt = DateTime.UtcNow 
+            var resolvedAlert = alert with
+            {
+                IsResolved = true,
+                ResolvedAt = DateTime.UtcNow
             };
-            
+
             _activeAlerts.TryUpdate(alertId, resolvedAlert, alert);
-            
+
             await _messageBus.PublishAsync("risk.alert.resolved", new AlertEvent
             {
                 AlertType = alert.Type.ToString(),
@@ -75,7 +75,7 @@ public class RiskAlertService : IRiskAlertService
     public async Task<bool> CheckDrawdownLimitAsync(decimal currentDrawdown)
     {
         var maxDrawdownLimit = 25000m; // TODO: Get from risk limits
-        
+
         if (currentDrawdown > maxDrawdownLimit * 0.8m) // 80% threshold
         {
             var alert = new RiskAlert(
@@ -86,11 +86,11 @@ public class RiskAlertService : IRiskAlertService
                 Severity: currentDrawdown > maxDrawdownLimit ? RiskLevel.Critical : RiskLevel.High,
                 CreatedAt: DateTime.UtcNow
             );
-            
+
             await CreateAlertAsync(alert);
             return currentDrawdown <= maxDrawdownLimit;
         }
-        
+
         return true;
     }
 
@@ -98,7 +98,7 @@ public class RiskAlertService : IRiskAlertService
     {
         var maxPositionSize = 100000m; // TODO: Get from risk limits
         var estimatedValue = quantity * 100m; // Rough estimate, should use current price
-        
+
         if (estimatedValue > maxPositionSize * 0.9m) // 90% threshold
         {
             var alert = new RiskAlert(
@@ -109,18 +109,18 @@ public class RiskAlertService : IRiskAlertService
                 Severity: estimatedValue > maxPositionSize ? RiskLevel.Critical : RiskLevel.Medium,
                 CreatedAt: DateTime.UtcNow
             );
-            
+
             await CreateAlertAsync(alert);
             return estimatedValue <= maxPositionSize;
         }
-        
+
         return true;
     }
 
     public async Task<bool> CheckDailyLossLimitAsync(decimal currentLoss)
     {
         var maxDailyLoss = 10000m; // TODO: Get from risk limits
-        
+
         if (currentLoss > maxDailyLoss * 0.8m) // 80% threshold
         {
             var alert = new RiskAlert(
@@ -131,11 +131,11 @@ public class RiskAlertService : IRiskAlertService
                 Severity: currentLoss > maxDailyLoss ? RiskLevel.Critical : RiskLevel.High,
                 CreatedAt: DateTime.UtcNow
             );
-            
+
             await CreateAlertAsync(alert);
             return currentLoss <= maxDailyLoss;
         }
-        
+
         return true;
     }
 
@@ -153,8 +153,8 @@ public class RiskAlertService : IRiskAlertService
                 RequiresAcknowledgment = true
             });
 
-            TradingLogOrchestrator.Instance.LogError($"URGENT RISK ALERT: {alert.Type} for {alert.Symbol} - {alert.Message}", 
-                userImpact: "Trading restrictions may apply", 
+            TradingLogOrchestrator.Instance.LogError($"URGENT RISK ALERT: {alert.Type} for {alert.Symbol} - {alert.Message}",
+                userImpact: "Trading restrictions may apply",
                 troubleshootingHints: "Review risk alerts and take immediate action");
         }
         catch (Exception ex)

@@ -22,7 +22,7 @@ public class ProcessManager : IProcessManager
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _managedProcesses = new Dictionary<string, Process>();
         _processConfigurations = new Dictionary<string, ProcessConfiguration>();
-        
+
         TradingLogOrchestrator.Instance.LogInfo("ProcessManager initialized for Windows optimization");
     }
 
@@ -37,7 +37,7 @@ public class ProcessManager : IProcessManager
             {
                 if (_managedProcesses.ContainsKey(processName) && !_managedProcesses[processName].HasExited)
                 {
-                    TradingLogOrchestrator.Instance.LogWarning($"Process {processName} is already running", 
+                    TradingLogOrchestrator.Instance.LogWarning($"Process {processName} is already running",
                         impact: "Start request ignored",
                         recommendedAction: "Check process status before starting",
                         additionalData: new { ProcessName = processName });
@@ -57,7 +57,7 @@ public class ProcessManager : IProcessManager
             var process = Process.Start(startInfo);
             if (process == null)
             {
-                TradingLogOrchestrator.Instance.LogError($"Failed to start process {processName}", 
+                TradingLogOrchestrator.Instance.LogError($"Failed to start process {processName}",
                     operationContext: "Process start",
                     additionalData: new { ProcessName = processName, Configuration = configuration });
                 return false;
@@ -72,7 +72,7 @@ public class ProcessManager : IProcessManager
                 _processConfigurations[processName] = configuration;
             }
 
-            TradingLogOrchestrator.Instance.LogInfo($"Started process {processName} with PID {process.Id}", 
+            TradingLogOrchestrator.Instance.LogInfo($"Started process {processName} with PID {process.Id}",
                 new { ProcessName = processName, ProcessId = process.Id, Configuration = configuration });
 
             return true;
@@ -331,10 +331,10 @@ public class ProcessManager : IProcessManager
     {
         return await Task.Run(() =>
         {
-            var tradingProcessNames = new[] 
-            { 
+            var tradingProcessNames = new[]
+            {
                 "TradingPlatform.Gateway",
-                "TradingPlatform.FixEngine", 
+                "TradingPlatform.FixEngine",
                 "TradingPlatform.MarketData",
                 "TradingPlatform.StrategyEngine",
                 "TradingPlatform.RiskManagement",
@@ -351,7 +351,7 @@ public class ProcessManager : IProcessManager
                 }
                 catch (Exception ex)
                 {
-                    TradingLogOrchestrator.Instance.LogWarning($"Could not get processes for {name}", 
+                    TradingLogOrchestrator.Instance.LogWarning($"Could not get processes for {name}",
                         impact: "Process monitoring incomplete",
                         recommendedAction: "Check process permissions",
                         additionalData: new { ProcessName = name, Error = ex.Message });
@@ -507,7 +507,7 @@ public class ProcessManager : IProcessManager
                 TradingLogOrchestrator.Instance.LogWarning($"Could not get metrics for {name}",
                     impact: "Incomplete performance monitoring",
                     additionalData: new { ProcessName = name, Error = ex.Message });
-                    
+
                 metrics[name] = new PerformanceMetrics
                 {
                     CpuUsagePercent = 100,

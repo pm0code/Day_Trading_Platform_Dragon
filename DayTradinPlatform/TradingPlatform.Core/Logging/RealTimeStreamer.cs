@@ -25,7 +25,7 @@ internal class RealTimeStreamer : IDisposable
     public RealTimeStreamer(StreamingConfiguration config)
     {
         _config = config;
-        
+
         if (_config.EnableWebSocketStreaming)
         {
             _streamTimer = new Timer(ProcessStreamBuffer, null, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));
@@ -42,7 +42,7 @@ internal class RealTimeStreamer : IDisposable
             _httpListener = new HttpListener();
             _httpListener.Prefixes.Add($"http://localhost:{_config.StreamingPort}/logs/");
             _httpListener.Start();
-            
+
             Task.Run(AcceptWebSocketConnections);
             Console.WriteLine($"Real-time log streaming started on port {_config.StreamingPort}");
         }
@@ -58,7 +58,7 @@ internal class RealTimeStreamer : IDisposable
             return;
 
         _streamBuffer.Enqueue(entry);
-        
+
         // Limit buffer size
         while (_streamBuffer.Count > _config.StreamingBufferSize)
         {
@@ -73,17 +73,17 @@ internal class RealTimeStreamer : IDisposable
             try
             {
                 var context = await _httpListener.GetContextAsync();
-                
+
                 if (context.Request.IsWebSocketRequest)
                 {
                     var webSocketContext = await context.AcceptWebSocketAsync(null);
                     var clientId = Guid.NewGuid().ToString();
-                    
+
                     _connectedClients.TryAdd(clientId, webSocketContext.WebSocket);
-                    
+
                     // Handle client connection
                     _ = Task.Run(() => HandleWebSocketClient(clientId, webSocketContext.WebSocket));
-                    
+
                     Console.WriteLine($"WebSocket client connected: {clientId}");
                 }
                 else
@@ -102,19 +102,19 @@ internal class RealTimeStreamer : IDisposable
     private async Task HandleWebSocketClient(string clientId, WebSocket webSocket)
     {
         var buffer = new byte[4096];
-        
+
         try
         {
             while (webSocket.State == WebSocketState.Open && !_cancellationTokenSource.Token.IsCancellationRequested)
             {
                 var result = await webSocket.ReceiveAsync(buffer, _cancellationTokenSource.Token);
-                
+
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
                     await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client requested close", _cancellationTokenSource.Token);
                     break;
                 }
-                
+
                 // Handle client messages (e.g., filtering requests)
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
@@ -160,7 +160,7 @@ internal class RealTimeStreamer : IDisposable
 
         // Send to all connected clients
         var clientsToRemove = new List<string>();
-        
+
         foreach (var kvp in _connectedClients)
         {
             try
@@ -193,7 +193,7 @@ internal class RealTimeStreamer : IDisposable
         _streamTimer?.Dispose();
         _httpListener?.Stop();
         _httpListener?.Close();
-        
+
         // Close all WebSocket connections
         foreach (var kvp in _connectedClients)
         {
@@ -207,7 +207,7 @@ internal class RealTimeStreamer : IDisposable
             }
             catch { }
         }
-        
+
         _cancellationTokenSource.Dispose();
     }
 }

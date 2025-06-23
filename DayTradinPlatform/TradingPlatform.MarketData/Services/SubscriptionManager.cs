@@ -24,9 +24,9 @@ public class SubscriptionManager : ISubscriptionManager
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _activeSubscriptions = new ConcurrentDictionary<string, SubscriptionInfo>();
         _cancellationTokenSource = new CancellationTokenSource();
-        
+
         // Send subscription heartbeats every 30 seconds
-        _heartbeatTimer = new Timer(SendSubscriptionHeartbeat, null, 
+        _heartbeatTimer = new Timer(SendSubscriptionHeartbeat, null,
             TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
     }
 
@@ -35,7 +35,7 @@ public class SubscriptionManager : ISubscriptionManager
         try
         {
             var normalizedSymbol = symbol.ToUpperInvariant();
-            
+
             if (_activeSubscriptions.ContainsKey(normalizedSymbol))
             {
                 TradingLogOrchestrator.Instance.LogInfo($"Already subscribed to {symbol}, updating subscription time");
@@ -77,7 +77,7 @@ public class SubscriptionManager : ISubscriptionManager
         try
         {
             var normalizedSymbol = symbol.ToUpperInvariant();
-            
+
             if (!_activeSubscriptions.TryRemove(normalizedSymbol, out var subscriptionInfo))
             {
                 TradingLogOrchestrator.Instance.LogWarning($"Attempted to unsubscribe from {symbol} but no active subscription found");
@@ -124,10 +124,10 @@ public class SubscriptionManager : ISubscriptionManager
     public async Task<SubscriptionStats> GetSubscriptionStatsAsync()
     {
         await Task.CompletedTask;
-        
+
         var now = DateTime.UtcNow;
         var subscriptions = _activeSubscriptions.Values.ToArray();
-        
+
         var averageAge = subscriptions.Length > 0 ?
             TimeSpan.FromTicks((long)subscriptions.Average(s => (now - s.SubscribedAt).Ticks)) :
             TimeSpan.Zero;
@@ -179,7 +179,7 @@ public class SubscriptionManager : ISubscriptionManager
     public async Task UpdateSubscriptionActivityAsync(string symbol)
     {
         await Task.CompletedTask;
-        
+
         var normalizedSymbol = symbol.ToUpperInvariant();
         if (_activeSubscriptions.TryGetValue(normalizedSymbol, out var subscription))
         {
@@ -194,7 +194,7 @@ public class SubscriptionManager : ISubscriptionManager
     {
         var tasks = symbols.Select(SubscribeAsync);
         await Task.WhenAll(tasks);
-        
+
         TradingLogOrchestrator.Instance.LogInfo($"Batch subscribed to {symbols.Length} symbols: {string.Join(", ", symbols)}");
     }
 
@@ -205,7 +205,7 @@ public class SubscriptionManager : ISubscriptionManager
     {
         var tasks = symbols.Select(UnsubscribeAsync);
         await Task.WhenAll(tasks);
-        
+
         TradingLogOrchestrator.Instance.LogInfo($"Batch unsubscribed from {symbols.Length} symbols: {string.Join(", ", symbols)}");
     }
 
@@ -218,7 +218,7 @@ public class SubscriptionManager : ISubscriptionManager
                 return;
 
             var activeSymbols = _activeSubscriptions.Keys.ToArray();
-            
+
             var heartbeatEvent = new MarketDataSubscriptionEvent
             {
                 Symbols = activeSymbols,
@@ -227,7 +227,7 @@ public class SubscriptionManager : ISubscriptionManager
             };
 
             await _messageBus.PublishAsync("market-data-subscriptions", heartbeatEvent);
-            
+
             TradingLogOrchestrator.Instance.LogInfo($"Sent subscription heartbeat for {activeSymbols.Length} symbols");
         }
         catch (Exception ex)

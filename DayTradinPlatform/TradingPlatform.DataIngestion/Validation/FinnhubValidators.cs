@@ -46,7 +46,7 @@ namespace TradingPlatform.DataIngestion.Validation
                 .Must(HaveReasonableVolatility)
                 .WithMessage("Price relationships seem inconsistent")
                 .WithName("PriceConsistency");
-                
+
             RuleFor(x => x.PercentChange)
                 .InclusiveBetween(-50, 50)
                 .WithMessage("Extreme price change detected (>50%)")

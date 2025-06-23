@@ -28,9 +28,9 @@ public class HealthMonitor : IHealthMonitor
         _activeAlerts = new List<SystemAlert>();
 
         RegisterDefaultHealthChecks();
-        
+
         // Start monitoring timer (every 10 seconds)
-        _monitoringTimer = new Timer(async _ => await PerformHealthChecksAsync(), null, 
+        _monitoringTimer = new Timer(async _ => await PerformHealthChecksAsync(), null,
             TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
     }
 
@@ -84,9 +84,9 @@ public class HealthMonitor : IHealthMonitor
         {
             TradingLogOrchestrator.Instance.LogError("Error performing health check", ex);
             stopwatch.Stop();
-            
-            return new HealthStatus(false, "Error", stopwatch.Elapsed, serviceHealth, 
-                new[] { CreateAlert(AlertSeverity.Critical, "Health Check Failed", ex.Message) }, 
+
+            return new HealthStatus(false, "Error", stopwatch.Elapsed, serviceHealth,
+                new[] { CreateAlert(AlertSeverity.Critical, "Health Check Failed", ex.Message) },
                 DateTimeOffset.UtcNow);
         }
     }
@@ -102,11 +102,11 @@ public class HealthMonitor : IHealthMonitor
             foreach (var process in processes)
             {
                 var issues = new List<string>();
-                
+
                 // Check for potential issues
                 if (process.CpuUsagePercent > 80)
                     issues.Add($"High CPU usage: {process.CpuUsagePercent:F1}%");
-                
+
                 if (process.MemoryUsageMB > 2048) // 2GB threshold
                     issues.Add($"High memory usage: {process.MemoryUsageMB}MB");
 
@@ -154,9 +154,9 @@ public class HealthMonitor : IHealthMonitor
         {
             // Define critical systems for trading
             var criticalSystems = new[] { "Redis", "RiskManagement", "PaperTrading" };
-            
+
             var healthStatus = await GetHealthStatusAsync();
-            
+
             foreach (var system in criticalSystems)
             {
                 if (!healthStatus.ServiceHealth.GetValueOrDefault(system, false))
@@ -181,7 +181,7 @@ public class HealthMonitor : IHealthMonitor
         {
             // TODO: Implement actual trading health metrics collection
             // For MVP, return mock metrics with realistic values
-            
+
             var marketOpen = IsMarketOpen();
             var sessionStart = GetMarketSessionStart();
 
@@ -285,8 +285,8 @@ public class HealthMonitor : IHealthMonitor
                 sessionStatus,
                 $"Trading session status: {sessionStatus}",
                 TimeSpan.FromMilliseconds(1),
-                new Dictionary<string, object> 
-                { 
+                new Dictionary<string, object>
+                {
                     ["IsMarketOpen"] = isMarketOpen,
                     ["SessionStart"] = GetMarketSessionStart()
                 });
@@ -298,21 +298,21 @@ public class HealthMonitor : IHealthMonitor
         try
         {
             var healthStatus = await GetHealthStatusAsync();
-            
+
             // Check for new issues and create alerts
             foreach (var (serviceName, isHealthy) in healthStatus.ServiceHealth)
             {
                 if (!isHealthy)
                 {
-                    var existingAlert = _activeAlerts.FirstOrDefault(a => 
+                    var existingAlert = _activeAlerts.FirstOrDefault(a =>
                         a.Title.Contains(serviceName) && !a.IsAcknowledged);
-                    
+
                     if (existingAlert == null)
                     {
-                        var alert = CreateAlert(AlertSeverity.Error, 
-                            $"Service Unhealthy: {serviceName}", 
+                        var alert = CreateAlert(AlertSeverity.Error,
+                            $"Service Unhealthy: {serviceName}",
                             $"Service {serviceName} is reporting unhealthy status");
-                        
+
                         AddAlert(alert);
                     }
                 }
@@ -321,8 +321,8 @@ public class HealthMonitor : IHealthMonitor
             // Clean up resolved alerts (auto-acknowledge)
             lock (_alertLock)
             {
-                var resolvedAlerts = _activeAlerts.Where(a => 
-                    !a.IsAcknowledged && 
+                var resolvedAlerts = _activeAlerts.Where(a =>
+                    !a.IsAcknowledged &&
                     a.CreatedAt < DateTimeOffset.UtcNow.AddMinutes(-5) && // Older than 5 minutes
                     healthStatus.ServiceHealth.Values.All(h => h)) // All services healthy
                     .ToArray();
@@ -361,7 +361,7 @@ public class HealthMonitor : IHealthMonitor
         lock (_alertLock)
         {
             _activeAlerts.Add(alert);
-            
+
             // Keep only last 100 alerts
             if (_activeAlerts.Count > 100)
             {
@@ -379,9 +379,9 @@ public class HealthMonitor : IHealthMonitor
         var marketTime = TimeZoneInfo.ConvertTime(now, est);
 
         // Simple market hours check (9:30 AM - 4:00 PM EST, Monday-Friday)
-        return marketTime.DayOfWeek >= DayOfWeek.Monday && 
+        return marketTime.DayOfWeek >= DayOfWeek.Monday &&
                marketTime.DayOfWeek <= DayOfWeek.Friday &&
-               marketTime.TimeOfDay >= TimeSpan.FromHours(9.5) && 
+               marketTime.TimeOfDay >= TimeSpan.FromHours(9.5) &&
                marketTime.TimeOfDay <= TimeSpan.FromHours(16);
     }
 

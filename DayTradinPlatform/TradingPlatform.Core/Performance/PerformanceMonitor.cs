@@ -19,30 +19,30 @@ public sealed class PerformanceMonitor : IDisposable
     private readonly Timer _metricsCollectionTimer;
     private readonly Timer _alertCheckTimer;
     private readonly object _lock = new();
-    
+
     private long _totalOperations;
     private long _totalLatencyMicroseconds;
     private double _maxLatencyMicroseconds;
     private DateTime _monitoringStartTime;
     private bool _disposed;
-    
+
     // Performance thresholds for alerts
     private const double CRITICAL_LATENCY_MICROSECONDS = 100.0; // 100μs
     private const double WARNING_LATENCY_MICROSECONDS = 50.0;   // 50μs
     private const double MAX_CPU_USAGE_PERCENT = 80.0;          // 80%
     private const long MAX_MEMORY_USAGE_MB = 2048;              // 2GB
-    
+
     // Events for performance alerts
     public event EventHandler<PerformanceAlert>? PerformanceAlertTriggered;
     public event EventHandler<PerformanceMetrics>? MetricsUpdated;
-    
+
     private static readonly Lazy<PerformanceMonitor> _instance = new(() => new PerformanceMonitor());
     public static PerformanceMonitor Instance => _instance.Value;
-    
+
     private PerformanceMonitor()
     {
         _monitoringStartTime = DateTime.UtcNow;
-        
+
         try
         {
             // Initialize performance counters (Windows-specific)
@@ -56,18 +56,18 @@ public sealed class PerformanceMonitor : IDisposable
         {
             // Performance counters may not be available in all environments
         }
-        
+
         // Collect metrics every second
-        _metricsCollectionTimer = new Timer(CollectMetrics, null, 
+        _metricsCollectionTimer = new Timer(CollectMetrics, null,
             TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
-        
+
         // Check for alerts every 100ms for near real-time monitoring
         _alertCheckTimer = new Timer(CheckAlerts, null,
             TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));
-        
+
         InitializeDefaultTrackers();
     }
-    
+
     /// <summary>
     /// Measures execution latency for a specific operation
     /// </summary>
@@ -75,7 +75,7 @@ public sealed class PerformanceMonitor : IDisposable
     {
         return new LatencyMeasurement(this, operationName);
     }
-    
+
     /// <summary>
     /// Records a completed operation with its latency
     /// </summary>
@@ -84,7 +84,7 @@ public sealed class PerformanceMonitor : IDisposable
         // Update global counters
         Interlocked.Increment(ref _totalOperations);
         Interlocked.Add(ref _totalLatencyMicroseconds, (long)latencyMicroseconds);
-        
+
         // Update max latency
         lock (_lock)
         {
@@ -93,24 +93,24 @@ public sealed class PerformanceMonitor : IDisposable
                 _maxLatencyMicroseconds = latencyMicroseconds;
             }
         }
-        
+
         // Update operation-specific tracker
         var tracker = _latencyTrackers.GetOrAdd(operationName, _ => new LatencyTracker());
         tracker.RecordLatency(latencyMicroseconds);
-        
+
         // Check for latency violations
         if (latencyMicroseconds > CRITICAL_LATENCY_MICROSECONDS)
         {
-            TriggerAlert(AlertSeverity.Critical, 
+            TriggerAlert(AlertSeverity.Critical,
                 $"Critical latency violation: {operationName} took {latencyMicroseconds:F2}μs");
         }
         else if (latencyMicroseconds > WARNING_LATENCY_MICROSECONDS)
         {
-            TriggerAlert(AlertSeverity.Warning, 
+            TriggerAlert(AlertSeverity.Warning,
                 $"Latency warning: {operationName} took {latencyMicroseconds:F2}μs");
         }
     }
-    
+
     /// <summary>
     /// Records throughput for a specific operation
     /// </summary>
@@ -119,7 +119,7 @@ public sealed class PerformanceMonitor : IDisposable
         var tracker = _throughputTrackers.GetOrAdd(operationName, _ => new ThroughputTracker());
         tracker.RecordOperations(operationCount);
     }
-    
+
     /// <summary>
     /// Gets comprehensive performance metrics
     /// </summary>
@@ -128,7 +128,7 @@ public sealed class PerformanceMonitor : IDisposable
         var uptime = DateTime.UtcNow - _monitoringStartTime;
         var totalOps = Interlocked.Read(ref _totalOperations);
         var totalLatency = Interlocked.Read(ref _totalLatencyMicroseconds);
-        
+
         return new PerformanceMetrics
         {
             Uptime = uptime,
@@ -142,7 +142,7 @@ public sealed class PerformanceMonitor : IDisposable
             Timestamp = DateTime.UtcNow
         };
     }
-    
+
     /// <summary>
     /// Gets latency percentiles for a specific operation
     /// </summary>
@@ -152,10 +152,10 @@ public sealed class PerformanceMonitor : IDisposable
         {
             return tracker.GetPercentiles();
         }
-        
+
         return new LatencyPercentiles();
     }
-    
+
     /// <summary>
     /// Resets all performance counters
     /// </summary>
@@ -163,38 +163,38 @@ public sealed class PerformanceMonitor : IDisposable
     {
         Interlocked.Exchange(ref _totalOperations, 0);
         Interlocked.Exchange(ref _totalLatencyMicroseconds, 0);
-        
+
         lock (_lock)
         {
             _maxLatencyMicroseconds = 0;
             _monitoringStartTime = DateTime.UtcNow;
         }
-        
+
         foreach (var tracker in _latencyTrackers.Values)
         {
             tracker.Reset();
         }
-        
+
         foreach (var tracker in _throughputTrackers.Values)
         {
             tracker.Reset();
         }
     }
-    
+
     /// <summary>
     /// Enables or disables high-frequency monitoring mode
     /// </summary>
     public void SetHighFrequencyMode(bool enabled)
     {
         var interval = enabled ? TimeSpan.FromMilliseconds(10) : TimeSpan.FromMilliseconds(100);
-        
+
         _alertCheckTimer?.Change(interval, interval);
-        
+
         // Adjust collection frequency
         var collectionInterval = enabled ? TimeSpan.FromMilliseconds(500) : TimeSpan.FromSeconds(1);
         _metricsCollectionTimer?.Change(collectionInterval, collectionInterval);
     }
-    
+
     /// <summary>
     /// Gets system resource usage metrics
     /// </summary>
@@ -210,14 +210,14 @@ public sealed class PerformanceMonitor : IDisposable
             Gen2Collections = GC.CollectionCount(2),
             ThreadCount = Process.GetCurrentProcess().Threads.Count
         };
-        
+
         try
         {
             if (_cpuCounter != null)
             {
                 metrics.CpuUsagePercent = _cpuCounter.NextValue();
             }
-            
+
             if (_memoryCounter != null)
             {
                 metrics.AvailableMemoryMB = _memoryCounter.NextValue();
@@ -227,17 +227,17 @@ public sealed class PerformanceMonitor : IDisposable
         {
             // Performance counters may fail in some environments
         }
-        
+
         return metrics;
     }
-    
+
     private void InitializeDefaultTrackers()
     {
         // Pre-create trackers for common trading operations
         var commonOperations = new[]
         {
             "OrderExecution",
-            "MarketDataProcessing", 
+            "MarketDataProcessing",
             "FixMessageParsing",
             "FixMessageGeneration",
             "OrderValidation",
@@ -245,31 +245,31 @@ public sealed class PerformanceMonitor : IDisposable
             "DatabaseWrite",
             "DatabaseRead"
         };
-        
+
         foreach (var operation in commonOperations)
         {
             _latencyTrackers.TryAdd(operation, new LatencyTracker());
             _throughputTrackers.TryAdd(operation, new ThroughputTracker());
         }
     }
-    
+
     private void CollectMetrics(object? state)
     {
         try
         {
             var metrics = GetMetrics();
             MetricsUpdated?.Invoke(this, metrics);
-            
+
             // Check system resource thresholds
             if (metrics.SystemMetrics.CpuUsagePercent > MAX_CPU_USAGE_PERCENT)
             {
-                TriggerAlert(AlertSeverity.Warning, 
+                TriggerAlert(AlertSeverity.Warning,
                     $"High CPU usage: {metrics.SystemMetrics.CpuUsagePercent:F1}%");
             }
-            
+
             if (metrics.SystemMetrics.WorkingSetMB > MAX_MEMORY_USAGE_MB)
             {
-                TriggerAlert(AlertSeverity.Warning, 
+                TriggerAlert(AlertSeverity.Warning,
                     $"High memory usage: {metrics.SystemMetrics.WorkingSetMB:F0} MB");
             }
         }
@@ -278,19 +278,19 @@ public sealed class PerformanceMonitor : IDisposable
             // Ignore collection failures to prevent monitoring from affecting performance
         }
     }
-    
+
     private void CheckAlerts(object? state)
     {
         try
         {
             // This method is called frequently, so it should be very lightweight
             // More intensive alert checking is done in CollectMetrics
-            
+
             // Check for excessive GC activity
             var gen2Collections = GC.CollectionCount(2);
             if (gen2Collections > 10) // Threshold for Gen2 collections
             {
-                TriggerAlert(AlertSeverity.Warning, 
+                TriggerAlert(AlertSeverity.Warning,
                     $"Excessive Gen2 GC activity: {gen2Collections} collections");
             }
         }
@@ -299,7 +299,7 @@ public sealed class PerformanceMonitor : IDisposable
             // Ignore alert check failures
         }
     }
-    
+
     private void TriggerAlert(AlertSeverity severity, string message)
     {
         var alert = new PerformanceAlert
@@ -309,19 +309,19 @@ public sealed class PerformanceMonitor : IDisposable
             Timestamp = DateTime.UtcNow,
             Metrics = GetMetrics()
         };
-        
+
         PerformanceAlertTriggered?.Invoke(this, alert);
     }
-    
+
     public void Dispose()
     {
         if (_disposed) return;
-        
+
         _metricsCollectionTimer?.Dispose();
         _alertCheckTimer?.Dispose();
         _cpuCounter?.Dispose();
         _memoryCounter?.Dispose();
-        
+
         _disposed = true;
     }
 }
@@ -334,14 +334,14 @@ public readonly struct LatencyMeasurement : IDisposable
     private readonly PerformanceMonitor _monitor;
     private readonly string _operationName;
     private readonly long _startTicks;
-    
+
     internal LatencyMeasurement(PerformanceMonitor monitor, string operationName)
     {
         _monitor = monitor;
         _operationName = operationName;
         _startTicks = Stopwatch.GetTimestamp();
     }
-    
+
     public void Dispose()
     {
         var elapsedTicks = Stopwatch.GetTimestamp() - _startTicks;
@@ -361,30 +361,30 @@ public sealed class LatencyTracker
     private long _operationCount;
     private double _minLatency = double.MaxValue;
     private double _maxLatency;
-    
+
     public void RecordLatency(double latencyMicroseconds)
     {
         _recentLatencies.Enqueue(latencyMicroseconds);
-        
+
         // Keep only recent measurements for percentile calculations
         while (_recentLatencies.Count > 10000)
         {
             _recentLatencies.TryDequeue(out _);
         }
-        
+
         lock (_lock)
         {
             _totalLatency += latencyMicroseconds;
             _operationCount++;
-            
+
             if (latencyMicroseconds < _minLatency)
                 _minLatency = latencyMicroseconds;
-            
+
             if (latencyMicroseconds > _maxLatency)
                 _maxLatency = latencyMicroseconds;
         }
     }
-    
+
     public LatencyMetrics GetMetrics()
     {
         lock (_lock)
@@ -398,7 +398,7 @@ public sealed class LatencyTracker
             };
         }
     }
-    
+
     public LatencyPercentiles GetPercentiles()
     {
         var latencies = _recentLatencies.ToArray();
@@ -406,9 +406,9 @@ public sealed class LatencyTracker
         {
             return new LatencyPercentiles();
         }
-        
+
         Array.Sort(latencies);
-        
+
         return new LatencyPercentiles
         {
             P50 = GetPercentile(latencies, 50),
@@ -417,28 +417,28 @@ public sealed class LatencyTracker
             P999 = GetPercentile(latencies, 99.9)
         };
     }
-    
+
     private static double GetPercentile(double[] sortedArray, double percentile)
     {
         if (sortedArray.Length == 0) return 0;
-        
+
         var index = (percentile / 100.0) * (sortedArray.Length - 1);
         var lower = (int)Math.Floor(index);
         var upper = (int)Math.Ceiling(index);
-        
+
         if (lower == upper)
         {
             return sortedArray[lower];
         }
-        
+
         var weight = index - lower;
         return sortedArray[lower] * (1 - weight) + sortedArray[upper] * weight;
     }
-    
+
     public void Reset()
     {
         while (_recentLatencies.TryDequeue(out _)) { }
-        
+
         lock (_lock)
         {
             _totalLatency = 0;
@@ -456,12 +456,12 @@ public sealed class ThroughputTracker
 {
     private readonly ConcurrentQueue<(DateTime Timestamp, int Count)> _recentOperations = new();
     private long _totalOperations;
-    
+
     public void RecordOperations(int count)
     {
         _recentOperations.Enqueue((DateTime.UtcNow, count));
         Interlocked.Add(ref _totalOperations, count);
-        
+
         // Keep only last 60 seconds of data
         var cutoff = DateTime.UtcNow.AddSeconds(-60);
         while (_recentOperations.TryPeek(out var oldest) && oldest.Timestamp < cutoff)
@@ -469,22 +469,22 @@ public sealed class ThroughputTracker
             _recentOperations.TryDequeue(out _);
         }
     }
-    
+
     public ThroughputMetrics GetMetrics()
     {
         var recentOps = _recentOperations.ToArray();
         var totalRecent = recentOps.Sum(op => op.Count);
-        var timeSpan = recentOps.Length > 0 ? 
-            DateTime.UtcNow - recentOps[0].Timestamp : 
+        var timeSpan = recentOps.Length > 0 ?
+            DateTime.UtcNow - recentOps[0].Timestamp :
             TimeSpan.Zero;
-        
+
         return new ThroughputMetrics
         {
             TotalOperations = Interlocked.Read(ref _totalOperations),
             RecentOperationsPerSecond = timeSpan.TotalSeconds > 0 ? totalRecent / timeSpan.TotalSeconds : 0
         };
     }
-    
+
     public void Reset()
     {
         while (_recentOperations.TryDequeue(out _)) { }

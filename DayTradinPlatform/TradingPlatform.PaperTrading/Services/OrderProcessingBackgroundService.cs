@@ -157,11 +157,11 @@ public class OrderProcessingBackgroundService : BackgroundService
 
             // Update market data for active symbols
             var activeSymbols = GetActiveSymbols();
-            
+
             foreach (var symbol in activeSymbols)
             {
                 var currentPrice = await orderBookSimulator.GetCurrentPriceAsync(symbol);
-                
+
                 // Publish market data update
                 await messageBus.PublishAsync("marketdata.price.updated", new MarketDataEvent
                 {

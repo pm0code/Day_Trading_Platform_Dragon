@@ -19,85 +19,85 @@ public sealed class PerformanceStats
     /// <summary>
     /// Total number of method calls tracked
     /// </summary>
-    public long CallCount 
-    { 
-        get 
-        { 
-            lock (_lock) 
-            { 
-                return _callCount; 
-            } 
-        } 
-        set 
-        { 
-            lock (_lock) 
-            { 
-                _callCount = value; 
-            } 
-        } 
+    public long CallCount
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _callCount;
+            }
+        }
+        set
+        {
+            lock (_lock)
+            {
+                _callCount = value;
+            }
+        }
     }
 
     /// <summary>
     /// Total execution duration in nanoseconds
     /// </summary>
-    public double TotalDurationNs 
-    { 
-        get 
-        { 
-            lock (_lock) 
-            { 
-                return _totalDurationNs; 
-            } 
-        } 
-        set 
-        { 
-            lock (_lock) 
-            { 
-                _totalDurationNs = value; 
-            } 
-        } 
+    public double TotalDurationNs
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _totalDurationNs;
+            }
+        }
+        set
+        {
+            lock (_lock)
+            {
+                _totalDurationNs = value;
+            }
+        }
     }
 
     /// <summary>
     /// Minimum execution duration in nanoseconds
     /// </summary>
-    public double MinDurationNs 
-    { 
-        get 
-        { 
-            lock (_lock) 
-            { 
-                return _minDurationNs; 
-            } 
-        } 
-        set 
-        { 
-            lock (_lock) 
-            { 
-                _minDurationNs = value; 
-            } 
-        } 
+    public double MinDurationNs
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _minDurationNs;
+            }
+        }
+        set
+        {
+            lock (_lock)
+            {
+                _minDurationNs = value;
+            }
+        }
     }
 
     /// <summary>
     /// Maximum execution duration in nanoseconds
     /// </summary>
-    public double MaxDurationNs 
-    { 
-        get 
-        { 
-            lock (_lock) 
-            { 
-                return _maxDurationNs; 
-            } 
-        } 
-        set 
-        { 
-            lock (_lock) 
-            { 
-                _maxDurationNs = value; 
-            } 
-        } 
+    public double MaxDurationNs
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _maxDurationNs;
+            }
+        }
+        set
+        {
+            lock (_lock)
+            {
+                _maxDurationNs = value;
+            }
+        }
     }
 
     /// <summary>
@@ -123,10 +123,10 @@ public sealed class PerformanceStats
         {
             _callCount++;
             _totalDurationNs += durationNs;
-            
+
             if (durationNs < _minDurationNs)
                 _minDurationNs = durationNs;
-                
+
             if (durationNs > _maxDurationNs)
                 _maxDurationNs = durationNs;
         }

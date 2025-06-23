@@ -25,7 +25,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
     private readonly object _webSocketLock = new();
     private readonly CancellationTokenSource _cancellationTokenSource;
 
-    public GatewayOrchestrator(IMessageBus messageBus, Core.Interfaces.ITradingLogger logger, 
+    public GatewayOrchestrator(IMessageBus messageBus, Core.Interfaces.ITradingLogger logger,
         ITradingOperationsLogger tradingLogger, IPerformanceLogger performanceLogger)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
@@ -50,12 +50,12 @@ public class GatewayOrchestrator : IGatewayOrchestrator
     public async Task<MarketData?> GetMarketDataAsync(string symbol)
     {
         var correlationId = _tradingLogger.GenerateCorrelationId();
-        
+
         using var performanceScope = _performanceLogger.MeasureOperation("GetMarketData", correlationId);
         using var tradingScope = _tradingLogger.BeginScope("GetMarketData", correlationId);
-        
+
         _tradingLogger.LogMethodEntry("GetMarketDataAsync", new { symbol });
-        
+
         try
         {
             // Request market data from MarketData service via Redis Streams
@@ -74,7 +74,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
             });
 
             await _messageBus.PublishAsync("market-data-requests", request);
-            
+
             // TODO: Implement response handling with timeout
             // For MVP, return mock data
             var mockData = new MarketData(_tradingLogger)
@@ -85,7 +85,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
                 Timestamp = DateTime.UtcNow
             };
 
-            _tradingLogger.LogMarketDataReceived(symbol, mockData.Price, mockData.Volume, 
+            _tradingLogger.LogMarketDataReceived(symbol, mockData.Price, mockData.Volume,
                 mockData.Timestamp, TimeSpan.FromMilliseconds(5)); // Mock 5ms latency
 
             return mockData;
@@ -104,12 +104,12 @@ public class GatewayOrchestrator : IGatewayOrchestrator
     public async Task SubscribeToMarketDataAsync(string[] symbols)
     {
         var correlationId = _tradingLogger.GenerateCorrelationId();
-        
+
         using var performanceScope = _performanceLogger.MeasureOperation("SubscribeToMarketData", correlationId);
         using var tradingScope = _tradingLogger.BeginScope("SubscribeToMarketData", correlationId);
-        
+
         _tradingLogger.LogMethodEntry("SubscribeToMarketDataAsync", new { symbols, symbolCount = symbols.Length });
-        
+
         try
         {
             var subscribeEvent = new MarketDataSubscriptionEvent
@@ -128,7 +128,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
             });
 
             await _messageBus.PublishAsync("market-data-subscriptions", subscribeEvent);
-            
+
             _tradingLogger.LogPerformanceMetric("market_data.subscriptions", symbols.Length, "count", new Dictionary<string, object>
             {
                 ["symbols"] = string.Join(",", symbols),
@@ -183,7 +183,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
             await _messageBus.PublishAsync("orders", orderEvent);
 
             stopwatch.Stop();
-            
+
             // Log performance for order-to-wire latency tracking
             if (stopwatch.Elapsed.TotalMicroseconds > 100) // Target: <100μs
             {
@@ -258,9 +258,9 @@ public class GatewayOrchestrator : IGatewayOrchestrator
             // For MVP, return mock strategies
             return new[]
             {
-                new StrategyInfo("strategy-1", "Golden Rules Momentum", "Running", 
+                new StrategyInfo("strategy-1", "Golden Rules Momentum", "Running",
                     DateTimeOffset.UtcNow.AddHours(-2), 250.75m, 12),
-                new StrategyInfo("strategy-2", "Gap Reversal", "Stopped", 
+                new StrategyInfo("strategy-2", "Gap Reversal", "Stopped",
                     DateTimeOffset.UtcNow.AddHours(-1), -45.25m, 3)
             };
         }
@@ -348,7 +348,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
     public async Task<PerformanceMetrics> GetPerformanceMetricsAsync()
     {
         var latency = await _messageBus.GetLatencyAsync();
-        
+
         return new PerformanceMetrics(
             TimeSpan.FromMicroseconds(95), // Average order latency
             latency, // Market data latency
@@ -362,7 +362,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
     public async Task<LatencyMetrics> GetLatencyMetricsAsync()
     {
         var messageBusLatency = await _messageBus.GetLatencyAsync();
-        
+
         return new LatencyMetrics(
             TimeSpan.FromMicroseconds(85), // Order-to-wire
             messageBusLatency, // Market data processing
@@ -375,7 +375,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
     public async Task HandleWebSocketConnectionAsync(WebSocket webSocket)
     {
         var connectionId = Guid.NewGuid().ToString();
-        
+
         lock (_webSocketLock)
         {
             _activeWebSockets[connectionId] = webSocket;
@@ -386,11 +386,11 @@ public class GatewayOrchestrator : IGatewayOrchestrator
         try
         {
             var buffer = new byte[1024 * 4];
-            
+
             while (webSocket.State == WebSocketState.Open && !_cancellationTokenSource.Token.IsCancellationRequested)
             {
                 var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), _cancellationTokenSource.Token);
-                
+
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
                     var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
@@ -412,7 +412,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
             {
                 _activeWebSockets.Remove(connectionId);
             }
-            
+
             TradingLogOrchestrator.Instance.LogInfo($"WebSocket connection closed: {connectionId}");
         }
     }
@@ -420,7 +420,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
     public async Task<SystemHealth> GetSystemHealthAsync()
     {
         var isHealthy = await _messageBus.IsHealthyAsync();
-        
+
         return new SystemHealth(
             isHealthy,
             new[] { "Gateway", "MarketData", "StrategyEngine", "RiskManagement", "PaperTrading" },
@@ -443,7 +443,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
         try
         {
             // Subscribe to all relevant streams for real-time updates
-            await _messageBus.SubscribeAsync<MarketDataEvent>("market-data", "gateway-group", "gateway-consumer", 
+            await _messageBus.SubscribeAsync<MarketDataEvent>("market-data", "gateway-group", "gateway-consumer",
                 HandleMarketDataEvent, _cancellationTokenSource.Token);
         }
         catch (Exception ex)
@@ -471,7 +471,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
             {
                 if (webSocket.State == WebSocketState.Open)
                 {
-                    await webSocket.SendAsync(new ArraySegment<byte>(messageBytes), 
+                    await webSocket.SendAsync(new ArraySegment<byte>(messageBytes),
                         WebSocketMessageType.Text, true, _cancellationTokenSource.Token);
                 }
                 else

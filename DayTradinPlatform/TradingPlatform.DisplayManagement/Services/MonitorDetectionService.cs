@@ -14,22 +14,22 @@ public interface IMonitorDetectionService
     /// Gets all currently connected monitors
     /// </summary>
     Task<List<MonitorConfiguration>> GetConnectedMonitorsAsync();
-    
+
     /// <summary>
     /// Gets monitor selection recommendations based on GPU capabilities
     /// </summary>
     Task<MonitorSelectionRecommendation> GetMonitorRecommendationAsync();
-    
+
     /// <summary>
     /// Saves monitor configuration preferences
     /// </summary>
     Task SaveMonitorConfigurationAsync(MultiMonitorConfiguration configuration);
-    
+
     /// <summary>
     /// Loads saved monitor configuration
     /// </summary>
     Task<MultiMonitorConfiguration?> LoadMonitorConfigurationAsync();
-    
+
     /// <summary>
     /// Validates and optimizes a monitor configuration for trading
     /// </summary>
@@ -96,7 +96,7 @@ public class MonitorDetectionService : IMonitorDetectionService
     public async Task<List<MonitorConfiguration>> GetConnectedMonitorsAsync()
     {
         TradingLogOrchestrator.Instance.LogInfo("Detecting connected monitors for DRAGON trading platform");
-        
+
         var monitors = new List<MonitorConfiguration>();
         var monitorIndex = 0;
 
@@ -138,7 +138,7 @@ public class MonitorDetectionService : IMonitorDetectionService
         catch (Exception ex)
         {
             TradingLogOrchestrator.Instance.LogError("Failed to detect monitors", ex);
-            
+
             // Fallback: create a single default monitor configuration
             return new List<MonitorConfiguration>
             {
@@ -172,7 +172,7 @@ public class MonitorDetectionService : IMonitorDetectionService
         // Determine optimal monitor count for trading
         var recommendedCount = DetermineOptimalMonitorCount(connectedMonitors.Count, maxGpuSupported, gpuAssessment.OverallRating);
         var optimalResolution = DetermineOptimalResolution(gpuAssessment.OverallRating, recommendedCount);
-        
+
         var recommendation = new MonitorSelectionRecommendation
         {
             RecommendedMonitorCount = recommendedCount,
@@ -202,13 +202,13 @@ public class MonitorDetectionService : IMonitorDetectionService
                 Directory.CreateDirectory(configDirectory!);
             }
 
-            var json = System.Text.Json.JsonSerializer.Serialize(configuration, new System.Text.Json.JsonSerializerOptions 
-            { 
-                WriteIndented = true 
+            var json = System.Text.Json.JsonSerializer.Serialize(configuration, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true
             });
-            
+
             await File.WriteAllTextAsync(_configurationFilePath, json);
-            
+
             TradingLogOrchestrator.Instance.LogInfo($"Monitor configuration saved to {_configurationFilePath}");
         }
         catch (Exception ex)
@@ -233,7 +233,7 @@ public class MonitorDetectionService : IMonitorDetectionService
 
             var json = await File.ReadAllTextAsync(_configurationFilePath);
             var configuration = System.Text.Json.JsonSerializer.Deserialize<MultiMonitorConfiguration>(json);
-            
+
             TradingLogOrchestrator.Instance.LogInfo($"Monitor configuration loaded from {_configurationFilePath}");
             return configuration;
         }
@@ -254,7 +254,7 @@ public class MonitorDetectionService : IMonitorDetectionService
 
         // Add trading-specific validation and optimization
         AddTradingSpecificValidation(validation, configuration, recommendation);
-        
+
         return validation;
     }
 
@@ -392,7 +392,7 @@ public class MonitorDetectionService : IMonitorDetectionService
     {
         // Check for essential trading screen assignments
         var assignedScreens = configuration.ScreenAssignments.Keys.ToList();
-        
+
         if (!assignedScreens.Contains(TradingScreenType.PrimaryCharting))
         {
             validation.Warnings.Add("No primary charting screen assigned - critical for technical analysis");

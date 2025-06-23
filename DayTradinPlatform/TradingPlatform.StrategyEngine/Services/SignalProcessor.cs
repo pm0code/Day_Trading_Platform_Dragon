@@ -30,9 +30,9 @@ public class SignalProcessor : ISignalProcessor
         _gapStrategy = gapStrategy ?? throw new ArgumentNullException(nameof(gapStrategy));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _recentSignals = new ConcurrentDictionary<string, List<TradingSignal>>();
-        
+
         // Clean up old signals every 5 minutes
-        _cleanupTimer = new Timer(CleanupOldSignals, null, 
+        _cleanupTimer = new Timer(CleanupOldSignals, null,
             TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
     }
 
@@ -101,7 +101,7 @@ public class SignalProcessor : ISignalProcessor
 
             // Validate against risk parameters
             var riskAssessment = await ValidateSignalAsync(signal);
-            
+
             if (!riskAssessment.IsAcceptable)
             {
                 return new StrategyResult(false, "Signal rejected by risk management", "RISK_REJECTED");
@@ -113,7 +113,7 @@ public class SignalProcessor : ISignalProcessor
             TradingLogOrchestrator.Instance.LogInfo($"Manual signal processed successfully for {request.Symbol}");
 
             await Task.CompletedTask;
-            return new StrategyResult(true, "Manual signal processed successfully", 
+            return new StrategyResult(true, "Manual signal processed successfully",
                 null, new Dictionary<string, object> { ["SignalId"] = signal.Id });
         }
         catch (Exception ex)
@@ -126,9 +126,9 @@ public class SignalProcessor : ISignalProcessor
     public async Task<TradingSignal[]> GetRecentSignalsAsync(string strategyId)
     {
         await Task.CompletedTask;
-        
+
         var allSignals = _recentSignals.Values.SelectMany(signals => signals).ToArray();
-        
+
         if (!string.IsNullOrEmpty(strategyId))
         {
             return allSignals.Where(s => s.StrategyId == strategyId).ToArray();
@@ -143,27 +143,27 @@ public class SignalProcessor : ISignalProcessor
         {
             // Calculate position size based on signal
             var positionValue = signal.Price * signal.Quantity;
-            
+
             // Basic risk assessment logic
             var maxPositionSize = 10000.0m; // $10k max position
             var maxPortfolioRisk = 0.02m; // 2% max portfolio risk
-            
+
             // Calculate stop loss and take profit levels
             var stopLossPercent = 0.02m; // 2% stop loss
             var takeProfitPercent = 0.04m; // 4% take profit (2:1 risk/reward)
-            
-            var stopLoss = signal.SignalType == SignalType.Buy ? 
-                signal.Price * (1 - stopLossPercent) : 
+
+            var stopLoss = signal.SignalType == SignalType.Buy ?
+                signal.Price * (1 - stopLossPercent) :
                 signal.Price * (1 + stopLossPercent);
-                
-            var takeProfit = signal.SignalType == SignalType.Buy ? 
-                signal.Price * (1 + takeProfitPercent) : 
+
+            var takeProfit = signal.SignalType == SignalType.Buy ?
+                signal.Price * (1 + takeProfitPercent) :
                 signal.Price * (1 - takeProfitPercent);
 
             var riskReward = takeProfitPercent / stopLossPercent;
 
             // Validate position size
-            var isAcceptable = positionValue <= maxPositionSize && 
+            var isAcceptable = positionValue <= maxPositionSize &&
                               signal.Confidence >= 0.6m && // Minimum 60% confidence
                               riskReward >= 1.5m; // Minimum 1.5:1 risk/reward
 
@@ -198,11 +198,11 @@ public class SignalProcessor : ISignalProcessor
     public async Task<SignalStatistics> GetSignalStatisticsAsync(string? strategyId = null)
     {
         await Task.CompletedTask;
-        
+
         var signals = await GetRecentSignalsAsync(strategyId ?? string.Empty);
         var now = DateTimeOffset.UtcNow;
         var last24Hours = signals.Where(s => now - s.CreatedAt < TimeSpan.FromHours(24)).ToArray();
-        
+
         var buySignals = last24Hours.Count(s => s.SignalType == SignalType.Buy);
         var sellSignals = last24Hours.Count(s => s.SignalType == SignalType.Sell);
         var avgConfidence = last24Hours.Length > 0 ? last24Hours.Average(s => (double)s.Confidence) : 0;
@@ -224,7 +224,7 @@ public class SignalProcessor : ISignalProcessor
         {
             if (_recentSignals.TryGetValue(symbol, out var signals))
             {
-                var signalsToRemove = signals.Where(s => 
+                var signalsToRemove = signals.Where(s =>
                     string.IsNullOrEmpty(strategyId) || s.StrategyId == strategyId).ToArray();
 
                 foreach (var signal in signalsToRemove)
@@ -255,7 +255,7 @@ public class SignalProcessor : ISignalProcessor
         foreach (var group in signalGroups)
         {
             var symbolSignals = group.ToArray();
-            
+
             // If we have conflicting signals (buy and sell), choose highest confidence
             var buySignals = symbolSignals.Where(s => s.SignalType == SignalType.Buy).ToArray();
             var sellSignals = symbolSignals.Where(s => s.SignalType == SignalType.Sell).ToArray();
@@ -283,7 +283,7 @@ public class SignalProcessor : ISignalProcessor
 
     private void AddToRecentSignals(TradingSignal signal)
     {
-        _recentSignals.AddOrUpdate(signal.Symbol, 
+        _recentSignals.AddOrUpdate(signal.Symbol,
             new List<TradingSignal> { signal },
             (key, existing) =>
             {
@@ -305,7 +305,7 @@ public class SignalProcessor : ISignalProcessor
                 var signals = kvp.Value;
 
                 var oldSignals = signals.Where(s => s.CreatedAt < cutoffTime).ToArray();
-                
+
                 foreach (var oldSignal in oldSignals)
                 {
                     signals.Remove(oldSignal);

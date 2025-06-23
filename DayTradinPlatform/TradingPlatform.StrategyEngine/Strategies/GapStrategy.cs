@@ -27,7 +27,7 @@ public class GapStrategy : IGapStrategy
             TradingLogOrchestrator.Instance.LogInfo($"Evaluating gap signals for {symbol}");
 
             var gaps = await DetectGapsAsync(symbol, conditions);
-            
+
             if (gaps.Length == 0)
             {
                 return Array.Empty<TradingSignal>();
@@ -38,7 +38,7 @@ public class GapStrategy : IGapStrategy
             foreach (var gap in gaps)
             {
                 var fillProbability = await AssessGapFillProbabilityAsync(symbol, gap);
-                
+
                 if (fillProbability >= 0.65m) // Minimum 65% fill probability
                 {
                     var signal = await CreateGapSignalAsync(gap, fillProbability);
@@ -70,7 +70,7 @@ public class GapStrategy : IGapStrategy
             // Mock previous close (in real implementation, this would come from historical data)
             var mockPreviousClose = conditions.Volatility * 95; // Estimate previous close
             var currentOpen = conditions.Volatility * 100; // Current open price
-            
+
             var gapSize = Math.Abs(currentOpen - mockPreviousClose);
             var gapPercentage = gapSize / mockPreviousClose;
 
@@ -295,7 +295,7 @@ public class GapStrategy : IGapStrategy
     private GapType DetermineGapType(decimal currentOpen, decimal previousClose, decimal gapPercentage, MarketConditions conditions)
     {
         var isGapUp = currentOpen > previousClose;
-        
+
         // Classify gap type based on size and market conditions
         return gapPercentage switch
         {
@@ -310,10 +310,10 @@ public class GapStrategy : IGapStrategy
     {
         // Larger positions for higher probability, smaller gaps
         var baseSize = 150;
-        
+
         // Size based on fill probability
         var probabilityMultiplier = (double)fillProbability; // 0.0 to 1.0
-        
+
         // Size based on gap size (smaller gaps = larger positions)
         var gapMultiplier = gapPercentage switch
         {

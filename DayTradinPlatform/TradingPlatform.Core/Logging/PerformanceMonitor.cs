@@ -20,7 +20,7 @@ internal class PerformanceMonitor
     public PerformanceMonitor(PerformanceThresholds thresholds)
     {
         _thresholds = thresholds;
-        
+
         try
         {
             _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
@@ -111,7 +111,7 @@ internal class PerformanceMonitor
             {
                 var stats = _methodStats.GetOrAdd(entry.Source.MethodName, _ => new PerformanceStats());
                 var durationNs = entry.Performance.DurationNanoseconds ?? 0;
-                
+
                 stats.CallCount++;
                 stats.TotalDurationNs += durationNs;
                 stats.MinDurationNs = Math.Min(stats.MinDurationNs, durationNs);

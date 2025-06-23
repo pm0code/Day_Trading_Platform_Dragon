@@ -29,27 +29,27 @@ public class RiskManagementService : IRiskManagementService
         _alertService = alertService;
         _messageBus = messageBus;
         _logger = logger;
-        
+
         InitializeDefaultLimits();
     }
 
     public async Task<RiskStatus> GetRiskStatusAsync()
     {
         var startTime = DateTime.UtcNow;
-        
+
         try
         {
             var positions = await _positionMonitor.GetAllPositionsAsync();
             var totalExposure = await _positionMonitor.GetTotalExposureAsync();
-            
+
             var portfolioValues = positions.Select(p => p.MarketValue);
             var maxDrawdown = _riskCalculator.CalculateMaxDrawdown(portfolioValues);
-            
+
             var dailyPnL = positions.Sum(p => p.UnrealizedPnL + p.RealizedPnL);
             var currentDrawdown = Math.Abs(Math.Min(0, dailyPnL));
-            
+
             var riskLevel = DetermineRiskLevel(currentDrawdown, maxDrawdown, totalExposure);
-            
+
             var status = new RiskStatus(
                 CurrentDrawdown: currentDrawdown,
                 MaxDrawdown: maxDrawdown,
@@ -91,7 +91,7 @@ public class RiskManagementService : IRiskManagementService
     public async Task UpdateRiskLimitsAsync(RiskLimits limits)
     {
         _defaultLimits = limits;
-        
+
         await _messageBus.PublishAsync("risk.limits.updated", new RiskEvent
         {
             RiskType = "LimitsUpdate",
@@ -102,14 +102,14 @@ public class RiskManagementService : IRiskManagementService
             LimitBreached = false,
             Action = "Configure"
         });
-        
+
         TradingLogOrchestrator.Instance.LogInfo($"Risk limits updated - Max Daily Loss: {limits.MaxDailyLoss}, Max Drawdown: {limits.MaxDrawdown}");
     }
 
     public async Task<bool> ValidateOrderAsync(OrderRiskRequest request)
     {
         var startTime = DateTime.UtcNow;
-        
+
         try
         {
             // Check position size limits
@@ -132,7 +132,7 @@ public class RiskManagementService : IRiskManagementService
             var orderValue = request.Quantity * request.Price;
             var newSymbolExposure = symbolExposure + orderValue;
             var totalExposure = await _positionMonitor.GetTotalExposureAsync();
-            
+
             if (newSymbolExposure / (totalExposure + orderValue) > _defaultLimits.MaxSymbolConcentration)
             {
                 await _alertService.CreateAlertAsync(new RiskAlert(
@@ -162,7 +162,7 @@ public class RiskManagementService : IRiskManagementService
     {
         var position = await _positionMonitor.GetPositionAsync(symbol);
         var orderValue = Math.Abs(quantity * price);
-        
+
         if (position == null)
         {
             return orderValue;
@@ -171,7 +171,7 @@ public class RiskManagementService : IRiskManagementService
         var currentExposure = Math.Abs(position.Quantity * position.CurrentPrice);
         var newQuantity = position.Quantity + quantity;
         var newExposure = Math.Abs(newQuantity * price);
-        
+
         return Math.Max(currentExposure, newExposure);
     }
 
@@ -185,9 +185,9 @@ public class RiskManagementService : IRiskManagementService
     {
         var drawdownRatio = currentDrawdown / _defaultLimits.MaxDailyLoss;
         var exposureRatio = totalExposure / _defaultLimits.MaxTotalExposure;
-        
+
         var maxRatio = Math.Max(drawdownRatio, exposureRatio);
-        
+
         return maxRatio switch
         {
             >= 0.9m => RiskLevel.Critical,

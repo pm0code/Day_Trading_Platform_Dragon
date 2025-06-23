@@ -20,9 +20,9 @@ public class MockGpuDetectionService : IGpuDetectionService
     public async Task<List<GpuInfo>> GetGpuInformationAsync()
     {
         TradingLogOrchestrator.Instance.LogInfo("Mock GPU detection: Simulating RTX 4070 Ti + RTX 3060 Ti setup");
-        
+
         await Task.Delay(500); // Simulate detection time
-        
+
         return new List<GpuInfo>
         {
             new GpuInfo
@@ -41,7 +41,7 @@ public class MockGpuDetectionService : IGpuDetectionService
             new GpuInfo
             {
                 Name = "NVIDIA GeForce RTX 3060 Ti",
-                DriverVersion = "546.29", 
+                DriverVersion = "546.29",
                 VideoMemoryGB = 8.0,
                 MaxDisplayOutputs = 4,
                 IsActive = true,
@@ -63,7 +63,7 @@ public class MockGpuDetectionService : IGpuDetectionService
     public async Task<GpuPerformanceAssessment> GetPerformanceAssessmentAsync()
     {
         await Task.Delay(200);
-        
+
         return new GpuPerformanceAssessment
         {
             OverallRating = PerformanceRating.Excellent,
@@ -81,7 +81,7 @@ public class MockGpuDetectionService : IGpuDetectionService
     public async Task<MonitorConfigurationValidation> ValidateMonitorConfigurationAsync(List<MonitorConfiguration> configuration)
     {
         await Task.Delay(100);
-        
+
         var validation = new MonitorConfigurationValidation
         {
             IsSupported = configuration.Count <= 8,

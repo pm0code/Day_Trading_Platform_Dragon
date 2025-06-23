@@ -19,7 +19,7 @@ public static class ServiceCollectionExtensions
         // Register display session management services
         services.Configure<DisplaySessionOptions>(configuration.GetSection("DisplaySession"));
         services.AddSingleton<IDisplaySessionService, DisplaySessionService>();
-        services.AddHostedService<DisplaySessionService>(provider => 
+        services.AddHostedService<DisplaySessionService>(provider =>
             (DisplaySessionService)provider.GetRequiredService<IDisplaySessionService>());
 
         // Register GPU detection services
@@ -38,7 +38,7 @@ public static class ServiceCollectionExtensions
     {
         // Determine if running in RDP session for mock services
         var isRdpSession = IsRunningViaRdp();
-        
+
         if (isRdpSession)
         {
             // Use mock services for RDP testing
@@ -58,7 +58,7 @@ public static class ServiceCollectionExtensions
     {
         // Determine if running in RDP session for mock services
         var isRdpSession = IsRunningViaRdp();
-        
+
         if (isRdpSession)
         {
             // Use mock services for RDP testing
@@ -79,7 +79,7 @@ public static class ServiceCollectionExtensions
         try
         {
             var sessionName = Environment.GetEnvironmentVariable("SESSIONNAME");
-            return !string.IsNullOrEmpty(sessionName) && 
+            return !string.IsNullOrEmpty(sessionName) &&
                    (sessionName.StartsWith("RDP-", StringComparison.OrdinalIgnoreCase) ||
                     !sessionName.Equals("Console", StringComparison.OrdinalIgnoreCase));
         }

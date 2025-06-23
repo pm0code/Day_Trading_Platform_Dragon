@@ -25,9 +25,9 @@ public class ComplianceMonitor : IComplianceMonitor
         var violations = GetActiveViolations();
         var pdtStatus = await GetPatternDayTradingStatusAsync("DEFAULT_ACCOUNT");
         var marginStatus = await GetMarginStatusAsync("DEFAULT_ACCOUNT");
-        
+
         var isCompliant = !violations.Any(v => v.Severity >= ViolationSeverity.Major);
-        
+
         var status = new ComplianceStatus(
             IsCompliant: isCompliant,
             Violations: violations,
@@ -44,7 +44,7 @@ public class ComplianceMonitor : IComplianceMonitor
     public async Task<bool> ValidatePatternDayTradingAsync(string accountId)
     {
         var pdtStatus = await GetPatternDayTradingStatusAsync(accountId);
-        
+
         if (pdtStatus.IsPatternDayTrader && pdtStatus.DayTradesRemaining <= 0)
         {
             var violation = new ComplianceViolation(
@@ -81,7 +81,7 @@ public class ComplianceMonitor : IComplianceMonitor
     public async Task<bool> ValidateMarginRequirementsAsync(string accountId, decimal orderValue)
     {
         var marginStatus = await GetMarginStatusAsync(accountId);
-        
+
         if (marginStatus.HasMarginCall)
         {
             var violation = new ComplianceViolation(
@@ -137,7 +137,7 @@ public class ComplianceMonitor : IComplianceMonitor
         var now = DateTime.Now.TimeOfDay;
         var marketOpen = new TimeSpan(9, 30, 0);
         var marketClose = new TimeSpan(16, 0, 0);
-        
+
         if (now < marketOpen || now > marketClose)
         {
             violations.Add(new ComplianceViolation(
@@ -157,7 +157,7 @@ public class ComplianceMonitor : IComplianceMonitor
         }
 
         var hasMajorViolations = violations.Any(v => v.Severity >= ViolationSeverity.Major);
-        
+
         TradingLogOrchestrator.Instance.LogInfo($"Regulatory validation for {request.Symbol}: {(!hasMajorViolations ? "PASSED" : "FAILED")} ({violations.Count} violations)");
 
         return !hasMajorViolations;
@@ -166,7 +166,7 @@ public class ComplianceMonitor : IComplianceMonitor
     public async Task LogComplianceEventAsync(ComplianceEvent complianceEvent)
     {
         _complianceEvents.TryAdd(complianceEvent.EventId, complianceEvent);
-        
+
         await _messageBus.PublishAsync("compliance.event.logged", new AlertEvent
         {
             AlertType = "ComplianceEvent",
@@ -182,7 +182,7 @@ public class ComplianceMonitor : IComplianceMonitor
     private IEnumerable<ComplianceViolation> GetActiveViolations()
     {
         var recentCutoff = DateTime.UtcNow.AddHours(-24); // Last 24 hours
-        
+
         return _complianceEvents.Values
             .Where(e => e.Timestamp >= recentCutoff)
             .Where(e => e.EventType.Contains("Violation"))
@@ -244,7 +244,7 @@ public class ComplianceMonitor : IComplianceMonitor
         );
 
         await LogComplianceEventAsync(complianceEvent);
-        
+
         TradingLogOrchestrator.Instance.LogWarning($"Compliance violation: {violation.RuleId} - {violation.Description} (Severity: {violation.Severity})");
     }
 }

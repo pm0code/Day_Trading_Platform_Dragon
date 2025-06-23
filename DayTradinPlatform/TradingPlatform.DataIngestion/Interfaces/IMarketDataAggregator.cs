@@ -48,14 +48,14 @@ namespace TradingPlatform.DataIngestion.Interfaces
         /// <param name="fallbackData">Data from the fallback provider (optional)</param>
         /// <returns>A task containing the best available aggregated MarketData</returns>
         Task<MarketData> AggregateMultiProviderAsync(string symbol, MarketData primaryData, MarketData fallbackData = null);
-        
+
         /// <summary>
         /// Gets market data for a single symbol with intelligent provider selection.
         /// </summary>
         /// <param name="symbol">The stock symbol</param>
         /// <returns>Market data from the best available provider</returns>
         Task<MarketData> GetMarketDataAsync(string symbol);
-        
+
         /// <summary>
         /// Gets market data for multiple symbols with intelligent provider selection.
         /// </summary>

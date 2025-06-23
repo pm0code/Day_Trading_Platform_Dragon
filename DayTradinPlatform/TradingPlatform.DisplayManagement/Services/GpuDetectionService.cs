@@ -16,17 +16,17 @@ public interface IGpuDetectionService
     /// Gets detailed information about all GPUs in the system
     /// </summary>
     Task<List<GpuInfo>> GetGpuInformationAsync();
-    
+
     /// <summary>
     /// Gets the recommended maximum number of monitors based on GPU capabilities
     /// </summary>
     Task<int> GetRecommendedMaxMonitorsAsync();
-    
+
     /// <summary>
     /// Gets GPU performance assessment for trading workloads
     /// </summary>
     Task<GpuPerformanceAssessment> GetPerformanceAssessmentAsync();
-    
+
     /// <summary>
     /// Validates if a specific monitor configuration is supported by current GPUs
     /// </summary>
@@ -54,7 +54,7 @@ public class GpuDetectionService : IGpuDetectionService
     public async Task<List<GpuInfo>> GetGpuInformationAsync()
     {
         TradingLogOrchestrator.Instance.LogInfo("Detecting GPU information for DRAGON system monitor configuration");
-        
+
         // Return cached data if still valid
         if (_cachedGpuInfo.Any() && DateTime.UtcNow - _lastCacheUpdate < _cacheExpiry)
         {
@@ -65,7 +65,7 @@ public class GpuDetectionService : IGpuDetectionService
         try
         {
             _cachedGpuInfo.Clear();
-            
+
             // Query video controllers using WMI
             using var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController");
             var videoControllers = await Task.Run(() => searcher.Get());
@@ -88,7 +88,7 @@ public class GpuDetectionService : IGpuDetectionService
             }
 
             _lastCacheUpdate = DateTime.UtcNow;
-            
+
             TradingLogOrchestrator.Instance.LogInfo($"GPU detection complete. Found {_cachedGpuInfo.Count} GPU(s)");
             return _cachedGpuInfo;
         }
@@ -105,7 +105,7 @@ public class GpuDetectionService : IGpuDetectionService
     public async Task<int> GetRecommendedMaxMonitorsAsync()
     {
         var gpus = await GetGpuInformationAsync();
-        
+
         if (!gpus.Any())
         {
             TradingLogOrchestrator.Instance.LogWarning("No GPUs detected, defaulting to single monitor recommendation");
@@ -119,12 +119,12 @@ public class GpuDetectionService : IGpuDetectionService
 
         // Apply conservative factor for trading workload stability
         var recommendedMax = Math.Max(1, (int)(totalMaxOutputs * 0.8)); // 80% of theoretical max
-        
+
         // Cap at reasonable limits for trading platforms
         var finalRecommendation = Math.Min(recommendedMax, 12); // Maximum 12 monitors for practical trading
-        
+
         TradingLogOrchestrator.Instance.LogInfo($"Recommended maximum monitors: {finalRecommendation} (based on {totalMaxOutputs} total GPU outputs)");
-            
+
         return finalRecommendation;
     }
 
@@ -134,7 +134,7 @@ public class GpuDetectionService : IGpuDetectionService
     public async Task<GpuPerformanceAssessment> GetPerformanceAssessmentAsync()
     {
         var gpus = await GetGpuInformationAsync();
-        
+
         if (!gpus.Any())
         {
             return new GpuPerformanceAssessment
@@ -172,7 +172,7 @@ public class GpuDetectionService : IGpuDetectionService
     {
         var gpus = await GetGpuInformationAsync();
         var maxRecommended = await GetRecommendedMaxMonitorsAsync();
-        
+
         var validation = new MonitorConfigurationValidation
         {
             IsSupported = true,
@@ -218,7 +218,7 @@ public class GpuDetectionService : IGpuDetectionService
         {
             var name = gpu["Name"]?.ToString() ?? "Unknown GPU";
             var driverVersion = gpu["DriverVersion"]?.ToString() ?? "Unknown";
-            
+
             // Extract video memory (in bytes, convert to GB)
             var vramBytes = Convert.ToUInt64(gpu["AdapterRAM"] ?? 0);
             var vramGB = vramBytes / (1024.0 * 1024.0 * 1024.0);
@@ -252,7 +252,7 @@ public class GpuDetectionService : IGpuDetectionService
     private int EstimateMaxDisplayOutputs(string gpuName, double vramGB)
     {
         var name = gpuName.ToLowerInvariant();
-        
+
         // NVIDIA estimation
         if (name.Contains("nvidia") || name.Contains("geforce") || name.Contains("rtx") || name.Contains("gtx"))
         {
@@ -263,7 +263,7 @@ public class GpuDetectionService : IGpuDetectionService
             if (vramGB >= 4) return 3;
             return 2;
         }
-        
+
         // AMD estimation
         if (name.Contains("amd") || name.Contains("radeon") || name.Contains("rx"))
         {
@@ -273,7 +273,7 @@ public class GpuDetectionService : IGpuDetectionService
             if (vramGB >= 4) return 3;
             return 2;
         }
-        
+
         // Intel estimation
         if (name.Contains("intel") || name.Contains("iris") || name.Contains("uhd"))
         {
@@ -292,19 +292,19 @@ public class GpuDetectionService : IGpuDetectionService
     private PerformanceRating CalculatePerformanceRating(GpuInfo primaryGpu, double totalVram, int totalOutputs)
     {
         var score = 0;
-        
+
         // VRAM scoring
         if (totalVram >= 16) score += 40;
         else if (totalVram >= 8) score += 30;
         else if (totalVram >= 4) score += 20;
         else score += 10;
-        
+
         // Output capacity scoring
         if (totalOutputs >= 8) score += 30;
         else if (totalOutputs >= 4) score += 25;
         else if (totalOutputs >= 2) score += 15;
         else score += 5;
-        
+
         // GPU type scoring
         var name = primaryGpu.Name.ToLowerInvariant();
         if (name.Contains("rtx 40") || name.Contains("rx 7")) score += 30; // Latest generation
@@ -337,18 +337,18 @@ public class GpuDetectionService : IGpuDetectionService
     private List<string> GetLimitations(List<GpuInfo> gpus)
     {
         var limitations = new List<string>();
-        
+
         var totalVram = gpus.Sum(g => g.VideoMemoryGB);
         if (totalVram < 4)
         {
             limitations.Add("Low video memory may limit high-resolution multi-monitor performance");
         }
-        
+
         if (gpus.Count == 1 && gpus[0].Name.ToLowerInvariant().Contains("intel"))
         {
             limitations.Add("Integrated graphics detected - consider dedicated GPU for optimal multi-monitor trading");
         }
-        
+
         if (gpus.Any(g => !g.IsActive))
         {
             limitations.Add("Some GPUs are inactive - check device manager and drivers");

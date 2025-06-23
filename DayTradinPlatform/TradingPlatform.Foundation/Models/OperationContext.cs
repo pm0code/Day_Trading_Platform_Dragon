@@ -113,7 +113,7 @@ public class OperationContext
             UserId = parent.UserId;
             SessionId = parent.SessionId;
             AccountId = parent.AccountId;
-            
+
             // Copy relevant tags from parent
             foreach (var tag in parent.Tags.Where(t => t.StartsWith("inherit:", StringComparison.OrdinalIgnoreCase)))
             {
@@ -251,13 +251,13 @@ public class OperationContext
     {
         var path = new List<string>();
         var current = this;
-        
+
         while (current != null)
         {
             path.Insert(0, current.OperationName);
             current = current.Parent;
         }
-        
+
         return string.Join(" > ", path);
     }
 
@@ -278,19 +278,19 @@ public class OperationContext
 
         if (!string.IsNullOrEmpty(UserId))
             context["UserId"] = UserId;
-        
+
         if (!string.IsNullOrEmpty(SessionId))
             context["SessionId"] = SessionId;
-        
+
         if (!string.IsNullOrEmpty(AccountId))
             context["AccountId"] = AccountId;
-        
+
         if (!string.IsNullOrEmpty(Symbol))
             context["Symbol"] = Symbol;
-        
+
         if (!string.IsNullOrEmpty(StrategyName))
             context["Strategy"] = StrategyName;
-        
+
         if (!string.IsNullOrEmpty(OrderId))
             context["OrderId"] = OrderId;
 

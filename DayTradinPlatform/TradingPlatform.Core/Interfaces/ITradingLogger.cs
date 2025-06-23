@@ -14,7 +14,7 @@ namespace TradingPlatform.Core.Interfaces
     public interface ITradingLogger
     {
         #region Core Logging Methods with Rich Context
-        
+
         /// <summary>
         /// Logs informational message with full method context and execution metadata
         /// </summary>
@@ -23,12 +23,12 @@ namespace TradingPlatform.Core.Interfaces
         /// <param name="memberName">Auto-populated calling method name</param>
         /// <param name="sourceFilePath">Auto-populated source file path</param>
         /// <param name="sourceLineNumber">Auto-populated source line number</param>
-        void LogInfo(string message, 
+        void LogInfo(string message,
                     object? additionalData = null,
                     [CallerMemberName] string memberName = "",
                     [CallerFilePath] string sourceFilePath = "",
                     [CallerLineNumber] int sourceLineNumber = 0);
-        
+
         /// <summary>
         /// Logs debug information for development and troubleshooting
         /// </summary>
@@ -37,12 +37,12 @@ namespace TradingPlatform.Core.Interfaces
         /// <param name="memberName">Auto-populated calling method name</param>
         /// <param name="sourceFilePath">Auto-populated source file path</param>
         /// <param name="sourceLineNumber">Auto-populated source line number</param>
-        void LogDebug(string message, 
+        void LogDebug(string message,
                      object? additionalData = null,
                      [CallerMemberName] string memberName = "",
                      [CallerFilePath] string sourceFilePath = "",
                      [CallerLineNumber] int sourceLineNumber = 0);
-        
+
         /// <summary>
         /// Logs warning with context and potential impact assessment
         /// </summary>
@@ -55,12 +55,12 @@ namespace TradingPlatform.Core.Interfaces
         /// <param name="sourceLineNumber">Auto-populated source line number</param>
         void LogWarning(string message,
                        string? impact = null,
-                       string? recommendedAction = null, 
+                       string? recommendedAction = null,
                        object? additionalData = null,
                        [CallerMemberName] string memberName = "",
                        [CallerFilePath] string sourceFilePath = "",
                        [CallerLineNumber] int sourceLineNumber = 0);
-        
+
         /// <summary>
         /// Logs error with comprehensive diagnostic information
         /// </summary>
@@ -82,11 +82,11 @@ namespace TradingPlatform.Core.Interfaces
                      [CallerMemberName] string memberName = "",
                      [CallerFilePath] string sourceFilePath = "",
                      [CallerLineNumber] int sourceLineNumber = 0);
-        
+
         #endregion
-        
+
         #region Trading-Specific Operations
-        
+
         /// <summary>
         /// Logs trading operations with comprehensive audit trail information
         /// </summary>
@@ -110,7 +110,7 @@ namespace TradingPlatform.Core.Interfaces
                      object? marketConditions = null,
                      object? riskMetrics = null,
                      [CallerMemberName] string memberName = "");
-        
+
         /// <summary>
         /// Logs position changes with full audit trail
         /// </summary>
@@ -128,11 +128,11 @@ namespace TradingPlatform.Core.Interfaces
                               decimal? pnlImpact = null,
                               object? riskImpact = null,
                               [CallerMemberName] string memberName = "");
-        
+
         #endregion
-        
+
         #region Performance & Health Monitoring
-        
+
         /// <summary>
         /// Logs performance metrics with comprehensive timing and resource usage
         /// </summary>
@@ -152,7 +152,7 @@ namespace TradingPlatform.Core.Interfaces
                            object? businessMetrics = null,
                            TimeSpan? comparisonTarget = null,
                            [CallerMemberName] string memberName = "");
-        
+
         /// <summary>
         /// Logs system health indicators and operational status
         /// </summary>
@@ -168,11 +168,11 @@ namespace TradingPlatform.Core.Interfaces
                       string[]? alerts = null,
                       string[]? recommendedActions = null,
                       [CallerMemberName] string memberName = "");
-        
+
         #endregion
-        
+
         #region Risk & Compliance
-        
+
         /// <summary>
         /// Logs risk events and compliance monitoring
         /// </summary>
@@ -192,11 +192,11 @@ namespace TradingPlatform.Core.Interfaces
                     string[]? mitigationActions = null,
                     string? regulatoryImplications = null,
                     [CallerMemberName] string memberName = "");
-        
+
         #endregion
-        
+
         #region Data Pipeline & Market Data
-        
+
         /// <summary>
         /// Logs data pipeline operations with transformation details
         /// </summary>
@@ -214,7 +214,7 @@ namespace TradingPlatform.Core.Interfaces
                             object? latencyMetrics = null,
                             string[]? errors = null,
                             [CallerMemberName] string memberName = "");
-        
+
         /// <summary>
         /// Logs market data events with quality and timing information
         /// </summary>
@@ -232,11 +232,11 @@ namespace TradingPlatform.Core.Interfaces
                           string? quality = null,
                           object? volume = null,
                           [CallerMemberName] string memberName = "");
-        
+
         #endregion
-        
+
         #region Method Lifecycle (Entry/Exit)
-        
+
         /// <summary>
         /// Logs method entry with parameters for execution tracing
         /// </summary>
@@ -246,7 +246,7 @@ namespace TradingPlatform.Core.Interfaces
         void LogMethodEntry(object? parameters = null,
                            [CallerMemberName] string memberName = "",
                            [CallerFilePath] string sourceFilePath = "");
-        
+
         /// <summary>
         /// Logs method exit with results and execution metrics
         /// </summary>
@@ -258,7 +258,7 @@ namespace TradingPlatform.Core.Interfaces
                           TimeSpan? executionTime = null,
                           bool success = true,
                           [CallerMemberName] string memberName = "");
-        
+
         #endregion
     }
 }

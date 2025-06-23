@@ -30,7 +30,7 @@ public class GoldenRulesStrategy : IGoldenRulesStrategy
 
             // Evaluate Golden Rules compliance
             var assessment = await EvaluateGoldenRulesAsync(symbol, conditions);
-            
+
             if (!assessment.OverallCompliance || assessment.ConfidenceScore < 0.7m)
             {
                 TradingLogOrchestrator.Instance.LogInfo($"Golden Rules assessment failed for {symbol}: Compliance={assessment.OverallCompliance}, Confidence={assessment.ConfidenceScore}");
@@ -133,7 +133,7 @@ public class GoldenRulesStrategy : IGoldenRulesStrategy
         catch (Exception ex)
         {
             TradingLogOrchestrator.Instance.LogError($"Error evaluating Golden Rules for {symbol}", ex);
-            return new GoldenRulesAssessment(false, 0, _goldenRules.Length, 
+            return new GoldenRulesAssessment(false, 0, _goldenRules.Length,
                 new[] { "Evaluation Error" }, 0.0m, "Do not trade - evaluation failed");
         }
     }
@@ -141,7 +141,7 @@ public class GoldenRulesStrategy : IGoldenRulesStrategy
     public async Task<GoldenRuleStatus[]> GetRuleStatusAsync()
     {
         await Task.CompletedTask;
-        
+
         return _goldenRules.Select(rule => new GoldenRuleStatus(
             rule.Number,
             rule.Name,
@@ -217,40 +217,40 @@ public class GoldenRulesStrategy : IGoldenRulesStrategy
     }
 
     // Golden Rules evaluation methods
-    private bool EvaluateRule1_CapitalPreservation(MarketConditions conditions) => 
+    private bool EvaluateRule1_CapitalPreservation(MarketConditions conditions) =>
         conditions.Volatility < 0.05m; // Low volatility for capital preservation
 
-    private bool EvaluateRule2_TradingDiscipline(MarketConditions conditions) => 
+    private bool EvaluateRule2_TradingDiscipline(MarketConditions conditions) =>
         true; // Always enforce discipline
 
-    private bool EvaluateRule3_LossManagement(MarketConditions conditions) => 
+    private bool EvaluateRule3_LossManagement(MarketConditions conditions) =>
         Math.Abs(conditions.PriceChange) < 0.05m; // Limit exposure to high price movements
 
-    private bool EvaluateRule4_SystematicApproach(MarketConditions conditions) => 
+    private bool EvaluateRule4_SystematicApproach(MarketConditions conditions) =>
         conditions.Volume > 500000; // Ensure adequate liquidity
 
-    private bool EvaluateRule5_RiskManagement(MarketConditions conditions) => 
+    private bool EvaluateRule5_RiskManagement(MarketConditions conditions) =>
         conditions.Volatility < 0.04m; // Risk control through volatility
 
-    private bool EvaluateRule6_MarketTiming(MarketConditions conditions) => 
+    private bool EvaluateRule6_MarketTiming(MarketConditions conditions) =>
         conditions.Trend != TrendDirection.Unknown; // Clear trend identification
 
-    private bool EvaluateRule7_EmotionalControl(MarketConditions conditions) => 
+    private bool EvaluateRule7_EmotionalControl(MarketConditions conditions) =>
         true; // Systematic approach eliminates emotions
 
-    private bool EvaluateRule8_TechnicalAnalysis(MarketConditions conditions) => 
+    private bool EvaluateRule8_TechnicalAnalysis(MarketConditions conditions) =>
         conditions.RSI > 30 && conditions.RSI < 70; // RSI in normal range
 
-    private bool EvaluateRule9_VolumeConfirmation(MarketConditions conditions) => 
+    private bool EvaluateRule9_VolumeConfirmation(MarketConditions conditions) =>
         conditions.Volume > 1000000; // Volume confirmation
 
-    private bool EvaluateRule10_TrendFollowing(MarketConditions conditions) => 
+    private bool EvaluateRule10_TrendFollowing(MarketConditions conditions) =>
         conditions.Trend == TrendDirection.Up; // Follow uptrend
 
-    private bool EvaluateRule11_ProfitTaking(MarketConditions conditions) => 
+    private bool EvaluateRule11_ProfitTaking(MarketConditions conditions) =>
         conditions.RSI < 80; // Not in extreme overbought territory
 
-    private bool EvaluateRule12_ContinuousLearning(MarketConditions conditions) => 
+    private bool EvaluateRule12_ContinuousLearning(MarketConditions conditions) =>
         true; // Always learning and adapting
 
     private string GenerateRecommendation(bool overallCompliance, decimal confidenceScore, string[] violatedRules)

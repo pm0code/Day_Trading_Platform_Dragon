@@ -23,7 +23,7 @@ public class OrderExecutionEngine : IOrderExecutionEngine
     public async Task<Execution?> ExecuteOrderAsync(Order order, decimal marketPrice)
     {
         var startTime = DateTime.UtcNow;
-        
+
         try
         {
             var shouldExecute = await ShouldExecuteOrderAsync(order, marketPrice);
@@ -35,11 +35,11 @@ public class OrderExecutionEngine : IOrderExecutionEngine
 
             var orderBook = await _orderBookSimulator.GetOrderBookAsync(order.Symbol);
             var executionPrice = await CalculateExecutionPriceAsync(order, orderBook);
-            
+
             // Calculate slippage
             var expectedPrice = order.Type == OrderType.Market ? marketPrice : (order.LimitPrice ?? marketPrice);
             var slippage = _slippageCalculator.CalculateSlippage(expectedPrice, executionPrice, order.Side);
-            
+
             // Simulate execution latency (realistic for paper trading)
             var executionLatency = CalculateExecutionLatency(order.Type);
             await Task.Delay(executionLatency);
@@ -101,13 +101,13 @@ public class OrderExecutionEngine : IOrderExecutionEngine
             var orderValue = order.Quantity * (order.LimitPrice ?? GetMidPrice(orderBook));
             // var marketCap = 1000000000m; // Simplified - would get from market data (unused for now)
             var adv = 5000000m; // Average daily volume - would get from market data
-            
+
             // Market impact model based on order size relative to market
             var participationRate = orderValue / adv;
             var temporaryImpact = 0.01m * TradingPlatform.Common.Mathematics.TradingMath.Sqrt(participationRate);
             var permanentImpact = 0.005m * participationRate;
             var priceImpact = temporaryImpact + permanentImpact;
-            
+
             // Impact duration based on order size
             var impactDuration = TimeSpan.FromMinutes(Math.Min(60, Math.Max(1, (double)participationRate * 100)));
 
@@ -186,7 +186,7 @@ public class OrderExecutionEngine : IOrderExecutionEngine
 
     private bool CheckLimitOrderExecution(Order order, decimal currentPrice)
     {
-        return order.Side == OrderSide.Buy 
+        return order.Side == OrderSide.Buy
             ? currentPrice <= (order.LimitPrice ?? 0m)
             : currentPrice >= (order.LimitPrice ?? decimal.MaxValue);
     }
@@ -214,7 +214,7 @@ public class OrderExecutionEngine : IOrderExecutionEngine
     {
         var bestBid = orderBook.Bids.OrderByDescending(b => b.Price).FirstOrDefault()?.Price ?? 0m;
         var bestAsk = orderBook.Asks.OrderBy(a => a.Price).FirstOrDefault()?.Price ?? 0m;
-        
+
         return bestBid > 0 && bestAsk > 0 ? (bestBid + bestAsk) / 2m : Math.Max(bestBid, bestAsk);
     }
 

@@ -24,9 +24,9 @@ public class MockMonitorDetectionService : IMonitorDetectionService
     public async Task<List<MonitorConfiguration>> GetConnectedMonitorsAsync()
     {
         TradingLogOrchestrator.Instance.LogInfo("Mock monitor detection: RDP session detected - showing 1 active monitor");
-        
+
         await Task.Delay(300);
-        
+
         // For RDP: Only show the active RDP display
         return new List<MonitorConfiguration>
         {
@@ -49,7 +49,7 @@ public class MockMonitorDetectionService : IMonitorDetectionService
     public async Task<MonitorSelectionRecommendation> GetMonitorRecommendationAsync()
     {
         await Task.Delay(200);
-        
+
         return new MonitorSelectionRecommendation
         {
             RecommendedMonitorCount = 6,
@@ -113,10 +113,10 @@ public class MockMonitorDetectionService : IMonitorDetectionService
     public async Task<MultiMonitorConfiguration?> LoadMonitorConfigurationAsync()
     {
         await Task.Delay(100);
-        
+
         // Simulate saved configuration
         var monitors = await GetConnectedMonitorsAsync();
-        
+
         return new MultiMonitorConfiguration
         {
             Monitors = monitors.Take(1).ToList(), // Currently only RDP monitor
@@ -134,27 +134,27 @@ public class MockMonitorDetectionService : IMonitorDetectionService
     public async Task SaveMonitorConfigurationAsync(MultiMonitorConfiguration configuration)
     {
         TradingLogOrchestrator.Instance.LogInfo($"Mock save: Monitor configuration with {configuration.Monitors.Count} monitors");
-        
+
         await Task.Delay(100);
-        
+
         // Simulate successful save
     }
 
     public async Task<MonitorConfigurationValidation> ValidateAndOptimizeConfigurationAsync(MultiMonitorConfiguration configuration)
     {
         var validation = await _gpuDetectionService.ValidateMonitorConfigurationAsync(configuration.Monitors);
-        
+
         // Add trading-specific mock validation
         if (configuration.Monitors.Count == 1)
         {
             validation.OptimizationSuggestions.Add("Consider adding a second monitor for Order Execution to improve trading workflow");
         }
-        
+
         if (configuration.Monitors.Count >= 4)
         {
             validation.OptimizationSuggestions.Add("Arrange monitors in curved formation: Charts (center), Orders (right), Portfolio (left), Scanner (far right)");
         }
-        
+
         return validation;
     }
 }

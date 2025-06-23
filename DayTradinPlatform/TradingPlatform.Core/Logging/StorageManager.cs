@@ -22,12 +22,12 @@ internal class StorageManager : IDisposable
     public StorageManager(StorageConfiguration config)
     {
         _config = config;
-        
+
         // Ensure storage directories exist
         Directory.CreateDirectory(_config.HotStoragePath);
         Directory.CreateDirectory(_config.WarmStoragePath);
         Directory.CreateDirectory(_config.ColdStoragePath);
-        
+
         // Start tiered storage management timer
         _tieringTimer = new Timer(ManageTieredStorageInternal, null, TimeSpan.FromHours(1), TimeSpan.FromHours(1));
     }
@@ -40,7 +40,7 @@ internal class StorageManager : IDisposable
             // Write to hot storage (JSON format)
             var hotFile = GetHotStorageFile();
             await WriteToJsonFile(hotFile, entries);
-            
+
             // Write to ClickHouse if enabled
             if (_config.EnableClickHouse)
             {
@@ -88,10 +88,10 @@ internal class StorageManager : IDisposable
         {
             // Move files from hot to warm storage
             MoveHotToWarm();
-            
+
             // Move files from warm to cold storage
             MoveWarmToCold();
-            
+
             // Clean up old files based on retention policies
             CleanupOldFiles();
         }
@@ -111,7 +111,7 @@ internal class StorageManager : IDisposable
         {
             var fileName = Path.GetFileName(file);
             var warmPath = Path.Combine(_config.WarmStoragePath, fileName + ".gz");
-            
+
             // Compress and move to warm storage
             CompressFile(file, warmPath);
             File.Delete(file);
@@ -128,7 +128,7 @@ internal class StorageManager : IDisposable
         {
             var fileName = Path.GetFileName(file);
             var coldPath = Path.Combine(_config.ColdStoragePath, fileName);
-            
+
             File.Move(file, coldPath);
         }
     }

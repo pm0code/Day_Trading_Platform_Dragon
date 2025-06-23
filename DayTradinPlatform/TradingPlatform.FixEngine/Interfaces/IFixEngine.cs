@@ -13,47 +13,47 @@ public interface IFixEngine : IDisposable
     /// Initializes FIX engine with US market venue configurations
     /// </summary>
     Task<bool> InitializeAsync(FixEngineConfig config);
-    
+
     /// <summary>
     /// Submits new order to optimal US venue with smart routing
     /// </summary>
     Task<string> SubmitOrderAsync(OrderRequest request);
-    
+
     /// <summary>
     /// Cancels existing order across US venues
     /// </summary>
     Task<bool> CancelOrderAsync(string orderId, string symbol);
-    
+
     /// <summary>
     /// Modifies existing order (cancel/replace)
     /// </summary>
     Task<bool> ModifyOrderAsync(string orderId, OrderRequest newRequest);
-    
+
     /// <summary>
     /// Requests market data subscription for US symbols
     /// </summary>
     Task<bool> SubscribeMarketDataAsync(string[] symbols, MarketDataType dataType);
-    
+
     /// <summary>
     /// Unsubscribes from market data
     /// </summary>
     Task<bool> UnsubscribeMarketDataAsync(string[] symbols);
-    
+
     /// <summary>
     /// Gets current session status for all US venues
     /// </summary>
     Dictionary<string, bool> GetVenueStatuses();
-    
+
     /// <summary>
     /// Event fired when order execution report is received
     /// </summary>
     event EventHandler<ExecutionReport> ExecutionReceived;
-    
+
     /// <summary>
     /// Event fired when market data is received
     /// </summary>
     event EventHandler<MarketDataSnapshot> MarketDataReceived;
-    
+
     /// <summary>
     /// Event fired when venue connection status changes
     /// </summary>

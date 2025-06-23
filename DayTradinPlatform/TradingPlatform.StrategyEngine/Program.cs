@@ -6,7 +6,7 @@ using TradingPlatform.StrategyEngine.Strategies;
 // Configure Serilog for high-performance trading strategy logging
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss.fff} {Level:u3}] StrategyEngine: {Message:lj}{NewLine}{Exception}")
-    .WriteTo.File("logs/strategyengine-.log", 
+    .WriteTo.File("logs/strategyengine-.log",
         rollingInterval: RollingInterval.Day,
         outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
     .MinimumLevel.Information()

@@ -48,7 +48,7 @@ public abstract record TradingEvent
 public record MarketDataEvent : TradingEvent
 {
     public override string EventType => "MarketData";
-    
+
     public string Symbol { get; init; } = string.Empty;
     public decimal Price { get; init; }
     public decimal Volume { get; init; }
@@ -66,7 +66,7 @@ public record MarketDataEvent : TradingEvent
 public record OrderEvent : TradingEvent
 {
     public override string EventType => "Order";
-    
+
     public string OrderId { get; init; } = string.Empty;
     public string Symbol { get; init; } = string.Empty;
     public string OrderType { get; init; } = string.Empty; // Market, Limit, Stop
@@ -84,7 +84,7 @@ public record OrderEvent : TradingEvent
 public record AlertEvent : TradingEvent
 {
     public override string EventType => "Alert";
-    
+
     public string AlertType { get; init; } = string.Empty; // Price, Volume, News, Risk
     public string Symbol { get; init; } = string.Empty;
     public string Message { get; init; } = string.Empty;
@@ -99,7 +99,7 @@ public record AlertEvent : TradingEvent
 public record RiskEvent : TradingEvent
 {
     public override string EventType => "Risk";
-    
+
     public string RiskType { get; init; } = string.Empty; // Position, Drawdown, PDT
     public string Symbol { get; init; } = string.Empty;
     public decimal CurrentExposure { get; init; }
@@ -116,7 +116,7 @@ public record RiskEvent : TradingEvent
 public record StrategyEvent : TradingEvent
 {
     public override string EventType => "Strategy";
-    
+
     public string StrategyName { get; init; } = string.Empty;
     public string Symbol { get; init; } = string.Empty;
     public string Signal { get; init; } = string.Empty; // Buy, Sell, Hold
@@ -132,7 +132,7 @@ public record StrategyEvent : TradingEvent
 public record MarketDataRequestEvent : TradingEvent
 {
     public override string EventType => "MarketDataRequest";
-    
+
     public string Symbol { get; init; } = string.Empty;
     public string RequestType { get; init; } = string.Empty; // RealTime, Historical
     public DateTimeOffset? StartDate { get; init; }
@@ -147,7 +147,7 @@ public record MarketDataRequestEvent : TradingEvent
 public record MarketDataSubscriptionEvent : TradingEvent
 {
     public override string EventType => "MarketDataSubscription";
-    
+
     public string[] Symbols { get; init; } = Array.Empty<string>();
     public string Action { get; init; } = string.Empty; // Subscribe, Unsubscribe
 }

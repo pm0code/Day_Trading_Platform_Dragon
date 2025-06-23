@@ -18,7 +18,7 @@ public class MockMessageBus : IMessageBus
     private readonly ConcurrentDictionary<string, List<SubscriptionInfo>> _subscriptions = new();
     private readonly ConcurrentQueue<string> _acknowledgments = new();
     private readonly Random _random = new();
-    
+
     // Configuration for testing scenarios
     private TimeSpan _simulatedLatency = TimeSpan.FromMicroseconds(50);
     private bool _isHealthy = true;
@@ -79,7 +79,7 @@ public class MockMessageBus : IMessageBus
 
     #region IMessageBus Implementation
 
-    public async Task<string> PublishAsync<T>(string stream, T message, CancellationToken cancellationToken = default) 
+    public async Task<string> PublishAsync<T>(string stream, T message, CancellationToken cancellationToken = default)
         where T : class
     {
         if (cancellationToken.IsCancellationRequested)
@@ -89,7 +89,7 @@ public class MockMessageBus : IMessageBus
         if (_random.NextDouble() < _errorRate)
         {
             var error = TradingError.System(
-                new InvalidOperationException("Simulated message bus error"), 
+                new InvalidOperationException("Simulated message bus error"),
                 Guid.NewGuid().ToString());
             _logger?.LogError($"MockMessageBus simulated publish error for stream {stream}");
             throw new TradingOperationException(error);
@@ -134,7 +134,7 @@ public class MockMessageBus : IMessageBus
         return messageId;
     }
 
-    public async Task SubscribeAsync<T>(string stream, string consumerGroup, string consumerName, 
+    public async Task SubscribeAsync<T>(string stream, string consumerGroup, string consumerName,
         Func<T, Task> handler, CancellationToken cancellationToken = default) where T : class
     {
         if (cancellationToken.IsCancellationRequested)
@@ -144,7 +144,7 @@ public class MockMessageBus : IMessageBus
         if (_random.NextDouble() < _errorRate)
         {
             var error = TradingError.System(
-                new InvalidOperationException("Simulated subscription error"), 
+                new InvalidOperationException("Simulated subscription error"),
                 Guid.NewGuid().ToString());
             _logger?.LogError($"MockMessageBus simulated subscription error for stream {stream}");
             throw new TradingOperationException(error);
@@ -183,7 +183,7 @@ public class MockMessageBus : IMessageBus
         if (_random.NextDouble() < _errorRate)
         {
             var error = TradingError.System(
-                new InvalidOperationException("Simulated acknowledgment error"), 
+                new InvalidOperationException("Simulated acknowledgment error"),
                 Guid.NewGuid().ToString());
             _logger?.LogError($"MockMessageBus simulated acknowledgment error for message {messageId}");
             throw new TradingOperationException(error);
@@ -240,8 +240,8 @@ public class MockMessageBus : IMessageBus
     /// </summary>
     public IReadOnlyList<PublishedMessage> GetPublishedMessages(string stream)
     {
-        return _publishedMessages.TryGetValue(stream, out var messages) 
-            ? messages.ToList() 
+        return _publishedMessages.TryGetValue(stream, out var messages)
+            ? messages.ToList()
             : new List<PublishedMessage>();
     }
 
@@ -268,8 +268,8 @@ public class MockMessageBus : IMessageBus
     /// </summary>
     public IReadOnlyList<SubscriptionInfo> GetSubscriptions(string stream)
     {
-        return _subscriptions.TryGetValue(stream, out var subs) 
-            ? subs.ToList() 
+        return _subscriptions.TryGetValue(stream, out var subs)
+            ? subs.ToList()
             : new List<SubscriptionInfo>();
     }
 
@@ -338,13 +338,13 @@ public class MockMessageBus : IMessageBus
     {
         _publishedMessages.Clear();
         _subscriptions.Clear();
-        
+
         // Clear acknowledgments queue
         while (_acknowledgments.TryDequeue(out _))
         {
             // Empty the queue
         }
-        
+
         _logger?.LogDebug("MockMessageBus cleared all captured data");
     }
 

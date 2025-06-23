@@ -146,7 +146,7 @@ public class ProcessManager : IProcessManager
 
             // Graceful shutdown
             process.CloseMainWindow();
-            
+
             // Wait for graceful shutdown
             if (!process.WaitForExit(5000)) // 5 second timeout
             {
@@ -169,7 +169,7 @@ public class ProcessManager : IProcessManager
     public async Task RestartServiceAsync(string serviceName)
     {
         TradingLogOrchestrator.Instance.LogInfo($"Restarting service {serviceName}");
-        
+
         await StopServiceAsync(serviceName);
         await Task.Delay(2000); // Brief pause for cleanup
         await StartServiceAsync(serviceName);

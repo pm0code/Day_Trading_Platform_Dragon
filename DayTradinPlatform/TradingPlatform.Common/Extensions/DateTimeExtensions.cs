@@ -18,7 +18,7 @@ public static class DateTimeExtensions
     {
         var easternTimeZone = timeZone ?? GetEasternTimeZone();
         var easternTime = TimeZoneInfo.ConvertTime(dateTime, easternTimeZone);
-        
+
         // Check if it's a weekday
         if (easternTime.DayOfWeek == DayOfWeek.Saturday || easternTime.DayOfWeek == DayOfWeek.Sunday)
             return false;
@@ -26,7 +26,7 @@ public static class DateTimeExtensions
         // Check if time is between 9:30 AM and 4:00 PM ET
         var marketOpen = new TimeSpan(9, 30, 0);
         var marketClose = new TimeSpan(16, 0, 0);
-        
+
         return easternTime.TimeOfDay >= marketOpen && easternTime.TimeOfDay <= marketClose;
     }
 
@@ -40,7 +40,7 @@ public static class DateTimeExtensions
     {
         var easternTimeZone = timeZone ?? GetEasternTimeZone();
         var easternTime = TimeZoneInfo.ConvertTime(dateTime, easternTimeZone);
-        
+
         // Check if it's a weekday
         if (easternTime.DayOfWeek == DayOfWeek.Saturday || easternTime.DayOfWeek == DayOfWeek.Sunday)
             return false;
@@ -48,7 +48,7 @@ public static class DateTimeExtensions
         // Check if time is between 4:00 AM and 9:30 AM ET
         var preMarketOpen = new TimeSpan(4, 0, 0);
         var preMarketClose = new TimeSpan(9, 30, 0);
-        
+
         return easternTime.TimeOfDay >= preMarketOpen && easternTime.TimeOfDay < preMarketClose;
     }
 
@@ -62,7 +62,7 @@ public static class DateTimeExtensions
     {
         var easternTimeZone = timeZone ?? GetEasternTimeZone();
         var easternTime = TimeZoneInfo.ConvertTime(dateTime, easternTimeZone);
-        
+
         // Check if it's a weekday
         if (easternTime.DayOfWeek == DayOfWeek.Saturday || easternTime.DayOfWeek == DayOfWeek.Sunday)
             return false;
@@ -70,7 +70,7 @@ public static class DateTimeExtensions
         // Check if time is between 4:00 PM and 8:00 PM ET
         var afterHoursOpen = new TimeSpan(16, 0, 0);
         var afterHoursClose = new TimeSpan(20, 0, 0);
-        
+
         return easternTime.TimeOfDay >= afterHoursOpen && easternTime.TimeOfDay <= afterHoursClose;
     }
 
@@ -263,7 +263,7 @@ public static class DateTimeExtensions
 
         var count = 0;
         var current = startDate.Date;
-        
+
         while (current <= endDate.Date)
         {
             if (current.IsTradingDay())
@@ -283,7 +283,7 @@ public static class DateTimeExtensions
     public static IEnumerable<DateTime> TradingDaysInRange(this DateTime startDate, DateTime endDate)
     {
         var current = startDate.Date;
-        
+
         while (current <= endDate.Date)
         {
             if (current.IsTradingDay())
@@ -306,7 +306,7 @@ public static class DateTimeExtensions
 
         var marketClose = dateTime.Date.GetMarketClose();
         var threshold = marketClose.AddMinutes(-minutes);
-        
+
         return dateTime >= threshold;
     }
 
@@ -324,7 +324,7 @@ public static class DateTimeExtensions
 
         var marketOpen = dateTime.Date.GetMarketOpen();
         var threshold = marketOpen.AddMinutes(minutes);
-        
+
         return dateTime >= marketOpen && dateTime <= threshold;
     }
 
@@ -407,44 +407,44 @@ public static class DateTimeExtensions
     private static bool IsMarketHoliday(DateTime date)
     {
         var year = date.Year;
-        
+
         // New Year's Day
         if (date.Month == 1 && date.Day == 1)
             return true;
-        
+
         // Martin Luther King Jr. Day (3rd Monday in January)
         if (date.Month == 1 && date.DayOfWeek == DayOfWeek.Monday && date.Day >= 15 && date.Day <= 21)
             return true;
-        
+
         // Presidents' Day (3rd Monday in February)
         if (date.Month == 2 && date.DayOfWeek == DayOfWeek.Monday && date.Day >= 15 && date.Day <= 21)
             return true;
-        
+
         // Good Friday (Friday before Easter)
         var easter = GetEasterDate(year);
         if (date == easter.AddDays(-2))
             return true;
-        
+
         // Memorial Day (last Monday in May)
         if (date.Month == 5 && date.DayOfWeek == DayOfWeek.Monday && date.Day >= 25)
             return true;
-        
+
         // Juneteenth (June 19)
         if (date.Month == 6 && date.Day == 19)
             return true;
-        
+
         // Independence Day (July 4)
         if (date.Month == 7 && date.Day == 4)
             return true;
-        
+
         // Labor Day (1st Monday in September)
         if (date.Month == 9 && date.DayOfWeek == DayOfWeek.Monday && date.Day <= 7)
             return true;
-        
+
         // Thanksgiving (4th Thursday in November)
         if (date.Month == 11 && date.DayOfWeek == DayOfWeek.Thursday && date.Day >= 22 && date.Day <= 28)
             return true;
-        
+
         // Christmas Day (December 25)
         if (date.Month == 12 && date.Day == 25)
             return true;
@@ -474,7 +474,7 @@ public static class DateTimeExtensions
         var m = (a + 11 * h + 22 * l) / 451;
         var month = (h + l - 7 * m + 114) / 31;
         var day = ((h + l - 7 * m + 114) % 31) + 1;
-        
+
         return new DateTime(year, month, day);
     }
 

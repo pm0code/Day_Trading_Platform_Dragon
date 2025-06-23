@@ -20,12 +20,12 @@ namespace TradingPlatform.DataIngestion.RateLimiting
         private readonly ConcurrentDictionary<string, int> _requestCounts;
         private readonly ConcurrentDictionary<string, RateLimitingStatistics> _statistics;
         private readonly SemaphoreSlim _semaphore;
-        
+
         // Configuration
         private int _requestsPerMinute = 60;
         private int _requestsPerDay = 500;
         private readonly string _defaultProvider = "default";
-        
+
         // Events
         public event EventHandler<RateLimitReachedEventArgs> RateLimitReached;
         public event EventHandler<RateLimitStatusChangedEventArgs> StatusChanged;
@@ -64,12 +64,12 @@ namespace TradingPlatform.DataIngestion.RateLimiting
 
             _cache.Set(cacheKey, currentCount + 1, TimeSpan.FromMinutes(1));
             _lastRequestTimes.AddOrUpdate(provider, DateTime.UtcNow, (k, v) => DateTime.UtcNow);
-            
+
             // Update statistics
             var stats = GetOrCreateStatistics(provider);
             stats.TotalRequests++;
             stats.CurrentRpm = currentCount + 1;
-            
+
             await Task.CompletedTask;
         }
 
@@ -109,7 +109,7 @@ namespace TradingPlatform.DataIngestion.RateLimiting
             var cacheKey = GetCacheKey(provider);
             _cache.Remove(cacheKey);
             _lastRequestTimes.TryRemove(provider, out _);
-            
+
             await Task.CompletedTask;
         }
 
@@ -125,18 +125,18 @@ namespace TradingPlatform.DataIngestion.RateLimiting
         {
             await WaitForPermitAsync(_defaultProvider);
         }
-        
+
         public async Task WaitForPermitAsync(string provider)
         {
             var stats = GetOrCreateStatistics(provider);
             var startTime = DateTime.UtcNow;
-            
+
             while (!TryAcquirePermit())
             {
                 stats.RateLimitedRequests++;
                 await Task.Delay(100);
             }
-            
+
             var delay = (DateTime.UtcNow - startTime).TotalMilliseconds;
             stats.AverageDelayMs = (stats.AverageDelayMs * (stats.RateLimitedRequests - 1) + delay) / stats.RateLimitedRequests;
             stats.MaxDelayMs = Math.Max(stats.MaxDelayMs, delay);
@@ -146,7 +146,7 @@ namespace TradingPlatform.DataIngestion.RateLimiting
         {
             return TryAcquirePermit(_defaultProvider);
         }
-        
+
         public bool TryAcquirePermit(string provider)
         {
             return CanMakeRequestAsync(provider).Result;
@@ -161,7 +161,7 @@ namespace TradingPlatform.DataIngestion.RateLimiting
         {
             var stats = GetOrCreateStatistics(_defaultProvider);
             stats.FailedRequests++;
-            
+
             _logger.LogError($"Rate limiter recorded failure: {exception.Message}", exception);
         }
 
@@ -169,7 +169,7 @@ namespace TradingPlatform.DataIngestion.RateLimiting
         {
             return IsLimitReached(_defaultProvider);
         }
-        
+
         public bool IsLimitReached(string provider)
         {
             return !CanMakeRequestAsync(provider).Result;
@@ -179,29 +179,29 @@ namespace TradingPlatform.DataIngestion.RateLimiting
         {
             return GetRemainingCalls(_defaultProvider);
         }
-        
+
         public int GetRemainingCalls(string provider)
         {
             return GetRemainingRequestsAsync(provider, TimeSpan.FromMinutes(1)).Result;
         }
-        
+
         public int GetUsedCalls()
         {
             var cacheKey = GetCacheKey(_defaultProvider);
             return _cache.Get<int>(cacheKey);
         }
-        
+
         public int GetMaxCalls()
         {
             return _requestsPerMinute;
         }
-        
+
         public DateTime GetResetTime()
         {
             // Rate limits reset every minute
             return DateTime.UtcNow.AddMinutes(1).AddSeconds(-DateTime.UtcNow.Second);
         }
-        
+
         public TimeSpan GetRecommendedDelay()
         {
             if (IsLimitReached())
@@ -210,7 +210,7 @@ namespace TradingPlatform.DataIngestion.RateLimiting
             }
             return TimeSpan.Zero;
         }
-        
+
         public void UpdateLimits(int requestsPerMinute, int requestsPerDay = -1)
         {
             _requestsPerMinute = requestsPerMinute;
@@ -218,20 +218,20 @@ namespace TradingPlatform.DataIngestion.RateLimiting
             {
                 _requestsPerDay = requestsPerDay;
             }
-            
+
             _logger.LogInfo($"Rate limits updated: {requestsPerMinute}/min, {requestsPerDay}/day");
         }
-        
+
         public void Reset()
         {
             _cache.Remove(GetCacheKey(_defaultProvider));
             _lastRequestTimes.Clear();
             _requestCounts.Clear();
             _statistics.Clear();
-            
+
             _logger.LogInfo("Rate limiter reset completed");
         }
-        
+
         public RateLimitingStatistics GetStatistics()
         {
             return GetOrCreateStatistics(_defaultProvider);
@@ -241,13 +241,13 @@ namespace TradingPlatform.DataIngestion.RateLimiting
         {
             return await GetWaitTimeAsync(provider);
         }
-        
+
         // Helper methods
         private string GetCacheKey(string provider)
         {
             return $"rate_limit_{provider}_{DateTime.UtcNow:yyyyMMddHHmm}";
         }
-        
+
         private RateLimitingStatistics GetOrCreateStatistics(string provider)
         {
             return _statistics.GetOrAdd(provider, p => new RateLimitingStatistics

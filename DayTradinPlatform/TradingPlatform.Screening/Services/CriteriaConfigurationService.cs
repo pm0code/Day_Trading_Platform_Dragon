@@ -83,7 +83,7 @@ namespace TradingPlatform.Screening.Services
             {
                 throw new ArgumentException("Minimum price cannot be negative", nameof(criteria));
             }
-            
+
             if (criteria.MaximumPrice > 0 && criteria.MinimumPrice > criteria.MaximumPrice)
             {
                 throw new ArgumentException("Minimum price cannot exceed maximum price", nameof(criteria));

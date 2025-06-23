@@ -151,10 +151,10 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         try
         {
             var process = Process.GetProcessById(processId);
-            
+
             // Calculate affinity mask from CPU core array
             UIntPtr affinityMask = CalculateAffinityMask(cpuCores);
-            
+
             var result = SetProcessAffinityMask(process.Handle, affinityMask);
             if (!result)
             {
@@ -322,7 +322,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         try
         {
             var metrics = new Dictionary<string, object>();
-            
+
             // Get system info
             GetSystemInfo(out var sysInfo);
             metrics["ProcessorCount"] = sysInfo.NumberOfProcessors;
@@ -338,10 +338,10 @@ public class WindowsOptimizationService : IWindowsOptimizationService
             // Get performance counters
             using var cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
             using var memoryCounter = new PerformanceCounter("Memory", "Available MBytes");
-            
+
             cpuCounter.NextValue(); // First call returns 0
             await Task.Delay(100);
-            
+
             metrics["CpuUsagePercent"] = cpuCounter.NextValue();
             metrics["AvailableMemoryMB"] = memoryCounter.NextValue();
 
@@ -397,7 +397,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
             // Force JIT compilation of critical methods
             ProfileOptimization.SetProfileRoot(Path.GetTempPath());
             ProfileOptimization.StartProfile("TradingPlatform.profile");
-            
+
             TradingLogOrchestrator.Instance.LogInfo("Pre-JIT compilation enabled for critical methods");
             return true;
         }
@@ -450,16 +450,16 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         {
             var startTime = DateTime.UtcNow;
             var startCpuUsage = process.TotalProcessorTime;
-            
+
             await Task.Delay(100);
-            
+
             var endTime = DateTime.UtcNow;
             var endCpuUsage = process.TotalProcessorTime;
-            
+
             var cpuUsedMs = (endCpuUsage - startCpuUsage).TotalMilliseconds;
             var totalMsPassed = (endTime - startTime).TotalMilliseconds;
             var cpuUsageTotal = cpuUsedMs / (Environment.ProcessorCount * totalMsPassed);
-            
+
             return cpuUsageTotal * 100;
         }
         catch
@@ -499,10 +499,10 @@ public class WindowsOptimizationService : IWindowsOptimizationService
                     CreateNoWindow = true
                 }
             };
-            
+
             process.Start();
             await process.WaitForExitAsync();
-            
+
             TradingLogOrchestrator.Instance.LogInfo("Set high-performance power plan");
             return process.ExitCode == 0;
         }
@@ -527,10 +527,10 @@ public class WindowsOptimizationService : IWindowsOptimizationService
                     CreateNoWindow = true
                 }
             };
-            
+
             process.Start();
             await process.WaitForExitAsync();
-            
+
             TradingLogOrchestrator.Instance.LogInfo("Disabled hibernation");
             return process.ExitCode == 0;
         }
@@ -569,7 +569,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
                         CreateNoWindow = true
                     }
                 };
-                
+
                 process.Start();
                 await process.WaitForExitAsync();
             }

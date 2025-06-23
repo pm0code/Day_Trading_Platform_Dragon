@@ -125,10 +125,10 @@ public static class DecimalExtensions
     /// <returns>Number of shares to buy based on risk management</returns>
     public static decimal CalculatePositionSize(this decimal accountValue, decimal riskPercent, decimal entryPrice, decimal stopPrice)
     {
-        if (riskPercent <= 0m || riskPercent > 1m) 
+        if (riskPercent <= 0m || riskPercent > 1m)
             throw new ArgumentException("Risk percent must be between 0 and 1");
-        
-        if (entryPrice <= 0m || stopPrice <= 0m) 
+
+        if (entryPrice <= 0m || stopPrice <= 0m)
             throw new ArgumentException("Prices must be positive");
 
         decimal riskPerShare = Math.Abs(entryPrice - stopPrice);
@@ -177,7 +177,7 @@ public static class DecimalExtensions
     public static bool IsValidQuantity(this decimal value, bool allowFractional = false)
     {
         if (value <= 0m) return false;
-        
+
         return allowFractional || value == Math.Floor(value);
     }
 
@@ -196,7 +196,7 @@ public static class DecimalExtensions
     {
         var formatted = value.ToFinancialPrecision().ToString("N2");
         var sign = "";
-        
+
         if (includeSign && value > 0m)
             sign = "+";
         else if (value < 0m)
@@ -298,7 +298,7 @@ public static class DecimalExtensions
     {
         var valuesList = values.ToList();
         if (!valuesList.Any()) return 0m;
-        
+
         return valuesList.Max() - valuesList.Min();
     }
 

@@ -23,15 +23,15 @@ public class TradingLogger : ITradingOperationsLogger
     {
         _serviceName = serviceName;
         _orchestrator = TradingLogOrchestrator.Instance;
-        
+
         // Log the delegation setup
-        _orchestrator.LogInfo("TradingLogger initialized - delegating to TradingLogOrchestrator", 
+        _orchestrator.LogInfo("TradingLogger initialized - delegating to TradingLogOrchestrator",
             new { ServiceName = serviceName, DelegationType = "Canonical" });
     }
 
     #region ITradingLogger Interface - Delegated to TradingLogOrchestrator
 
-    public void LogInfo(string message, 
+    public void LogInfo(string message,
                         object? additionalData = null,
                         [CallerMemberName] string memberName = "",
                         [CallerFilePath] string sourceFilePath = "",
@@ -40,7 +40,7 @@ public class TradingLogger : ITradingOperationsLogger
         _orchestrator.LogInfo(message, additionalData, memberName, sourceFilePath, sourceLineNumber);
     }
 
-    public void LogDebug(string message, 
+    public void LogDebug(string message,
                          object? additionalData = null,
                          [CallerMemberName] string memberName = "",
                          [CallerFilePath] string sourceFilePath = "",
@@ -51,7 +51,7 @@ public class TradingLogger : ITradingOperationsLogger
 
     public void LogWarning(string message,
                            string? impact = null,
-                           string? recommendedAction = null, 
+                           string? recommendedAction = null,
                            object? additionalData = null,
                            [CallerMemberName] string memberName = "",
                            [CallerFilePath] string sourceFilePath = "",
@@ -170,8 +170,8 @@ public class TradingLogger : ITradingOperationsLogger
 
     public void LogOrderRejection(string orderId, string symbol, string reason, string correlationId)
     {
-        _orchestrator.LogWarning($"Order rejected: {orderId} for {symbol}", 
-            impact: "Trading operation failed", 
+        _orchestrator.LogWarning($"Order rejected: {orderId} for {symbol}",
+            impact: "Trading operation failed",
             recommendedAction: "Review order parameters and retry",
             additionalData: new { OrderId = orderId, Symbol = symbol, Reason = reason, CorrelationId = correlationId });
     }
@@ -266,7 +266,7 @@ public class TradingLogger : ITradingOperationsLogger
     public void LogHealthCheck(string serviceName, bool healthy, TimeSpan responseTime, string? details = null)
     {
         var status = healthy ? "HEALTHY" : "UNHEALTHY";
-        _orchestrator.LogHealth(serviceName, status, new { ResponseTime = responseTime }, 
+        _orchestrator.LogHealth(serviceName, status, new { ResponseTime = responseTime },
             healthy ? null : new[] { "Service health check failed" },
             healthy ? null : new[] { "Investigate service status", "Check dependencies" });
     }
@@ -275,19 +275,19 @@ public class TradingLogger : ITradingOperationsLogger
     {
         var utilizationPercent = (usage / capacity) * 100;
         var status = utilizationPercent > 90 ? "CRITICAL" : utilizationPercent > 75 ? "WARNING" : "HEALTHY";
-        _orchestrator.LogHealth($"Resource.{resource}", status, 
+        _orchestrator.LogHealth($"Resource.{resource}", status,
             new { Usage = usage, Capacity = capacity, Unit = unit, UtilizationPercent = utilizationPercent });
     }
 
     public void LogTradingError(string operation, Exception exception, string? correlationId = null, Dictionary<string, object>? context = null)
     {
-        _orchestrator.LogError($"Trading error in {operation}", exception, operation, "Trading operations impacted", 
+        _orchestrator.LogError($"Trading error in {operation}", exception, operation, "Trading operations impacted",
             "Check system status and retry operation", context);
     }
 
     public void LogCriticalError(string operation, Exception exception, string? correlationId = null, Dictionary<string, object>? context = null)
     {
-        _orchestrator.LogError($"CRITICAL ERROR in {operation}", exception, operation, "System functionality severely impacted", 
+        _orchestrator.LogError($"CRITICAL ERROR in {operation}", exception, operation, "System functionality severely impacted",
             "Immediate investigation required - escalate to operations team", context);
     }
 
@@ -339,7 +339,7 @@ public class TradingLogger : ITradingOperationsLogger
         }
         else
         {
-            _orchestrator.LogError($"Database operation failed: {operation} on {table}", 
+            _orchestrator.LogError($"Database operation failed: {operation} on {table}",
                 operationContext: $"Database {operation}",
                 userImpact: "Data operation failed",
                 troubleshootingHints: errorMessage ?? "Check database connectivity and permissions",
@@ -413,7 +413,7 @@ public class TradingLogger : ITradingOperationsLogger
             "CRITICAL" => "CRITICAL",
             _ => "MEDIUM"
         };
-        
+
         _orchestrator.LogRisk("SecurityEvent", severity, $"{eventType}: {details}", null, null, null,
             "Security event requires investigation");
     }
@@ -564,7 +564,7 @@ public class TradingLogger : ITradingOperationsLogger
 /// </summary>
 internal class LogScope : IDisposable
 {
-    
+
 
 
 

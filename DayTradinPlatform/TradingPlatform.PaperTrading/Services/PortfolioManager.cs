@@ -59,7 +59,7 @@ public class PortfolioManager : IPortfolioManager
             {
                 var position = kvp.Value;
                 var currentPrice = await _orderBookSimulator.GetCurrentPriceAsync(position.Symbol);
-                
+
                 var updatedPosition = position with
                 {
                     CurrentPrice = currentPrice,
@@ -69,7 +69,7 @@ public class PortfolioManager : IPortfolioManager
                 };
 
                 positionsList.Add(updatedPosition);
-                
+
                 // Update the stored position with current market data
                 _positions.TryUpdate(kvp.Key, updatedPosition, position);
             }
@@ -91,7 +91,7 @@ public class PortfolioManager : IPortfolioManager
         try
         {
             var currentPrice = await _orderBookSimulator.GetCurrentPriceAsync(symbol);
-            
+
             return position with
             {
                 CurrentPrice = currentPrice,
@@ -112,7 +112,7 @@ public class PortfolioManager : IPortfolioManager
         try
         {
             var existingPosition = _positions.GetValueOrDefault(symbol);
-            
+
             if (existingPosition == null)
             {
                 // New position
@@ -127,16 +127,16 @@ public class PortfolioManager : IPortfolioManager
                     FirstTradeDate: execution.ExecutionTime,
                     LastUpdated: execution.ExecutionTime
                 );
-                
+
                 _positions.TryAdd(symbol, newPosition);
-                
+
                 // Update cash balance
-                var cashImpact = execution.Side == OrderSide.Buy 
+                var cashImpact = execution.Side == OrderSide.Buy
                     ? -(execution.Quantity * execution.Price + execution.Commission)
                     : (execution.Quantity * execution.Price - execution.Commission);
-                    
+
                 _cashBalance += cashImpact;
-                
+
                 TradingLogOrchestrator.Instance.LogInfo($"Created new position for {symbol}: {newPosition.Quantity}@{execution.Price}");
             }
             else
@@ -144,22 +144,22 @@ public class PortfolioManager : IPortfolioManager
                 // Update existing position
                 var executionQuantity = execution.Side == OrderSide.Buy ? execution.Quantity : -execution.Quantity;
                 var newTotalQuantity = existingPosition.Quantity + executionQuantity;
-                
+
                 decimal newAveragePrice;
                 decimal realizedPnL = existingPosition.RealizedPnL - execution.Commission;
-                
+
                 if (Math.Sign(existingPosition.Quantity) != Math.Sign(newTotalQuantity) && existingPosition.Quantity != 0)
                 {
                     // Position is being reduced or reversed - calculate realized P&L
                     var closingQuantity = Math.Min(Math.Abs(existingPosition.Quantity), Math.Abs(executionQuantity));
-                    var pnlPerShare = execution.Side == OrderSide.Sell 
+                    var pnlPerShare = execution.Side == OrderSide.Sell
                         ? execution.Price - existingPosition.AveragePrice
                         : existingPosition.AveragePrice - execution.Price;
-                    
+
                     realizedPnL += closingQuantity * pnlPerShare;
                     _totalRealizedPnL += closingQuantity * pnlPerShare;
                 }
-                
+
                 if (newTotalQuantity == 0)
                 {
                     // Position closed
@@ -172,7 +172,7 @@ public class PortfolioManager : IPortfolioManager
                     if (Math.Sign(existingPosition.Quantity) == Math.Sign(executionQuantity))
                     {
                         // Adding to position
-                        var totalCost = (existingPosition.Quantity * existingPosition.AveragePrice) + 
+                        var totalCost = (existingPosition.Quantity * existingPosition.AveragePrice) +
                                        (executionQuantity * execution.Price);
                         newAveragePrice = totalCost / newTotalQuantity;
                     }
@@ -195,20 +195,20 @@ public class PortfolioManager : IPortfolioManager
                         RealizedPnL = realizedPnL,
                         LastUpdated = execution.ExecutionTime
                     };
-                    
+
                     _positions.TryUpdate(symbol, updatedPosition, existingPosition);
                 }
-                
+
                 // Update cash balance
-                var cashImpact = execution.Side == OrderSide.Buy 
+                var cashImpact = execution.Side == OrderSide.Buy
                     ? -(execution.Quantity * execution.Price + execution.Commission)
                     : (execution.Quantity * execution.Price - execution.Commission);
-                    
+
                 _cashBalance += cashImpact;
-                
+
                 TradingLogOrchestrator.Instance.LogInfo($"Updated position for {symbol}: {existingPosition.Quantity} -> {newTotalQuantity}@{newAveragePrice}");
             }
-            
+
             return Task.CompletedTask;
         }
         catch (Exception ex)
@@ -225,7 +225,7 @@ public class PortfolioManager : IPortfolioManager
             var positions = await GetPositionsAsync();
             var longMarketValue = positions.Where(p => p.Quantity > 0).Sum(p => p.MarketValue);
             var shortMarketValue = Math.Abs(positions.Where(p => p.Quantity < 0).Sum(p => p.MarketValue));
-            
+
             // Simplified buying power calculation (for paper trading)
             // Cash + (Long positions * 0.5) - (Short positions * 1.5) for margin
             return _cashBalance + (longMarketValue * 0.5m) - (shortMarketValue * 1.5m);
@@ -243,11 +243,11 @@ public class PortfolioManager : IPortfolioManager
         {
             var buyingPower = await GetBuyingPowerAsync();
             var requiredCapital = orderRequest.Quantity * estimatedPrice;
-            
+
             // Add buffer for commissions and slippage
             var requiredCapitalWithBuffer = requiredCapital * 1.01m; // 1% buffer
-            
-            return orderRequest.Side == OrderSide.Buy 
+
+            return orderRequest.Side == OrderSide.Buy
                 ? buyingPower >= requiredCapitalWithBuffer
                 : true; // Selling doesn't require additional buying power in paper trading
         }

@@ -87,7 +87,7 @@ public static class MessageBusTestHelpers
     /// <param name="configureAction">Optional configuration action</param>
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddMockMessageBus(
-        this IServiceCollection services, 
+        this IServiceCollection services,
         Action<MockMessageBus>? configureAction = null)
     {
         return services.AddSingleton<IMessageBus>(provider =>
@@ -131,23 +131,23 @@ public static class MessageBusTestHelpers
     public static bool VerifyTradingPattern(MockMessageBus mockBus, string orderStream, TradingMessagePattern expectedPattern)
     {
         var messages = mockBus.GetPublishedMessages(orderStream);
-        
+
         return expectedPattern switch
         {
-            TradingMessagePattern.OrderSubmissionAcceptance => VerifyMessageOrder(mockBus, orderStream, 
+            TradingMessagePattern.OrderSubmissionAcceptance => VerifyMessageOrder(mockBus, orderStream,
                 "OrderSubmitted", "OrderAccepted"),
-            
-            TradingMessagePattern.OrderSubmissionRejection => VerifyMessageOrder(mockBus, orderStream, 
+
+            TradingMessagePattern.OrderSubmissionRejection => VerifyMessageOrder(mockBus, orderStream,
                 "OrderSubmitted", "OrderRejected"),
-            
-            TradingMessagePattern.OrderFillSequence => VerifyMessageOrder(mockBus, orderStream, 
+
+            TradingMessagePattern.OrderFillSequence => VerifyMessageOrder(mockBus, orderStream,
                 "OrderSubmitted", "OrderAccepted", "OrderFilled"),
-            
-            TradingMessagePattern.OrderCancellationSequence => VerifyMessageOrder(mockBus, orderStream, 
+
+            TradingMessagePattern.OrderCancellationSequence => VerifyMessageOrder(mockBus, orderStream,
                 "OrderSubmitted", "OrderAccepted", "OrderCancelled"),
-            
+
             TradingMessagePattern.RiskLimitBreach => messages.Any(m => m.MessageType.Contains("RiskLimit")),
-            
+
             _ => false
         };
     }
@@ -162,21 +162,21 @@ public static class MessageBusTestHelpers
     /// <param name="timeout">Maximum time to wait</param>
     /// <returns>True if the expected count was reached within timeout</returns>
     public static async Task<bool> WaitForMessagesAsync(
-        MockMessageBus mockBus, 
-        string stream, 
-        int expectedCount, 
+        MockMessageBus mockBus,
+        string stream,
+        int expectedCount,
         TimeSpan timeout)
     {
         var startTime = DateTime.UtcNow;
-        
+
         while (DateTime.UtcNow - startTime < timeout)
         {
             if (mockBus.GetPublishedMessageCount(stream) >= expectedCount)
                 return true;
-            
+
             await Task.Delay(TimeSpan.FromMilliseconds(10)); // Small polling interval
         }
-        
+
         return false;
     }
 
@@ -208,21 +208,21 @@ public static class MessageBusTestHelpers
     public static async Task<(bool IsValid, List<string> Issues)> ValidateConfigurationAsync(MockMessageBus mockBus)
     {
         var issues = new List<string>();
-        
+
         // Check latency requirements
         var latency = await mockBus.GetLatencyAsync();
         if (latency > TimeSpan.FromMilliseconds(TradingConstants.PerformanceThresholds.OrderExecutionMaxLatencyMs))
         {
             issues.Add($"Latency {latency.TotalMilliseconds}ms exceeds trading requirements");
         }
-        
+
         // Check health status
         var isHealthy = await mockBus.IsHealthyAsync();
         if (!isHealthy)
         {
             issues.Add("Message bus is not healthy");
         }
-        
+
         return (issues.Count == 0, issues);
     }
 }

@@ -27,7 +27,7 @@ builder.WebHost.ConfigureKestrel(options =>
     // Optimize for local trading workstation
     options.ListenLocalhost(5000); // HTTP
     options.ListenLocalhost(5001, configure => configure.UseHttps()); // HTTPS
-    
+
     // Performance optimizations for trading applications
     options.Limits.MaxConcurrentConnections = 1000;
     options.Limits.MaxConcurrentUpgradedConnections = 1000;

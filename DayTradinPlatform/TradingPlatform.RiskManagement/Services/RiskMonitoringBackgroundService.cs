@@ -71,7 +71,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
         try
         {
             var riskStatus = await _riskService.GetRiskStatusAsync();
-            
+
             // Check if risk level is elevated
             if (riskStatus.RiskLevel >= Models.RiskLevel.High)
             {
@@ -89,11 +89,11 @@ public class RiskMonitoringBackgroundService : BackgroundService
         try
         {
             var exceedingPositions = await _positionMonitor.GetPositionsExceedingLimitsAsync();
-            
+
             foreach (var position in exceedingPositions)
             {
                 await _alertService.CheckPositionLimitAsync(position.Symbol, position.Quantity);
-                
+
                 TradingLogOrchestrator.Instance.LogWarning($"Position exceeding limits: {position.Symbol} - Exposure: {position.RiskExposure}");
             }
         }
@@ -108,11 +108,11 @@ public class RiskMonitoringBackgroundService : BackgroundService
         try
         {
             var complianceStatus = await _complianceMonitor.GetComplianceStatusAsync();
-            
+
             if (!complianceStatus.IsCompliant)
             {
                 TradingLogOrchestrator.Instance.LogWarning($"Compliance violations detected: {complianceStatus.Violations.Count()} violations");
-                
+
                 foreach (var violation in complianceStatus.Violations.Where(v => v.Severity >= Models.ViolationSeverity.Major))
                 {
                     TradingLogOrchestrator.Instance.LogError($"Major compliance violation: {violation.RuleId} - {violation.Description}");
@@ -143,9 +143,9 @@ public class RiskMonitoringBackgroundService : BackgroundService
         {
             var positions = await _positionMonitor.GetAllPositionsAsync();
             var currentDrawdown = positions.Where(p => p.UnrealizedPnL < 0).Sum(p => Math.Abs(p.UnrealizedPnL));
-            
+
             var isWithinLimits = await _alertService.CheckDrawdownLimitAsync(currentDrawdown);
-            
+
             if (!isWithinLimits)
             {
                 TradingLogOrchestrator.Instance.LogError($"DRAWDOWN LIMIT EXCEEDED: {currentDrawdown:C}", userImpact: "Trading may be halted", troubleshootingHints: "Review position sizes and stop losses");

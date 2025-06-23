@@ -26,9 +26,9 @@ public class MarketDataCache : IMarketDataCache
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _memoryCache = new ConcurrentDictionary<string, CacheEntry>();
-        
+
         // Cleanup expired entries every 30 seconds
-        _cleanupTimer = new Timer(CleanupExpiredEntries, null, 
+        _cleanupTimer = new Timer(CleanupExpiredEntries, null,
             TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
     }
 
@@ -114,12 +114,12 @@ public class MarketDataCache : IMarketDataCache
     public async Task<CacheStats> GetStatsAsync()
     {
         await Task.CompletedTask;
-        
+
         lock (_statsLock)
         {
             var totalRequests = _hitCount + _missCount;
             var hitRate = totalRequests > 0 ? (double)_hitCount / totalRequests : 0.0;
-            
+
             // Calculate average age of cached entries
             var now = DateTime.UtcNow;
             var averageAge = _memoryCache.Values.Count > 0 ?

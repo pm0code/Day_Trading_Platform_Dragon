@@ -17,36 +17,36 @@ public sealed class OrderManager : IDisposable
     private readonly ConcurrentDictionary<string, List<Execution>> _orderExecutions = new();
     private readonly Timer _orderTimeoutChecker;
     private readonly CancellationTokenSource _cancellationTokenSource = new();
-    
+
     private int _orderIdCounter = 1;
-    
+
     public event EventHandler<Order>? OrderStatusChanged;
     public event EventHandler<Execution>? ExecutionReceived;
     public event EventHandler<OrderReject>? OrderRejected;
-    
+
     public OrderManager(FixSession fixSession, ITradingLogger logger)
     {
         _fixSession = fixSession ?? throw new ArgumentNullException(nameof(fixSession));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        
+
         // Subscribe to execution reports
         _fixSession.MessageReceived += OnFixMessageReceived;
-        
+
         // Check for order timeouts every 10 seconds
-        _orderTimeoutChecker = new Timer(CheckOrderTimeouts, null, 
+        _orderTimeoutChecker = new Timer(CheckOrderTimeouts, null,
             TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
     }
-    
+
     /// <summary>
     /// Submit a new single order
     /// </summary>
     public async Task<string> SubmitOrderAsync(OrderRequest orderRequest)
     {
         ValidateOrderRequest(orderRequest);
-        
+
         var orderId = GenerateOrderId();
         var clOrdId = $"ORD_{orderId}_{DateTimeOffset.UtcNow.Ticks}";
-        
+
         var order = new Order
         {
             OrderId = orderId,
@@ -66,14 +66,14 @@ public sealed class OrderManager : IDisposable
             CreatedTime = DateTime.UtcNow,
             HardwareTimestamp = GetHardwareTimestamp()
         };
-        
+
         _activeOrders[clOrdId] = order;
-        
+
         try
         {
             var fixMessage = CreateNewOrderSingleMessage(order);
             var success = await _fixSession.SendMessageAsync(fixMessage);
-            
+
             if (success)
             {
                 order.Status = OrderStatus.New;
@@ -86,7 +86,7 @@ public sealed class OrderManager : IDisposable
                 _activeOrders.TryRemove(clOrdId, out _);
                 TradingLogOrchestrator.Instance.LogError($"Failed to send order: {clOrdId}");
             }
-            
+
             return clOrdId;
         }
         catch (Exception ex)
@@ -97,7 +97,7 @@ public sealed class OrderManager : IDisposable
             throw;
         }
     }
-    
+
     /// <summary>
     /// Cancel an existing order
     /// </summary>
@@ -108,13 +108,13 @@ public sealed class OrderManager : IDisposable
             TradingLogOrchestrator.Instance.LogWarning($"Cannot cancel order - not found: {clOrdId}");
             return false;
         }
-        
+
         if (order.Status == OrderStatus.Filled || order.Status == OrderStatus.Cancelled)
         {
             TradingLogOrchestrator.Instance.LogWarning($"Cannot cancel order in status: {order.Status}");
             return false;
         }
-        
+
         try
         {
             var cancelRequest = new FixMessage
@@ -122,22 +122,22 @@ public sealed class OrderManager : IDisposable
                 MsgType = FixMessageTypes.OrderCancelRequest,
                 HardwareTimestamp = GetHardwareTimestamp()
             };
-            
+
             cancelRequest.SetField(11, clOrdId); // ClOrdID
             cancelRequest.SetField(41, origClOrdId ?? order.ClOrdId); // OrigClOrdID
             cancelRequest.SetField(55, order.Symbol); // Symbol
             cancelRequest.SetField(54, order.Side == OrderSide.Buy ? "1" : "2"); // Side
             cancelRequest.SetField(60, DateTime.UtcNow.ToString("yyyyMMdd-HH:mm:ss.fff")); // TransactTime
-            
+
             var success = await _fixSession.SendMessageAsync(cancelRequest);
-            
+
             if (success)
             {
                 order.Status = OrderStatus.PendingCancel;
                 _logger.LogInfo($"Cancel request sent for order: {clOrdId}");
                 OrderStatusChanged?.Invoke(this, order);
             }
-            
+
             return success;
         }
         catch (Exception ex)
@@ -146,7 +146,7 @@ public sealed class OrderManager : IDisposable
             return false;
         }
     }
-    
+
     /// <summary>
     /// Replace (modify) an existing order
     /// </summary>
@@ -156,9 +156,9 @@ public sealed class OrderManager : IDisposable
         {
             throw new InvalidOperationException($"Original order not found: {origClOrdId}");
         }
-        
+
         var newClOrdId = $"REP_{GenerateOrderId()}_{DateTimeOffset.UtcNow.Ticks}";
-        
+
         try
         {
             var replaceMessage = new FixMessage
@@ -166,27 +166,27 @@ public sealed class OrderManager : IDisposable
                 MsgType = FixMessageTypes.OrderCancelReplaceRequest,
                 HardwareTimestamp = GetHardwareTimestamp()
             };
-            
+
             replaceMessage.SetField(11, newClOrdId); // ClOrdID
             replaceMessage.SetField(41, origClOrdId); // OrigClOrdID
             replaceMessage.SetField(55, originalOrder.Symbol); // Symbol
             replaceMessage.SetField(54, originalOrder.Side == OrderSide.Buy ? "1" : "2"); // Side
             replaceMessage.SetField(60, DateTime.UtcNow.ToString("yyyyMMdd-HH:mm:ss.fff")); // TransactTime
-            
+
             // New order parameters
             replaceMessage.SetField(38, replaceRequest.NewQuantity); // OrderQty
             replaceMessage.SetField(40, GetFixOrderType(replaceRequest.NewOrderType)); // OrdType
-            
+
             if (replaceRequest.NewPrice.HasValue)
                 replaceMessage.SetField(44, replaceRequest.NewPrice.Value); // Price
-            
+
             if (replaceRequest.NewStopPrice.HasValue)
                 replaceMessage.SetField(99, replaceRequest.NewStopPrice.Value); // StopPx
-            
+
             replaceMessage.SetField(59, GetFixTimeInForce(replaceRequest.NewTimeInForce)); // TimeInForce
-            
+
             var success = await _fixSession.SendMessageAsync(replaceMessage);
-            
+
             if (success)
             {
                 // Create new order object for the replacement
@@ -206,16 +206,16 @@ public sealed class OrderManager : IDisposable
                     HardwareTimestamp = GetHardwareTimestamp(),
                     OriginalOrderId = origClOrdId
                 };
-                
+
                 _activeOrders[newClOrdId] = newOrder;
                 originalOrder.Status = OrderStatus.PendingReplace;
-                
+
                 _logger.LogInfo($"Order replace request sent: {origClOrdId} -> {newClOrdId}");
-                
+
                 OrderStatusChanged?.Invoke(this, originalOrder);
                 OrderStatusChanged?.Invoke(this, newOrder);
             }
-            
+
             return newClOrdId;
         }
         catch (Exception ex)
@@ -224,7 +224,7 @@ public sealed class OrderManager : IDisposable
             throw;
         }
     }
-    
+
     /// <summary>
     /// Submit a mass cancel request for all orders or specific criteria
     /// </summary>
@@ -237,11 +237,11 @@ public sealed class OrderManager : IDisposable
                 MsgType = FixMessageTypes.OrderMassCancelRequest,
                 HardwareTimestamp = GetHardwareTimestamp()
             };
-            
+
             var clOrdId = $"MC_{GenerateOrderId()}_{DateTimeOffset.UtcNow.Ticks}";
             massCancelRequest.SetField(11, clOrdId); // ClOrdID
             massCancelRequest.SetField(60, DateTime.UtcNow.ToString("yyyyMMdd-HH:mm:ss.fff")); // TransactTime
-            
+
             // Mass cancel type (1=Cancel all orders, 7=Cancel all orders for a security)
             if (string.IsNullOrEmpty(symbol))
             {
@@ -252,19 +252,19 @@ public sealed class OrderManager : IDisposable
                 massCancelRequest.SetField(530, "7"); // MassCancelRequestType
                 massCancelRequest.SetField(55, symbol); // Symbol
             }
-            
+
             if (side.HasValue)
             {
                 massCancelRequest.SetField(54, side == OrderSide.Buy ? "1" : "2"); // Side
             }
-            
+
             var success = await _fixSession.SendMessageAsync(massCancelRequest);
-            
+
             if (success)
             {
                 _logger.LogInfo($"Mass cancel request sent - Symbol: {symbol ?? "ALL"}, Side: {side?.ToString() ?? "ALL"}");
             }
-            
+
             return success;
         }
         catch (Exception ex)
@@ -273,7 +273,7 @@ public sealed class OrderManager : IDisposable
             return false;
         }
     }
-    
+
     /// <summary>
     /// Get order by client order ID
     /// </summary>
@@ -281,7 +281,7 @@ public sealed class OrderManager : IDisposable
     {
         return _activeOrders.TryGetValue(clOrdId, out var order) ? order : null;
     }
-    
+
     /// <summary>
     /// Get all active orders
     /// </summary>
@@ -289,17 +289,17 @@ public sealed class OrderManager : IDisposable
     {
         return _activeOrders.Values.Where(o => IsActiveStatus(o.Status)).ToList();
     }
-    
+
     /// <summary>
     /// Get executions for an order
     /// </summary>
     public IReadOnlyList<Execution> GetOrderExecutions(string clOrdId)
     {
-        return _orderExecutions.TryGetValue(clOrdId, out var executions) 
-            ? executions.AsReadOnly() 
+        return _orderExecutions.TryGetValue(clOrdId, out var executions)
+            ? executions.AsReadOnly()
             : new List<Execution>().AsReadOnly();
     }
-    
+
     private void OnFixMessageReceived(object? sender, FixMessage message)
     {
         try
@@ -309,7 +309,7 @@ public sealed class OrderManager : IDisposable
                 case FixMessageTypes.ExecutionReport:
                     HandleExecutionReport(message);
                     break;
-                    
+
                 case FixMessageTypes.OrderCancelReject:
                     HandleOrderCancelReject(message);
                     break;
@@ -320,21 +320,21 @@ public sealed class OrderManager : IDisposable
             TradingLogOrchestrator.Instance.LogError($"Error processing order message: {message.MsgType}", ex);
         }
     }
-    
+
     private void HandleExecutionReport(FixMessage message)
     {
         var clOrdId = message.GetField(11); // ClOrdID
         var execType = message.GetField(150); // ExecType
         var ordStatus = message.GetField(39); // OrdStatus
-        
+
         if (string.IsNullOrEmpty(clOrdId)) return;
-        
+
         if (_activeOrders.TryGetValue(clOrdId, out var order))
         {
             // Update order status
             order.Status = ConvertFixOrderStatus(ordStatus);
             order.LastUpdateTime = DateTime.UtcNow;
-            
+
             // Handle execution
             if (execType == "F") // Trade (partial or full fill)
             {
@@ -351,40 +351,40 @@ public sealed class OrderManager : IDisposable
                     LeavesQty = message.GetDecimalField(151), // LeavesQty
                     CumQty = message.GetDecimalField(14) // CumQty
                 };
-                
+
                 if (!_orderExecutions.ContainsKey(clOrdId))
                     _orderExecutions[clOrdId] = new List<Execution>();
-                
+
                 _orderExecutions[clOrdId].Add(execution);
-                
+
                 order.FilledQuantity = execution.CumQty;
                 order.AveragePrice = CalculateAveragePrice(clOrdId);
-                
+
                 ExecutionReceived?.Invoke(this, execution);
-                
+
                 _logger.LogInfo($"Execution received: {clOrdId} - {execution.Quantity}@{execution.Price}, Status: {order.Status}");
             }
-            
+
             OrderStatusChanged?.Invoke(this, order);
-            
+
             // Remove completed orders
-            if (order.Status == OrderStatus.Filled || 
-                order.Status == OrderStatus.Cancelled || 
+            if (order.Status == OrderStatus.Filled ||
+                order.Status == OrderStatus.Cancelled ||
                 order.Status == OrderStatus.Rejected)
             {
                 _activeOrders.TryRemove(clOrdId, out _);
             }
         }
     }
-    
+
     private void HandleOrderCancelReject(FixMessage message)
     {
         var clOrdId = message.GetField(11); // ClOrdID
         var cxlRejReason = message.GetField(102); // CxlRejReason
         var text = message.GetField(58); // Text
-        
+
         TradingLogOrchestrator.Instance.LogWarning($"Order cancel rejected: {clOrdId}, Reason: {cxlRejReason}, Text: {text}");
-        
+
         if (!string.IsNullOrEmpty(clOrdId) && _activeOrders.TryGetValue(clOrdId, out var order))
         {
             // Revert status back to previous state
@@ -392,7 +392,7 @@ public sealed class OrderManager : IDisposable
             order.LastUpdateTime = DateTime.UtcNow;
             OrderStatusChanged?.Invoke(this, order);
         }
-        
+
         var reject = new OrderReject
         {
             ClOrdId = clOrdId ?? "",
@@ -400,10 +400,10 @@ public sealed class OrderManager : IDisposable
             RejectText = text ?? "",
             RejectTime = DateTime.UtcNow
         };
-        
+
         OrderRejected?.Invoke(this, reject);
     }
-    
+
     private FixMessage CreateNewOrderSingleMessage(Order order)
     {
         var message = new FixMessage
@@ -411,37 +411,37 @@ public sealed class OrderManager : IDisposable
             MsgType = FixMessageTypes.NewOrderSingle,
             HardwareTimestamp = order.HardwareTimestamp
         };
-        
+
         message.SetField(11, order.ClOrdId); // ClOrdID
         message.SetField(55, order.Symbol); // Symbol
         message.SetField(54, order.Side == OrderSide.Buy ? "1" : "2"); // Side
         message.SetField(60, DateTime.UtcNow.ToString("yyyyMMdd-HH:mm:ss.fff")); // TransactTime
         message.SetField(38, order.Quantity); // OrderQty
         message.SetField(40, GetFixOrderType(order.OrderType)); // OrdType
-        
+
         if (order.Price.HasValue && order.OrderType != OrderType.Market)
             message.SetField(44, order.Price.Value); // Price
-        
+
         if (order.StopPrice.HasValue)
             message.SetField(99, order.StopPrice.Value); // StopPx
-        
+
         message.SetField(59, GetFixTimeInForce(order.TimeInForce)); // TimeInForce
-        
+
         if (order.MinQty.HasValue)
             message.SetField(110, order.MinQty.Value); // MinQty
-        
+
         if (order.MaxFloor.HasValue)
             message.SetField(111, order.MaxFloor.Value); // MaxFloor
-        
+
         if (order.ExpireTime.HasValue)
             message.SetField(432, order.ExpireTime.Value.ToString("yyyyMMdd-HH:mm:ss")); // ExpireTime
-        
+
         if (!string.IsNullOrEmpty(order.ExecutionInstructions))
             message.SetField(18, order.ExecutionInstructions); // ExecInst
-        
+
         return message;
     }
-    
+
     private static string GetFixOrderType(OrderType orderType)
     {
         return orderType switch
@@ -453,7 +453,7 @@ public sealed class OrderManager : IDisposable
             _ => "2" // Default to Limit
         };
     }
-    
+
     private static string GetFixTimeInForce(TimeInForce timeInForce)
     {
         return timeInForce switch
@@ -467,7 +467,7 @@ public sealed class OrderManager : IDisposable
             _ => "0" // Default to Day
         };
     }
-    
+
     private static OrderStatus ConvertFixOrderStatus(string? fixStatus)
     {
         return fixStatus switch
@@ -483,33 +483,33 @@ public sealed class OrderManager : IDisposable
             _ => OrderStatus.Unknown
         };
     }
-    
+
     private static bool IsActiveStatus(OrderStatus status)
     {
-        return status is OrderStatus.New or OrderStatus.PartiallyFilled or 
-                       OrderStatus.PendingNew or OrderStatus.PendingCancel or 
+        return status is OrderStatus.New or OrderStatus.PartiallyFilled or
+                       OrderStatus.PendingNew or OrderStatus.PendingCancel or
                        OrderStatus.PendingReplace;
     }
-    
+
     private decimal CalculateAveragePrice(string clOrdId)
     {
         if (!_orderExecutions.TryGetValue(clOrdId, out var executions) || !executions.Any())
             return 0m;
-        
+
         var totalValue = executions.Sum(e => e.Quantity * e.Price);
         var totalQuantity = executions.Sum(e => e.Quantity);
-        
+
         return totalQuantity > 0 ? totalValue / totalQuantity : 0m;
     }
-    
+
     private void CheckOrderTimeouts(object? state)
     {
         var timeoutThreshold = TimeSpan.FromMinutes(10); // Orders timeout after 10 minutes
         var now = DateTime.UtcNow;
-        
+
         foreach (var order in _activeOrders.Values.ToList())
         {
-            if (order.Status == OrderStatus.PendingNew && 
+            if (order.Status == OrderStatus.PendingNew &&
                 now - order.CreatedTime > timeoutThreshold)
             {
                 TradingLogOrchestrator.Instance.LogWarning($"Order timeout detected: {order.ClOrdId}");
@@ -519,32 +519,32 @@ public sealed class OrderManager : IDisposable
             }
         }
     }
-    
+
     private static void ValidateOrderRequest(OrderRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Symbol))
             throw new ArgumentException("Symbol is required", nameof(request));
-        
+
         if (request.Quantity <= 0)
             throw new ArgumentException("Quantity must be positive", nameof(request));
-        
+
         if (request.OrderType != OrderType.Market && !request.Price.HasValue)
             throw new ArgumentException("Price is required for non-market orders", nameof(request));
-        
+
         if (request.OrderType == OrderType.StopLimit && !request.StopPrice.HasValue)
             throw new ArgumentException("Stop price is required for stop-limit orders", nameof(request));
     }
-    
+
     private string GenerateOrderId()
     {
         return Interlocked.Increment(ref _orderIdCounter).ToString();
     }
-    
+
     private long GetHardwareTimestamp()
     {
         return (DateTimeOffset.UtcNow.Ticks - DateTimeOffset.UnixEpoch.Ticks) * 100L;
     }
-    
+
     public void Dispose()
     {
         _cancellationTokenSource.Cancel();
@@ -608,7 +608,7 @@ public class Order
     public string? OriginalOrderId { get; set; }
     public decimal FilledQuantity { get; set; }
     public decimal AveragePrice { get; set; }
-    
+
     public decimal RemainingQuantity => Quantity - FilledQuantity;
 }
 

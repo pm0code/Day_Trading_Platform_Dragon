@@ -20,11 +20,11 @@ internal class AnomalyDetector : IDisposable
     public AnomalyDetector(AiConfiguration config)
     {
         _config = config;
-        
+
         if (_config.EnableAnomalyDetection)
         {
             // Initialize ML model update timer
-            _modelUpdateTimer = new Timer(UpdateModels, null, 
+            _modelUpdateTimer = new Timer(UpdateModels, null,
                 TimeSpan.FromHours(_config.ModelUpdateIntervalHours),
                 TimeSpan.FromHours(_config.ModelUpdateIntervalHours));
         }
@@ -39,10 +39,10 @@ internal class AnomalyDetector : IDisposable
         {
             // Simplified anomaly scoring - in production this would use ML.NET
             var score = CalculateBasicAnomalyScore(entry);
-            
+
             // Add to training data for continuous learning
             _trainingData.Enqueue(entry);
-            
+
             return score;
         }
         catch (Exception ex)
@@ -91,7 +91,7 @@ internal class AnomalyDetector : IDisposable
         {
             // Process entries for pattern detection
             await AnalyzePatterns(entries);
-            
+
             // Update model if needed
             if (_trainingData.Count > 10000)
             {
@@ -129,7 +129,7 @@ internal class AnomalyDetector : IDisposable
             // Large quantity orders
             if (entry.Trading.Quantity > 10000)
                 score += 0.2;
-            
+
             // High execution time
             if (entry.Trading.ExecutionTimeNanoseconds > 100_000_000) // >100ms
                 score += 0.3;
@@ -183,10 +183,10 @@ internal class AnomalyDetector : IDisposable
             // In production, this would implement ML.NET model training
             // For now, simulate model training
             await Task.Delay(1000);
-            
+
             _modelTrained = true;
             Console.WriteLine("Anomaly detection model updated");
-            
+
             // Clear old training data
             while (_trainingData.TryDequeue(out _)) { }
         }

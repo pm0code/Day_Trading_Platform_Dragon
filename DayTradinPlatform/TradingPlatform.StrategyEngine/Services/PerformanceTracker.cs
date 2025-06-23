@@ -21,9 +21,9 @@ public class PerformanceTracker : IPerformanceTracker
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _strategyPerformances = new ConcurrentDictionary<string, StrategyPerformance>();
         _tradeHistory = new ConcurrentDictionary<string, List<TradeRecord>>();
-        
+
         // Update performance metrics every 30 seconds
-        _metricsUpdateTimer = new Timer(UpdatePerformanceMetrics, null, 
+        _metricsUpdateTimer = new Timer(UpdatePerformanceMetrics, null,
             TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
     }
 
@@ -78,7 +78,7 @@ public class PerformanceTracker : IPerformanceTracker
         try
         {
             var allPerformances = _strategyPerformances.Values.ToArray();
-            
+
             if (allPerformances.Length == 0)
             {
                 return new PortfolioPerformance(0.0m, 0.0m, 0.0m, 0, 0, 0.0m, DateTimeOffset.UtcNow);
@@ -89,7 +89,7 @@ public class PerformanceTracker : IPerformanceTracker
             var maxDrawdown = allPerformances.Min(p => p.MaxDrawdown);
             var activeStrategies = allPerformances.Count(p => p.ActiveDuration > TimeSpan.Zero);
             var totalTrades = allPerformances.Sum(p => p.TotalTrades);
-            
+
             var totalWinningTrades = allPerformances.Sum(p => p.WinningTrades);
             var winRate = totalTrades > 0 ? (decimal)totalWinningTrades / totalTrades : 0.0m;
 
@@ -137,14 +137,14 @@ public class PerformanceTracker : IPerformanceTracker
     public async Task<TradeRecord[]> GetTradeHistoryAsync(string strategyId, int? limit = null)
     {
         await Task.CompletedTask;
-        
+
         if (!_tradeHistory.TryGetValue(strategyId, out var trades))
         {
             return Array.Empty<TradeRecord>();
         }
 
         var orderedTrades = trades.OrderByDescending(t => t.Timestamp).ToArray();
-        
+
         if (limit.HasValue && limit.Value > 0)
         {
             return orderedTrades.Take(limit.Value).ToArray();
@@ -159,7 +159,7 @@ public class PerformanceTracker : IPerformanceTracker
     public async Task<PerformanceComparison[]> GetStrategyComparisonAsync()
     {
         await Task.CompletedTask;
-        
+
         return _strategyPerformances.Values
             .Select(p => new PerformanceComparison(
                 p.StrategyId,
@@ -185,28 +185,28 @@ public class PerformanceTracker : IPerformanceTracker
             }
 
             var returns = trades.Select(t => t.PnL).ToArray();
-            
+
             // Calculate volatility (standard deviation of returns)
             var averageReturn = returns.Average();
             var variance = returns.Select(r => Math.Pow((double)(r - averageReturn), 2)).Average();
             var volatility = (decimal)Math.Sqrt(variance);
-            
+
             // Calculate Sharpe ratio (assuming risk-free rate of 0 for simplicity)
             var sharpeRatio = volatility > 0 ? averageReturn / volatility : 0.0m;
-            
+
             // Calculate maximum drawdown
             var cumulativeReturns = new List<decimal> { 0 };
             var runningTotal = 0.0m;
-            
+
             foreach (var trade in trades.OrderBy(t => t.Timestamp))
             {
                 runningTotal += trade.PnL;
                 cumulativeReturns.Add(runningTotal);
             }
-            
+
             var maxDrawdown = 0.0m;
             var peak = 0.0m;
-            
+
             foreach (var cumReturn in cumulativeReturns)
             {
                 if (cumReturn > peak)
@@ -263,7 +263,7 @@ public class PerformanceTracker : IPerformanceTracker
         var newWinningTrades = existing.WinningTrades + (isWinning ? 1 : 0);
         var newLosingTrades = existing.LosingTrades + (isWinning ? 0 : 1);
         var newWinRate = (decimal)newWinningTrades / newTotalTrades;
-        
+
         // Update max drawdown if this trade creates a new low
         var newMaxDrawdown = existing.MaxDrawdown;
         if (newTotalPnL < existing.TotalPnL)
@@ -312,7 +312,7 @@ public class PerformanceTracker : IPerformanceTracker
                     // Calculate rolling Sharpe ratio with at least 10 trades
                     var recentTrades = trades.TakeLast(30).ToArray(); // Last 30 trades
                     var returns = recentTrades.Select(t => (double)t.PnL).ToArray();
-                    
+
                     if (returns.Length > 1)
                     {
                         var meanReturn = returns.Average();

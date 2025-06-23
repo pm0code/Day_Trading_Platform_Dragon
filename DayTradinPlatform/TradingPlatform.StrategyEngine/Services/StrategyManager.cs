@@ -20,7 +20,7 @@ public class StrategyManager : IStrategyManager
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _activeStrategies = new ConcurrentDictionary<string, StrategyInfo>();
         _strategyConfigs = new ConcurrentDictionary<string, StrategyConfig>();
-        
+
         // Initialize default strategies
         InitializeDefaultStrategies();
     }
@@ -47,7 +47,7 @@ public class StrategyManager : IStrategyManager
             }
 
             // Check if already running
-            if (_activeStrategies.TryGetValue(strategyId, out var existingStrategy) && 
+            if (_activeStrategies.TryGetValue(strategyId, out var existingStrategy) &&
                 existingStrategy.Status == StrategyStatus.Running)
             {
                 return new StrategyResult(false, $"Strategy {strategyId} is already running");
@@ -175,14 +175,14 @@ public class StrategyManager : IStrategyManager
         {
             if (_activeStrategies.TryGetValue(strategyId, out var strategy))
             {
-                var updatedStrategy = strategy with 
-                { 
+                var updatedStrategy = strategy with
+                {
                     PnL = strategy.PnL + pnlChange,
                     TradeCount = strategy.TradeCount + tradeCount
                 };
 
                 _activeStrategies.TryUpdate(strategyId, updatedStrategy, strategy);
-                
+
                 TradingLogOrchestrator.Instance.LogInfo($"Updated metrics for strategy {strategyId}: PnL={updatedStrategy.PnL}, Trades={updatedStrategy.TradeCount}");
             }
 
@@ -224,7 +224,7 @@ public class StrategyManager : IStrategyManager
             _activeStrategies.TryUpdate(strategyId, pausedStrategy, strategy);
 
             TradingLogOrchestrator.Instance.LogInfo($"Strategy {strategyId} paused");
-            
+
             await Task.CompletedTask;
             return new StrategyResult(true, $"Strategy {strategyId} paused successfully");
         }
@@ -256,7 +256,7 @@ public class StrategyManager : IStrategyManager
             _activeStrategies.TryUpdate(strategyId, runningStrategy, strategy);
 
             TradingLogOrchestrator.Instance.LogInfo($"Strategy {strategyId} resumed");
-            
+
             await Task.CompletedTask;
             return new StrategyResult(true, $"Strategy {strategyId} resumed successfully");
         }

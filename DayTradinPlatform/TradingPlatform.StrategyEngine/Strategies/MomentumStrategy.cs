@@ -41,7 +41,7 @@ public class MomentumStrategy : IMomentumStrategy
                 if (momentum.Strength >= 0.7m && momentum.VolumeConfirmation >= 1.5m)
                 {
                     var signalType = momentum.Direction == TrendDirection.Up ? SignalType.Buy : SignalType.Sell;
-                    
+
                     var signal = new TradingSignal(
                         Guid.NewGuid().ToString(),
                         "momentum-breakout",
@@ -90,10 +90,10 @@ public class MomentumStrategy : IMomentumStrategy
             {
                 var direction = conditions.PriceChange > 0 ? TrendDirection.Up : TrendDirection.Down;
                 var strength = Math.Min(Math.Abs(conditions.PriceChange) * 10, 1.0m); // Scale to 0-1
-                
+
                 // Calculate volume confirmation
                 var volumeConfirmation = conditions.Volume / 1000000m; // Assuming average volume of 1M
-                
+
                 // Calculate breakout level (mock implementation)
                 var breakoutLevel = conditions.Volatility * 100 * (1 + conditions.PriceChange);
 
@@ -129,7 +129,7 @@ public class MomentumStrategy : IMomentumStrategy
             var priceStrength = Math.Min(Math.Abs(conditions.PriceChange) * 10, 1.0m);
             var volumeStrength = Math.Min(conditions.Volume / 2000000m, 1.0m); // Volume factor
             var volatilityStrength = Math.Min(conditions.Volatility * 20, 1.0m); // Volatility factor
-            
+
             // RSI momentum component
             var rsiMomentum = conditions.RSI switch
             {
@@ -141,9 +141,9 @@ public class MomentumStrategy : IMomentumStrategy
             };
 
             // Weighted combination of factors
-            var momentumStrength = (priceStrength * 0.3m) + 
-                                 (volumeStrength * 0.3m) + 
-                                 (volatilityStrength * 0.2m) + 
+            var momentumStrength = (priceStrength * 0.3m) +
+                                 (volumeStrength * 0.3m) +
+                                 (volatilityStrength * 0.2m) +
                                  (rsiMomentum * 0.2m);
 
             TradingLogOrchestrator.Instance.LogInfo($"Calculated momentum strength for {symbol}: {momentumStrength} (Price={priceStrength}, Volume={volumeStrength}, RSI={rsiMomentum})");

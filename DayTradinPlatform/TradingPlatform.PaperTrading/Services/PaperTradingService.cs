@@ -37,7 +37,7 @@ public class PaperTradingService : IPaperTradingService
     public async Task<OrderResult> SubmitOrderAsync(OrderRequest orderRequest)
     {
         var startTime = DateTime.UtcNow;
-        
+
         try
         {
             // Validate order request
@@ -50,7 +50,7 @@ public class PaperTradingService : IPaperTradingService
             // Check buying power
             var currentPrice = await _orderBookSimulator.GetCurrentPriceAsync(orderRequest.Symbol);
             var hasSufficientBuyingPower = await _portfolioManager.HasSufficientBuyingPowerAsync(orderRequest, currentPrice);
-            
+
             if (!hasSufficientBuyingPower)
             {
                 return new OrderResult(false, null, "Insufficient buying power", OrderStatus.Rejected, DateTime.UtcNow);
@@ -135,12 +135,12 @@ public class PaperTradingService : IPaperTradingService
             }
 
             // Update order status
-            var cancelledOrder = order with 
-            { 
-                Status = OrderStatus.Cancelled, 
-                UpdatedAt = DateTime.UtcNow 
+            var cancelledOrder = order with
+            {
+                Status = OrderStatus.Cancelled,
+                UpdatedAt = DateTime.UtcNow
             };
-            
+
             _orders.TryUpdate(orderId, cancelledOrder, order);
 
             // Publish cancellation event
@@ -219,7 +219,7 @@ public class PaperTradingService : IPaperTradingService
         if (orderRequest.Type == OrderType.Stop && orderRequest.StopPrice <= 0)
             return (false, "Stop price must be positive for stop orders");
 
-        if (orderRequest.Type == OrderType.StopLimit && 
+        if (orderRequest.Type == OrderType.StopLimit &&
             (orderRequest.LimitPrice <= 0 || orderRequest.StopPrice <= 0))
             return (false, "Both limit and stop prices must be positive for stop-limit orders");
 

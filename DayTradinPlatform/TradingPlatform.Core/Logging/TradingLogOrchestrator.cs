@@ -25,18 +25,18 @@ namespace TradingPlatform.Core.Logging;
 public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
 {
     #region Configuration Constants
-    
+
     private const string LogDirectory = "/logs";
     private const int ChannelCapacity = 100000; // Large buffer for high-frequency logging
     private const int WorkerThreadCount = 4; // Multiple worker threads for parallel processing
     private const int FlushIntervalMs = 500; // 500ms flush interval for real-time logging
     private const int MaxBatchSize = 1000; // Process logs in batches for efficiency
     private const int EmergencyFlushThreshold = 50000; // Emergency flush when buffer reaches this size
-    
+
     #endregion
 
     #region Thread-Safe Infrastructure
-    
+
     private readonly Channel<LogEntry> _logChannel;
     private readonly ChannelWriter<LogEntry> _logWriter;
     private readonly ChannelReader<LogEntry> _logReader;
@@ -45,30 +45,30 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
     private readonly Timer _flushTimer;
     private readonly string _serviceName;
     private readonly AsyncLocal<string?> _correlationId = new();
-    
+
     // Thread-safe file writers for different log types
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _fileLocks = new();
     private readonly ConcurrentDictionary<string, PerformanceStats> _performanceStats = new();
-    
+
     // Pre-allocated resources for performance
     private readonly ObjectPool<StringBuilder> _stringBuilderPool;
     private readonly ObjectPool<List<LogEntry>> _logEntryListPool;
-    
+
     private volatile bool _disposed;
     private long _totalLogsProcessed;
     private long _logsPerSecond;
-    
+
     #endregion
 
     #region Singleton Pattern for Canonical Usage
-    
+
     private static readonly Lazy<TradingLogOrchestrator> _instance = new(() => new TradingLogOrchestrator());
-    
+
     /// <summary>
     /// CANONICAL INSTANCE - Use this throughout the entire codebase
     /// </summary>
     public static TradingLogOrchestrator Instance => _instance.Value;
-    
+
     #endregion
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
     private TradingLogOrchestrator(string serviceName = "TradingPlatform")
     {
         _serviceName = serviceName;
-        
+
         // Create high-performance channel for non-blocking logging
         var options = new BoundedChannelOptions(ChannelCapacity)
         {
@@ -86,18 +86,18 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
             SingleWriter = false, // Multiple threads can log
             AllowSynchronousContinuations = false // Prevent thread pool starvation
         };
-        
+
         _logChannel = Channel.CreateBounded<LogEntry>(options);
         _logWriter = _logChannel.Writer;
         _logReader = _logChannel.Reader;
-        
+
         // Initialize object pools for memory efficiency
         _stringBuilderPool = new ObjectPool<StringBuilder>(() => new StringBuilder(2048));
         _logEntryListPool = new ObjectPool<List<LogEntry>>(() => new List<LogEntry>(MaxBatchSize));
-        
+
         // Ensure logs directory exists
         Directory.CreateDirectory(LogDirectory);
-        
+
         // Start multiple worker threads for parallel log processing
         _workerTasks = new Task[WorkerThreadCount];
         for (int i = 0; i < WorkerThreadCount; i++)
@@ -105,27 +105,27 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
             var workerIndex = i;
             _workerTasks[i] = Task.Run(() => ProcessLogWorker(workerIndex, _cancellationTokenSource.Token));
         }
-        
+
         // Start performance monitoring timer
         _flushTimer = new Timer(FlushPerformanceStats, null, FlushIntervalMs, FlushIntervalMs);
-        
+
         // Log orchestrator initialization
-        LogInfo("TradingLogOrchestrator initialized - CANONICAL LOGGING ACTIVE", new 
-        { 
-            ServiceName = serviceName, 
-            LogDirectory, 
-            ChannelCapacity, 
+        LogInfo("TradingLogOrchestrator initialized - CANONICAL LOGGING ACTIVE", new
+        {
+            ServiceName = serviceName,
+            LogDirectory,
+            ChannelCapacity,
             WorkerThreads = WorkerThreadCount,
-            FlushInterval = FlushIntervalMs 
+            FlushInterval = FlushIntervalMs
         });
     }
 
     #region Enhanced ITradingLogger Interface Implementation - NON-BLOCKING
-    
+
     /// <summary>
     /// NON-BLOCKING informational logging with automatic method context
     /// </summary>
-    public void LogInfo(string message, 
+    public void LogInfo(string message,
                         object? additionalData = null,
                         [CallerMemberName] string memberName = "",
                         [CallerFilePath] string sourceFilePath = "",
@@ -133,11 +133,11 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
     {
         EnqueueLogEntry(LogLevel.Info, message, null, memberName, sourceFilePath, sourceLineNumber, additionalData);
     }
-    
+
     /// <summary>
     /// NON-BLOCKING debug logging for development and troubleshooting
     /// </summary>
-    public void LogDebug(string message, 
+    public void LogDebug(string message,
                         object? additionalData = null,
                         [CallerMemberName] string memberName = "",
                         [CallerFilePath] string sourceFilePath = "",
@@ -145,13 +145,13 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
     {
         EnqueueLogEntry(LogLevel.Debug, message, null, memberName, sourceFilePath, sourceLineNumber, additionalData);
     }
-    
+
     /// <summary>
     /// NON-BLOCKING warning logging with impact assessment
     /// </summary>
     public void LogWarning(string message,
                            string? impact = null,
-                           string? recommendedAction = null, 
+                           string? recommendedAction = null,
                            object? additionalData = null,
                            [CallerMemberName] string memberName = "",
                            [CallerFilePath] string sourceFilePath = "",
@@ -163,10 +163,10 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
             RecommendedAction = recommendedAction ?? "Monitor situation",
             AdditionalData = additionalData
         };
-        
+
         EnqueueLogEntry(LogLevel.Warning, message, null, memberName, sourceFilePath, sourceLineNumber, warningData);
     }
-    
+
     /// <summary>
     /// NON-BLOCKING error logging with comprehensive diagnostic information
     /// </summary>
@@ -190,10 +190,10 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
             StackTrace = exception?.StackTrace,
             AdditionalData = additionalData
         };
-        
+
         EnqueueLogEntry(LogLevel.Error, message, exception, memberName, sourceFilePath, sourceLineNumber, errorData);
     }
-    
+
     /// <summary>
     /// NON-BLOCKING trading operations logging for regulatory compliance
     /// </summary>
@@ -209,7 +209,7 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
                          [CallerMemberName] string memberName = "")
     {
         var correlationId = GenerateCorrelationId();
-        var performanceStatus = executionTime?.TotalMicroseconds <= 100 ? "✅ OPTIMAL" : 
+        var performanceStatus = executionTime?.TotalMicroseconds <= 100 ? "✅ OPTIMAL" :
                                executionTime?.TotalMicroseconds <= 200 ? "⚠️ ACCEPTABLE" : "❌ SLOW";
 
         var tradeData = new
@@ -236,14 +236,14 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
                      $"Notional: ${quantity * price:F2} | Correlation: {correlationId}";
 
         EnqueueLogEntry(LogLevel.Trade, message, null, memberName, "", 0, tradeData);
-        
+
         // NON-BLOCKING performance tracking
         if (executionTime.HasValue)
         {
             TrackPerformanceAsync("trade.execution_time", executionTime.Value.TotalMicroseconds, "microseconds");
         }
     }
-    
+
     /// <summary>
     /// NON-BLOCKING position change logging with P&L impact
     /// </summary>
@@ -257,7 +257,7 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
     {
         var positionChange = newPosition - oldPosition;
         var correlationId = GenerateCorrelationId();
-        
+
         var positionData = new
         {
             Symbol = symbol,
@@ -289,13 +289,13 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
                                TimeSpan? comparisonTarget = null,
                                [CallerMemberName] string memberName = "")
     {
-        var performanceStatus = comparisonTarget.HasValue ? 
-            (duration <= comparisonTarget.Value ? "✅ UNDER TARGET" : 
+        var performanceStatus = comparisonTarget.HasValue ?
+            (duration <= comparisonTarget.Value ? "✅ UNDER TARGET" :
              duration <= comparisonTarget.Value * 1.2 ? "⚠️ NEAR TARGET" : "❌ OVER TARGET") :
             "ℹ️ NO TARGET";
-            
-        var percentOfTarget = comparisonTarget.HasValue ? 
-            (duration.TotalMicroseconds / comparisonTarget.Value.TotalMicroseconds * 100).ToString("F1") + "%" : 
+
+        var percentOfTarget = comparisonTarget.HasValue ?
+            (duration.TotalMicroseconds / comparisonTarget.Value.TotalMicroseconds * 100).ToString("F1") + "%" :
             "N/A";
 
         var performanceData = new
@@ -316,10 +316,10 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
                      (throughput.HasValue ? $" | Throughput: {throughput}/sec" : "");
 
         EnqueueLogEntry(LogLevel.Performance, message, null, memberName, "", 0, performanceData);
-        
+
         TrackPerformanceAsync(operation, duration.TotalMicroseconds, "microseconds");
     }
-    
+
     /// <summary>
     /// NON-BLOCKING health monitoring logging
     /// </summary>
@@ -333,7 +333,7 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
         var healthIcon = status.ToUpper() switch
         {
             "HEALTHY" => "✅",
-            "DEGRADED" => "⚠️", 
+            "DEGRADED" => "⚠️",
             "UNHEALTHY" => "❌",
             "CRITICAL" => "🚨",
             _ => "ℹ️"
@@ -354,7 +354,7 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
 
         EnqueueLogEntry(LogLevel.Health, message, null, memberName, "", 0, healthData);
     }
-    
+
     /// <summary>
     /// NON-BLOCKING risk event logging with compliance information
     /// </summary>
@@ -375,7 +375,7 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
             "CRITICAL" => "🔴",
             _ => "⚪"
         };
-        
+
         var utilizationPercent = currentExposure.HasValue && riskLimit.HasValue && riskLimit > 0 ?
             (currentExposure.Value / riskLimit.Value * 100).ToString("F1") + "%" : "N/A";
 
@@ -399,7 +399,7 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
 
         EnqueueLogEntry(LogLevel.Risk, message, null, memberName, "", 0, riskData);
     }
-    
+
     /// <summary>
     /// NON-BLOCKING data pipeline logging
     /// </summary>
@@ -429,7 +429,7 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
 
         EnqueueLogEntry(LogLevel.DataPipeline, message, null, memberName, "", 0, pipelineData);
     }
-    
+
     /// <summary>
     /// NON-BLOCKING market data logging
     /// </summary>
@@ -466,7 +466,7 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
 
         EnqueueLogEntry(LogLevel.MarketData, message, null, memberName, "", 0, marketDataObject);
     }
-    
+
     /// <summary>
     /// NON-BLOCKING method entry logging for execution tracing
     /// </summary>
@@ -486,7 +486,7 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
 
         EnqueueLogEntry(LogLevel.Debug, message, null, memberName, sourceFilePath, 0, entryData);
     }
-    
+
     /// <summary>
     /// NON-BLOCKING method exit logging with execution metrics
     /// </summary>
@@ -510,7 +510,7 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
                      (executionTime.HasValue ? $" | Duration: {executionTime.Value.TotalMicroseconds}μs" : "");
 
         EnqueueLogEntry(LogLevel.Debug, message, null, memberName, "", 0, exitData);
-        
+
         // NON-BLOCKING performance tracking
         if (executionTime.HasValue)
         {
@@ -611,7 +611,7 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
             ThreadId = Environment.CurrentManagedThreadId,
             Timestamp = DateTime.UtcNow
         };
-        
+
         EnqueueLogEntry(LogLevel.Debug, $"📚 STACK TRACE: {reason} requested by {callerName} [T{Environment.CurrentManagedThreadId}]", null, callerName, "", 0, stackData);
     }
 
@@ -628,14 +628,14 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
 
         var timestamp = DateTime.UtcNow;
         var correlationId = _correlationId.Value ?? GenerateCorrelationId();
-        
+
         var logEntry = new LogEntry
         {
             Timestamp = timestamp,
             Level = level,
             Message = message,
             Exception = exception != null ? ExceptionContext.FromException(exception) : null,
-            Source = new SourceContext 
+            Source = new SourceContext
             {
                 MethodName = memberName,
                 FilePath = Path.GetFileName(sourceFilePath),
@@ -685,7 +685,7 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
     private async Task ProcessLogWorker(int workerIndex, CancellationToken cancellationToken)
     {
         var logBatch = _logEntryListPool.Get();
-        
+
         try
         {
             while (!cancellationToken.IsCancellationRequested)
@@ -693,19 +693,19 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
                 try
                 {
                     logBatch.Clear();
-                    
+
                     // Read batch of logs for efficient processing
                     await foreach (var logEntry in _logReader.ReadAllAsync(cancellationToken))
                     {
                         logBatch.Add(logEntry);
-                        
+
                         if (logBatch.Count >= MaxBatchSize)
                         {
                             await ProcessLogBatch(logBatch, workerIndex);
                             logBatch.Clear();
                         }
                     }
-                    
+
                     // Process remaining logs
                     if (logBatch.Count > 0)
                     {
@@ -742,14 +742,14 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
         {
             // Group logs by date for efficient file operations
             var logsByDate = logBatch.GroupBy(e => e.Timestamp.Date);
-            
+
             var tasks = logsByDate.Select(async dateGroup =>
             {
                 await WriteLogsToFiles(dateGroup.Key, dateGroup.ToList());
             });
 
             await Task.WhenAll(tasks);
-            
+
             // Update performance counters
             Interlocked.Add(ref _totalLogsProcessed, logBatch.Count);
         }
@@ -796,16 +796,16 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
     {
         var filePath = Path.Combine(LogDirectory, fileName);
         var fileLock = _fileLocks.GetOrAdd(fileName, _ => new SemaphoreSlim(1, 1));
-        
+
         await fileLock.WaitAsync();
-        
+
         try
         {
             var sb = _stringBuilderPool.Get();
             try
             {
                 sb.Clear();
-                
+
                 foreach (var entry in logEntries)
                 {
                     sb.AppendLine(FormatLogEntry(entry));
@@ -830,19 +830,19 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
     private static string FormatLogEntry(LogEntry entry)
     {
         var sb = new StringBuilder(512);
-        
+
         // Core log line with all essential information
         sb.Append($"[{entry.Timestamp:yyyy-MM-dd HH:mm:ss.fff}] ");
         sb.Append($"[{entry.Level.ToString().ToUpper()}] ");
         sb.Append($"[{entry.Source?.Service}] ");
         sb.Append($"[{entry.Source?.MethodName}");
-        
+
         if (!string.IsNullOrEmpty(entry.Source?.FilePath))
             sb.Append($":{entry.Source?.FilePath}");
-            
+
         if (entry.Source?.LineNumber > 0)
             sb.Append($":{entry.Source?.LineNumber}");
-            
+
         sb.Append("] ");
         sb.Append($"[T{entry.Thread?.ThreadId}] ");
         sb.Append($"[{entry.CorrelationId}] ");
@@ -885,7 +885,7 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
             _performanceStats.AddOrUpdate(metricName,
                 new PerformanceStats(),
                 (key, existing) => existing);
-            
+
             // Update the stats using the thread-safe method
             _performanceStats[metricName].UpdateStats(value);
         });
@@ -934,23 +934,23 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
     public void Dispose()
     {
         if (_disposed) return;
-        
+
         _disposed = true;
-        
+
         // Complete the writer to signal no more logs
         _logWriter.Complete();
-        
+
         // Wait for all workers to complete processing
         Task.WaitAll(_workerTasks, TimeSpan.FromSeconds(10));
-        
+
         _flushTimer?.Dispose();
         _cancellationTokenSource.Cancel();
         _cancellationTokenSource.Dispose();
-        
+
         // Clean up object pools
         _stringBuilderPool.Dispose();
         _logEntryListPool.Dispose();
-        
+
         // Clean up file locks
         foreach (var lockSemaphore in _fileLocks.Values)
         {

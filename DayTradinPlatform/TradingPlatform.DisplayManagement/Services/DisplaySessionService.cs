@@ -144,7 +144,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
     public async Task<DisplaySessionInfo> GetCurrentSessionAsync()
     {
         // Return cached info if recent and caching enabled
-        if (_options.CacheSessionInfo && 
+        if (_options.CacheSessionInfo &&
             DateTime.UtcNow - _lastSessionCheck < _options.CacheDuration)
         {
             return _currentSession;
@@ -162,7 +162,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
         try
         {
             TradingLogOrchestrator.Instance.LogInfo("Refreshing DRAGON display session information");
-            
+
             var previousSession = _currentSession;
             _currentSession = await DetectCurrentSessionAsync();
             _lastSessionCheck = DateTime.UtcNow;
@@ -204,7 +204,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
     public async Task<List<string>> GetPerformanceRecommendationsAsync()
     {
         await Task.CompletedTask;
-        
+
         var recommendations = new List<string>();
         var session = _currentSession;
 
@@ -280,7 +280,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
         {
             // Check Windows session name environment variable
             var sessionName = Environment.GetEnvironmentVariable("SESSIONNAME");
-            
+
             if (string.IsNullOrEmpty(sessionName))
             {
                 return DisplaySessionType.Unknown;
@@ -361,7 +361,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
         {
             var clientName = GetWtsSessionInfo(WtsInfoClass.WTSClientName);
             var clientAddress = GetWtsSessionInfo(WtsInfoClass.WTSClientAddress);
-            
+
             return new RemoteClientInfo
             {
                 ClientName = clientName ?? "Unknown",
@@ -396,7 +396,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
                 SupportsHotPlugging = true,
                 PerformanceRating = SessionPerformanceRating.Excellent
             },
-            
+
             DisplaySessionType.RemoteDesktop => new DisplayCapabilities
             {
                 MaxDisplays = 1, // Limited in RDP
@@ -407,7 +407,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
                 SupportsHotPlugging = false,
                 PerformanceRating = SessionPerformanceRating.Adequate
             },
-            
+
             DisplaySessionType.VirtualMachine => new DisplayCapabilities
             {
                 MaxDisplays = 4, // VM dependent
@@ -418,7 +418,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
                 SupportsHotPlugging = false,
                 PerformanceRating = SessionPerformanceRating.Good
             },
-            
+
             _ => new DisplayCapabilities
             {
                 MaxDisplays = 1,
@@ -477,21 +477,21 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
                 "Network latency may affect responsiveness",
                 "High-frequency chart updates may be throttled"
             },
-            
+
             DisplaySessionType.VirtualMachine => new List<string>
             {
                 "GPU acceleration limited without passthrough",
                 "Shared host resources may impact performance",
                 "Monitor configuration changes require VM restart"
             },
-            
+
             DisplaySessionType.TerminalServices => new List<string>
             {
                 "Shared system resources",
                 "Limited GPU acceleration",
                 "Performance varies with system load"
             },
-            
+
             _ => new List<string>()
         };
     }
@@ -566,7 +566,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
     private async Task MonitorSessionChanges()
     {
         var currentSessionInfo = await DetectCurrentSessionAsync();
-        
+
         if (HasSessionChanged(_currentSession, currentSessionInfo))
         {
             var previousSession = _currentSession;
@@ -622,16 +622,16 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
     private async Task<List<string>> GetSessionChangeRecommendations(DisplaySessionInfo previous, DisplaySessionInfo current)
     {
         await Task.CompletedTask;
-        
+
         var recommendations = new List<string>();
 
-        if (previous.SessionType == DisplaySessionType.DirectConsole && 
+        if (previous.SessionType == DisplaySessionType.DirectConsole &&
             current.SessionType == DisplaySessionType.RemoteDesktop)
         {
             recommendations.Add("Switched to RDP session - multi-monitor trading disabled");
             recommendations.Add("GPU acceleration unavailable - consider reducing chart complexity");
         }
-        else if (previous.SessionType == DisplaySessionType.RemoteDesktop && 
+        else if (previous.SessionType == DisplaySessionType.RemoteDesktop &&
                  current.SessionType == DisplaySessionType.DirectConsole)
         {
             recommendations.Add("Switched to direct console - full multi-monitor support enabled");

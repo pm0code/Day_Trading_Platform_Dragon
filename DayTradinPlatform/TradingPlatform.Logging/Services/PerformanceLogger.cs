@@ -27,11 +27,11 @@ public class PerformanceLogger : IPerformanceLogger
     {
         _orchestrator = TradingLogOrchestrator.Instance;
         _logger = logger;
-        
+
         // Report performance statistics every 30 seconds
-        _reportingTimer = new Timer(ReportPerformanceStatistics, null, 
+        _reportingTimer = new Timer(ReportPerformanceStatistics, null,
             TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
-            
+
         // Log delegation setup
         _orchestrator.LogInfo("PerformanceLogger initialized - delegating to TradingLogOrchestrator",
             new { DelegationType = "Canonical", ReportingInterval = "30s" });
@@ -44,7 +44,7 @@ public class PerformanceLogger : IPerformanceLogger
     public IDisposable MeasureOperation(string operationName, string? correlationId = null)
     {
         correlationId ??= _orchestrator.GenerateCorrelationId();
-        
+
         _orchestrator.LogMethodEntry(new { OperationName = operationName, CorrelationId = correlationId });
 
         return new PerformanceMeasurement(operationName, correlationId, this);
@@ -59,7 +59,7 @@ public class PerformanceLogger : IPerformanceLogger
 
         // Record latency for histogram calculation
         RecordLatency(operationName, duration.TotalMilliseconds);
-        
+
         // Update performance counters
         UpdatePerformanceCounters(operationName, duration, success);
 
@@ -81,7 +81,7 @@ public class PerformanceLogger : IPerformanceLogger
         var avgLatencyMs = duration.TotalMilliseconds / itemsProcessed;
 
         // Delegate to orchestrator
-        _orchestrator.LogPerformance(operation, duration, true, throughputPerSecond, 
+        _orchestrator.LogPerformance(operation, duration, true, throughputPerSecond,
             new { ItemsProcessed = itemsProcessed, AvgLatencyMs = avgLatencyMs },
             new { ThroughputPerSecond = throughputPerSecond });
     }
@@ -113,7 +113,7 @@ public class PerformanceLogger : IPerformanceLogger
 
     private void RecordLatency(string operationName, double latencyMs)
     {
-        _latencyHistograms.AddOrUpdate(operationName, 
+        _latencyHistograms.AddOrUpdate(operationName,
             new List<double> { latencyMs },
             (key, existing) =>
             {
@@ -155,11 +155,11 @@ public class PerformanceLogger : IPerformanceLogger
     private void CheckPerformanceThresholds(string operationName, TimeSpan duration, string correlationId)
     {
         var thresholds = GetPerformanceThresholds(operationName);
-        
+
         if (duration > thresholds.Warning)
         {
             var severity = duration > thresholds.Critical ? "CRITICAL" : "WARNING";
-            
+
             _orchestrator.LogWarning($"Performance threshold exceeded for {operationName}",
                 impact: $"Performance degradation: {duration.TotalMilliseconds}ms vs {thresholds.Warning.TotalMilliseconds}ms threshold",
                 recommendedAction: "Investigate performance bottleneck",
@@ -167,9 +167,9 @@ public class PerformanceLogger : IPerformanceLogger
 
             if (duration > thresholds.Critical)
             {
-                _orchestrator.LogRisk("PerformanceViolation", "CRITICAL", 
+                _orchestrator.LogRisk("PerformanceViolation", "CRITICAL",
                     $"Critical performance threshold exceeded: {operationName}",
-                    null, null, 
+                    null, null,
                     new[] { "Immediate performance investigation required" },
                     "Performance SLA violation");
             }
@@ -223,14 +223,14 @@ public class PerformanceLogger : IPerformanceLogger
             {
                 var operationName = kvp.Key;
                 var counters = kvp.Value;
-                
+
                 if (counters.TotalOperations == 0) continue;
 
                 var avgDurationMs = counters.TotalDurationMs / counters.TotalOperations;
                 var successRate = (double)counters.SuccessfulOperations / counters.TotalOperations * 100;
 
                 // Delegate performance reporting to orchestrator
-                _orchestrator.LogPerformance($"Report.{operationName}", 
+                _orchestrator.LogPerformance($"Report.{operationName}",
                     TimeSpan.FromMilliseconds(avgDurationMs), true, null,
                     new { SuccessRate = successRate, TotalOperations = counters.TotalOperations, MinDuration = counters.MinDurationMs, MaxDuration = counters.MaxDurationMs });
 
@@ -244,7 +244,7 @@ public class PerformanceLogger : IPerformanceLogger
                         var p95 = GetPercentile(sortedLatencies, 0.95);
                         var p99 = GetPercentile(sortedLatencies, 0.99);
 
-                        LogLatencyPercentile(operationName, 
+                        LogLatencyPercentile(operationName,
                             TimeSpan.FromMilliseconds(p50),
                             TimeSpan.FromMilliseconds(p95),
                             TimeSpan.FromMilliseconds(p99));
@@ -263,13 +263,13 @@ public class PerformanceLogger : IPerformanceLogger
     private static double GetPercentile(double[] sortedValues, double percentile)
     {
         if (sortedValues.Length == 0) return 0;
-        
+
         var index = (percentile * (sortedValues.Length - 1));
         var lower = (int)Math.Floor(index);
         var upper = (int)Math.Ceiling(index);
-        
+
         if (lower == upper) return sortedValues[lower];
-        
+
         var weight = index - lower;
         return sortedValues[lower] * (1 - weight) + sortedValues[upper] * weight;
     }
@@ -303,7 +303,7 @@ internal class PerformanceMeasurement : IDisposable
     public void Dispose()
     {
         if (_disposed) return;
-        
+
         _stopwatch.Stop();
         _performanceLogger.LogOperationComplete(_operationName, _stopwatch.Elapsed, true, _correlationId);
         _disposed = true;

@@ -12,7 +12,7 @@ public sealed class FixMessage
     private readonly Dictionary<int, string> _fields = new();
     private readonly Dictionary<int, decimal> _originalDecimalValues = new();
     private readonly StringBuilder _messageBuilder = new(1024);
-    
+
     public string BeginString { get; set; } = "FIX.4.2";
     public string MsgType { get; set; } = string.Empty;
     public int MsgSeqNum { get; set; }
@@ -21,10 +21,10 @@ public sealed class FixMessage
     public DateTime SendingTime { get; set; } = DateTime.UtcNow;
     public string? PossDupFlag { get; set; }
     public string? OrigSendingTime { get; set; }
-    
+
     // Hardware timestamp for ultra-low latency measurement
     public long HardwareTimestamp { get; set; }
-    
+
     public IReadOnlyDictionary<int, string> Fields => _fields;
 
     public void SetField(int tag, string value)
@@ -65,7 +65,7 @@ public sealed class FixMessage
         {
             return originalValue;
         }
-        
+
         var value = GetField(tag);
         return decimal.TryParse(value, out var result) ? result : 0m;
     }
@@ -82,7 +82,7 @@ public sealed class FixMessage
     public string ToFixString()
     {
         _messageBuilder.Clear();
-        
+
         // Required header fields
         _messageBuilder.Append("8=").Append(BeginString).Append('\x01');
         _messageBuilder.Append("35=").Append(MsgType).Append('\x01');
@@ -90,24 +90,24 @@ public sealed class FixMessage
         _messageBuilder.Append("56=").Append(TargetCompID).Append('\x01');
         _messageBuilder.Append("34=").Append(MsgSeqNum).Append('\x01');
         _messageBuilder.Append("52=").Append(SendingTime.ToString("yyyyMMdd-HH:mm:ss.fff")).Append('\x01');
-        
+
         // Optional header fields
         if (!string.IsNullOrEmpty(PossDupFlag))
             _messageBuilder.Append("43=").Append(PossDupFlag).Append('\x01');
         if (!string.IsNullOrEmpty(OrigSendingTime))
             _messageBuilder.Append("122=").Append(OrigSendingTime).Append('\x01');
-        
+
         // Body fields (sorted by tag for consistent output)
         foreach (var field in _fields.OrderBy(f => f.Key))
         {
             _messageBuilder.Append(field.Key).Append('=').Append(field.Value).Append('\x01');
         }
-        
+
         // Calculate and append checksum
         var messageWithoutChecksum = _messageBuilder.ToString();
         var checksum = CalculateChecksum(messageWithoutChecksum);
         _messageBuilder.Append("10=").Append(checksum.ToString("D3")).Append('\x01');
-        
+
         return _messageBuilder.ToString();
     }
 
@@ -118,60 +118,60 @@ public sealed class FixMessage
     public static FixMessage Parse(string fixString)
     {
         var message = new FixMessage();
-        
+
         // Simple and robust parsing - split by SOH character
         var fields = fixString.Split('\x01', StringSplitOptions.RemoveEmptyEntries);
-        
+
         foreach (var field in fields)
         {
             if (string.IsNullOrEmpty(field)) continue;
-            
+
             var equalIndex = field.IndexOf('=');
             if (equalIndex == -1 || equalIndex == 0) continue;
-            
+
             // Parse tag number
             var tagStr = field.Substring(0, equalIndex);
             if (!int.TryParse(tagStr, out int tag)) continue;
-            
+
             // Extract value - ensure we create a new string instance
             var value = field.Substring(equalIndex + 1);
-            
+
             // Handle standard header fields
             switch (tag)
             {
-                case 8: 
-                    message.BeginString = string.Copy(value); 
+                case 8:
+                    message.BeginString = string.Copy(value);
                     break;
-                case 35: 
-                    message.MsgType = value; 
+                case 35:
+                    message.MsgType = value;
                     break;
-                case 49: 
-                    message.SenderCompID = value; 
+                case 49:
+                    message.SenderCompID = value;
                     break;
-                case 56: 
-                    message.TargetCompID = value; 
+                case 56:
+                    message.TargetCompID = value;
                     break;
-                case 34: 
-                    if (int.TryParse(value, out int seqNum)) 
-                        message.MsgSeqNum = seqNum; 
+                case 34:
+                    if (int.TryParse(value, out int seqNum))
+                        message.MsgSeqNum = seqNum;
                     break;
-                case 52: 
-                    message.SendingTime = ParseSendingTime(value); 
+                case 52:
+                    message.SendingTime = ParseSendingTime(value);
                     break;
-                case 43: 
-                    message.PossDupFlag = value; 
+                case 43:
+                    message.PossDupFlag = value;
                     break;
-                case 122: 
-                    message.OrigSendingTime = value; 
+                case 122:
+                    message.OrigSendingTime = value;
                     break;
-                case 10: 
+                case 10:
                     break; // Skip checksum in parsing
-                default: 
-                    message._fields[tag] = value; 
+                default:
+                    message._fields[tag] = value;
                     break;
             }
         }
-        
+
         return message;
     }
 
@@ -187,7 +187,7 @@ public sealed class FixMessage
 
     private static DateTime ParseSendingTime(string value)
     {
-        if (DateTime.TryParseExact(value, "yyyyMMdd-HH:mm:ss.fff", 
+        if (DateTime.TryParseExact(value, "yyyyMMdd-HH:mm:ss.fff",
             null, System.Globalization.DateTimeStyles.AssumeUniversal, out var result))
         {
             return result;

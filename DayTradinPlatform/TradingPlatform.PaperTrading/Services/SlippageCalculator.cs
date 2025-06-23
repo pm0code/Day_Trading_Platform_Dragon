@@ -22,7 +22,7 @@ public class SlippageCalculator : ISlippageCalculator
             if (requestedPrice <= 0)
                 return 0m;
 
-            var priceDifference = side == OrderSide.Buy 
+            var priceDifference = side == OrderSide.Buy
                 ? executedPrice - requestedPrice
                 : requestedPrice - executedPrice;
 
@@ -68,18 +68,18 @@ public class SlippageCalculator : ISlippageCalculator
         {
             var adv = GetAverageDailyVolume(symbol);
             var dailyParticipation = quantity / adv;
-            
+
             // Adjust for execution duration
             var durationHours = duration.TotalHours;
             var tradingHours = 6.5m; // Market hours
             var timeAdjustment = (decimal)Math.Sqrt((double)(tradingHours / (decimal)Math.Max(durationHours, 0.1)));
-            
+
             var adjustedParticipation = dailyParticipation * timeAdjustment;
 
             // Almgren-Chriss model components
             var temporaryImpact = CalculateTemporaryImpact(adjustedParticipation);
             var permanentImpact = CalculatePermanentImpact(adjustedParticipation);
-            
+
             var totalImpact = temporaryImpact + permanentImpact;
 
             TradingLogOrchestrator.Instance.LogInfo($"Market impact for {symbol}: {totalImpact} (temp: {temporaryImpact}, perm: {permanentImpact})");
@@ -98,7 +98,7 @@ public class SlippageCalculator : ISlippageCalculator
         // Temporary impact is proportional to square root of participation rate
         var sigma = 0.3m; // Volatility parameter
         var gamma = 0.5m; // Impact coefficient
-        
+
         return gamma * sigma * (decimal)Math.Sqrt((double)participationRate);
     }
 
@@ -106,7 +106,7 @@ public class SlippageCalculator : ISlippageCalculator
     {
         // Permanent impact is linear in participation rate
         var eta = 0.01m; // Permanent impact coefficient
-        
+
         return eta * participationRate;
     }
 
@@ -118,7 +118,7 @@ public class SlippageCalculator : ISlippageCalculator
         // Generate realistic ADV based on symbol characteristics
         var symbolHash = Math.Abs(symbol.GetHashCode());
         var baseVolume = 1000000m + (symbolHash % 50000000); // 1M to 51M shares
-        
+
         _averageDailyVolumes[symbol] = baseVolume;
         return baseVolume;
     }
@@ -127,7 +127,7 @@ public class SlippageCalculator : ISlippageCalculator
     {
         // Estimate typical bid-ask spread based on symbol characteristics
         var symbolCategory = GetSymbolCategory(symbol);
-        
+
         return symbolCategory switch
         {
             "LargeCap" => 0.0001m,    // 1 basis point
@@ -143,13 +143,13 @@ public class SlippageCalculator : ISlippageCalculator
         // Simplified categorization based on common symbols
         var largeCap = new[] { "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "BRK.B" };
         var etfs = new[] { "SPY", "QQQ", "IWM", "VTI", "VOO", "EFA", "EEM" };
-        
+
         if (largeCap.Contains(symbol, StringComparer.OrdinalIgnoreCase))
             return "LargeCap";
-        
+
         if (etfs.Contains(symbol, StringComparer.OrdinalIgnoreCase))
             return "ETF";
-        
+
         // Use symbol length as proxy for market cap
         return symbol.Length <= 3 ? "MidCap" : "SmallCap";
     }

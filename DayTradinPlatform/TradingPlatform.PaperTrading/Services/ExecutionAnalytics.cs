@@ -28,16 +28,16 @@ public class ExecutionAnalytics : IExecutionAnalytics
 
             var trades = GroupExecutionsIntoTrades(executions);
             var tradePnLs = trades.Select(CalculateTradePnL).ToArray();
-            
+
             var totalReturn = tradePnLs.Sum();
             var winningTrades = tradePnLs.Where(pnl => pnl > 0).ToArray();
             var losingTrades = tradePnLs.Where(pnl => pnl < 0).ToArray();
-            
+
             var winRate = trades.Any() ? (decimal)winningTrades.Length / trades.Count : 0m;
             var averageWin = winningTrades.Any() ? winningTrades.Average() : 0m;
             var averageLoss = losingTrades.Any() ? Math.Abs(losingTrades.Average()) : 0m;
             var profitFactor = averageLoss > 0 ? averageWin / averageLoss : 0m;
-            
+
             var returns = CalculateDailyReturns(tradePnLs);
             var sharpeRatio = CalculateSharpeRatio(returns);
             var maxDrawdown = CalculateMaxDrawdown(tradePnLs);
@@ -83,10 +83,10 @@ public class ExecutionAnalytics : IExecutionAnalytics
             var totalCommissions = executions.Sum(e => e.Commission);
             var averageExecutionTime = CalculateAverageExecutionTime(executions);
             var fillRate = CalculateFillRate(executions);
-            
+
             var slippageBySymbol = CalculateSlippageBySymbol(executions);
             var venueMetrics = CalculateVenueMetrics(executions);
-            
+
             var periodStart = executions.Min(e => e.ExecutionTime);
             var periodEnd = executions.Max(e => e.ExecutionTime);
 
@@ -119,7 +119,7 @@ public class ExecutionAnalytics : IExecutionAnalytics
         {
             return await Task.FromResult(executions.OrderByDescending(e => e.ExecutionTime));
         }
-        
+
         return await Task.FromResult(Array.Empty<Execution>());
     }
 
@@ -128,7 +128,7 @@ public class ExecutionAnalytics : IExecutionAnalytics
         try
         {
             _executions.Enqueue(execution);
-            
+
             _executionsBySymbol.AddOrUpdate(execution.Symbol,
                 new List<Execution> { execution },
                 (key, existingList) =>
@@ -138,7 +138,7 @@ public class ExecutionAnalytics : IExecutionAnalytics
                 });
 
             TradingLogOrchestrator.Instance.LogInfo($"Recorded execution: {execution.ExecutionId} for {execution.Symbol} {execution.Quantity}@{execution.Price}");
-                
+
             await Task.CompletedTask;
         }
         catch (Exception ex)
@@ -161,7 +161,7 @@ public class ExecutionAnalytics : IExecutionAnalytics
             foreach (var execution in symbolExecutions)
             {
                 currentTrade.Add(execution);
-                
+
                 var quantity = execution.Side == OrderSide.Buy ? execution.Quantity : -execution.Quantity;
                 netPosition += quantity;
 
@@ -250,7 +250,7 @@ public class ExecutionAnalytics : IExecutionAnalytics
         foreach (var pnl in tradePnLs)
         {
             cumulativePnL += pnl;
-            
+
             if (cumulativePnL > peak)
             {
                 peak = cumulativePnL;
@@ -268,7 +268,7 @@ public class ExecutionAnalytics : IExecutionAnalytics
     private TimeSpan CalculateAverageExecutionTime(Execution[] executions)
     {
         // Simulate execution time based on order characteristics
-        var averageLatencyMs = executions.Average(e => 
+        var averageLatencyMs = executions.Average(e =>
         {
             // Simulate different latencies for different venues
             return e.VenueId switch
@@ -330,7 +330,7 @@ public class ExecutionAnalytics : IExecutionAnalytics
 
     private Models.ExecutionAnalytics CreateEmptyExecutionAnalytics()
     {
-        return new Models.ExecutionAnalytics(0m, 0m, TimeSpan.Zero, 0m, 
+        return new Models.ExecutionAnalytics(0m, 0m, TimeSpan.Zero, 0m,
             Array.Empty<SlippageMetric>(), Array.Empty<VenueMetric>(), DateTime.UtcNow, DateTime.UtcNow);
     }
 }

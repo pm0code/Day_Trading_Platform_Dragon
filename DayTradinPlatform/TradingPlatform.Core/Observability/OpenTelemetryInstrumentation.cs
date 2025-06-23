@@ -20,14 +20,14 @@ public static class OpenTelemetryInstrumentation
 {
     public const string ServiceName = "TradingPlatform";
     public const string ServiceVersion = "1.0.0";
-    
+
     // Activity sources for different platform areas
     public static readonly ActivitySource TradingActivitySource = new("TradingPlatform.Trading");
     public static readonly ActivitySource RiskActivitySource = new("TradingPlatform.Risk");
     public static readonly ActivitySource MarketDataActivitySource = new("TradingPlatform.MarketData");
     public static readonly ActivitySource FixEngineActivitySource = new("TradingPlatform.FixEngine");
     public static readonly ActivitySource InfrastructureActivitySource = new("TradingPlatform.Infrastructure");
-    
+
     /// <summary>
     /// Configures OpenTelemetry with comprehensive instrumentation for all platform components
     /// </summary>
@@ -51,7 +51,7 @@ public static class OpenTelemetryInstrumentation
                 .AddSource(MarketDataActivitySource.Name)
                 .AddSource(FixEngineActivitySource.Name)
                 .AddSource(InfrastructureActivitySource.Name)
-                
+
                 // Add automatic instrumentation for infrastructure components
                 .AddAspNetCoreInstrumentation(options =>
                 {
@@ -71,7 +71,7 @@ public static class OpenTelemetryInstrumentation
                     options.SetDbStatementForStoredProcedure = true;
                     options.EnrichWithIDbCommand = EnrichDatabaseCommand;
                 })
-                
+
                 // Export to Jaeger for distributed tracing (free)
                 .AddJaegerExporter(options =>
                 {
@@ -83,18 +83,18 @@ public static class OpenTelemetryInstrumentation
                 .AddMeter("TradingPlatform.*")
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
-                
+
                 // Export to Prometheus (free)
                 .AddPrometheusExporter());
-        
+
         // Register custom services
         services.AddSingleton<ITradingMetrics, TradingMetrics>();
         services.AddSingleton<IInfrastructureMetrics, InfrastructureMetrics>();
         services.AddSingleton<IObservabilityEnricher, ObservabilityEnricher>();
-        
+
         return services;
     }
-    
+
     /// <summary>
     /// Enriches HTTP request traces with trading-specific context
     /// </summary>
@@ -105,7 +105,7 @@ public static class OpenTelemetryInstrumentation
         activity.SetTag("http.request.client_ip", request.HttpContext.Connection.RemoteIpAddress?.ToString());
         activity.SetTag("trading.request.timestamp", DateTimeOffset.UtcNow.ToString("O"));
     }
-    
+
     /// <summary>
     /// Enriches HTTP response traces with performance metrics
     /// </summary>
@@ -113,13 +113,13 @@ public static class OpenTelemetryInstrumentation
     {
         activity.SetTag("http.response.content_length", response.ContentLength?.ToString());
         activity.SetTag("trading.response.timestamp", DateTimeOffset.UtcNow.ToString("O"));
-        
+
         // Calculate and record response time
         if (activity.StartTimeUtc != default)
         {
             var responseTime = DateTimeOffset.UtcNow - activity.StartTimeUtc;
             activity.SetTag("trading.response.time_microseconds", responseTime.TotalMicroseconds.ToString("F2"));
-            
+
             // Flag latency violations for trading systems
             if (responseTime.TotalMicroseconds > 100)
             {
@@ -128,7 +128,7 @@ public static class OpenTelemetryInstrumentation
             }
         }
     }
-    
+
     /// <summary>
     /// Enriches HTTP client request traces
     /// </summary>
@@ -136,7 +136,7 @@ public static class OpenTelemetryInstrumentation
     {
         activity.SetTag("http.client.correlation_id", request.Headers.GetValues("X-Correlation-ID").FirstOrDefault());
         activity.SetTag("trading.client.request.timestamp", DateTimeOffset.UtcNow.ToString("O"));
-        
+
         // Identify market data provider requests
         if (request.RequestUri?.Host.Contains("alphavantage") == true)
         {
@@ -147,7 +147,7 @@ public static class OpenTelemetryInstrumentation
             activity.SetTag("trading.data_provider", "Finnhub");
         }
     }
-    
+
     /// <summary>
     /// Enriches HTTP client response traces
     /// </summary>
@@ -155,21 +155,21 @@ public static class OpenTelemetryInstrumentation
     {
         activity.SetTag("http.client.response.content_length", response.Content.Headers.ContentLength?.ToString());
         activity.SetTag("trading.client.response.timestamp", DateTimeOffset.UtcNow.ToString("O"));
-        
+
         // Track API rate limiting
         if (response.Headers.Contains("X-RateLimit-Remaining"))
         {
             activity.SetTag("trading.rate_limit.remaining", response.Headers.GetValues("X-RateLimit-Remaining").FirstOrDefault());
         }
     }
-    
+
     /// <summary>
     /// Enriches database command traces with trading context
     /// </summary>
     private static void EnrichDatabaseCommand(Activity activity, System.Data.IDbCommand command)
     {
         activity.SetTag("db.operation.timestamp", DateTimeOffset.UtcNow.ToString("O"));
-        
+
         // Identify trading-specific table operations
         var commandText = command.CommandText?.ToLowerInvariant();
         if (commandText?.Contains("orders") == true)
@@ -184,7 +184,7 @@ public static class OpenTelemetryInstrumentation
         {
             activity.SetTag("trading.db.table_type", "market_data");
         }
-        
+
         // Flag potentially slow queries
         if (command.CommandTimeout > 5)
         {

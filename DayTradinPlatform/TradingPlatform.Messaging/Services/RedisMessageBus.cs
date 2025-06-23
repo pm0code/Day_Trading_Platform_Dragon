@@ -45,18 +45,18 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
     /// Publishes message with sub-millisecond latency optimization
     /// Uses Redis Streams XADD with pipeline batching for maximum throughput
     /// </summary>
-    public async Task<string> PublishAsync<T>(string stream, T message, CancellationToken cancellationToken = default) 
+    public async Task<string> PublishAsync<T>(string stream, T message, CancellationToken cancellationToken = default)
         where T : class
     {
         ThrowIfDisposed();
-        
+
         var stopwatch = Stopwatch.StartNew();
-        
+
         try
         {
             // Serialize with pre-allocated buffer to minimize GC pressure
             var serializedMessage = JsonSerializer.Serialize(message, _jsonOptions);
-            
+
             // Redis Streams XADD for atomic publish with auto-generated ID
             var messageId = await _database.StreamAddAsync(
                 key: stream,
@@ -66,11 +66,11 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
             );
 
             stopwatch.Stop();
-            
+
             // Performance monitoring - log if exceeding sub-millisecond target
             if (stopwatch.ElapsedTicks > TimeSpan.TicksPerMillisecond)
             {
-                TradingLogOrchestrator.Instance.LogWarning($"Publish latency exceeded 1ms: {stopwatch.Elapsed.TotalMilliseconds}ms for stream {stream}", 
+                TradingLogOrchestrator.Instance.LogWarning($"Publish latency exceeded 1ms: {stopwatch.Elapsed.TotalMilliseconds}ms for stream {stream}",
                     impact: "Performance degradation",
                     recommendedAction: "Consider scaling or optimizing");
             }
@@ -95,7 +95,7 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
     /// Subscribe with consumer group for fault-tolerant message processing
     /// Implements backpressure handling and automatic retry for failed messages
     /// </summary>
-    public async Task SubscribeAsync<T>(string stream, string consumerGroup, string consumerName, 
+    public async Task SubscribeAsync<T>(string stream, string consumerGroup, string consumerName,
         Func<T, Task> handler, CancellationToken cancellationToken = default) where T : class
     {
         ThrowIfDisposed();
@@ -134,7 +134,7 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
                         {
                             if (field.Name == "data")
                             {
-                                await ProcessMessageAsync(stream, consumerGroup, message.Id, 
+                                await ProcessMessageAsync(stream, consumerGroup, message.Id,
                                     field.Value!, handler, cancellationToken);
                             }
                         }
@@ -168,11 +168,11 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
     /// <summary>
     /// Process individual message with error handling and acknowledgment
     /// </summary>
-    private async Task ProcessMessageAsync<T>(string stream, string consumerGroup, RedisValue messageId, 
+    private async Task ProcessMessageAsync<T>(string stream, string consumerGroup, RedisValue messageId,
         RedisValue messageData, Func<T, Task> handler, CancellationToken cancellationToken) where T : class
     {
         var processingStopwatch = Stopwatch.StartNew();
-        
+
         try
         {
             // Deserialize message
@@ -214,7 +214,7 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
         try
         {
             var acknowledgedCount = await _database.StreamAcknowledgeAsync(stream, consumerGroup, messageId);
-            
+
             if (acknowledgedCount == 0)
             {
                 TradingLogOrchestrator.Instance.LogWarning($"Failed to acknowledge message {messageId} for stream {stream}, group {consumerGroup}");
@@ -235,7 +235,7 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
         ThrowIfDisposed();
 
         var stopwatch = Stopwatch.StartNew();
-        
+
         try
         {
             await _database.PingAsync();
@@ -260,17 +260,17 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
         {
             // Test connection with ping
             var latency = await GetLatencyAsync();
-            
+
             // Test stream operations with a test stream
             const string testStream = "health-check";
             const string testData = "ping";
-            
+
             var messageId = await _database.StreamAddAsync(testStream, "test", testData);
             await _database.StreamDeleteAsync(testStream, new RedisValue[] { messageId });
 
             // Consider healthy if latency is reasonable (< 10ms)
             var isHealthy = latency.TotalMilliseconds < 10;
-            
+
             TradingLogOrchestrator.Instance.LogInfo($"Health check completed: {isHealthy}, latency: {latency.TotalMilliseconds}ms");
 
             return isHealthy;

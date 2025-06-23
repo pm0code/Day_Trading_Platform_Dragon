@@ -17,7 +17,7 @@ public class PositionMonitor : IPositionMonitor
     {
         _messageBus = messageBus;
         _logger = logger;
-        
+
         // TODO: Subscribe to market data updates when Redis messaging is fixed
         // Subscribe to market data updates
         //_ = Task.Run(async () =>
@@ -83,7 +83,7 @@ public class PositionMonitor : IPositionMonitor
     {
         var positions = await GetAllPositionsAsync();
         var totalExposure = positions.Sum(p => p.RiskExposure);
-        
+
         TradingLogOrchestrator.Instance.LogInfo($"Total portfolio exposure calculated: {totalExposure}");
         return totalExposure;
     }
@@ -92,7 +92,7 @@ public class PositionMonitor : IPositionMonitor
     {
         var position = await GetPositionAsync(symbol);
         var exposure = position?.RiskExposure ?? 0m;
-        
+
         TradingLogOrchestrator.Instance.LogInfo($"Symbol exposure for {symbol}: {exposure}");
         return exposure;
     }
@@ -101,14 +101,14 @@ public class PositionMonitor : IPositionMonitor
     {
         var positions = await GetAllPositionsAsync();
         var maxPositionSize = 100000m; // TODO: Get from risk limits
-        
+
         var exceedingPositions = positions.Where(p => p.RiskExposure > maxPositionSize).ToList();
-        
+
         if (exceedingPositions.Any())
         {
             TradingLogOrchestrator.Instance.LogWarning($"Found {exceedingPositions.Count} positions exceeding limits");
         }
-        
+
         return exceedingPositions;
     }
 
@@ -121,12 +121,12 @@ public class PositionMonitor : IPositionMonitor
                 var position = await GetPositionAsync(marketDataEvent.Symbol);
                 if (position != null)
                 {
-                    var updatedPosition = position with 
-                    { 
+                    var updatedPosition = position with
+                    {
                         CurrentPrice = marketDataEvent.Price,
                         LastUpdated = DateTime.UtcNow
                     };
-                    
+
                     await UpdatePositionAsync(updatedPosition);
                 }
             }
@@ -147,9 +147,9 @@ public class PositionMonitor : IPositionMonitor
                 var symbol = orderEvent.Symbol;
                 var quantity = orderEvent.Quantity;
                 var price = orderEvent.Price ?? 0m;
-                
+
                 var existingPosition = await GetPositionAsync(symbol);
-                
+
                 if (existingPosition == null)
                 {
                     // New position
@@ -165,27 +165,27 @@ public class PositionMonitor : IPositionMonitor
                         OpenTime: DateTime.UtcNow,
                         LastUpdated: DateTime.UtcNow
                     );
-                    
+
                     await UpdatePositionAsync(newPosition);
                 }
                 else
                 {
                     // Update existing position
                     var newQuantity = existingPosition.Quantity + quantity;
-                    var newAveragePrice = newQuantity != 0 
+                    var newAveragePrice = newQuantity != 0
                         ? (existingPosition.AveragePrice * existingPosition.Quantity + price * quantity) / newQuantity
                         : 0m;
-                    
+
                     // Calculate realized P&L if closing position
                     var realizedPnL = existingPosition.RealizedPnL;
-                    if ((existingPosition.Quantity > 0 && quantity < 0) || 
+                    if ((existingPosition.Quantity > 0 && quantity < 0) ||
                         (existingPosition.Quantity < 0 && quantity > 0))
                     {
                         var closingQuantity = Math.Min(Math.Abs(existingPosition.Quantity), Math.Abs(quantity));
-                        realizedPnL += closingQuantity * (price - existingPosition.AveragePrice) * 
+                        realizedPnL += closingQuantity * (price - existingPosition.AveragePrice) *
                                       Math.Sign(existingPosition.Quantity);
                     }
-                    
+
                     var updatedPosition = existingPosition with
                     {
                         Quantity = newQuantity,
@@ -194,7 +194,7 @@ public class PositionMonitor : IPositionMonitor
                         RealizedPnL = realizedPnL,
                         LastUpdated = DateTime.UtcNow
                     };
-                    
+
                     await UpdatePositionAsync(updatedPosition);
                 }
 

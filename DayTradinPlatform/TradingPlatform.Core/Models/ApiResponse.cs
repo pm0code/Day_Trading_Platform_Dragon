@@ -53,17 +53,17 @@ namespace TradingPlatform.Core.Models
 
         [JsonPropertyName("10. change percent")]
         public string ChangePercent { get; set; }
-        
+
         // Helper properties for decimal conversion
         [JsonIgnore]
         public decimal PriceAsDecimal => decimal.TryParse(Price, out var val) ? val : 0m;
-        
+
         [JsonIgnore]
         public long VolumeAsLong => long.TryParse(Volume, out var val) ? val : 0L;
-        
+
         [JsonIgnore]
         public decimal ChangeAsDecimal => decimal.TryParse(Change, out var val) ? val : 0m;
-        
+
         [JsonIgnore]
         public decimal ChangePercentAsDecimal
         {
@@ -79,10 +79,10 @@ namespace TradingPlatform.Core.Models
     {
         [JsonPropertyName("Meta Data")]
         public Dictionary<string, string> MetaData { get; set; }
-        
+
         [JsonPropertyName("Time Series (Daily)")]
         public Dictionary<string, AlphaVantageTimeSeriesData> TimeSeries { get; set; }
-        
+
         public List<DailyData> ToDailyData()
         {
             var result = new List<DailyData>();
@@ -109,37 +109,37 @@ namespace TradingPlatform.Core.Models
             return result;
         }
     }
-    
+
     public class AlphaVantageTimeSeriesData
     {
         [JsonPropertyName("1. open")]
         public string Open { get; set; }
-        
+
         [JsonPropertyName("2. high")]
         public string High { get; set; }
-        
+
         [JsonPropertyName("3. low")]
         public string Low { get; set; }
-        
+
         [JsonPropertyName("4. close")]
         public string Close { get; set; }
-        
+
         [JsonPropertyName("5. volume")]
         public string Volume { get; set; }
-        
+
         // Helper properties
         [JsonIgnore]
         public decimal OpenAsDecimal => decimal.TryParse(Open, out var val) ? val : 0m;
-        
+
         [JsonIgnore]
         public decimal HighAsDecimal => decimal.TryParse(High, out var val) ? val : 0m;
-        
+
         [JsonIgnore]
         public decimal LowAsDecimal => decimal.TryParse(Low, out var val) ? val : 0m;
-        
+
         [JsonIgnore]
         public decimal CloseAsDecimal => decimal.TryParse(Close, out var val) ? val : 0m;
-        
+
         [JsonIgnore]
         public long VolumeAsLong => long.TryParse(Volume, out var val) ? val : 0L;
     }
@@ -191,7 +191,7 @@ namespace TradingPlatform.Core.Models
         [JsonPropertyName("pc")]
         public decimal PreviousClose { get; set; }
     }
-    
+
     public class FinnhubCandleResponse
     {
         [JsonPropertyName("o")]
