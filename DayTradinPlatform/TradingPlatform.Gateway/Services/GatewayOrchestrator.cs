@@ -158,7 +158,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
         };
 
         await _messageBus.PublishAsync("market-data-subscriptions", unsubscribeEvent);
-        TradingLogOrchestrator.Instance.LogInfo("Unsubscribed from market data for symbols: {Symbols}", string.Join(", ", symbols));
+        TradingLogOrchestrator.Instance.LogInfo($"Unsubscribed from market data for symbols: {string.Join(", ", symbols}"));
     }
 
     // Order Management Operations
@@ -189,18 +189,16 @@ public class GatewayOrchestrator : IGatewayOrchestrator
             // Log performance for order-to-wire latency tracking
             if (stopwatch.Elapsed.TotalMicroseconds > 100) // Target: <100μs
             {
-                TradingLogOrchestrator.Instance.LogWarning("Order submission exceeded 100μs target: {ElapsedMicroseconds}μs for order {OrderId}",
-                    stopwatch.Elapsed.TotalMicroseconds, orderId);
+                TradingLogOrchestrator.Instance.LogWarning($"Order submission exceeded 100μs target: {stopwatch.Elapsed.TotalMicroseconds}μs for order {orderId}");
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("Order submitted: {OrderId} for {Symbol} in {ElapsedMicroseconds}μs",
-                orderId, request.Symbol, stopwatch.Elapsed.TotalMicroseconds);
+            TradingLogOrchestrator.Instance.LogInfo($"Order submitted: {orderId} for {request.Symbol} in {stopwatch.Elapsed.TotalMicroseconds}μs");
 
             return new OrderResponse(orderId, "Submitted", "Order accepted for processing", DateTimeOffset.UtcNow);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error submitting order for {Symbol}", request.Symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error submitting order for {request.Symbol}", ex);
             return new OrderResponse(orderId, "Rejected", ex.Message, DateTimeOffset.UtcNow);
         }
     }
@@ -226,7 +224,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error retrieving order status for {OrderId}", orderId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error retrieving order status for {orderId}", ex);
             return null;
         }
     }
@@ -248,7 +246,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error cancelling order {OrderId}", orderId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error cancelling order {orderId}", ex);
             return new OrderResponse(orderId, "CancelRejected", ex.Message, DateTimeOffset.UtcNow);
         }
     }
@@ -285,7 +283,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
         };
 
         await _messageBus.PublishAsync("strategies", strategyEvent);
-        TradingLogOrchestrator.Instance.LogInfo("Strategy start command sent for {StrategyId}", strategyId);
+        TradingLogOrchestrator.Instance.LogInfo($"Strategy start command sent for {strategyId}");
     }
 
     public async Task StopStrategyAsync(string strategyId)
@@ -298,7 +296,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
         };
 
         await _messageBus.PublishAsync("strategies", strategyEvent);
-        TradingLogOrchestrator.Instance.LogInfo("Strategy stop command sent for {StrategyId}", strategyId);
+        TradingLogOrchestrator.Instance.LogInfo($"Strategy stop command sent for {strategyId}");
     }
 
     public async Task<StrategyPerformance> GetStrategyPerformanceAsync(string strategyId)
@@ -385,7 +383,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
             _activeWebSockets[connectionId] = webSocket;
         }
 
-        TradingLogOrchestrator.Instance.LogInfo("WebSocket connection established: {ConnectionId}", connectionId);
+        TradingLogOrchestrator.Instance.LogInfo($"WebSocket connection established: {connectionId}");
 
         try
         {
@@ -408,7 +406,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("WebSocket error for connection {ConnectionId}", connectionId, ex);
+            TradingLogOrchestrator.Instance.LogError($"WebSocket error for connection {connectionId}", ex);
         }
         finally
         {
@@ -417,7 +415,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
                 _activeWebSockets.Remove(connectionId);
             }
             
-            TradingLogOrchestrator.Instance.LogInfo("WebSocket connection closed: {ConnectionId}", connectionId);
+            TradingLogOrchestrator.Instance.LogInfo($"WebSocket connection closed: {connectionId}");
         }
     }
 
@@ -505,12 +503,12 @@ public class GatewayOrchestrator : IGatewayOrchestrator
         try
         {
             // TODO: Implement WebSocket message processing for client requests
-            TradingLogOrchestrator.Instance.LogInfo("Received WebSocket message from {ConnectionId}: {Message}", connectionId, message);
+            TradingLogOrchestrator.Instance.LogInfo($"Received WebSocket message from {connectionId}: {message}");
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error processing WebSocket message from {ConnectionId}", connectionId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error processing WebSocket message from {connectionId}", ex);
         }
     }
 }

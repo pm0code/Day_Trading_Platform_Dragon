@@ -39,7 +39,7 @@ public class OrderBookSimulator : IOrderBookSimulator
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error getting order book for {Symbol}", symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error getting order book for {symbol}", ex);
             throw;
         }
     }
@@ -65,7 +65,7 @@ public class OrderBookSimulator : IOrderBookSimulator
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error getting current price for {Symbol}", symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error getting current price for {symbol}", ex);
             throw;
         }
     }
@@ -103,7 +103,7 @@ public class OrderBookSimulator : IOrderBookSimulator
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error calculating slippage for {Symbol}", symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error calculating slippage for {symbol}", ex);
             return 0.001m; // Default 10 basis points slippage
         }
     }
@@ -122,14 +122,13 @@ public class OrderBookSimulator : IOrderBookSimulator
             // Update current price
             _currentPrices.TryUpdate(symbol, execution.Price, _currentPrices.GetValueOrDefault(symbol, execution.Price));
             
-            TradingLogOrchestrator.Instance.LogInfo("Updated order book for {Symbol} after execution of {Quantity}@{Price}", 
-                symbol, execution.Quantity, execution.Price);
+            TradingLogOrchestrator.Instance.LogInfo($"Updated order book for {symbol} after execution of {execution.Quantity}@{execution.Price}");
                 
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error updating order book for {Symbol}", symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error updating order book for {symbol}", ex);
         }
     }
 

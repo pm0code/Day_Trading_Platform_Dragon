@@ -61,8 +61,7 @@ public class RiskManagementService : IRiskManagementService
             );
 
             var elapsed = DateTime.UtcNow - startTime;
-            TradingLogOrchestrator.Instance.LogInfo("Risk status calculated in {ElapsedMs}ms - Risk Level: {RiskLevel}", 
-                elapsed.TotalMilliseconds, riskLevel);
+            TradingLogOrchestrator.Instance.LogInfo($"Risk status calculated in {elapsed.TotalMilliseconds}ms - Risk Level: {riskLevel}");
 
             await _messageBus.PublishAsync("risk.status.updated", new RiskEvent
             {
@@ -104,8 +103,7 @@ public class RiskManagementService : IRiskManagementService
             Action = "Configure"
         });
         
-        TradingLogOrchestrator.Instance.LogInfo("Risk limits updated - Max Daily Loss: {MaxDailyLoss}, Max Drawdown: {MaxDrawdown}", 
-            limits.MaxDailyLoss, limits.MaxDrawdown);
+        TradingLogOrchestrator.Instance.LogInfo($"Risk limits updated - Max Daily Loss: {limits.MaxDailyLoss}, Max Drawdown: {limits.MaxDrawdown}");
     }
 
     public async Task<bool> ValidateOrderAsync(OrderRiskRequest request)
@@ -149,14 +147,13 @@ public class RiskManagementService : IRiskManagementService
             }
 
             var elapsed = DateTime.UtcNow - startTime;
-            TradingLogOrchestrator.Instance.LogInfo("Order validation completed in {ElapsedMs}ms for {Symbol}", 
-                elapsed.TotalMilliseconds, request.Symbol);
+            TradingLogOrchestrator.Instance.LogInfo($"Order validation completed in {elapsed.TotalMilliseconds}ms for {request.Symbol}");
 
             return true;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error validating order for {Symbol}", request.Symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error validating order for {request.Symbol}", ex);
             return false;
         }
     }

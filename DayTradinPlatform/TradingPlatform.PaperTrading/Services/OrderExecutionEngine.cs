@@ -29,7 +29,7 @@ public class OrderExecutionEngine : IOrderExecutionEngine
             var shouldExecute = await ShouldExecuteOrderAsync(order, marketPrice);
             if (!shouldExecute)
             {
-                TradingLogOrchestrator.Instance.LogInfo("Order {OrderId} not executed - conditions not met", order.OrderId);
+                TradingLogOrchestrator.Instance.LogInfo($"Order {order.OrderId} not executed - conditions not met");
                 return null;
             }
 
@@ -62,14 +62,13 @@ public class OrderExecutionEngine : IOrderExecutionEngine
             await _orderBookSimulator.UpdateOrderBookAsync(order.Symbol, execution);
 
             var elapsed = DateTime.UtcNow - startTime;
-            TradingLogOrchestrator.Instance.LogInfo("Order {OrderId} executed: {Quantity}@{Price} with {Slippage} slippage in {ElapsedMs}ms", 
-                order.OrderId, execution.Quantity, execution.Price, slippage, elapsed.TotalMilliseconds);
+            TradingLogOrchestrator.Instance.LogInfo($"Order {order.OrderId} executed: {execution.Quantity}@{execution.Price} with {slippage} slippage in {elapsed.TotalMilliseconds}ms");
 
             return execution;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error executing order {OrderId}", order.OrderId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error executing order {order.OrderId}", ex);
             return null;
         }
     }
@@ -90,7 +89,7 @@ public class OrderExecutionEngine : IOrderExecutionEngine
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error calculating execution price for order {OrderId}", order.OrderId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error calculating execution price for order {order.OrderId}", ex);
             throw;
         }
     }
@@ -121,7 +120,7 @@ public class OrderExecutionEngine : IOrderExecutionEngine
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error calculating market impact for order {OrderId}", order.OrderId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error calculating market impact for order {order.OrderId}", ex);
             throw;
         }
     }
@@ -142,7 +141,7 @@ public class OrderExecutionEngine : IOrderExecutionEngine
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error checking execution conditions for order {OrderId}", order.OrderId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error checking execution conditions for order {order.OrderId}", ex);
             return false;
         }
     }

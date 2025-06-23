@@ -93,8 +93,7 @@ public sealed partial class MonitorSelectionView : UserControl
         if (savedConfig != null)
         {
             _currentConfiguration = savedConfig;
-            TradingLogOrchestrator.Instance.LogInfo("Loaded saved monitor configuration with {MonitorCount} monitors", 
-                savedConfig.Monitors.Count);
+            TradingLogOrchestrator.Instance.LogInfo($"Loaded saved monitor configuration with {savedConfig.Monitors.Count} monitors");
         }
         else
         {
@@ -547,19 +546,19 @@ public sealed partial class MonitorSelectionView : UserControl
     private void ShowSuccessMessage(string message)
     {
         // In a real implementation, you would show a proper message dialog
-        TradingLogOrchestrator.Instance.LogInfo("Success: {Message}", message);
+        TradingLogOrchestrator.Instance.LogInfo($"Success: {message}");
     }
 
     private void ShowErrorMessage(string message)
     {
         // In a real implementation, you would show a proper error dialog
-        TradingLogOrchestrator.Instance.LogError("Error: {Message}", message);
+        TradingLogOrchestrator.Instance.LogError($"Error: {message}");
     }
 
     private void ShowInfoMessage(string message)
     {
         // In a real implementation, you would show a proper info dialog
-        TradingLogOrchestrator.Instance.LogInfo("Info: {Message}", message);
+        TradingLogOrchestrator.Instance.LogInfo($"Info: {message}");
     }
 
     #endregion

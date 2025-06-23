@@ -36,8 +36,7 @@ public class ComplianceMonitor : IComplianceMonitor
             LastChecked: DateTime.UtcNow
         );
 
-        TradingLogOrchestrator.Instance.LogInfo("Compliance status checked - Compliant: {IsCompliant}, Violations: {ViolationCount}", 
-            isCompliant, violations.Count());
+        TradingLogOrchestrator.Instance.LogInfo($"Compliance status checked - Compliant: {isCompliant}, Violations: {violations.Count(}"));
 
         return status;
     }
@@ -159,8 +158,7 @@ public class ComplianceMonitor : IComplianceMonitor
 
         var hasMajorViolations = violations.Any(v => v.Severity >= ViolationSeverity.Major);
         
-        TradingLogOrchestrator.Instance.LogInfo("Regulatory validation for {Symbol}: {Result} ({ViolationCount} violations)", 
-            request.Symbol, !hasMajorViolations ? "PASSED" : "FAILED", violations.Count);
+        TradingLogOrchestrator.Instance.LogInfo($"Regulatory validation for {request.Symbol}: {!hasMajorViolations ? "PASSED" : "FAILED"} ({violations.Count} violations)");
 
         return !hasMajorViolations;
     }
@@ -178,8 +176,7 @@ public class ComplianceMonitor : IComplianceMonitor
             RequiresAcknowledgment = false
         });
 
-        TradingLogOrchestrator.Instance.LogInfo("Compliance event logged: {EventType} for account {AccountId}", 
-            complianceEvent.EventType, complianceEvent.AccountId);
+        TradingLogOrchestrator.Instance.LogInfo($"Compliance event logged: {complianceEvent.EventType} for account {complianceEvent.AccountId}");
     }
 
     private IEnumerable<ComplianceViolation> GetActiveViolations()
@@ -248,7 +245,6 @@ public class ComplianceMonitor : IComplianceMonitor
 
         await LogComplianceEventAsync(complianceEvent);
         
-        TradingLogOrchestrator.Instance.LogWarning("Compliance violation: {RuleId} - {Description} (Severity: {Severity})", 
-            violation.RuleId, violation.Description, violation.Severity);
+        TradingLogOrchestrator.Instance.LogWarning($"Compliance violation: {violation.RuleId} - {violation.Description} (Severity: {violation.Severity})");
     }
 }

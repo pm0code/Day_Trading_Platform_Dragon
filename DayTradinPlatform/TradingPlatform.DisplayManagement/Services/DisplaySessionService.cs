@@ -173,8 +173,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
                 await NotifySessionChanged(previousSession, _currentSession);
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("Session detected: {SessionType} ({Description})", 
-                _currentSession.SessionType, _currentSession.Description);
+            TradingLogOrchestrator.Instance.LogInfo($"Session detected: {_currentSession.SessionType} ({_currentSession.Description})");
         }
         catch (Exception ex)
         {
@@ -317,7 +316,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to detect session type, defaulting to Unknown");
+            TradingLogOrchestrator.Instance.LogWarning("Failed to detect session type, defaulting to Unknown", additionalData: new { Error = ex.Message });
             return DisplaySessionType.Unknown;
         }
     }
@@ -375,7 +374,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to get remote client information");
+            TradingLogOrchestrator.Instance.LogWarning("Failed to get remote client information", additionalData: new { Error = ex.Message });
             return null;
         }
     }
@@ -608,8 +607,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
 
             if (_options.LogSessionChanges)
             {
-                TradingLogOrchestrator.Instance.LogInfo("Session changed from {PreviousType} to {CurrentType}", 
-                    previous.SessionType, current.SessionType);
+                TradingLogOrchestrator.Instance.LogInfo($"Session changed from {previous.SessionType} to {current.SessionType}");
             }
         }
         catch (Exception ex)

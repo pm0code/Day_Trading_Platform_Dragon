@@ -38,8 +38,7 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
         };
 
-        TradingLogOrchestrator.Instance.LogInfo("RedisMessageBus initialized with connection to {EndPoint}", 
-            _redis.GetEndPoints()[0]);
+        TradingLogOrchestrator.Instance.LogInfo($"RedisMessageBus initialized with connection to {_redis.GetEndPoints()[0]}");
     }
 
     /// <summary>
@@ -82,12 +81,12 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
         }
         catch (RedisException ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Redis error publishing to stream {Stream}", ex, "Redis publish", null, null, new { Stream = stream });
+            TradingLogOrchestrator.Instance.LogError($"Redis error publishing to stream {ex}");
             throw;
         }
         catch (JsonException ex)
         {
-            TradingLogOrchestrator.Instance.LogError("JSON serialization error for stream {Stream}", ex, "JSON serialization", null, null, new { Stream = stream });
+            TradingLogOrchestrator.Instance.LogError($"JSON serialization error for stream {ex}");
             throw;
         }
     }
@@ -107,14 +106,12 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
             try
             {
                 await _database.StreamCreateConsumerGroupAsync(stream, consumerGroup, "0", true);
-                TradingLogOrchestrator.Instance.LogInfo("Created consumer group {ConsumerGroup} for stream {Stream}", 
-                    consumerGroup, stream);
+                TradingLogOrchestrator.Instance.LogInfo($"Created consumer group {consumerGroup} for stream {stream}");
             }
             catch (RedisServerException ex) when (ex.Message.Contains("BUSYGROUP"))
             {
                 // Consumer group already exists - this is expected
-                TradingLogOrchestrator.Instance.LogInfo("Consumer group {ConsumerGroup} already exists for stream {Stream}", 
-                    consumerGroup, stream);
+                TradingLogOrchestrator.Instance.LogInfo($"Consumer group {consumerGroup} already exists for stream {stream}");
             }
 
             // Continuous message processing loop
@@ -151,21 +148,19 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
                 }
                 catch (OperationCanceledException)
                 {
-                    TradingLogOrchestrator.Instance.LogInfo("Subscription cancelled for stream {Stream}, consumer {ConsumerName}", 
-                        stream, consumerName);
+                    TradingLogOrchestrator.Instance.LogInfo($"Subscription cancelled for stream {stream}, consumer {consumerName}");
                     break;
                 }
                 catch (RedisException ex)
                 {
-                    TradingLogOrchestrator.Instance.LogError("Redis error reading from stream {Stream}", ex, "Redis read", null, null, new { Stream = stream });
+                    TradingLogOrchestrator.Instance.LogError($"Redis error reading from stream {ex}");
                     await Task.Delay(1000, cancellationToken); // Backoff on errors
                 }
             }
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Subscription error for stream {Stream}, consumer {ConsumerName}", ex, 
-                "Redis subscription", null, null, new { Stream = stream, ConsumerName = consumerName });
+            TradingLogOrchestrator.Instance.LogError($"Subscription error for stream {ex}, consumer {"Redis subscription"}");
             throw;
         }
     }
@@ -184,8 +179,7 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
             var message = JsonSerializer.Deserialize<T>(messageData!, _jsonOptions);
             if (message == null)
             {
-                TradingLogOrchestrator.Instance.LogWarning("Failed to deserialize message {MessageId} from stream {Stream}", 
-                    messageId, stream);
+                TradingLogOrchestrator.Instance.LogWarning($"Failed to deserialize message {messageId} from stream {stream}");
                 return;
             }
 
@@ -200,14 +194,12 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
         }
         catch (JsonException ex)
         {
-            TradingLogOrchestrator.Instance.LogError("JSON deserialization error for message {MessageId} from stream {Stream}", ex, 
-                "JSON deserialization", null, null, new { MessageId = messageId, Stream = stream });
+            TradingLogOrchestrator.Instance.LogError($"JSON deserialization error for message {ex} from stream {"JSON deserialization"}");
             // Don't acknowledge - message will be retried
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error processing message {MessageId} from stream {Stream}", ex, 
-                "Message processing", null, null, new { MessageId = messageId, Stream = stream });
+            TradingLogOrchestrator.Instance.LogError($"Error processing message {ex} from stream {"Message processing"}");
             // Don't acknowledge - message will be retried
         }
     }
@@ -225,13 +217,12 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
             
             if (acknowledgedCount == 0)
             {
-                TradingLogOrchestrator.Instance.LogWarning("Failed to acknowledge message {MessageId} for stream {Stream}, group {ConsumerGroup}", 
-                    messageId, stream, consumerGroup);
+                TradingLogOrchestrator.Instance.LogWarning($"Failed to acknowledge message {messageId} for stream {stream}, group {consumerGroup}");
             }
         }
         catch (RedisException ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Redis error acknowledging message {MessageId}", ex, "Redis acknowledge", null, null, new { MessageId = messageId });
+            TradingLogOrchestrator.Instance.LogError($"Redis error acknowledging message {ex}");
             throw;
         }
     }

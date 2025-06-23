@@ -93,14 +93,13 @@ public class PaperTradingService : IPaperTradingService
             });
 
             var elapsed = DateTime.UtcNow - startTime;
-            TradingLogOrchestrator.Instance.LogInfo("Order {OrderId} submitted for {Symbol} in {ElapsedMs}ms", 
-                orderId, orderRequest.Symbol, elapsed.TotalMilliseconds);
+            TradingLogOrchestrator.Instance.LogInfo($"Order {orderId} submitted for {orderRequest.Symbol} in {elapsed.TotalMilliseconds}ms");
 
             return new OrderResult(true, orderId, "Order submitted successfully", OrderStatus.New, DateTime.UtcNow);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error submitting order for {Symbol}", orderRequest.Symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error submitting order for {orderRequest.Symbol}", ex);
             return new OrderResult(false, null, $"Internal error: {ex.Message}", OrderStatus.Rejected, DateTime.UtcNow);
         }
     }
@@ -157,13 +156,13 @@ public class PaperTradingService : IPaperTradingService
                 ExecutionTime = DateTime.UtcNow
             });
 
-            TradingLogOrchestrator.Instance.LogInfo("Order {OrderId} cancelled for {Symbol}", orderId, order.Symbol);
+            TradingLogOrchestrator.Instance.LogInfo($"Order {orderId} cancelled for {order.Symbol}");
 
             return new OrderResult(true, orderId, "Order cancelled successfully", OrderStatus.Cancelled, DateTime.UtcNow);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error cancelling order {OrderId}", orderId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error cancelling order {orderId}", ex);
             return new OrderResult(false, orderId, $"Error cancelling order: {ex.Message}", OrderStatus.Rejected, DateTime.UtcNow);
         }
     }
@@ -195,13 +194,13 @@ public class PaperTradingService : IPaperTradingService
 
             _orders.TryUpdate(orderId, updatedOrder, existingOrder);
 
-            TradingLogOrchestrator.Instance.LogInfo("Order {OrderId} modified for {Symbol}", orderId, existingOrder.Symbol);
+            TradingLogOrchestrator.Instance.LogInfo($"Order {orderId} modified for {existingOrder.Symbol}");
 
             return Task.FromResult(new OrderResult(true, orderId, "Order modified successfully", updatedOrder.Status, DateTime.UtcNow));
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error modifying order {OrderId}", orderId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error modifying order {orderId}", ex);
             return Task.FromResult(new OrderResult(false, orderId, $"Error modifying order: {ex.Message}", OrderStatus.Rejected, DateTime.UtcNow));
         }
     }

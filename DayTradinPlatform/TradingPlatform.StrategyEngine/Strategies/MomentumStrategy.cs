@@ -24,7 +24,7 @@ public class MomentumStrategy : IMomentumStrategy
     {
         try
         {
-            TradingLogOrchestrator.Instance.LogInfo("Evaluating momentum signals for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogInfo($"Evaluating momentum signals for {symbol}");
 
             var momentumSignals = await DetectMomentumAsync(symbol, conditions);
             var momentumStrength = await CalculateMomentumStrengthAsync(symbol, conditions);
@@ -64,12 +64,12 @@ public class MomentumStrategy : IMomentumStrategy
                 }
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("Generated {SignalCount} momentum signals for {Symbol}", signals.Count, symbol);
+            TradingLogOrchestrator.Instance.LogInfo($"Generated {signals.Count} momentum signals for {symbol}");
             return signals.ToArray();
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error generating momentum signals for {Symbol}", symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error generating momentum signals for {symbol}", ex);
             return Array.Empty<TradingSignal>();
         }
     }
@@ -107,15 +107,14 @@ public class MomentumStrategy : IMomentumStrategy
 
                 signals.Add(momentumSignal);
 
-                TradingLogOrchestrator.Instance.LogInfo("Detected momentum for {Symbol}: Direction={Direction}, Strength={Strength}, Volume={VolumeConfirmation}x",
-                    symbol, direction, strength, volumeConfirmation);
+                TradingLogOrchestrator.Instance.LogInfo($"Detected momentum for {symbol}: Direction={direction}, Strength={strength}, Volume={volumeConfirmation}x");
             }
 
             return signals.ToArray();
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error detecting momentum for {Symbol}", symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error detecting momentum for {symbol}", ex);
             return Array.Empty<MomentumSignal>();
         }
     }
@@ -147,14 +146,13 @@ public class MomentumStrategy : IMomentumStrategy
                                  (volatilityStrength * 0.2m) + 
                                  (rsiMomentum * 0.2m);
 
-            TradingLogOrchestrator.Instance.LogInfo("Calculated momentum strength for {Symbol}: {Strength} (Price={PriceStrength}, Volume={VolumeStrength}, RSI={RSIMomentum})",
-                symbol, momentumStrength, priceStrength, volumeStrength, rsiMomentum);
+            TradingLogOrchestrator.Instance.LogInfo($"Calculated momentum strength for {symbol}: {momentumStrength} (Price={priceStrength}, Volume={volumeStrength}, RSI={rsiMomentum})");
 
             return Math.Min(momentumStrength, 1.0m);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error calculating momentum strength for {Symbol}", symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error calculating momentum strength for {symbol}", ex);
             return 0.0m;
         }
     }
@@ -222,7 +220,7 @@ public class MomentumStrategy : IMomentumStrategy
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error calculating sustainability score for {Symbol}", symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error calculating sustainability score for {symbol}", ex);
             return 0.0m;
         }
     }

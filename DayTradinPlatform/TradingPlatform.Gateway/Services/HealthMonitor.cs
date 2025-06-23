@@ -67,7 +67,7 @@ public class HealthMonitor : IHealthMonitor
                 }
                 catch (Exception ex)
                 {
-                    TradingLogOrchestrator.Instance.LogError("Health check failed for {HealthCheckName}", name, ex);
+                    TradingLogOrchestrator.Instance.LogError($"Health check failed for {name}", ex);
                     serviceHealth[name] = false;
                     overallHealthy = false;
                 }
@@ -161,7 +161,7 @@ public class HealthMonitor : IHealthMonitor
             {
                 if (!healthStatus.ServiceHealth.GetValueOrDefault(system, false))
                 {
-                    TradingLogOrchestrator.Instance.LogWarning("Critical system {SystemName} is not healthy", system);
+                    TradingLogOrchestrator.Instance.LogWarning($"Critical system {system} is not healthy");
                     return false;
                 }
             }
@@ -207,7 +207,7 @@ public class HealthMonitor : IHealthMonitor
     public void RegisterHealthCheck(string name, Func<Task<HealthCheckResult>> healthCheck)
     {
         _healthChecks[name] = healthCheck ?? throw new ArgumentNullException(nameof(healthCheck));
-        TradingLogOrchestrator.Instance.LogInfo("Registered health check: {HealthCheckName}", name);
+        TradingLogOrchestrator.Instance.LogInfo($"Registered health check: {name}");
     }
 
     public async Task StartMonitoringAsync(CancellationToken cancellationToken)
@@ -369,8 +369,7 @@ public class HealthMonitor : IHealthMonitor
             }
         }
 
-        TradingLogOrchestrator.Instance.LogWarning("New system alert: {Severity} - {Title}: {Description}", 
-            alert.Severity, alert.Title, alert.Description);
+        TradingLogOrchestrator.Instance.LogWarning($"New system alert: {alert.Severity} - {alert.Title}: {alert.Description}");
     }
 
     private bool IsMarketOpen()

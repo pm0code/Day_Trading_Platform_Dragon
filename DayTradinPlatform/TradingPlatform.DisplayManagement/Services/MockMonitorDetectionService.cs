@@ -133,8 +133,7 @@ public class MockMonitorDetectionService : IMonitorDetectionService
 
     public async Task SaveMonitorConfigurationAsync(MultiMonitorConfiguration configuration)
     {
-        TradingLogOrchestrator.Instance.LogInfo("Mock save: Monitor configuration with {MonitorCount} monitors", 
-            configuration.Monitors.Count);
+        TradingLogOrchestrator.Instance.LogInfo($"Mock save: Monitor configuration with {configuration.Monitors.Count} monitors");
         
         await Task.Delay(100);
         

@@ -23,7 +23,7 @@ public class RiskCalculator : IRiskCalculator
         index = Math.Max(0, Math.Min(index, returnsList.Count - 1));
         
         var var95 = Math.Abs(returnsList[index]);
-        TradingLogOrchestrator.Instance.LogInfo("VaR calculated: {VaR} at {ConfidenceLevel}% confidence", var95, confidenceLevel * 100);
+        TradingLogOrchestrator.Instance.LogInfo($"VaR calculated: {var95} at {confidenceLevel * 100}% confidence");
         return var95;
     }
 
@@ -40,8 +40,7 @@ public class RiskCalculator : IRiskCalculator
         var tailReturns = returnsList.Take(cutoff);
         var expectedShortfall = Math.Abs(tailReturns.Average());
         
-        TradingLogOrchestrator.Instance.LogInfo("Expected Shortfall calculated: {ES} at {ConfidenceLevel}% confidence", 
-            expectedShortfall, confidenceLevel * 100);
+        TradingLogOrchestrator.Instance.LogInfo($"Expected Shortfall calculated: {expectedShortfall} at {confidenceLevel * 100}% confidence");
         return expectedShortfall;
     }
 
@@ -67,7 +66,7 @@ public class RiskCalculator : IRiskCalculator
         }
 
         var maxDrawdownPercent = maxDrawdown * 100m;
-        TradingLogOrchestrator.Instance.LogInfo("Max Drawdown calculated: {MaxDrawdown}%", maxDrawdownPercent);
+        TradingLogOrchestrator.Instance.LogInfo($"Max Drawdown calculated: {maxDrawdownPercent}%");
         return maxDrawdownPercent;
     }
 
@@ -83,7 +82,7 @@ public class RiskCalculator : IRiskCalculator
         if (standardDeviation == 0m) return 0m;
 
         var sharpeRatio = meanExcessReturn / standardDeviation;
-        TradingLogOrchestrator.Instance.LogInfo("Sharpe Ratio calculated: {SharpeRatio}", sharpeRatio);
+        TradingLogOrchestrator.Instance.LogInfo($"Sharpe Ratio calculated: {sharpeRatio}");
         return sharpeRatio;
     }
 
@@ -94,8 +93,7 @@ public class RiskCalculator : IRiskCalculator
         var riskAmount = accountBalance * riskPerTrade;
         var positionSize = riskAmount / stopLoss;
         
-        TradingLogOrchestrator.Instance.LogInfo("Position size calculated: {PositionSize} (Risk: {RiskAmount}, Stop: {StopLoss})", 
-            positionSize, riskAmount, stopLoss);
+        TradingLogOrchestrator.Instance.LogInfo($"Position size calculated: {positionSize} (Risk: {riskAmount}, Stop: {stopLoss})");
         return positionSize;
     }
 
@@ -132,8 +130,7 @@ public class RiskCalculator : IRiskCalculator
             CalculatedAt: DateTime.UtcNow
         );
 
-        TradingLogOrchestrator.Instance.LogInfo("Portfolio risk metrics calculated - VaR95: {VaR95}, Sharpe: {Sharpe}, Vol: {Vol}", 
-            var95, sharpeRatio, volatility);
+        TradingLogOrchestrator.Instance.LogInfo($"Portfolio risk metrics calculated - VaR95: {var95}, Sharpe: {sharpeRatio}, Vol: {volatility}");
 
         return metrics;
     }

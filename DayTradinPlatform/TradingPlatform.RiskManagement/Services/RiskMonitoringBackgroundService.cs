@@ -47,7 +47,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
                 );
 
                 var elapsed = DateTime.UtcNow - startTime;
-                TradingLogOrchestrator.Instance.LogInfo("Risk monitoring cycle completed in {ElapsedMs}ms", elapsed.TotalMilliseconds);
+                TradingLogOrchestrator.Instance.LogInfo($"Risk monitoring cycle completed in {elapsed.TotalMilliseconds}ms");
 
                 await Task.Delay(_monitoringInterval, stoppingToken);
             }
@@ -75,8 +75,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
             // Check if risk level is elevated
             if (riskStatus.RiskLevel >= Models.RiskLevel.High)
             {
-                TradingLogOrchestrator.Instance.LogWarning("Elevated risk level detected: {RiskLevel} - Drawdown: {Drawdown:C}, Exposure: {Exposure:C}", 
-                    riskStatus.RiskLevel, riskStatus.CurrentDrawdown, riskStatus.TotalExposure);
+                TradingLogOrchestrator.Instance.LogWarning($"Elevated risk level detected: {riskStatus.RiskLevel} - Drawdown: {riskStatus.CurrentDrawdown}, Exposure: {riskStatus.TotalExposure}");
             }
         }
         catch (Exception ex)
@@ -95,8 +94,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
             {
                 await _alertService.CheckPositionLimitAsync(position.Symbol, position.Quantity);
                 
-                TradingLogOrchestrator.Instance.LogWarning("Position exceeding limits: {Symbol} - Exposure: {Exposure:C}", 
-                    position.Symbol, position.RiskExposure);
+                TradingLogOrchestrator.Instance.LogWarning($"Position exceeding limits: {position.Symbol} - Exposure: {position.RiskExposure}");
             }
         }
         catch (Exception ex)
@@ -113,20 +111,18 @@ public class RiskMonitoringBackgroundService : BackgroundService
             
             if (!complianceStatus.IsCompliant)
             {
-                TradingLogOrchestrator.Instance.LogWarning("Compliance violations detected: {ViolationCount} violations", 
-                    complianceStatus.Violations.Count());
+                TradingLogOrchestrator.Instance.LogWarning($"Compliance violations detected: {complianceStatus.Violations.Count(} violations"));
                 
                 foreach (var violation in complianceStatus.Violations.Where(v => v.Severity >= Models.ViolationSeverity.Major))
                 {
-                    TradingLogOrchestrator.Instance.LogError("Major compliance violation: {RuleId} - {Description}", violation.RuleId, violation.Description);
+                    TradingLogOrchestrator.Instance.LogError($"Major compliance violation: {violation.RuleId} - {violation.Description}");
                 }
             }
 
             // Monitor PDT status
             if (complianceStatus.PDTStatus.IsPatternDayTrader && complianceStatus.PDTStatus.DayTradesRemaining <= 1)
             {
-                TradingLogOrchestrator.Instance.LogWarning("PDT day trades running low: {Remaining} remaining", 
-                    complianceStatus.PDTStatus.DayTradesRemaining);
+                TradingLogOrchestrator.Instance.LogWarning($"PDT day trades running low: {complianceStatus.PDTStatus.DayTradesRemaining} remaining");
             }
 
             // Monitor margin status

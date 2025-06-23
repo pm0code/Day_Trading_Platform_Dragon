@@ -37,7 +37,7 @@ public class ProcessManager : IProcessManager
             {
                 if (_managedProcesses.ContainsKey(processName) && !_managedProcesses[processName].HasExited)
                 {
-                    TradingLogOrchestrator.Instance.LogWarning("Process {ProcessName} is already running", 
+                    TradingLogOrchestrator.Instance.LogWarning($"Process {processName} is already running", 
                         impact: "Start request ignored",
                         recommendedAction: "Check process status before starting",
                         additionalData: new { ProcessName = processName });
@@ -57,7 +57,7 @@ public class ProcessManager : IProcessManager
             var process = Process.Start(startInfo);
             if (process == null)
             {
-                TradingLogOrchestrator.Instance.LogError("Failed to start process {ProcessName}", 
+                TradingLogOrchestrator.Instance.LogError($"Failed to start process {processName}", 
                     operationContext: "Process start",
                     additionalData: new { ProcessName = processName, Configuration = configuration });
                 return false;
@@ -72,14 +72,14 @@ public class ProcessManager : IProcessManager
                 _processConfigurations[processName] = configuration;
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("Started process {ProcessName} with PID {ProcessId}", 
+            TradingLogOrchestrator.Instance.LogInfo($"Started process {processName} with PID {process.Id}", 
                 new { ProcessName = processName, ProcessId = process.Id, Configuration = configuration });
 
             return true;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error starting process {ProcessName}", ex,
+            TradingLogOrchestrator.Instance.LogError($"Error starting process {processName}", ex,
                 operationContext: "Process start",
                 userImpact: "Service may not be available",
                 troubleshootingHints: "Check executable path and permissions",
@@ -100,7 +100,7 @@ public class ProcessManager : IProcessManager
             {
                 if (!_managedProcesses.TryGetValue(processName, out process!) || process.HasExited)
                 {
-                    TradingLogOrchestrator.Instance.LogWarning("Process {ProcessName} is not running",
+                    TradingLogOrchestrator.Instance.LogWarning($"Process {processName} is not running",
                         impact: "Stop request ignored",
                         additionalData: new { ProcessName = processName });
                     return true;
@@ -114,7 +114,7 @@ public class ProcessManager : IProcessManager
             if (!stopped)
             {
                 // Force termination if graceful shutdown failed
-                TradingLogOrchestrator.Instance.LogWarning("Process {ProcessName} did not stop gracefully, forcing termination",
+                TradingLogOrchestrator.Instance.LogWarning($"Process {processName} did not stop gracefully, forcing termination",
                     impact: "Process will be forcefully terminated",
                     additionalData: new { ProcessName = processName, ProcessId = process.Id });
                 process.Kill();
@@ -127,14 +127,14 @@ public class ProcessManager : IProcessManager
                 _processConfigurations.Remove(processName);
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("Stopped process {ProcessName}",
+            TradingLogOrchestrator.Instance.LogInfo($"Stopped process {processName}",
                 new { ProcessName = processName, GracefulShutdown = stopped });
 
             return true;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error stopping process {ProcessName}", ex,
+            TradingLogOrchestrator.Instance.LogError($"Error stopping process {processName}", ex,
                 operationContext: "Process stop",
                 troubleshootingHints: "Process may need manual termination",
                 additionalData: new { ProcessName = processName });
@@ -155,7 +155,7 @@ public class ProcessManager : IProcessManager
                 if (configuration.Priority != ProcessPriorityClass.Normal)
                 {
                     process.PriorityClass = configuration.Priority;
-                    TradingLogOrchestrator.Instance.LogInfo("Set process priority to {Priority} for PID {ProcessId}",
+                    TradingLogOrchestrator.Instance.LogInfo($"Set process priority to {configuration.Priority} for PID {process.Id}",
                         new { Priority = configuration.Priority, ProcessId = process.Id });
                 }
 
@@ -168,7 +168,7 @@ public class ProcessManager : IProcessManager
                         affinityMask |= 1 << cpu;
                     }
                     process.ProcessorAffinity = new IntPtr(affinityMask);
-                    TradingLogOrchestrator.Instance.LogInfo("Set CPU affinity mask to {AffinityMask} for PID {ProcessId}",
+                    TradingLogOrchestrator.Instance.LogInfo($"Set CPU affinity mask to {affinityMask} for PID {process.Id}",
                         new { AffinityMask = affinityMask, ProcessId = process.Id, CPUs = configuration.CpuAffinity });
                 }
 
@@ -177,7 +177,7 @@ public class ProcessManager : IProcessManager
                 {
                     SetProcessWorkingSetSize(process.Handle, new IntPtr(configuration.MinWorkingSetMB * 1024 * 1024),
                         new IntPtr(configuration.MaxWorkingSetMB * 1024 * 1024));
-                    TradingLogOrchestrator.Instance.LogInfo("Boosted working set to {Min}MB-{Max}MB for PID {ProcessId}",
+                    TradingLogOrchestrator.Instance.LogInfo($"Boosted working set to {configuration.MinWorkingSetMB}MB-{configuration.MaxWorkingSetMB}MB for PID {process.Id}",
                         new { Min = configuration.MinWorkingSetMB, Max = configuration.MaxWorkingSetMB, ProcessId = process.Id });
                 }
             }
@@ -236,7 +236,7 @@ public class ProcessManager : IProcessManager
                     }
                     catch (Exception ex)
                     {
-                        TradingLogOrchestrator.Instance.LogError("Error getting status for process {ProcessName}", ex,
+                        TradingLogOrchestrator.Instance.LogError($"Error getting status for process {name}", ex,
                             operationContext: "Process status check",
                             additionalData: new { ProcessName = name });
                     }
@@ -284,7 +284,7 @@ public class ProcessManager : IProcessManager
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError("Error getting metrics for process {ProcessName}", ex,
+                TradingLogOrchestrator.Instance.LogError($"Error getting metrics for process {processName}", ex,
                     operationContext: "Process metrics",
                     additionalData: new { ProcessName = processName });
                 return new ProcessPerformanceMetrics { ProcessName = processName, IsRunning = false };

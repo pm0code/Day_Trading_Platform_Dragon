@@ -137,14 +137,13 @@ public class ExecutionAnalytics : IExecutionAnalytics
                     return existingList;
                 });
 
-            TradingLogOrchestrator.Instance.LogInfo("Recorded execution: {ExecutionId} for {Symbol} {Quantity}@{Price}", 
-                execution.ExecutionId, execution.Symbol, execution.Quantity, execution.Price);
+            TradingLogOrchestrator.Instance.LogInfo($"Recorded execution: {execution.ExecutionId} for {execution.Symbol} {execution.Quantity}@{execution.Price}");
                 
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error recording execution {ExecutionId}", execution.ExecutionId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error recording execution {execution.ExecutionId}", ex);
         }
     }
 

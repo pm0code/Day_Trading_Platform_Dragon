@@ -1,0 +1,392 @@
+using System.Diagnostics;
+using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Models;
+using TradingPlatform.DataIngestion.Interfaces;
+using TradingPlatform.Messaging.Events;
+using TradingPlatform.Messaging.Interfaces;
+using TradingPlatform.Core.Logging;
+
+namespace TradingPlatform.MarketData.Services;
+
+/// <summary>
+/// High-performance market data service for on-premise trading workstation
+/// Integrates with external providers and distributes data via Redis Streams
+/// </summary>
+public class MarketDataService : IMarketDataService
+{
+    private readonly IDataIngestionService _dataIngestionService;
+    private readonly IMarketDataAggregator _marketDataAggregator;
+    private readonly IMarketDataCache _cache;
+    private readonly IMessageBus _messageBus;
+    private readonly ITradingLogger _logger;
+    private readonly CancellationTokenSource _cancellationTokenSource;
+    private readonly Dictionary<string, DateTime> _lastUpdateTimes;
+    private readonly object _metricsLock = new();
+    
+    // Performance tracking
+    private long _totalRequests;
+    private long _cacheHits;
+    private long _cacheMisses;
+    private readonly List<TimeSpan> _latencySamples = new();
+    private readonly DateTime _startTime = DateTime.UtcNow;
+
+    public MarketDataService(
+        IDataIngestionService dataIngestionService,
+        IMarketDataAggregator marketDataAggregator,
+        IMarketDataCache cache,
+        IMessageBus messageBus,
+        ITradingLogger logger)
+    {
+        _dataIngestionService = dataIngestionService ?? throw new ArgumentNullException(nameof(dataIngestionService));
+        _marketDataAggregator = marketDataAggregator ?? throw new ArgumentNullException(nameof(marketDataAggregator));
+        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+        _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _cancellationTokenSource = new CancellationTokenSource();
+        _lastUpdateTimes = new Dictionary<string, DateTime>();
+    }
+
+    public async Task<MarketData?> GetMarketDataAsync(string symbol)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        Interlocked.Increment(ref _totalRequests);
+
+        try
+        {
+            // Try cache first for sub-millisecond response
+            var cachedData = await _cache.GetAsync(symbol);
+            if (cachedData != null && IsDataFresh(symbol, cachedData.Timestamp))
+            {
+                Interlocked.Increment(ref _cacheHits);
+                stopwatch.Stop();
+                RecordLatency(stopwatch.Elapsed);
+                
+                TradingLogOrchestrator.Instance.LogInfo("Cache hit for {Symbol} in {ElapsedMicroseconds}μs", 
+                    symbol, stopwatch.Elapsed.TotalMicroseconds);
+                return cachedData;
+            }
+
+            Interlocked.Increment(ref _cacheMisses);
+
+            // Fetch from providers using aggregator
+            var freshData = await _marketDataAggregator.GetMarketDataAsync(symbol);
+            if (freshData != null)
+            {
+                // Cache with 5-second TTL for high-frequency trading
+                await _cache.SetAsync(symbol, freshData, TimeSpan.FromSeconds(5));
+                
+                // Update last update time
+                lock (_lastUpdateTimes)
+                {
+                    _lastUpdateTimes[symbol] = DateTime.UtcNow;
+                }
+
+                // Publish to Redis Streams for real-time distribution
+                var marketDataEvent = new MarketDataEvent
+                {
+                    Symbol = symbol,
+                    Price = freshData.Price,
+                    Volume = freshData.Volume,
+                    Timestamp = freshData.Timestamp,
+                    Source = "MarketDataService"
+                };
+
+                await _messageBus.PublishAsync("market-data", marketDataEvent);
+
+                stopwatch.Stop();
+                RecordLatency(stopwatch.Elapsed);
+
+                TradingLogOrchestrator.Instance.LogInfo("Updated market data for {Symbol} in {ElapsedMicroseconds}μs", 
+                    symbol, stopwatch.Elapsed.TotalMicroseconds);
+
+                return freshData;
+            }
+
+            stopwatch.Stop();
+            TradingLogOrchestrator.Instance.LogWarning("No market data available for {Symbol}", symbol);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            TradingLogOrchestrator.Instance.LogError("Error retrieving market data for {Symbol}", symbol, ex);
+            return null;
+        }
+    }
+
+    public async Task<Dictionary<string, MarketData>> GetMarketDataBatchAsync(string[] symbols)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var results = new Dictionary<string, MarketData>();
+
+        try
+        {
+            // Process symbols in parallel for maximum throughput
+            var tasks = symbols.Select(async symbol =>
+            {
+                var data = await GetMarketDataAsync(symbol);
+                return new { Symbol = symbol, Data = data };
+            }).ToArray();
+
+            var batchResults = await Task.WhenAll(tasks);
+
+            foreach (var result in batchResults)
+            {
+                if (result.Data != null)
+                {
+                    results[result.Symbol] = result.Data;
+                }
+            }
+
+            stopwatch.Stop();
+            TradingLogOrchestrator.Instance.LogInfo("Batch request for {SymbolCount} symbols completed in {ElapsedMilliseconds}ms", 
+                symbols.Length, stopwatch.Elapsed.TotalMilliseconds);
+
+            return results;
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            TradingLogOrchestrator.Instance.LogError("Error processing batch market data request", ex);
+            return results;
+        }
+    }
+
+    public async Task<HistoricalData?> GetHistoricalDataAsync(string symbol, string interval)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        try
+        {
+            // Use DataIngestion service for historical data
+            var historicalData = await _dataIngestionService.GetHistoricalDataAsync(symbol, interval);
+            
+            stopwatch.Stop();
+            TradingLogOrchestrator.Instance.LogInfo("Retrieved historical data for {Symbol} ({Interval}) in {ElapsedMilliseconds}ms", 
+                symbol, interval, stopwatch.Elapsed.TotalMilliseconds);
+
+            return historicalData;
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            TradingLogOrchestrator.Instance.LogError("Error retrieving historical data for {Symbol}", symbol, ex);
+            return null;
+        }
+    }
+
+    public async Task StartBackgroundProcessingAsync()
+    {
+        TradingLogOrchestrator.Instance.LogInfo("Starting background Redis Streams processing");
+
+        try
+        {
+            // Subscribe to market data requests from Gateway
+            await _messageBus.SubscribeAsync<MarketDataRequestEvent>("market-data-requests", 
+                "marketdata-group", "marketdata-consumer", 
+                HandleMarketDataRequest, _cancellationTokenSource.Token);
+
+            // Subscribe to subscription management requests
+            await _messageBus.SubscribeAsync<MarketDataSubscriptionEvent>("market-data-subscriptions", 
+                "marketdata-group", "subscription-consumer", 
+                HandleSubscriptionRequest, _cancellationTokenSource.Token);
+
+            TradingLogOrchestrator.Instance.LogInfo("Background processing started successfully");
+        }
+        catch (Exception ex)
+        {
+            TradingLogOrchestrator.Instance.LogError("Error starting background processing", ex);
+            throw;
+        }
+    }
+
+    public async Task<MarketDataHealthStatus> GetHealthStatusAsync()
+    {
+        try
+        {
+            var isHealthy = await _messageBus.IsHealthyAsync();
+            var providerLatency = await MeasureProviderLatency();
+            var cacheStats = await _cache.GetStatsAsync();
+
+            var issues = new List<string>();
+            
+            if (providerLatency.TotalMilliseconds > 1000)
+                issues.Add($"High provider latency: {providerLatency.TotalMilliseconds:F1}ms");
+            
+            if (cacheStats.HitRate < 0.8)
+                issues.Add($"Low cache hit rate: {cacheStats.HitRate:P1}");
+
+            return new MarketDataHealthStatus(
+                isHealthy && issues.Count == 0,
+                isHealthy ? "Healthy" : "Degraded",
+                providerLatency,
+                await GetActiveSubscriptionCount(),
+                _totalRequests,
+                DateTime.UtcNow,
+                issues.ToArray());
+        }
+        catch (Exception ex)
+        {
+            TradingLogOrchestrator.Instance.LogError("Error getting health status", ex);
+            return new MarketDataHealthStatus(false, "Error", TimeSpan.Zero, 0, 0, DateTime.UtcNow, 
+                new[] { ex.Message });
+        }
+    }
+
+    public async Task<MarketDataMetrics> GetPerformanceMetricsAsync()
+    {
+        var cacheStats = await _cache.GetStatsAsync();
+        var uptime = DateTime.UtcNow - _startTime;
+        
+        lock (_metricsLock)
+        {
+            var rps = _totalRequests > 0 ? _totalRequests / Math.Max(1, uptime.TotalSeconds) : 0;
+            var avgLatency = _latencySamples.Count > 0 ? 
+                TimeSpan.FromTicks((long)_latencySamples.Average(l => l.Ticks)) : TimeSpan.Zero;
+            var maxLatency = _latencySamples.Count > 0 ? 
+                _latencySamples.Max() : TimeSpan.Zero;
+
+            return new MarketDataMetrics(
+                (long)rps,
+                avgLatency,
+                maxLatency,
+                cacheStats.HitRate,
+                0, // Active connections - to be implemented
+                _totalRequests,
+                uptime);
+        }
+    }
+
+    public async Task RefreshMarketDataAsync(string symbol)
+    {
+        try
+        {
+            // Invalidate cache to force fresh fetch
+            await _cache.InvalidateAsync(symbol);
+            
+            // Fetch fresh data
+            await GetMarketDataAsync(symbol);
+            
+            TradingLogOrchestrator.Instance.LogInfo("Refreshed market data for {Symbol}", symbol);
+        }
+        catch (Exception ex)
+        {
+            TradingLogOrchestrator.Instance.LogError("Error refreshing market data for {Symbol}", symbol, ex);
+        }
+    }
+
+    public async Task<LatencyStats> GetLatencyStatsAsync()
+    {
+        await Task.CompletedTask;
+        
+        lock (_metricsLock)
+        {
+            if (_latencySamples.Count == 0)
+            {
+                return new LatencyStats(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, 
+                    TimeSpan.Zero, TimeSpan.Zero, 0, DateTime.UtcNow);
+            }
+
+            var sorted = _latencySamples.OrderBy(l => l.Ticks).ToArray();
+            var average = TimeSpan.FromTicks((long)sorted.Average(l => l.Ticks));
+            var p50 = sorted[sorted.Length / 2];
+            var p95 = sorted[(int)(sorted.Length * 0.95)];
+            var p99 = sorted[(int)(sorted.Length * 0.99)];
+            var max = sorted.Last();
+
+            return new LatencyStats(average, p50, p95, p99, max, sorted.Length, DateTime.UtcNow);
+        }
+    }
+
+    // Private helper methods
+    private async Task HandleMarketDataRequest(MarketDataRequestEvent request)
+    {
+        try
+        {
+            TradingLogOrchestrator.Instance.LogInfo("Processing market data request for {Symbol} from {Source}", 
+                request.Symbol, request.Source);
+
+            var data = await GetMarketDataAsync(request.Symbol);
+            
+            if (data != null)
+            {
+                var responseEvent = new MarketDataEvent
+                {
+                    Symbol = request.Symbol,
+                    Price = data.Price,
+                    Volume = data.Volume,
+                    Timestamp = data.Timestamp,
+                    Source = "MarketDataService",
+                    RequestId = request.RequestId
+                };
+
+                await _messageBus.PublishAsync("market-data", responseEvent);
+            }
+        }
+        catch (Exception ex)
+        {
+            TradingLogOrchestrator.Instance.LogError("Error handling market data request for {Symbol}", request.Symbol, ex);
+        }
+    }
+
+    private async Task HandleSubscriptionRequest(MarketDataSubscriptionEvent request)
+    {
+        try
+        {
+            TradingLogOrchestrator.Instance.LogInfo("Processing subscription request: {Action} for symbols: {Symbols}", 
+                request.Action, string.Join(", ", request.Symbols));
+
+            // Implementation would manage real-time subscriptions
+            // For MVP, just acknowledge the request
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            TradingLogOrchestrator.Instance.LogError("Error handling subscription request", ex);
+        }
+    }
+
+    private bool IsDataFresh(string symbol, DateTime dataTimestamp)
+    {
+        // Consider data fresh if it's less than 5 seconds old
+        return DateTime.UtcNow - dataTimestamp < TimeSpan.FromSeconds(5);
+    }
+
+    private void RecordLatency(TimeSpan latency)
+    {
+        lock (_metricsLock)
+        {
+            _latencySamples.Add(latency);
+            
+            // Keep only last 1000 samples for memory efficiency
+            if (_latencySamples.Count > 1000)
+            {
+                _latencySamples.RemoveAt(0);
+            }
+        }
+    }
+
+    private async Task<TimeSpan> MeasureProviderLatency()
+    {
+        var stopwatch = Stopwatch.StartNew();
+        try
+        {
+            // Test with a common symbol
+            await _marketDataAggregator.GetMarketDataAsync("AAPL");
+            stopwatch.Stop();
+            return stopwatch.Elapsed;
+        }
+        catch
+        {
+            stopwatch.Stop();
+            return TimeSpan.FromSeconds(10); // High latency for errors
+        }
+    }
+
+    private async Task<int> GetActiveSubscriptionCount()
+    {
+        // Implementation would track active subscriptions
+        await Task.CompletedTask;
+        return 0; // Placeholder for MVP
+    }
+}

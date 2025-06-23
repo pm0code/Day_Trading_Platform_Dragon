@@ -42,8 +42,7 @@ public class SignalProcessor : ISignalProcessor
 
         try
         {
-            TradingLogOrchestrator.Instance.LogInfo("Processing market data for {Symbol}: Price={Price}, Volume={Volume}, Volatility={Volatility}", 
-                symbol, conditions.Volatility, conditions.Volume, conditions.Volatility);
+            TradingLogOrchestrator.Instance.LogInfo($"Processing market data for {symbol}: Price={conditions.Volatility}, Volume={conditions.Volume}, Volatility={conditions.Volatility}");
 
             // Process through all available strategies
             var strategyTasks = new List<Task<TradingSignal[]>>
@@ -70,14 +69,13 @@ public class SignalProcessor : ISignalProcessor
                 AddToRecentSignals(signal);
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("Generated {SignalCount} signals for {Symbol} from {StrategyCount} strategies", 
-                filteredSignals.Length, symbol, strategyTasks.Count);
+            TradingLogOrchestrator.Instance.LogInfo($"Generated {filteredSignals.Length} signals for {symbol} from {strategyTasks.Count} strategies");
 
             return filteredSignals;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error processing market data for {Symbol}", symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error processing market data for {symbol}", ex);
             return Array.Empty<TradingSignal>();
         }
     }
@@ -86,8 +84,7 @@ public class SignalProcessor : ISignalProcessor
     {
         try
         {
-            TradingLogOrchestrator.Instance.LogInfo("Processing manual signal: {SignalType} {Quantity} {Symbol} at {Price}", 
-                request.SignalType, request.Quantity, request.Symbol, request.Price);
+            TradingLogOrchestrator.Instance.LogInfo($"Processing manual signal: {request.SignalType} {request.Quantity} {request.Symbol} at {request.Price}");
 
             // Create trading signal from manual request
             var signal = new TradingSignal(
@@ -113,7 +110,7 @@ public class SignalProcessor : ISignalProcessor
             // Add to recent signals
             AddToRecentSignals(signal);
 
-            TradingLogOrchestrator.Instance.LogInfo("Manual signal processed successfully for {Symbol}", request.Symbol);
+            TradingLogOrchestrator.Instance.LogInfo($"Manual signal processed successfully for {request.Symbol}");
 
             await Task.CompletedTask;
             return new StrategyResult(true, "Manual signal processed successfully", 
@@ -121,7 +118,7 @@ public class SignalProcessor : ISignalProcessor
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error processing manual signal for {Symbol}", request.Symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error processing manual signal for {request.Symbol}", ex);
             return new StrategyResult(false, ex.Message, "MANUAL_SIGNAL_ERROR");
         }
     }
@@ -180,8 +177,7 @@ public class SignalProcessor : ISignalProcessor
 
             if (!isAcceptable)
             {
-                TradingLogOrchestrator.Instance.LogWarning("Signal risk assessment failed for {Symbol}: PositionValue={PositionValue}, Confidence={Confidence}, RiskReward={RiskReward}", 
-                    signal.Symbol, positionValue, signal.Confidence, riskReward);
+                TradingLogOrchestrator.Instance.LogWarning($"Signal risk assessment failed for {signal.Symbol}: PositionValue={positionValue}, Confidence={signal.Confidence}, RiskReward={riskReward}");
             }
 
             await Task.CompletedTask;
@@ -189,7 +185,7 @@ public class SignalProcessor : ISignalProcessor
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error validating signal for {Symbol}", signal.Symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error validating signal for {signal.Symbol}", ex);
             return new RiskAssessment(0, 0, 0, 0, 0, false);
         }
     }
@@ -236,15 +232,14 @@ public class SignalProcessor : ISignalProcessor
                     signals.Remove(signal);
                 }
 
-                TradingLogOrchestrator.Instance.LogInfo("Cancelled {CancelledCount} signals for {Symbol}", 
-                    signalsToRemove.Length, symbol);
+                TradingLogOrchestrator.Instance.LogInfo($"Cancelled {signalsToRemove.Length} signals for {symbol}");
             }
 
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error cancelling signals for {Symbol}", symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error cancelling signals for {symbol}", ex);
         }
     }
 
@@ -326,7 +321,7 @@ public class SignalProcessor : ISignalProcessor
 
             if (totalRemoved > 0)
             {
-                TradingLogOrchestrator.Instance.LogInfo("Cleaned up {RemovedCount} old signals", totalRemoved);
+                TradingLogOrchestrator.Instance.LogInfo($"Cleaned up {totalRemoved} old signals");
             }
         }
         catch (Exception ex)

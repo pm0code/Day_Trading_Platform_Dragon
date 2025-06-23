@@ -54,7 +54,7 @@ public class ProcessManager : IProcessManager
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError("Error getting process info for {ServiceName}", serviceName, ex);
+                TradingLogOrchestrator.Instance.LogError($"Error getting process info for {serviceName}", ex);
                 processInfos.Add(new ProcessInfo(
                     serviceName, 0, ProcessStatus.Error, TimeSpan.Zero,
                     0, 0, 0, Array.Empty<int>(), ProcessPriorityLevel.Normal));
@@ -75,7 +75,7 @@ public class ProcessManager : IProcessManager
 
             if (_managedProcesses.ContainsKey(serviceName))
             {
-                TradingLogOrchestrator.Instance.LogWarning("Service {ServiceName} is already running", serviceName);
+                TradingLogOrchestrator.Instance.LogWarning($"Service {serviceName} is already running");
                 return;
             }
 
@@ -107,23 +107,23 @@ public class ProcessManager : IProcessManager
             process.OutputDataReceived += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(e.Data))
-                    TradingLogOrchestrator.Instance.LogInfo("[{ServiceName}] {Output}", serviceName, e.Data);
+                    TradingLogOrchestrator.Instance.LogInfo($"[{serviceName}] {e.Data}");
             };
 
             process.ErrorDataReceived += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(e.Data))
-                    TradingLogOrchestrator.Instance.LogError("[{ServiceName}] {Error}", serviceName, e.Data);
+                    TradingLogOrchestrator.Instance.LogError($"[{serviceName}] {e.Data}");
             };
 
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
-            TradingLogOrchestrator.Instance.LogInfo("Started service {ServiceName} with PID {ProcessId}", serviceName, process.Id);
+            TradingLogOrchestrator.Instance.LogInfo($"Started service {serviceName} with PID {process.Id}");
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Failed to start service {ServiceName}", serviceName, ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to start service {serviceName}", ex);
             throw;
         }
     }
@@ -134,7 +134,7 @@ public class ProcessManager : IProcessManager
         {
             if (!_managedProcesses.TryGetValue(serviceName, out var process))
             {
-                TradingLogOrchestrator.Instance.LogWarning("Service {ServiceName} is not running", serviceName);
+                TradingLogOrchestrator.Instance.LogWarning($"Service {serviceName} is not running");
                 return;
             }
 
@@ -150,16 +150,16 @@ public class ProcessManager : IProcessManager
             // Wait for graceful shutdown
             if (!process.WaitForExit(5000)) // 5 second timeout
             {
-                TradingLogOrchestrator.Instance.LogWarning("Service {ServiceName} did not shut down gracefully, forcing termination", serviceName);
+                TradingLogOrchestrator.Instance.LogWarning($"Service {serviceName} did not shut down gracefully, forcing termination");
                 process.Kill();
             }
 
             _managedProcesses.Remove(serviceName);
-            TradingLogOrchestrator.Instance.LogInfo("Stopped service {ServiceName}", serviceName);
+            TradingLogOrchestrator.Instance.LogInfo($"Stopped service {serviceName}");
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Failed to stop service {ServiceName}", serviceName, ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to stop service {serviceName}", ex);
             throw;
         }
 
@@ -168,7 +168,7 @@ public class ProcessManager : IProcessManager
 
     public async Task RestartServiceAsync(string serviceName)
     {
-        TradingLogOrchestrator.Instance.LogInfo("Restarting service {ServiceName}", serviceName);
+        TradingLogOrchestrator.Instance.LogInfo($"Restarting service {serviceName}");
         
         await StopServiceAsync(serviceName);
         await Task.Delay(2000); // Brief pause for cleanup
@@ -181,7 +181,7 @@ public class ProcessManager : IProcessManager
         {
             if (!_managedProcesses.TryGetValue(serviceName, out var process))
             {
-                TradingLogOrchestrator.Instance.LogWarning("Cannot set CPU affinity for unknown service {ServiceName}", serviceName);
+                TradingLogOrchestrator.Instance.LogWarning($"Cannot set CPU affinity for unknown service {serviceName}");
                 return;
             }
 
@@ -201,13 +201,12 @@ public class ProcessManager : IProcessManager
             if (affinityMask > 0)
             {
                 process.ProcessorAffinity = new IntPtr(affinityMask);
-                TradingLogOrchestrator.Instance.LogInfo("Set CPU affinity for {ServiceName} to cores: {Cores}", 
-                    serviceName, string.Join(", ", cpuCores));
+                TradingLogOrchestrator.Instance.LogInfo($"Set CPU affinity for {serviceName} to cores: {string.Join(", ", cpuCores}"));
             }
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Failed to set CPU affinity for {ServiceName}", serviceName, ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to set CPU affinity for {serviceName}", ex);
         }
 
         await Task.CompletedTask;
@@ -219,7 +218,7 @@ public class ProcessManager : IProcessManager
         {
             if (!_managedProcesses.TryGetValue(serviceName, out var process))
             {
-                TradingLogOrchestrator.Instance.LogWarning("Cannot set priority for unknown service {ServiceName}", serviceName);
+                TradingLogOrchestrator.Instance.LogWarning($"Cannot set priority for unknown service {serviceName}");
                 return;
             }
 
@@ -236,11 +235,11 @@ public class ProcessManager : IProcessManager
             };
 
             process.PriorityClass = processPriority;
-            TradingLogOrchestrator.Instance.LogInfo("Set process priority for {ServiceName} to {Priority}", serviceName, priority);
+            TradingLogOrchestrator.Instance.LogInfo($"Set process priority for {serviceName} to {priority}");
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Failed to set process priority for {ServiceName}", serviceName, ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to set process priority for {serviceName}", ex);
         }
 
         await Task.CompletedTask;
@@ -272,7 +271,7 @@ public class ProcessManager : IProcessManager
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError("Error getting performance metrics for {ServiceName}", serviceName, ex);
+                TradingLogOrchestrator.Instance.LogError($"Error getting performance metrics for {serviceName}", ex);
             }
         }
 

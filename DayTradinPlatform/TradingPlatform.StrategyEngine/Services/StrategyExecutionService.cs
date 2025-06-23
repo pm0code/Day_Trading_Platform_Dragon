@@ -147,8 +147,7 @@ public class StrategyExecutionService : IStrategyExecutionService
             
             if (signals.Length > 0)
             {
-                TradingLogOrchestrator.Instance.LogInfo("Generated {SignalCount} signals for strategy {StrategyId} on {Symbol}", 
-                    signals.Length, strategyId, conditions.Symbol);
+                TradingLogOrchestrator.Instance.LogInfo($"Generated {signals.Length} signals for strategy {strategyId} on {conditions.Symbol}");
 
                 // Process each signal
                 foreach (var signal in signals)
@@ -172,8 +171,7 @@ public class StrategyExecutionService : IStrategyExecutionService
                     }
                     else
                     {
-                        TradingLogOrchestrator.Instance.LogWarning("Signal rejected by risk assessment for {StrategyId}: {Reason}", 
-                            strategyId, "Risk limits exceeded");
+                        TradingLogOrchestrator.Instance.LogWarning($"Signal rejected by risk assessment for {strategyId}: {"Risk limits exceeded"}");
                     }
                 }
             }
@@ -185,12 +183,10 @@ public class StrategyExecutionService : IStrategyExecutionService
             // Log performance for strategy execution latency tracking
             if (stopwatch.Elapsed.TotalMilliseconds > 45) // Target: <45ms strategy execution
             {
-                TradingLogOrchestrator.Instance.LogWarning("Strategy execution exceeded 45ms target: {ElapsedMilliseconds}ms for {StrategyId}",
-                    stopwatch.Elapsed.TotalMilliseconds, strategyId);
+                TradingLogOrchestrator.Instance.LogWarning($"Strategy execution exceeded 45ms target: {stopwatch.Elapsed.TotalMilliseconds}ms for {strategyId}");
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("Strategy {StrategyId} executed in {ElapsedMicroseconds}μs", 
-                strategyId, stopwatch.Elapsed.TotalMicroseconds);
+            TradingLogOrchestrator.Instance.LogInfo($"Strategy {strategyId} executed in {stopwatch.Elapsed.TotalMicroseconds}μs");
 
             return new StrategyResult(true, $"Strategy {strategyId} executed successfully", 
                 null, new Dictionary<string, object> 
@@ -202,7 +198,7 @@ public class StrategyExecutionService : IStrategyExecutionService
         catch (Exception ex)
         {
             stopwatch.Stop();
-            TradingLogOrchestrator.Instance.LogError("Error executing strategy {StrategyId}", ex, strategyId);
+            TradingLogOrchestrator.Instance.LogError($"Error executing strategy {ex}");
             return new StrategyResult(false, ex.Message, "EXECUTION_ERROR");
         }
     }
@@ -235,7 +231,7 @@ public class StrategyExecutionService : IStrategyExecutionService
     {
         try
         {
-            TradingLogOrchestrator.Instance.LogInfo("Processing market data event for {Symbol}", marketDataEvent.Symbol);
+            TradingLogOrchestrator.Instance.LogInfo($"Processing market data event for {marketDataEvent.Symbol}");
 
             // Create market conditions from market data
             var conditions = new MarketConditions(
@@ -259,7 +255,7 @@ public class StrategyExecutionService : IStrategyExecutionService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error handling market data event for {Symbol}", ex, marketDataEvent.Symbol);
+            TradingLogOrchestrator.Instance.LogError($"Error handling market data event for {ex}");
         }
     }
 
@@ -267,8 +263,7 @@ public class StrategyExecutionService : IStrategyExecutionService
     {
         try
         {
-            TradingLogOrchestrator.Instance.LogInfo("Processing strategy control event: {Signal} for {StrategyName}", 
-                strategyEvent.Signal, strategyEvent.StrategyName);
+            TradingLogOrchestrator.Instance.LogInfo($"Processing strategy control event: {strategyEvent.Signal} for {strategyEvent.StrategyName}");
 
             switch (strategyEvent.Signal?.ToLowerInvariant())
             {
@@ -279,14 +274,13 @@ public class StrategyExecutionService : IStrategyExecutionService
                     await _strategyManager.StopStrategyAsync(strategyEvent.StrategyName);
                     break;
                 default:
-                    TradingLogOrchestrator.Instance.LogWarning("Unknown strategy control signal: {Signal}", strategyEvent.Signal);
+                    TradingLogOrchestrator.Instance.LogWarning($"Unknown strategy control signal: {strategyEvent.Signal}");
                     break;
             }
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error handling strategy control event for {StrategyName}", ex, 
-                strategyEvent.StrategyName);
+            TradingLogOrchestrator.Instance.LogError($"Error handling strategy control event for {ex}");
         }
     }
 

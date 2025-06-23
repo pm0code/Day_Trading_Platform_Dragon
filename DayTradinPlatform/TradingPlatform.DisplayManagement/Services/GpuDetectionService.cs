@@ -78,19 +78,18 @@ public class GpuDetectionService : IGpuDetectionService
                     if (gpuInfo != null)
                     {
                         _cachedGpuInfo.Add(gpuInfo);
-                        TradingLogOrchestrator.Instance.LogInfo("Detected GPU: {Name} - {MaxMonitors} max monitors, {VramGB}GB VRAM", 
-                            gpuInfo.Name, gpuInfo.MaxDisplayOutputs, gpuInfo.VideoMemoryGB);
+                        TradingLogOrchestrator.Instance.LogInfo($"Detected GPU: {gpuInfo.Name} - {gpuInfo.MaxDisplayOutputs} max monitors, {gpuInfo.VideoMemoryGB}GB VRAM");
                     }
                 }
                 catch (Exception ex)
                 {
-                    TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to extract information for GPU device");
+                    TradingLogOrchestrator.Instance.LogWarning("Failed to extract information for GPU device", additionalData: new { Error = ex.Message });
                 }
             }
 
             _lastCacheUpdate = DateTime.UtcNow;
             
-            TradingLogOrchestrator.Instance.LogInfo("GPU detection complete. Found {GpuCount} GPU(s)", _cachedGpuInfo.Count);
+            TradingLogOrchestrator.Instance.LogInfo($"GPU detection complete. Found {_cachedGpuInfo.Count} GPU(s)");
             return _cachedGpuInfo;
         }
         catch (Exception ex)
@@ -124,8 +123,7 @@ public class GpuDetectionService : IGpuDetectionService
         // Cap at reasonable limits for trading platforms
         var finalRecommendation = Math.Min(recommendedMax, 12); // Maximum 12 monitors for practical trading
         
-        TradingLogOrchestrator.Instance.LogInfo("Recommended maximum monitors: {Count} (based on {TotalOutputs} total GPU outputs)", 
-            finalRecommendation, totalMaxOutputs);
+        TradingLogOrchestrator.Instance.LogInfo($"Recommended maximum monitors: {finalRecommendation} (based on {totalMaxOutputs} total GPU outputs)");
             
         return finalRecommendation;
     }
@@ -207,8 +205,7 @@ public class GpuDetectionService : IGpuDetectionService
             validation.Warnings.Add("4+ monitor configuration detected - ensure adequate GPU cooling for extended trading sessions");
         }
 
-        TradingLogOrchestrator.Instance.LogInfo("Monitor configuration validation: {MonitorCount} monitors, Supported: {IsSupported}", 
-            configuration.Count, validation.IsSupported);
+        TradingLogOrchestrator.Instance.LogInfo($"Monitor configuration validation: {configuration.Count} monitors, Supported: {validation.IsSupported}");
 
         return validation;
     }
@@ -247,7 +244,7 @@ public class GpuDetectionService : IGpuDetectionService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to extract GPU information from WMI object");
+            TradingLogOrchestrator.Instance.LogWarning("Failed to extract GPU information from WMI object", additionalData: new { Error = ex.Message });
             return null;
         }
     }

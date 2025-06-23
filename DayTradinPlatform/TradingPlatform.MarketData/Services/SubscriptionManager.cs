@@ -38,7 +38,7 @@ public class SubscriptionManager : ISubscriptionManager
             
             if (_activeSubscriptions.ContainsKey(normalizedSymbol))
             {
-                TradingLogOrchestrator.Instance.LogInfo("Already subscribed to {Symbol}, updating subscription time", symbol);
+                TradingLogOrchestrator.Instance.LogInfo($"Already subscribed to {symbol}, updating subscription time");
                 _activeSubscriptions[normalizedSymbol].LastActivity = DateTime.UtcNow;
                 return;
             }
@@ -63,11 +63,11 @@ public class SubscriptionManager : ISubscriptionManager
 
             await _messageBus.PublishAsync("market-data-subscriptions", subscriptionEvent);
 
-            TradingLogOrchestrator.Instance.LogInfo("Subscribed to real-time data for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogInfo($"Subscribed to real-time data for {symbol}");
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error subscribing to {Symbol}", symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error subscribing to {symbol}", ex);
             throw;
         }
     }
@@ -80,7 +80,7 @@ public class SubscriptionManager : ISubscriptionManager
             
             if (!_activeSubscriptions.TryRemove(normalizedSymbol, out var subscriptionInfo))
             {
-                TradingLogOrchestrator.Instance.LogWarning("Attempted to unsubscribe from {Symbol} but no active subscription found", symbol);
+                TradingLogOrchestrator.Instance.LogWarning($"Attempted to unsubscribe from {symbol} but no active subscription found");
                 return;
             }
 
@@ -94,12 +94,11 @@ public class SubscriptionManager : ISubscriptionManager
 
             await _messageBus.PublishAsync("market-data-subscriptions", subscriptionEvent);
 
-            TradingLogOrchestrator.Instance.LogInfo("Unsubscribed from real-time data for {Symbol} (active for {Duration})", 
-                symbol, DateTime.UtcNow - subscriptionInfo.SubscribedAt);
+            TradingLogOrchestrator.Instance.LogInfo($"Unsubscribed from real-time data for {symbol} (active for {DateTime.UtcNow - subscriptionInfo.SubscribedAt})");
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error unsubscribing from {Symbol}", symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error unsubscribing from {symbol}", ex);
             throw;
         }
     }
@@ -160,12 +159,12 @@ public class SubscriptionManager : ISubscriptionManager
             foreach (var symbol in staleSubscriptions)
             {
                 await UnsubscribeAsync(symbol);
-                TradingLogOrchestrator.Instance.LogInfo("Cleaned up stale subscription for {Symbol}", symbol);
+                TradingLogOrchestrator.Instance.LogInfo($"Cleaned up stale subscription for {symbol}");
             }
 
             if (staleSubscriptions.Length > 0)
             {
-                TradingLogOrchestrator.Instance.LogInfo("Cleaned up {StaleCount} stale subscriptions", staleSubscriptions.Length);
+                TradingLogOrchestrator.Instance.LogInfo($"Cleaned up {staleSubscriptions.Length} stale subscriptions");
             }
         }
         catch (Exception ex)
@@ -196,8 +195,7 @@ public class SubscriptionManager : ISubscriptionManager
         var tasks = symbols.Select(SubscribeAsync);
         await Task.WhenAll(tasks);
         
-        TradingLogOrchestrator.Instance.LogInfo("Batch subscribed to {SymbolCount} symbols: {Symbols}", 
-            symbols.Length, string.Join(", ", symbols));
+        TradingLogOrchestrator.Instance.LogInfo($"Batch subscribed to {symbols.Length} symbols: {string.Join(", ", symbols}"));
     }
 
     /// <summary>
@@ -208,8 +206,7 @@ public class SubscriptionManager : ISubscriptionManager
         var tasks = symbols.Select(UnsubscribeAsync);
         await Task.WhenAll(tasks);
         
-        TradingLogOrchestrator.Instance.LogInfo("Batch unsubscribed from {SymbolCount} symbols: {Symbols}", 
-            symbols.Length, string.Join(", ", symbols));
+        TradingLogOrchestrator.Instance.LogInfo($"Batch unsubscribed from {symbols.Length} symbols: {string.Join(", ", symbols}"));
     }
 
     // Private helper methods
@@ -231,7 +228,7 @@ public class SubscriptionManager : ISubscriptionManager
 
             await _messageBus.PublishAsync("market-data-subscriptions", heartbeatEvent);
             
-            TradingLogOrchestrator.Instance.LogInfo("Sent subscription heartbeat for {SymbolCount} symbols", activeSymbols.Length);
+            TradingLogOrchestrator.Instance.LogInfo($"Sent subscription heartbeat for {activeSymbols.Length} symbols");
         }
         catch (Exception ex)
         {

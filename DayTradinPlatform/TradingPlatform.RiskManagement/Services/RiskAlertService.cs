@@ -38,8 +38,7 @@ public class RiskAlertService : IRiskAlertService
             RequiresAcknowledgment = alert.Severity >= RiskLevel.High
         });
 
-        TradingLogOrchestrator.Instance.LogWarning("Risk alert created: {AlertType} for {Symbol} - {Message}", 
-            alert.Type, alert.Symbol, alert.Message);
+        TradingLogOrchestrator.Instance.LogWarning($"Risk alert created: {alert.Type} for {alert.Symbol} - {alert.Message}");
 
         // Send notification based on severity
         if (alert.Severity >= RiskLevel.High)
@@ -69,7 +68,7 @@ public class RiskAlertService : IRiskAlertService
                 RequiresAcknowledgment = false
             });
 
-            TradingLogOrchestrator.Instance.LogInfo("Risk alert resolved: {AlertId} for {Symbol}", alertId, alert.Symbol);
+            TradingLogOrchestrator.Instance.LogInfo($"Risk alert resolved: {alertId} for {alert.Symbol}");
         }
     }
 
@@ -159,7 +158,7 @@ public class RiskAlertService : IRiskAlertService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Failed to send high priority notification for alert {AlertId}", alert.Id, ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to send high priority notification for alert {alert.Id}", ex);
         }
     }
 }

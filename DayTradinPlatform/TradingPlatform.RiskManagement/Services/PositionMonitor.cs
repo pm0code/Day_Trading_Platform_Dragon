@@ -62,8 +62,7 @@ public class PositionMonitor : IPositionMonitor
                 LastUpdated = DateTime.UtcNow
             };
 
-            TradingLogOrchestrator.Instance.LogInfo("Position updated for {Symbol}: Qty={Quantity}, Price={Price}, UnrealizedPnL={PnL}", 
-                position.Symbol, position.Quantity, position.CurrentPrice, newPosition.UnrealizedPnL);
+            TradingLogOrchestrator.Instance.LogInfo($"Position updated for {position.Symbol}: Qty={position.Quantity}, Price={position.CurrentPrice}, UnrealizedPnL={newPosition.UnrealizedPnL}");
 
             return newPosition;
         });
@@ -85,7 +84,7 @@ public class PositionMonitor : IPositionMonitor
         var positions = await GetAllPositionsAsync();
         var totalExposure = positions.Sum(p => p.RiskExposure);
         
-        TradingLogOrchestrator.Instance.LogInfo("Total portfolio exposure calculated: {TotalExposure:C}", totalExposure);
+        TradingLogOrchestrator.Instance.LogInfo($"Total portfolio exposure calculated: {totalExposure}");
         return totalExposure;
     }
 
@@ -94,7 +93,7 @@ public class PositionMonitor : IPositionMonitor
         var position = await GetPositionAsync(symbol);
         var exposure = position?.RiskExposure ?? 0m;
         
-        TradingLogOrchestrator.Instance.LogInfo("Symbol exposure for {Symbol}: {Exposure:C}", symbol, exposure);
+        TradingLogOrchestrator.Instance.LogInfo($"Symbol exposure for {symbol}: {exposure}");
         return exposure;
     }
 
@@ -107,7 +106,7 @@ public class PositionMonitor : IPositionMonitor
         
         if (exceedingPositions.Any())
         {
-            TradingLogOrchestrator.Instance.LogWarning("Found {Count} positions exceeding limits", exceedingPositions.Count);
+            TradingLogOrchestrator.Instance.LogWarning($"Found {exceedingPositions.Count} positions exceeding limits");
         }
         
         return exceedingPositions;
@@ -199,8 +198,7 @@ public class PositionMonitor : IPositionMonitor
                     await UpdatePositionAsync(updatedPosition);
                 }
 
-                TradingLogOrchestrator.Instance.LogInfo("Position updated from order execution: {Symbol} {Quantity}@{Price}", 
-                    symbol, quantity, price);
+                TradingLogOrchestrator.Instance.LogInfo($"Position updated from order execution: {symbol} {quantity}@{price}");
             }
         }
         catch (Exception ex)

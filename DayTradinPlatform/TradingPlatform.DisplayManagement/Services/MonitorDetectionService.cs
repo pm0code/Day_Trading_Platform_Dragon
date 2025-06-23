@@ -126,14 +126,13 @@ public class MonitorDetectionService : IMonitorDetectionService
                     monitors.Add(monitor);
                     monitorIndex++;
 
-                    TradingLogOrchestrator.Instance.LogInfo("Detected monitor: {DisplayName} at {X},{Y} ({Width}x{Height}), Primary: {IsPrimary}", 
-                        monitor.DisplayName, monitor.X, monitor.Y, monitor.Width, monitor.Height, monitor.IsPrimary);
+                    TradingLogOrchestrator.Instance.LogInfo($"Detected monitor: {monitor.DisplayName} at {monitor.X},{monitor.Y} ({monitor.Width}x{monitor.Height}), Primary: {monitor.IsPrimary}");
                 }
 
                 return true; // Continue enumeration
             }, IntPtr.Zero);
 
-            TradingLogOrchestrator.Instance.LogInfo("Monitor detection complete. Found {MonitorCount} monitor(s)", monitors.Count);
+            TradingLogOrchestrator.Instance.LogInfo($"Monitor detection complete. Found {monitors.Count} monitor(s)");
             return monitors;
         }
         catch (Exception ex)
@@ -185,8 +184,7 @@ public class MonitorDetectionService : IMonitorDetectionService
             AlternativeConfigurations = GenerateAlternativeConfigurations(connectedMonitors.Count, maxGpuSupported)
         };
 
-        TradingLogOrchestrator.Instance.LogInfo("Monitor recommendation: {RecommendedCount} monitors at {Resolution} resolution", 
-            recommendedCount, optimalResolution.DisplayName);
+        TradingLogOrchestrator.Instance.LogInfo($"Monitor recommendation: {recommendedCount} monitors at {optimalResolution.DisplayName} resolution");
 
         return recommendation;
     }
@@ -211,7 +209,7 @@ public class MonitorDetectionService : IMonitorDetectionService
             
             await File.WriteAllTextAsync(_configurationFilePath, json);
             
-            TradingLogOrchestrator.Instance.LogInfo("Monitor configuration saved to {FilePath}", _configurationFilePath);
+            TradingLogOrchestrator.Instance.LogInfo($"Monitor configuration saved to {_configurationFilePath}");
         }
         catch (Exception ex)
         {
@@ -236,7 +234,7 @@ public class MonitorDetectionService : IMonitorDetectionService
             var json = await File.ReadAllTextAsync(_configurationFilePath);
             var configuration = System.Text.Json.JsonSerializer.Deserialize<MultiMonitorConfiguration>(json);
             
-            TradingLogOrchestrator.Instance.LogInfo("Monitor configuration loaded from {FilePath}", _configurationFilePath);
+            TradingLogOrchestrator.Instance.LogInfo($"Monitor configuration loaded from {_configurationFilePath}");
             return configuration;
         }
         catch (Exception ex)

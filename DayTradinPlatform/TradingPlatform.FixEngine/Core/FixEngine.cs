@@ -474,7 +474,7 @@ public sealed class FixEngine : IFixEngine
                 // Record failed venue connection audit
                 TradingLogOrchestrator.Instance.LogError($"Venue initialization failure: VenueName={venueName}, Duration={stopwatch.Elapsed.TotalMilliseconds}ms, ErrorType=ConnectionFailure, CorrelationId={correlationId}");
                 
-                TradingLogOrchestrator.Instance.LogError(error.Message, error);
+                TradingLogOrchestrator.Instance.LogError(error);
             }
         }
         catch (Exception ex)

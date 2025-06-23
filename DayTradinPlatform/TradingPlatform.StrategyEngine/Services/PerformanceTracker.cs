@@ -63,14 +63,13 @@ public class PerformanceTracker : IPerformanceTracker
                 CreateInitialPerformance(strategyId, pnl, isWinning),
                 (key, existing) => UpdateExistingPerformance(existing, pnl, isWinning));
 
-            TradingLogOrchestrator.Instance.LogInfo("Updated performance for strategy {StrategyId}: PnL={PnL}, IsWinning={IsWinning}", 
-                strategyId, pnl, isWinning);
+            TradingLogOrchestrator.Instance.LogInfo($"Updated performance for strategy {strategyId}: PnL={pnl}, IsWinning={isWinning}");
 
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error updating performance for strategy {StrategyId}", strategyId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error updating performance for strategy {strategyId}", ex);
         }
     }
 
@@ -121,12 +120,12 @@ public class PerformanceTracker : IPerformanceTracker
             _strategyPerformances.TryRemove(strategyId, out _);
             _tradeHistory.TryRemove(strategyId, out _);
 
-            TradingLogOrchestrator.Instance.LogInfo("Reset performance tracking for strategy {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogInfo($"Reset performance tracking for strategy {strategyId}");
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error resetting performance for strategy {StrategyId}", strategyId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error resetting performance for strategy {strategyId}", ex);
         }
     }
 
@@ -235,7 +234,7 @@ public class PerformanceTracker : IPerformanceTracker
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error calculating risk-adjusted metrics for {StrategyId}", strategyId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error calculating risk-adjusted metrics for {strategyId}", ex);
             return new RiskAdjustedMetrics(strategyId, 0.0m, 0.0m, 0.0m, 0.0m, DateTimeOffset.UtcNow);
         }
     }

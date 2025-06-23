@@ -44,7 +44,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         try
         {
             _isMonitoring = true;
-            TradingLogOrchestrator.Instance.LogInfo("Starting system monitoring with interval: {Interval} on DRAGON i9-14900K platform", interval);
+            TradingLogOrchestrator.Instance.LogInfo($"Starting system monitoring with interval: {interval} on DRAGON i9-14900K platform");
 
             // Start monitoring timer
             var timer = new Timer(async _ => await MonitorSystemPerformanceAsync(), 
@@ -100,8 +100,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
                            networkUtilization < 85.0 &&
                            contextSwitches < 50000; // High-frequency trading threshold
 
-            TradingLogOrchestrator.Instance.LogInfo("DRAGON system optimal for trading: {IsOptimal} (CPU: {Cpu}%, Memory: {Memory}MB, Disk: {Disk}, Network: {Network}%, CtxSw: {ContextSwitches})",
-                isOptimal, cpuUsage, availableMemoryMB, diskQueueLength, networkUtilization, contextSwitches);
+            TradingLogOrchestrator.Instance.LogInfo($"DRAGON system optimal for trading: {isOptimal} (CPU: {cpuUsage}%, Memory: {availableMemoryMB}MB, Disk: {diskQueueLength}, Network: {networkUtilization}%, CtxSw: {contextSwitches})");
 
             return isOptimal;
         }
@@ -261,7 +260,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
             if (!allCritical)
             {
                 var failedChecks = criticalChecks.Where(kvp => !kvp.Value).Select(kvp => kvp.Key);
-                TradingLogOrchestrator.Instance.LogWarning("DRAGON system critical resource checks failed: {FailedChecks}", string.Join(", ", failedChecks));
+                TradingLogOrchestrator.Instance.LogWarning($"DRAGON system critical resource checks failed: {string.Join(", ", failedChecks)}");
             }
             else
             {
@@ -294,7 +293,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogWarning(ex, "Could not initialize P-Core/E-Core specific counters");
+                TradingLogOrchestrator.Instance.LogWarning("Could not initialize P-Core/E-Core specific counters", additionalData: new { Error = ex.Message });
             }
 
             // DDR5 Memory counters (32GB)
@@ -307,7 +306,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogWarning(ex, "Could not initialize memory bandwidth counter");
+                TradingLogOrchestrator.Instance.LogWarning("Could not initialize memory bandwidth counter", additionalData: new { Error = ex.Message });
             }
 
             // High-performance disk counters
@@ -349,10 +348,10 @@ public class SystemMonitor : ISystemMonitor, IDisposable
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogWarning(ex, "Could not initialize dual GPU performance counters");
+                TradingLogOrchestrator.Instance.LogWarning("Could not initialize dual GPU performance counters", additionalData: new { Error = ex.Message });
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("Initialized {Count} performance counters for DRAGON i9-14900K system", counters.Count);
+            TradingLogOrchestrator.Instance.LogInfo($"Initialized {counters.Count} performance counters for DRAGON i9-14900K system");
         }
         catch (Exception ex)
         {
@@ -378,7 +377,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to get network interface instance");
+            TradingLogOrchestrator.Instance.LogWarning("Failed to get network interface instance", additionalData: new { Error = ex.Message });
             return string.Empty;
         }
     }
@@ -406,7 +405,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
                 PerformanceThresholdExceeded?.Invoke(this, performanceMetrics);
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("DRAGON system monitoring cycle completed. Optimal: {SystemOptimal}", systemOptimal);
+            TradingLogOrchestrator.Instance.LogInfo($"DRAGON system monitoring cycle completed. Optimal: {systemOptimal}");
         }
         catch (Exception ex)
         {
@@ -430,14 +429,13 @@ public class SystemMonitor : ISystemMonitor, IDisposable
             // DRAGON system should respond within 50μs for basic operations
             var isResponsive = responseTime < 50.0;
             
-            TradingLogOrchestrator.Instance.LogInfo("DRAGON system responsiveness check: {ResponseTime}μs, Responsive: {IsResponsive}", 
-                responseTime, isResponsive);
+            TradingLogOrchestrator.Instance.LogInfo($"DRAGON system responsiveness check: {responseTime}μs, Responsive: {isResponsive}");
 
             return isResponsive;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to check DRAGON system responsiveness");
+            TradingLogOrchestrator.Instance.LogWarning("Failed to check DRAGON system responsiveness", additionalData: new { Error = ex.Message });
             return false;
         }
     }
@@ -474,14 +472,13 @@ public class SystemMonitor : ISystemMonitor, IDisposable
             var healthPercentage = (double)healthyProcesses / tradingProcessNames.Length;
             var isHealthy = healthPercentage >= 0.8;
 
-            TradingLogOrchestrator.Instance.LogInfo("DRAGON trading processes health: {HealthyProcesses}/{TotalProcesses} ({HealthPercentage:P0})",
-                healthyProcesses, tradingProcessNames.Length, healthPercentage);
+            TradingLogOrchestrator.Instance.LogInfo($"DRAGON trading processes health: {healthyProcesses}/{tradingProcessNames.Length} ({healthPercentage})");
 
             return isHealthy;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to check trading processes health on DRAGON system");
+            TradingLogOrchestrator.Instance.LogWarning("Failed to check trading processes health on DRAGON system", additionalData: new { Error = ex.Message });
             return false;
         }
     }
@@ -519,13 +516,12 @@ public class SystemMonitor : ISystemMonitor, IDisposable
                 if (!gpu1Healthy && gpuCount > 1) gpu1Healthy = true;
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("DRAGON dual NVIDIA GPU health check: GPU0={Gpu0Healthy}, GPU1(RTX3060Ti)={Gpu1Healthy}", 
-                gpu0Healthy, gpu1Healthy);
+            TradingLogOrchestrator.Instance.LogInfo($"DRAGON dual NVIDIA GPU health check: GPU0={gpu0Healthy}, GPU1(RTX3060Ti)={gpu1Healthy}");
             return (gpu0Healthy, gpu1Healthy);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to check dual GPU health on DRAGON system");
+            TradingLogOrchestrator.Instance.LogWarning("Failed to check dual GPU health on DRAGON system", additionalData: new { Error = ex.Message });
             return (false, false);
         }
     }

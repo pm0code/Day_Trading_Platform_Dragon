@@ -61,8 +61,7 @@ public class MarketDataService : IMarketDataService
                 stopwatch.Stop();
                 RecordLatency(stopwatch.Elapsed);
                 
-                TradingLogOrchestrator.Instance.LogInfo("Cache hit for {Symbol} in {ElapsedMicroseconds}μs", 
-                    symbol, stopwatch.Elapsed.TotalMicroseconds);
+                TradingLogOrchestrator.Instance.LogInfo($"Cache hit for {symbol} in {stopwatch.Elapsed.TotalMicroseconds}μs");
                 return cachedData;
             }
 
@@ -96,20 +95,19 @@ public class MarketDataService : IMarketDataService
                 stopwatch.Stop();
                 RecordLatency(stopwatch.Elapsed);
 
-                TradingLogOrchestrator.Instance.LogInfo("Updated market data for {Symbol} in {ElapsedMicroseconds}μs", 
-                    symbol, stopwatch.Elapsed.TotalMicroseconds);
+                TradingLogOrchestrator.Instance.LogInfo($"Updated market data for {symbol} in {stopwatch.Elapsed.TotalMicroseconds}μs");
 
                 return freshData;
             }
 
             stopwatch.Stop();
-            TradingLogOrchestrator.Instance.LogWarning("No market data available for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogWarning($"No market data available for {symbol}");
             return null;
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
-            TradingLogOrchestrator.Instance.LogError("Error retrieving market data for {Symbol}", symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error retrieving market data for {symbol}", ex);
             return null;
         }
     }
@@ -139,8 +137,7 @@ public class MarketDataService : IMarketDataService
             }
 
             stopwatch.Stop();
-            TradingLogOrchestrator.Instance.LogInfo("Batch request for {SymbolCount} symbols completed in {ElapsedMilliseconds}ms", 
-                symbols.Length, stopwatch.Elapsed.TotalMilliseconds);
+            TradingLogOrchestrator.Instance.LogInfo($"Batch request for {symbols.Length} symbols completed in {stopwatch.Elapsed.TotalMilliseconds}ms");
 
             return results;
         }
@@ -162,15 +159,14 @@ public class MarketDataService : IMarketDataService
             var historicalData = await _dataIngestionService.GetHistoricalDataAsync(symbol, interval);
             
             stopwatch.Stop();
-            TradingLogOrchestrator.Instance.LogInfo("Retrieved historical data for {Symbol} ({Interval}) in {ElapsedMilliseconds}ms", 
-                symbol, interval, stopwatch.Elapsed.TotalMilliseconds);
+            TradingLogOrchestrator.Instance.LogInfo($"Retrieved historical data for {symbol} ({interval}) in {stopwatch.Elapsed.TotalMilliseconds}ms");
 
             return historicalData;
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
-            TradingLogOrchestrator.Instance.LogError("Error retrieving historical data for {Symbol}", symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error retrieving historical data for {symbol}", ex);
             return null;
         }
     }
@@ -267,11 +263,11 @@ public class MarketDataService : IMarketDataService
             // Fetch fresh data
             await GetMarketDataAsync(symbol);
             
-            TradingLogOrchestrator.Instance.LogInfo("Refreshed market data for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogInfo($"Refreshed market data for {symbol}");
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error refreshing market data for {Symbol}", symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error refreshing market data for {symbol}", ex);
         }
     }
 
@@ -303,8 +299,7 @@ public class MarketDataService : IMarketDataService
     {
         try
         {
-            TradingLogOrchestrator.Instance.LogInfo("Processing market data request for {Symbol} from {Source}", 
-                request.Symbol, request.Source);
+            TradingLogOrchestrator.Instance.LogInfo($"Processing market data request for {request.Symbol} from {request.Source}");
 
             var data = await GetMarketDataAsync(request.Symbol);
             
@@ -325,7 +320,7 @@ public class MarketDataService : IMarketDataService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error handling market data request for {Symbol}", request.Symbol, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error handling market data request for {request.Symbol}", ex);
         }
     }
 
@@ -333,8 +328,7 @@ public class MarketDataService : IMarketDataService
     {
         try
         {
-            TradingLogOrchestrator.Instance.LogInfo("Processing subscription request: {Action} for symbols: {Symbols}", 
-                request.Action, string.Join(", ", request.Symbols));
+            TradingLogOrchestrator.Instance.LogInfo($"Processing subscription request: {request.Action} for symbols: {string.Join(", ", request.Symbols}"));
 
             // Implementation would manage real-time subscriptions
             // For MVP, just acknowledge the request

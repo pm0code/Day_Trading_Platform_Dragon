@@ -37,7 +37,7 @@ public class OrderProcessingBackgroundService : BackgroundService
                 await UpdateMarketDataAsync(scope.ServiceProvider);
 
                 var elapsed = DateTime.UtcNow - startTime;
-                TradingLogOrchestrator.Instance.LogInfo("Order processing cycle completed in {ElapsedMs}ms", elapsed.TotalMilliseconds);
+                TradingLogOrchestrator.Instance.LogInfo($"Order processing cycle completed in {elapsed.TotalMilliseconds}ms");
 
                 // Maintain consistent processing frequency
                 var remainingTime = _processingInterval - elapsed;
@@ -140,12 +140,11 @@ public class OrderProcessingBackgroundService : BackgroundService
                 ExecutionTime = execution.ExecutionTime
             });
 
-            TradingLogOrchestrator.Instance.LogInfo("Order {OrderId} executed: {Quantity}@{Price} on {Venue}", 
-                order.OrderId, execution.Quantity, execution.Price, execution.VenueId);
+            TradingLogOrchestrator.Instance.LogInfo($"Order {order.OrderId} executed: {execution.Quantity}@{execution.Price} on {execution.VenueId}");
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error processing order {OrderId}", order.OrderId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error processing order {order.OrderId}", ex);
         }
     }
 
@@ -216,11 +215,11 @@ public class OrderProcessingBackgroundService : BackgroundService
                 ExecutionTime = DateTime.UtcNow
             });
 
-            TradingLogOrchestrator.Instance.LogInfo("Order {OrderId} expired for {Symbol}", order.OrderId, order.Symbol);
+            TradingLogOrchestrator.Instance.LogInfo($"Order {order.OrderId} expired for {order.Symbol}");
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error expiring order {OrderId}", order.OrderId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Error expiring order {order.OrderId}", ex);
         }
     }
 

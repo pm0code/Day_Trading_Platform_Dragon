@@ -67,7 +67,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
             var processes = Process.GetProcessesByName(processName);
             if (processes.Length == 0)
             {
-                TradingLogOrchestrator.Instance.LogWarning("No processes found with name: {ProcessName}", processName);
+                TradingLogOrchestrator.Instance.LogWarning($"No processes found with name: {processName}");
                 return false;
             }
 
@@ -84,7 +84,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Failed to set process priority for {ProcessName}", processName, ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to set process priority for {processName}", ex);
             return false;
         }
     }
@@ -102,17 +102,17 @@ public class WindowsOptimizationService : IWindowsOptimizationService
                 var result = SetPriorityClass(process.Handle, REALTIME_PRIORITY_CLASS);
                 if (!result)
                 {
-                    TradingLogOrchestrator.Instance.LogWarning("Failed to set REALTIME priority for process {ProcessId}", processId);
+                    TradingLogOrchestrator.Instance.LogWarning($"Failed to set REALTIME priority for process {processId}");
                     return false;
                 }
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("Set process {ProcessId} priority to {Priority}", processId, priority);
+            TradingLogOrchestrator.Instance.LogInfo($"Set process {processId} priority to {priority}");
             return true;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Failed to set process priority for process {ProcessId}", processId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to set process priority for process {processId}", ex);
             return false;
         }
     }
@@ -124,7 +124,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
             var processes = Process.GetProcessesByName(processName);
             if (processes.Length == 0)
             {
-                TradingLogOrchestrator.Instance.LogWarning("No processes found with name: {ProcessName}", processName);
+                TradingLogOrchestrator.Instance.LogWarning($"No processes found with name: {processName}");
                 return false;
             }
 
@@ -141,7 +141,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Failed to set CPU affinity for {ProcessName}", processName, ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to set CPU affinity for {processName}", ex);
             return false;
         }
     }
@@ -158,17 +158,16 @@ public class WindowsOptimizationService : IWindowsOptimizationService
             var result = SetProcessAffinityMask(process.Handle, affinityMask);
             if (!result)
             {
-                TradingLogOrchestrator.Instance.LogWarning("Failed to set CPU affinity for process {ProcessId}", processId);
+                TradingLogOrchestrator.Instance.LogWarning($"Failed to set CPU affinity for process {processId}");
                 return false;
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("Set CPU affinity for process {ProcessId} to cores: {CpuCores}", 
-                processId, string.Join(", ", cpuCores));
+            TradingLogOrchestrator.Instance.LogInfo($"Set CPU affinity for process {processId} to cores: {string.Join(", ", cpuCores)}");
             return true;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Failed to set CPU affinity for process {ProcessId}", processId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to set CPU affinity for process {processId}", ex);
             return false;
         }
     }
@@ -220,7 +219,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
                 SetProcessWorkingSetSize(currentProcess.Handle, workingSetSize, workingSetSize);
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("Current process optimization completed with config: {Config}", config);
+            TradingLogOrchestrator.Instance.LogInfo($"Current process optimization completed with config: {config}");
             return success;
         }
         catch (Exception ex)
@@ -244,7 +243,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Failed to get process metrics for {ProcessName}", processName, ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to get process metrics for {processName}", ex);
             throw;
         }
     }
@@ -273,7 +272,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Failed to get process metrics for process {ProcessId}", processId, ex);
+            TradingLogOrchestrator.Instance.LogError($"Failed to get process metrics for process {processId}", ex);
             throw;
         }
     }
@@ -308,7 +307,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
                 success &= await OptimizeNetworkStackAsync();
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("System optimizations applied: {Settings}", settings);
+            TradingLogOrchestrator.Instance.LogInfo($"System optimizations applied: {settings}");
             return success;
         }
         catch (Exception ex)
@@ -362,11 +361,11 @@ public class WindowsOptimizationService : IWindowsOptimizationService
             var result = timeBeginPeriod((uint)milliseconds);
             if (result != 0)
             {
-                TradingLogOrchestrator.Instance.LogWarning("Failed to set timer resolution to {Milliseconds}ms", milliseconds);
+                TradingLogOrchestrator.Instance.LogWarning($"Failed to set timer resolution to {milliseconds}ms");
                 return false;
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("Set system timer resolution to {Milliseconds}ms", milliseconds);
+            TradingLogOrchestrator.Instance.LogInfo($"Set system timer resolution to {milliseconds}ms");
             return true;
         }
         catch (Exception ex)
