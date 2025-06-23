@@ -46,7 +46,7 @@ public class MarketDataService : IMarketDataService
         _lastUpdateTimes = new Dictionary<string, DateTime>();
     }
 
-    public async Task<MarketData?> GetMarketDataAsync(string symbol)
+    public async Task<Core.Models.MarketData?> GetMarketDataAsync(string symbol)
     {
         var stopwatch = Stopwatch.StartNew();
         Interlocked.Increment(ref _totalRequests);
@@ -112,10 +112,10 @@ public class MarketDataService : IMarketDataService
         }
     }
 
-    public async Task<Dictionary<string, MarketData>> GetMarketDataBatchAsync(string[] symbols)
+    public async Task<Dictionary<string, Core.Models.MarketData>> GetMarketDataBatchAsync(string[] symbols)
     {
         var stopwatch = Stopwatch.StartNew();
-        var results = new Dictionary<string, MarketData>();
+        var results = new Dictionary<string, Core.Models.MarketData>();
 
         try
         {
@@ -156,7 +156,27 @@ public class MarketDataService : IMarketDataService
         try
         {
             // Use DataIngestion service for historical data
-            var historicalData = await _dataIngestionService.GetHistoricalDataAsync(symbol, interval);
+            // For now, default to last 30 days of data based on interval
+            var endDate = DateTime.UtcNow;
+            var startDate = interval.ToLower() switch
+            {
+                "1m" or "5m" or "15m" or "30m" => endDate.AddDays(-1), // Intraday data for 1 day
+                "1h" or "4h" => endDate.AddDays(-7), // Hourly data for 1 week
+                "1d" or "daily" => endDate.AddDays(-30), // Daily data for 30 days
+                "1w" or "weekly" => endDate.AddMonths(-6), // Weekly data for 6 months
+                _ => endDate.AddDays(-30) // Default to 30 days
+            };
+
+            var dailyDataList = await _dataIngestionService.GetHistoricalDataAsync(symbol, startDate, endDate);
+            
+            // Convert List<DailyData> to HistoricalData
+            var historicalData = new HistoricalData
+            {
+                Symbol = symbol,
+                DailyPrices = dailyDataList,
+                StartDate = startDate,
+                EndDate = endDate
+            };
             
             stopwatch.Stop();
             TradingLogOrchestrator.Instance.LogInfo($"Retrieved historical data for {symbol} ({interval}) in {stopwatch.Elapsed.TotalMilliseconds}ms");
@@ -328,7 +348,7 @@ public class MarketDataService : IMarketDataService
     {
         try
         {
-            TradingLogOrchestrator.Instance.LogInfo($"Processing subscription request: {request.Action} for symbols: {string.Join(", ", request.Symbols}"));
+            TradingLogOrchestrator.Instance.LogInfo($"Processing subscription request: {request.Action} for symbols: {string.Join(", ", request.Symbols)}");
 
             // Implementation would manage real-time subscriptions
             // For MVP, just acknowledge the request

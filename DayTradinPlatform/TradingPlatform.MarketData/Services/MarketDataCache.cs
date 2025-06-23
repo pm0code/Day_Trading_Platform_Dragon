@@ -32,7 +32,7 @@ public class MarketDataCache : IMarketDataCache
             TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
     }
 
-    public async Task<MarketData?> GetAsync(string symbol)
+    public async Task<Core.Models.MarketData?> GetAsync(string symbol)
     {
         try
         {
@@ -68,7 +68,7 @@ public class MarketDataCache : IMarketDataCache
         }
     }
 
-    public async Task SetAsync(string symbol, MarketData data, TimeSpan? ttl = null)
+    public async Task SetAsync(string symbol, Core.Models.MarketData data, TimeSpan? ttl = null)
     {
         try
         {
@@ -168,12 +168,12 @@ public class MarketDataCache : IMarketDataCache
     // Cache entry wrapper
     private class CacheEntry
     {
-        public MarketData Data { get; }
+        public Core.Models.MarketData Data { get; }
         public DateTime ExpiryTime { get; }
         public DateTime CreatedAt { get; }
         public bool IsExpired => DateTime.UtcNow > ExpiryTime;
 
-        public CacheEntry(MarketData data, DateTime expiryTime)
+        public CacheEntry(Core.Models.MarketData data, DateTime expiryTime)
         {
             Data = data;
             ExpiryTime = expiryTime;

@@ -195,7 +195,7 @@ public class SubscriptionManager : ISubscriptionManager
         var tasks = symbols.Select(SubscribeAsync);
         await Task.WhenAll(tasks);
         
-        TradingLogOrchestrator.Instance.LogInfo($"Batch subscribed to {symbols.Length} symbols: {string.Join(", ", symbols}"));
+        TradingLogOrchestrator.Instance.LogInfo($"Batch subscribed to {symbols.Length} symbols: {string.Join(", ", symbols)}");
     }
 
     /// <summary>
@@ -206,7 +206,7 @@ public class SubscriptionManager : ISubscriptionManager
         var tasks = symbols.Select(UnsubscribeAsync);
         await Task.WhenAll(tasks);
         
-        TradingLogOrchestrator.Instance.LogInfo($"Batch unsubscribed from {symbols.Length} symbols: {string.Join(", ", symbols}"));
+        TradingLogOrchestrator.Instance.LogInfo($"Batch unsubscribed from {symbols.Length} symbols: {string.Join(", ", symbols)}");
     }
 
     // Private helper methods

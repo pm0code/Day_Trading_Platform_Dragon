@@ -11,12 +11,12 @@ public interface IMarketDataService
     /// <summary>
     /// Get real-time market data for a single symbol
     /// </summary>
-    Task<MarketData?> GetMarketDataAsync(string symbol);
+    Task<Core.Models.MarketData?> GetMarketDataAsync(string symbol);
 
     /// <summary>
     /// Get market data for multiple symbols in a single request
     /// </summary>
-    Task<Dictionary<string, MarketData>> GetMarketDataBatchAsync(string[] symbols);
+    Task<Dictionary<string, Core.Models.MarketData>> GetMarketDataBatchAsync(string[] symbols);
 
     /// <summary>
     /// Get historical market data for a symbol
@@ -83,12 +83,12 @@ public interface IMarketDataCache
     /// <summary>
     /// Get cached market data
     /// </summary>
-    Task<MarketData?> GetAsync(string symbol);
+    Task<Core.Models.MarketData?> GetAsync(string symbol);
 
     /// <summary>
     /// Cache market data with TTL
     /// </summary>
-    Task SetAsync(string symbol, MarketData data, TimeSpan? ttl = null);
+    Task SetAsync(string symbol, Core.Models.MarketData data, TimeSpan? ttl = null);
 
     /// <summary>
     /// Invalidate cached data for a symbol

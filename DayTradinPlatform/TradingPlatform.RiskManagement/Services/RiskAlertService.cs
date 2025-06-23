@@ -153,8 +153,9 @@ public class RiskAlertService : IRiskAlertService
                 RequiresAcknowledgment = true
             });
 
-            _logger.LogCritical("URGENT RISK ALERT: {AlertType} for {Symbol} - {Message}", 
-                alert.Type, alert.Symbol, alert.Message);
+            TradingLogOrchestrator.Instance.LogError($"URGENT RISK ALERT: {alert.Type} for {alert.Symbol} - {alert.Message}", 
+                userImpact: "Trading restrictions may apply", 
+                troubleshootingHints: "Review risk alerts and take immediate action");
         }
         catch (Exception ex)
         {

@@ -377,11 +377,11 @@ public class ProcessManager : IProcessManager
             var processConfig = new ProcessConfiguration
             {
                 ExecutablePath = processPath,
-                Priority = config.ProcessPriority,
-                CpuAffinity = config.CpuAffinity,
-                BoostWorkingSet = config.BoostWorkingSet,
-                MinWorkingSetMB = config.MinWorkingSetMB,
-                MaxWorkingSetMB = config.MaxWorkingSetMB
+                Priority = config.Priority,
+                CpuAffinity = config.CpuCoreAffinity,
+                BoostWorkingSet = config.WorkingSetLimit > 0,
+                MinWorkingSetMB = config.WorkingSetLimit > 0 ? (int)(config.WorkingSetLimit / (1024 * 1024)) / 2 : 50,
+                MaxWorkingSetMB = config.WorkingSetLimit > 0 ? (int)(config.WorkingSetLimit / (1024 * 1024)) : 500
             };
 
             var processName = Path.GetFileNameWithoutExtension(processPath);
@@ -495,11 +495,11 @@ public class ProcessManager : IProcessManager
                 metrics[name] = new PerformanceMetrics
                 {
                     CpuUsagePercent = processMetrics.CpuUsagePercent,
-                    MemoryUsageMB = processMetrics.MemoryUsageMB,
+                    MemoryUsageBytes = processMetrics.MemoryUsageMB * 1024 * 1024,
                     ThreadCount = processMetrics.ThreadCount,
                     HandleCount = processMetrics.HandleCount,
-                    ResponseTimeMs = 0, // Would need actual measurement
-                    IsHealthy = processMetrics.IsRunning && processMetrics.CpuUsagePercent < 80
+                    WorkingSetBytes = processMetrics.MemoryUsageMB * 1024 * 1024,
+                    LatencyMicroseconds = 0 // Would need actual measurement
                 };
             }
             catch (Exception ex)
@@ -510,7 +510,8 @@ public class ProcessManager : IProcessManager
                     
                 metrics[name] = new PerformanceMetrics
                 {
-                    IsHealthy = false
+                    CpuUsagePercent = 100,
+                    MemoryUsageBytes = 0
                 };
             }
         }

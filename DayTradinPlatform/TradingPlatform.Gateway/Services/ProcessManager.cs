@@ -201,7 +201,7 @@ public class ProcessManager : IProcessManager
             if (affinityMask > 0)
             {
                 process.ProcessorAffinity = new IntPtr(affinityMask);
-                TradingLogOrchestrator.Instance.LogInfo($"Set CPU affinity for {serviceName} to cores: {string.Join(", ", cpuCores}"));
+                TradingLogOrchestrator.Instance.LogInfo($"Set CPU affinity for {serviceName} to cores: {string.Join(", ", cpuCores)}");
             }
         }
         catch (Exception ex)
@@ -414,7 +414,7 @@ public class ProcessManager : IProcessManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to set high performance power plan");
+            TradingLogOrchestrator.Instance.LogWarning("Failed to set high performance power plan", additionalData: new { Error = ex.Message });
         }
     }
 
@@ -435,7 +435,7 @@ public class ProcessManager : IProcessManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to optimize network settings");
+            TradingLogOrchestrator.Instance.LogWarning("Failed to optimize network settings", additionalData: new { Error = ex.Message });
         }
     }
 
@@ -449,7 +449,7 @@ public class ProcessManager : IProcessManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to set timer resolution");
+            TradingLogOrchestrator.Instance.LogWarning("Failed to set timer resolution", additionalData: new { Error = ex.Message });
         }
     }
 

@@ -29,6 +29,7 @@
     <ProjectReference Include="../TradingPlatform.Core/TradingPlatform.Core.csproj" />
     <ProjectReference Include="../TradingPlatform.Messaging/TradingPlatform.Messaging.csproj" />
     <ProjectReference Include="../TradingPlatform.RiskManagement/TradingPlatform.RiskManagement.csproj" />
+    <ProjectReference Include="../TradingPlatform.Common/TradingPlatform.Common.csproj" />
   </ItemGroup>
 
 </Project>

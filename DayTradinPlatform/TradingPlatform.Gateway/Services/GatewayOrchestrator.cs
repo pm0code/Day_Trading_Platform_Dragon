@@ -77,9 +77,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
             
             // TODO: Implement response handling with timeout
             // For MVP, return mock data
-            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-            var marketDataLogger = loggerFactory.CreateLogger<MarketData>();
-            var mockData = new MarketData(marketDataLogger)
+            var mockData = new MarketData(_tradingLogger)
             {
                 Symbol = symbol,
                 Price = 150.25m,
@@ -158,7 +156,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
         };
 
         await _messageBus.PublishAsync("market-data-subscriptions", unsubscribeEvent);
-        TradingLogOrchestrator.Instance.LogInfo($"Unsubscribed from market data for symbols: {string.Join(", ", symbols}"));
+        TradingLogOrchestrator.Instance.LogInfo($"Unsubscribed from market data for symbols: {string.Join(", ", symbols)}");
     }
 
     // Order Management Operations
@@ -483,7 +481,7 @@ public class GatewayOrchestrator : IGatewayOrchestrator
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogWarning(ex, "Failed to send message to WebSocket {ConnectionId}", connectionId);
+                TradingLogOrchestrator.Instance.LogWarning($"Failed to send message to WebSocket {connectionId}", additionalData: new { Error = ex.Message });
                 deadConnections.Add(connectionId);
             }
         }

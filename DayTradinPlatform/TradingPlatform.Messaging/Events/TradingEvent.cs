@@ -56,6 +56,7 @@ public record MarketDataEvent : TradingEvent
     public decimal Ask { get; init; }
     public DateTimeOffset MarketTimestamp { get; init; }
     public string Exchange { get; init; } = string.Empty;
+    public string RequestId { get; init; } = string.Empty;
 }
 
 /// <summary>
@@ -123,4 +124,30 @@ public record StrategyEvent : TradingEvent
     public string[] TriggeredRules { get; init; } = Array.Empty<string>();
     public decimal SuggestedPrice { get; init; }
     public decimal SuggestedQuantity { get; init; }
+}
+
+/// <summary>
+/// Market data request event for on-demand data fetching
+/// </summary>
+public record MarketDataRequestEvent : TradingEvent
+{
+    public override string EventType => "MarketDataRequest";
+    
+    public string Symbol { get; init; } = string.Empty;
+    public string RequestType { get; init; } = string.Empty; // RealTime, Historical
+    public DateTimeOffset? StartDate { get; init; }
+    public DateTimeOffset? EndDate { get; init; }
+    public string Interval { get; init; } = string.Empty;
+    public string RequestId { get; init; } = Guid.NewGuid().ToString();
+}
+
+/// <summary>
+/// Market data subscription event for managing real-time feeds
+/// </summary>
+public record MarketDataSubscriptionEvent : TradingEvent
+{
+    public override string EventType => "MarketDataSubscription";
+    
+    public string[] Symbols { get; init; } = Array.Empty<string>();
+    public string Action { get; init; } = string.Empty; // Subscribe, Unsubscribe
 }

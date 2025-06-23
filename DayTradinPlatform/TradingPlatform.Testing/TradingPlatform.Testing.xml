@@ -164,30 +164,30 @@
             Provides standardized patterns for setting up, configuring, and verifying message bus behavior.
             </summary>
         </member>
-        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreateStandardMock(Microsoft.Extensions.Logging.ILogger{TradingPlatform.Testing.Mocks.MockMessageBus})">
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreateStandardMock(TradingPlatform.Core.Interfaces.ITradingLogger)">
             <summary>
             Creates a pre-configured MockMessageBus for standard testing scenarios.
             </summary>
             <param name="logger">Optional logger for debugging test issues</param>
             <returns>Configured MockMessageBus instance</returns>
         </member>
-        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreateHighLatencyMock(System.TimeSpan,Microsoft.Extensions.Logging.ILogger{TradingPlatform.Testing.Mocks.MockMessageBus})">
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreateHighLatencyMock(System.TimeSpan,TradingPlatform.Core.Interfaces.ITradingLogger)">
             <summary>
             Creates a MockMessageBus configured for high-latency testing scenarios.
             </summary>
         </member>
-        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreateErrorInjectingMock(System.Double,Microsoft.Extensions.Logging.ILogger{TradingPlatform.Testing.Mocks.MockMessageBus})">
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreateErrorInjectingMock(System.Double,TradingPlatform.Core.Interfaces.ITradingLogger)">
             <summary>
             Creates a MockMessageBus configured for error injection testing.
             </summary>
             <param name="errorRate">Probability (0-1) of operations failing</param>
         </member>
-        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreateUnhealthyMock(Microsoft.Extensions.Logging.ILogger{TradingPlatform.Testing.Mocks.MockMessageBus})">
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreateUnhealthyMock(TradingPlatform.Core.Interfaces.ITradingLogger)">
             <summary>
             Creates a MockMessageBus configured for unhealthy system testing.
             </summary>
         </member>
-        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreatePerformanceMock(Microsoft.Extensions.Logging.ILogger{TradingPlatform.Testing.Mocks.MockMessageBus})">
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreatePerformanceMock(TradingPlatform.Core.Interfaces.ITradingLogger)">
             <summary>
             Creates a MockMessageBus optimized for performance testing scenarios.
             </summary>
@@ -229,7 +229,7 @@
             <param name="timeout">Maximum time to wait</param>
             <returns>True if the expected count was reached within timeout</returns>
         </member>
-        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreateScenarioMock(TradingPlatform.Testing.Utilities.TestScenario,Microsoft.Extensions.Logging.ILogger{TradingPlatform.Testing.Mocks.MockMessageBus})">
+        <member name="M:TradingPlatform.Testing.Utilities.MessageBusTestHelpers.CreateScenarioMock(TradingPlatform.Testing.Utilities.TestScenario,TradingPlatform.Core.Interfaces.ITradingLogger)">
             <summary>
             Creates a comprehensive test scenario with multiple conditions.
             </summary>

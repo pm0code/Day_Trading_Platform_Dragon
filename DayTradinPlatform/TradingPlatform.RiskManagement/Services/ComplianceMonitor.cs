@@ -36,7 +36,7 @@ public class ComplianceMonitor : IComplianceMonitor
             LastChecked: DateTime.UtcNow
         );
 
-        TradingLogOrchestrator.Instance.LogInfo($"Compliance status checked - Compliant: {isCompliant}, Violations: {violations.Count(}"));
+        TradingLogOrchestrator.Instance.LogInfo($"Compliance status checked - Compliant: {isCompliant}, Violations: {violations.Count()}");
 
         return status;
     }
@@ -158,7 +158,7 @@ public class ComplianceMonitor : IComplianceMonitor
 
         var hasMajorViolations = violations.Any(v => v.Severity >= ViolationSeverity.Major);
         
-        TradingLogOrchestrator.Instance.LogInfo($"Regulatory validation for {request.Symbol}: {!hasMajorViolations ? "PASSED" : "FAILED"} ({violations.Count} violations)");
+        TradingLogOrchestrator.Instance.LogInfo($"Regulatory validation for {request.Symbol}: {(!hasMajorViolations ? "PASSED" : "FAILED")} ({violations.Count} violations)");
 
         return !hasMajorViolations;
     }

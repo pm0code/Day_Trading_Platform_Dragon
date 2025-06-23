@@ -39,7 +39,7 @@ public class MockMessageBus : IMessageBus
     public void SetSimulatedLatency(TimeSpan latency)
     {
         _simulatedLatency = latency;
-        _logger?.LogDebug("MockMessageBus latency set to {Latency}ms", latency.TotalMilliseconds);
+        _logger?.LogDebug($"MockMessageBus latency set to {latency.TotalMilliseconds}ms");
     }
 
     /// <summary>
@@ -48,7 +48,7 @@ public class MockMessageBus : IMessageBus
     public void SetHealthStatus(bool isHealthy)
     {
         _isHealthy = isHealthy;
-        _logger?.LogDebug("MockMessageBus health status set to {IsHealthy}", isHealthy);
+        _logger?.LogDebug($"MockMessageBus health status set to {isHealthy}");
     }
 
     /// <summary>
@@ -58,7 +58,7 @@ public class MockMessageBus : IMessageBus
     public void SetErrorRate(double errorRate)
     {
         _errorRate = Math.Clamp(errorRate, 0.0, 1.0);
-        _logger?.LogDebug("MockMessageBus error rate set to {ErrorRate}%", errorRate * 100);
+        _logger?.LogDebug($"MockMessageBus error rate set to {errorRate * 100}%");
     }
 
     /// <summary>
@@ -72,7 +72,7 @@ public class MockMessageBus : IMessageBus
         {
             ClearCapturedMessages();
         }
-        _logger?.LogDebug("MockMessageBus message capture set to {Enabled}, max: {MaxMessages}", enabled, maxMessages);
+        _logger?.LogDebug($"MockMessageBus message capture set to {enabled}, max: {maxMessages}");
     }
 
     #endregion
@@ -91,7 +91,7 @@ public class MockMessageBus : IMessageBus
             var error = TradingError.System(
                 new InvalidOperationException("Simulated message bus error"), 
                 Guid.NewGuid().ToString());
-            _logger?.LogError("MockMessageBus simulated publish error for stream {Stream}", stream);
+            _logger?.LogError($"MockMessageBus simulated publish error for stream {stream}");
             throw new TradingOperationException(error);
         }
 
@@ -129,8 +129,7 @@ public class MockMessageBus : IMessageBus
                 });
         }
 
-        _logger?.LogDebug("MockMessageBus published message {MessageId} to stream {Stream}: {MessageType}", 
-            messageId, stream, typeof(T).Name);
+        _logger?.LogDebug($"MockMessageBus published message {messageId} to stream {stream}: {typeof(T).Name}");
 
         return messageId;
     }
@@ -147,7 +146,7 @@ public class MockMessageBus : IMessageBus
             var error = TradingError.System(
                 new InvalidOperationException("Simulated subscription error"), 
                 Guid.NewGuid().ToString());
-            _logger?.LogError("MockMessageBus simulated subscription error for stream {Stream}", stream);
+            _logger?.LogError($"MockMessageBus simulated subscription error for stream {stream}");
             throw new TradingOperationException(error);
         }
 
@@ -175,8 +174,7 @@ public class MockMessageBus : IMessageBus
                 }
             });
 
-        _logger?.LogDebug("MockMessageBus subscribed {ConsumerName} in group {ConsumerGroup} to stream {Stream}", 
-            consumerName, consumerGroup, stream);
+        _logger?.LogDebug($"MockMessageBus subscribed {consumerName} in group {consumerGroup} to stream {stream}");
     }
 
     public async Task AcknowledgeAsync(string stream, string consumerGroup, string messageId)
@@ -187,7 +185,7 @@ public class MockMessageBus : IMessageBus
             var error = TradingError.System(
                 new InvalidOperationException("Simulated acknowledgment error"), 
                 Guid.NewGuid().ToString());
-            _logger?.LogError("MockMessageBus simulated acknowledgment error for message {MessageId}", messageId);
+            _logger?.LogError($"MockMessageBus simulated acknowledgment error for message {messageId}");
             throw new TradingOperationException(error);
         }
 
@@ -198,8 +196,7 @@ public class MockMessageBus : IMessageBus
         }
 
         _acknowledgments.Enqueue(messageId);
-        _logger?.LogDebug("MockMessageBus acknowledged message {MessageId} for group {ConsumerGroup}", 
-            messageId, consumerGroup);
+        _logger?.LogDebug($"MockMessageBus acknowledged message {messageId} for group {consumerGroup}");
     }
 
     public async Task<TimeSpan> GetLatencyAsync()

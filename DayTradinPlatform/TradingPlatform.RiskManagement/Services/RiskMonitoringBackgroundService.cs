@@ -111,7 +111,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
             
             if (!complianceStatus.IsCompliant)
             {
-                TradingLogOrchestrator.Instance.LogWarning($"Compliance violations detected: {complianceStatus.Violations.Count(} violations"));
+                TradingLogOrchestrator.Instance.LogWarning($"Compliance violations detected: {complianceStatus.Violations.Count()} violations");
                 
                 foreach (var violation in complianceStatus.Violations.Where(v => v.Severity >= Models.ViolationSeverity.Major))
                 {
@@ -128,7 +128,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
             // Monitor margin status
             if (complianceStatus.MarginStatus.HasMarginCall)
             {
-                _logger.LogCritical("MARGIN CALL ACTIVE - Immediate attention required");
+                TradingLogOrchestrator.Instance.LogError("MARGIN CALL ACTIVE - Immediate attention required", userImpact: "Trading restrictions in effect", troubleshootingHints: "Add funds or close positions immediately");
             }
         }
         catch (Exception ex)
@@ -148,7 +148,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
             
             if (!isWithinLimits)
             {
-                _logger.LogCritical("DRAWDOWN LIMIT EXCEEDED: {CurrentDrawdown:C}", currentDrawdown);
+                TradingLogOrchestrator.Instance.LogError($"DRAWDOWN LIMIT EXCEEDED: {currentDrawdown:C}", userImpact: "Trading may be halted", troubleshootingHints: "Review position sizes and stop losses");
             }
         }
         catch (Exception ex)
