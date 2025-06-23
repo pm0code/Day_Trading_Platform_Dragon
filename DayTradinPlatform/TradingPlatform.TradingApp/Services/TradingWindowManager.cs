@@ -11,7 +11,7 @@ namespace TradingPlatform.TradingApp.Services;
 /// </summary>
 public class TradingWindowManager : ITradingWindowManager
 {
-    private readonly ITradingLogger _logger;
+    private readonly Core.Interfaces.ITradingLogger _logger;
     private readonly IMonitorService _monitorService;
     private readonly Dictionary<TradingScreenType, Window> _openWindows = new();
     private readonly SemaphoreSlim _windowLock = new(1, 1);
@@ -20,7 +20,7 @@ public class TradingWindowManager : ITradingWindowManager
     public event EventHandler<TradingWindowEventArgs>? WindowClosed;
     public event EventHandler<TradingWindowEventArgs>? WindowMoved;
 
-    public TradingWindowManager(ITradingLogger logger, IMonitorService monitorService)
+    public TradingWindowManager(Core.Interfaces.ITradingLogger logger, IMonitorService monitorService)
     {
         _logger = logger;
         _monitorService = monitorService;

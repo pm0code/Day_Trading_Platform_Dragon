@@ -12,9 +12,9 @@ namespace TradingPlatform.Screening.Indicators
     /// </summary>
     public class TechnicalIndicators
     {
-        private readonly ILogger _logger;
+        private readonly ITradingLogger _logger;
 
-        public TechnicalIndicators(ILogger logger)
+        public TechnicalIndicators(ITradingLogger logger)
         {
             _logger = logger;
         }

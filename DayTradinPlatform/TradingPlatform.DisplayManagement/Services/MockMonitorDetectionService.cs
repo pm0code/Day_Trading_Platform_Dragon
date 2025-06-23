@@ -10,11 +10,11 @@ namespace TradingPlatform.DisplayManagement.Services;
 /// </summary>
 public class MockMonitorDetectionService : IMonitorDetectionService
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly IGpuDetectionService _gpuDetectionService;
 
     public MockMonitorDetectionService(
-        ILogger logger,
+        ITradingLogger logger,
         IGpuDetectionService gpuDetectionService)
     {
         _logger = logger;

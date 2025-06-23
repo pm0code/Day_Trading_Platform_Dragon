@@ -13,7 +13,7 @@ public class RiskManagementService : IRiskManagementService
     private readonly IPositionMonitor _positionMonitor;
     private readonly IRiskAlertService _alertService;
     private readonly IMessageBus _messageBus;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, RiskLimits> _riskLimits = new();
     private RiskLimits _defaultLimits = null!;
 
@@ -22,7 +22,7 @@ public class RiskManagementService : IRiskManagementService
         IPositionMonitor positionMonitor,
         IRiskAlertService alertService,
         IMessageBus messageBus,
-        ILogger logger)
+        ITradingLogger logger)
     {
         _riskCalculator = riskCalculator;
         _positionMonitor = positionMonitor;
@@ -79,7 +79,7 @@ public class RiskManagementService : IRiskManagementService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating risk status");
+            TradingLogOrchestrator.Instance.LogError("Error calculating risk status", ex);
             throw;
         }
     }
@@ -156,7 +156,7 @@ public class RiskManagementService : IRiskManagementService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error validating order for {Symbol}", request.Symbol);
+            TradingLogOrchestrator.Instance.LogError("Error validating order for {Symbol}", request.Symbol, ex);
             return false;
         }
     }

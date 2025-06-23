@@ -12,7 +12,7 @@ namespace TradingPlatform.MarketData.Services;
 /// </summary>
 public class MarketDataCache : IMarketDataCache
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, CacheEntry> _memoryCache;
     private readonly Timer _cleanupTimer;
     private readonly object _statsLock = new();
@@ -22,7 +22,7 @@ public class MarketDataCache : IMarketDataCache
     private long _missCount;
     private long _memoryUsageBytes;
 
-    public MarketDataCache(ILogger logger)
+    public MarketDataCache(ITradingLogger logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _memoryCache = new ConcurrentDictionary<string, CacheEntry>();
@@ -62,7 +62,7 @@ public class MarketDataCache : IMarketDataCache
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error getting cached data for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error getting cached data for {Symbol}", symbol, ex);
             Interlocked.Increment(ref _missCount);
             return null;
         }
@@ -90,7 +90,7 @@ public class MarketDataCache : IMarketDataCache
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error caching data for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error caching data for {Symbol}", symbol, ex);
         }
     }
 
@@ -108,7 +108,7 @@ public class MarketDataCache : IMarketDataCache
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error invalidating cache for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error invalidating cache for {Symbol}", symbol, ex);
         }
     }
 
@@ -162,7 +162,7 @@ public class MarketDataCache : IMarketDataCache
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error during cache cleanup");
+            TradingLogOrchestrator.Instance.LogError("Error during cache cleanup", ex);
         }
     }
 

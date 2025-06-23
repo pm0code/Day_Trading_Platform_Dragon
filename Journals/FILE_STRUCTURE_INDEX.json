@@ -1,0 +1,125 @@
+{
+  "metadata": {
+    "created": "2025-06-23T07:35:00",
+    "project_root": "/home/nader/my_projects/C#/DayTradingPlatform/DayTradinPlatform",
+    "total_cs_files": 363,
+    "total_projects": 19,
+    "index_format": "JSON for fast parsing and searching"
+  },
+  "quick_access": {
+    "core_interfaces": {
+      "ITradingLogger": "TradingPlatform.Core/Interfaces/ITradingLogger.cs",
+      "IMarketDataProvider": "TradingPlatform.Core/Interfaces/IMarketDataProvider.cs",
+      "IDataIngestionService": "TradingPlatform.Core/Interfaces/IDataIngestionService.cs",
+      "IScreeningEngine": "TradingPlatform.Core/Interfaces/IScreeningEngine.cs",
+      "IAlertService": "TradingPlatform.Core/Interfaces/IAlertService.cs",
+      "IRateLimiter": "TradingPlatform.DataIngestion/Interfaces/IRateLimiter.cs"
+    },
+    "logging_system": {
+      "TradingLogOrchestrator": "TradingPlatform.Core/Logging/TradingLogOrchestrator.cs",
+      "TradingLogger": "TradingPlatform.Logging/Services/TradingLogger.cs",
+      "PerformanceLogger": "TradingPlatform.Logging/Services/PerformanceLogger.cs",
+      "LogEntry": "TradingPlatform.Core/Logging/LogEntry.cs",
+      "LogLevel": "TradingPlatform.Core/Logging/LogLevel.cs",
+      "PerformanceStats": "TradingPlatform.Core/Logging/PerformanceStats.cs"
+    },
+    "critical_services": {
+      "StrategyExecutionService": "TradingPlatform.StrategyEngine/Services/StrategyExecutionService.cs",
+      "RedisMessageBus": "TradingPlatform.Messaging/Services/RedisMessageBus.cs",
+      "MarketDataService": "TradingPlatform.MarketData/Services/MarketDataService.cs",
+      "RiskManagementService": "TradingPlatform.RiskManagement/Services/RiskManagementService.cs",
+      "PaperTradingService": "TradingPlatform.PaperTrading/Services/PaperTradingService.cs"
+    },
+    "data_providers": {
+      "AlphaVantageProvider": "TradingPlatform.DataIngestion/Providers/AlphaVantageProvider.cs",
+      "FinnhubProvider": "TradingPlatform.DataIngestion/Providers/FinnhubProvider.cs",
+      "MarketDataAggregator": "TradingPlatform.DataIngestion/Providers/MarketDataAggregator.cs"
+    },
+    "configuration_files": {
+      "MainSolution": "DayTradingPlatform.sln",
+      "DirectoryBuildProps": "Directory.Build.props",
+      "GlobalUsings": "GlobalUsings.cs"
+    }
+  },
+  "project_structure": {
+    "TradingPlatform.Core": {
+      "path": "TradingPlatform.Core",
+      "key_files": [
+        "Interfaces/ITradingLogger.cs",
+        "Logging/TradingLogOrchestrator.cs",
+        "Models/MarketData.cs",
+        "Mathematics/FinancialCalculations.cs"
+      ]
+    },
+    "TradingPlatform.DataIngestion": {
+      "path": "TradingPlatform.DataIngestion",
+      "key_files": [
+        "Providers/AlphaVantageProvider.cs",
+        "Providers/FinnhubProvider.cs",
+        "RateLimiting/ApiRateLimiter.cs",
+        "Services/DataIngestionService.cs"
+      ]
+    },
+    "TradingPlatform.Screening": {
+      "path": "TradingPlatform.Screening",
+      "key_files": [
+        "Engines/ScreeningOrchestrator.cs",
+        "Criteria/PriceCriteria.cs",
+        "Criteria/VolumeCriteria.cs",
+        "Indicators/TechnicalIndicators.cs"
+      ]
+    },
+    "TradingPlatform.StrategyEngine": {
+      "path": "TradingPlatform.StrategyEngine",
+      "key_files": [
+        "Services/StrategyExecutionService.cs",
+        "Services/SignalProcessor.cs",
+        "Strategies/MomentumStrategy.cs",
+        "Strategies/GapStrategy.cs"
+      ]
+    },
+    "TradingPlatform.Messaging": {
+      "path": "TradingPlatform.Messaging",
+      "key_files": [
+        "Services/RedisMessageBus.cs",
+        "Extensions/ServiceCollectionExtensions.cs"
+      ]
+    },
+    "TradingPlatform.RiskManagement": {
+      "path": "TradingPlatform.RiskManagement",
+      "key_files": [
+        "Services/RiskManagementService.cs",
+        "Services/RiskCalculator.cs",
+        "Services/ComplianceMonitor.cs"
+      ]
+    },
+    "TradingPlatform.Gateway": {
+      "path": "TradingPlatform.Gateway",
+      "key_files": [
+        "Services/GatewayOrchestrator.cs",
+        "Services/ProcessManager.cs",
+        "Services/HealthMonitor.cs"
+      ]
+    },
+    "TradingPlatform.WindowsOptimization": {
+      "path": "TradingPlatform.WindowsOptimization",
+      "key_files": [
+        "Services/WindowsOptimizationService.cs",
+        "Services/SystemMonitor.cs",
+        "Services/ProcessManager.cs"
+      ]
+    }
+  },
+  "search_patterns": {
+    "find_all_loggers": "grep -r \"ITradingLogger\" --include=\"*.cs\"",
+    "find_log_calls": "grep -r \"LogError\\|LogInfo\\|LogWarning\" --include=\"*.cs\"",
+    "find_interfaces": "find . -path \"*/Interfaces/*.cs\" -type f",
+    "find_services": "find . -path \"*/Services/*.cs\" -type f",
+    "find_models": "find . -path \"*/Models/*.cs\" -type f"
+  },
+  "compilation_error_locations": {
+    "ServiceCollectionExtensions": "TradingPlatform.Messaging/Extensions/ServiceCollectionExtensions.cs",
+    "ApiRateLimiter": "TradingPlatform.DataIngestion/RateLimiting/ApiRateLimiter.cs",
+    "ProcessManager": "TradingPlatform.WindowsOptimization/Services/ProcessManager.cs"
+  }
+}

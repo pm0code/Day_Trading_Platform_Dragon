@@ -41,7 +41,7 @@ public interface IMonitorDetectionService
 /// </summary>
 public class MonitorDetectionService : IMonitorDetectionService
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly IGpuDetectionService _gpuDetectionService;
     private readonly string _configurationFilePath;
 
@@ -80,7 +80,7 @@ public class MonitorDetectionService : IMonitorDetectionService
     private const uint MONITORINFOF_PRIMARY = 0x00000001;
 
     public MonitorDetectionService(
-        ILogger logger,
+        ITradingLogger logger,
         IGpuDetectionService gpuDetectionService)
     {
         _logger = logger;
@@ -138,7 +138,7 @@ public class MonitorDetectionService : IMonitorDetectionService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to detect monitors");
+            TradingLogOrchestrator.Instance.LogError("Failed to detect monitors", ex);
             
             // Fallback: create a single default monitor configuration
             return new List<MonitorConfiguration>
@@ -215,7 +215,7 @@ public class MonitorDetectionService : IMonitorDetectionService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to save monitor configuration");
+            TradingLogOrchestrator.Instance.LogError("Failed to save monitor configuration", ex);
             throw;
         }
     }
@@ -241,7 +241,7 @@ public class MonitorDetectionService : IMonitorDetectionService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to load monitor configuration");
+            TradingLogOrchestrator.Instance.LogError("Failed to load monitor configuration", ex);
             return null;
         }
     }

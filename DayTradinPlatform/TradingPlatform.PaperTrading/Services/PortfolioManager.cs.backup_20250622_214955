@@ -1,0 +1,269 @@
+using TradingPlatform.PaperTrading.Models;
+using System.Collections.Concurrent;
+
+using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Core.Logging;
+namespace TradingPlatform.PaperTrading.Services;
+
+public class PortfolioManager : IPortfolioManager
+{
+    private readonly IOrderBookSimulator _orderBookSimulator;
+    private readonly ILogger _logger;
+    private readonly ConcurrentDictionary<string, Position> _positions = new();
+    private decimal _cashBalance = 100000m; // Starting with $100k for paper trading
+    private decimal _totalRealizedPnL = 0m;
+
+    public PortfolioManager(
+        IOrderBookSimulator orderBookSimulator,
+        ILogger logger)
+    {
+        _orderBookSimulator = orderBookSimulator;
+        _logger = logger;
+    }
+
+    public async Task<Portfolio> GetPortfolioAsync()
+    {
+        try
+        {
+            var positions = await GetPositionsAsync();
+            var totalMarketValue = positions.Sum(p => p.MarketValue);
+            var totalUnrealizedPnL = positions.Sum(p => p.UnrealizedPnL);
+            var totalEquity = _cashBalance + totalMarketValue;
+            var dayPnL = CalculateDayPnL(positions);
+
+            return new Portfolio(
+                TotalValue: totalEquity,
+                CashBalance: _cashBalance,
+                TotalEquity: totalEquity,
+                DayPnL: dayPnL,
+                TotalPnL: _totalRealizedPnL + totalUnrealizedPnL,
+                BuyingPower: await GetBuyingPowerAsync(),
+                Positions: positions,
+                LastUpdated: DateTime.UtcNow
+            );
+        }
+        catch (Exception ex)
+        {
+            TradingLogOrchestrator.Instance.LogError(ex, "Error getting portfolio");
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<Position>> GetPositionsAsync()
+    {
+        var positionsList = new List<Position>();
+
+        foreach (var kvp in _positions)
+        {
+            try
+            {
+                var position = kvp.Value;
+                var currentPrice = await _orderBookSimulator.GetCurrentPriceAsync(position.Symbol);
+                
+                var updatedPosition = position with
+                {
+                    CurrentPrice = currentPrice,
+                    MarketValue = position.Quantity * currentPrice,
+                    UnrealizedPnL = (currentPrice - position.AveragePrice) * position.Quantity,
+                    LastUpdated = DateTime.UtcNow
+                };
+
+                positionsList.Add(updatedPosition);
+                
+                // Update the stored position with current market data
+                _positions.TryUpdate(kvp.Key, updatedPosition, position);
+            }
+            catch (Exception ex)
+            {
+                TradingLogOrchestrator.Instance.LogError(ex, "Error updating position for {Symbol}", kvp.Key);
+                positionsList.Add(kvp.Value); // Add stale position data
+            }
+        }
+
+        return positionsList.OrderByDescending(p => Math.Abs(p.MarketValue));
+    }
+
+    public async Task<Position?> GetPositionAsync(string symbol)
+    {
+        if (!_positions.TryGetValue(symbol, out var position))
+            return null;
+
+        try
+        {
+            var currentPrice = await _orderBookSimulator.GetCurrentPriceAsync(symbol);
+            
+            return position with
+            {
+                CurrentPrice = currentPrice,
+                MarketValue = position.Quantity * currentPrice,
+                UnrealizedPnL = (currentPrice - position.AveragePrice) * position.Quantity,
+                LastUpdated = DateTime.UtcNow
+            };
+        }
+        catch (Exception ex)
+        {
+            TradingLogOrchestrator.Instance.LogError(ex, "Error getting current position for {Symbol}", symbol);
+            return position;
+        }
+    }
+
+    public Task UpdatePositionAsync(string symbol, Execution execution)
+    {
+        try
+        {
+            var existingPosition = _positions.GetValueOrDefault(symbol);
+            
+            if (existingPosition == null)
+            {
+                // New position
+                var newPosition = new Position(
+                    Symbol: symbol,
+                    Quantity: execution.Side == OrderSide.Buy ? execution.Quantity : -execution.Quantity,
+                    AveragePrice: execution.Price,
+                    CurrentPrice: execution.Price,
+                    MarketValue: execution.Quantity * execution.Price,
+                    UnrealizedPnL: 0m,
+                    RealizedPnL: -execution.Commission,
+                    FirstTradeDate: execution.ExecutionTime,
+                    LastUpdated: execution.ExecutionTime
+                );
+                
+                _positions.TryAdd(symbol, newPosition);
+                
+                // Update cash balance
+                var cashImpact = execution.Side == OrderSide.Buy 
+                    ? -(execution.Quantity * execution.Price + execution.Commission)
+                    : (execution.Quantity * execution.Price - execution.Commission);
+                    
+                _cashBalance += cashImpact;
+                
+                TradingLogOrchestrator.Instance.LogInfo("Created new position for {Symbol}: {Quantity}@{Price}", 
+                    symbol, newPosition.Quantity, execution.Price);
+            }
+            else
+            {
+                // Update existing position
+                var executionQuantity = execution.Side == OrderSide.Buy ? execution.Quantity : -execution.Quantity;
+                var newTotalQuantity = existingPosition.Quantity + executionQuantity;
+                
+                decimal newAveragePrice;
+                decimal realizedPnL = existingPosition.RealizedPnL - execution.Commission;
+                
+                if (Math.Sign(existingPosition.Quantity) != Math.Sign(newTotalQuantity) && existingPosition.Quantity != 0)
+                {
+                    // Position is being reduced or reversed - calculate realized P&L
+                    var closingQuantity = Math.Min(Math.Abs(existingPosition.Quantity), Math.Abs(executionQuantity));
+                    var pnlPerShare = execution.Side == OrderSide.Sell 
+                        ? execution.Price - existingPosition.AveragePrice
+                        : existingPosition.AveragePrice - execution.Price;
+                    
+                    realizedPnL += closingQuantity * pnlPerShare;
+                    _totalRealizedPnL += closingQuantity * pnlPerShare;
+                }
+                
+                if (newTotalQuantity == 0)
+                {
+                    // Position closed
+                    _positions.TryRemove(symbol, out _);
+                    newAveragePrice = 0m;
+                }
+                else
+                {
+                    // Calculate new average price
+                    if (Math.Sign(existingPosition.Quantity) == Math.Sign(executionQuantity))
+                    {
+                        // Adding to position
+                        var totalCost = (existingPosition.Quantity * existingPosition.AveragePrice) + 
+                                       (executionQuantity * execution.Price);
+                        newAveragePrice = totalCost / newTotalQuantity;
+                    }
+                    else
+                    {
+                        // Reducing position - keep existing average price
+                        newAveragePrice = existingPosition.AveragePrice;
+                    }
+                }
+
+                if (newTotalQuantity != 0)
+                {
+                    var updatedPosition = existingPosition with
+                    {
+                        Quantity = newTotalQuantity,
+                        AveragePrice = newAveragePrice,
+                        CurrentPrice = execution.Price,
+                        MarketValue = newTotalQuantity * execution.Price,
+                        UnrealizedPnL = (execution.Price - newAveragePrice) * newTotalQuantity,
+                        RealizedPnL = realizedPnL,
+                        LastUpdated = execution.ExecutionTime
+                    };
+                    
+                    _positions.TryUpdate(symbol, updatedPosition, existingPosition);
+                }
+                
+                // Update cash balance
+                var cashImpact = execution.Side == OrderSide.Buy 
+                    ? -(execution.Quantity * execution.Price + execution.Commission)
+                    : (execution.Quantity * execution.Price - execution.Commission);
+                    
+                _cashBalance += cashImpact;
+                
+                TradingLogOrchestrator.Instance.LogInfo("Updated position for {Symbol}: {OldQty} -> {NewQty}@{Price}", 
+                    symbol, existingPosition.Quantity, newTotalQuantity, newAveragePrice);
+            }
+            
+            return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            TradingLogOrchestrator.Instance.LogError(ex, "Error updating position for {Symbol}", symbol);
+            throw;
+        }
+    }
+
+    public async Task<decimal> GetBuyingPowerAsync()
+    {
+        try
+        {
+            var positions = await GetPositionsAsync();
+            var longMarketValue = positions.Where(p => p.Quantity > 0).Sum(p => p.MarketValue);
+            var shortMarketValue = Math.Abs(positions.Where(p => p.Quantity < 0).Sum(p => p.MarketValue));
+            
+            // Simplified buying power calculation (for paper trading)
+            // Cash + (Long positions * 0.5) - (Short positions * 1.5) for margin
+            return _cashBalance + (longMarketValue * 0.5m) - (shortMarketValue * 1.5m);
+        }
+        catch (Exception ex)
+        {
+            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating buying power");
+            return _cashBalance; // Conservative fallback
+        }
+    }
+
+    public async Task<bool> HasSufficientBuyingPowerAsync(OrderRequest orderRequest, decimal estimatedPrice)
+    {
+        try
+        {
+            var buyingPower = await GetBuyingPowerAsync();
+            var requiredCapital = orderRequest.Quantity * estimatedPrice;
+            
+            // Add buffer for commissions and slippage
+            var requiredCapitalWithBuffer = requiredCapital * 1.01m; // 1% buffer
+            
+            return orderRequest.Side == OrderSide.Buy 
+                ? buyingPower >= requiredCapitalWithBuffer
+                : true; // Selling doesn't require additional buying power in paper trading
+        }
+        catch (Exception ex)
+        {
+            TradingLogOrchestrator.Instance.LogError(ex, "Error checking buying power for {Symbol}", orderRequest.Symbol);
+            return false; // Conservative approach
+        }
+    }
+
+    private decimal CalculateDayPnL(IEnumerable<Position> positions)
+    {
+        // Simplified day P&L calculation
+        // In a real system, this would track positions from market open
+        return positions.Sum(p => p.UnrealizedPnL * 0.1m); // Assume 10% of unrealized P&L is from today
+    }
+}

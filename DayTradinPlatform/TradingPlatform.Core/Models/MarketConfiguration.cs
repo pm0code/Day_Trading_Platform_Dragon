@@ -1,4 +1,4 @@
-﻿// File: TradingPlatform.Core\Models\MarketConfiguration.cs
+// File: TradingPlatform.Core\Models\MarketConfiguration.cs
 
 using System;
 using System.Collections.Generic;
@@ -9,9 +9,9 @@ namespace TradingPlatform.Core.Models
 {
     public class MarketConfiguration
     {
-        private readonly ILogger _logger;
+        private readonly ITradingLogger _logger;
 
-        public MarketConfiguration(ILogger logger)
+        public MarketConfiguration(ITradingLogger logger)
         {
             _logger = logger;
         }
@@ -93,7 +93,7 @@ namespace TradingPlatform.Core.Models
         public static MarketSelector CreateDefault()
         {
             var selector = new MarketSelector();
-            var logger = new TradingPlatform.Core.Services.TradingLogger(); // Create logger for default config
+            var logger = TradingLogOrchestrator.Instance; // Create logger for default config
 
             selector.AvailableMarkets["US"] = new MarketConfiguration(logger)
             {

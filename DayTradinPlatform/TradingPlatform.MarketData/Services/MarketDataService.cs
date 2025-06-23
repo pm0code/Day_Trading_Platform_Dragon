@@ -18,7 +18,7 @@ public class MarketDataService : IMarketDataService
     private readonly IMarketDataAggregator _marketDataAggregator;
     private readonly IMarketDataCache _cache;
     private readonly IMessageBus _messageBus;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly Dictionary<string, DateTime> _lastUpdateTimes;
     private readonly object _metricsLock = new();
@@ -35,7 +35,7 @@ public class MarketDataService : IMarketDataService
         IMarketDataAggregator marketDataAggregator,
         IMarketDataCache cache,
         IMessageBus messageBus,
-        ILogger logger)
+        ITradingLogger logger)
     {
         _dataIngestionService = dataIngestionService ?? throw new ArgumentNullException(nameof(dataIngestionService));
         _marketDataAggregator = marketDataAggregator ?? throw new ArgumentNullException(nameof(marketDataAggregator));
@@ -109,7 +109,7 @@ public class MarketDataService : IMarketDataService
         catch (Exception ex)
         {
             stopwatch.Stop();
-            TradingLogOrchestrator.Instance.LogError(ex, "Error retrieving market data for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error retrieving market data for {Symbol}", symbol, ex);
             return null;
         }
     }
@@ -147,7 +147,7 @@ public class MarketDataService : IMarketDataService
         catch (Exception ex)
         {
             stopwatch.Stop();
-            TradingLogOrchestrator.Instance.LogError(ex, "Error processing batch market data request");
+            TradingLogOrchestrator.Instance.LogError("Error processing batch market data request", ex);
             return results;
         }
     }
@@ -170,7 +170,7 @@ public class MarketDataService : IMarketDataService
         catch (Exception ex)
         {
             stopwatch.Stop();
-            TradingLogOrchestrator.Instance.LogError(ex, "Error retrieving historical data for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error retrieving historical data for {Symbol}", symbol, ex);
             return null;
         }
     }
@@ -195,7 +195,7 @@ public class MarketDataService : IMarketDataService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error starting background processing");
+            TradingLogOrchestrator.Instance.LogError("Error starting background processing", ex);
             throw;
         }
     }
@@ -227,7 +227,7 @@ public class MarketDataService : IMarketDataService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error getting health status");
+            TradingLogOrchestrator.Instance.LogError("Error getting health status", ex);
             return new MarketDataHealthStatus(false, "Error", TimeSpan.Zero, 0, 0, DateTime.UtcNow, 
                 new[] { ex.Message });
         }
@@ -271,7 +271,7 @@ public class MarketDataService : IMarketDataService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error refreshing market data for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error refreshing market data for {Symbol}", symbol, ex);
         }
     }
 
@@ -325,7 +325,7 @@ public class MarketDataService : IMarketDataService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error handling market data request for {Symbol}", request.Symbol);
+            TradingLogOrchestrator.Instance.LogError("Error handling market data request for {Symbol}", request.Symbol, ex);
         }
     }
 
@@ -342,7 +342,7 @@ public class MarketDataService : IMarketDataService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error handling subscription request");
+            TradingLogOrchestrator.Instance.LogError("Error handling subscription request", ex);
         }
     }
 

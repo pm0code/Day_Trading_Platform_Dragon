@@ -11,11 +11,11 @@ namespace TradingPlatform.Gateway.Services;
 /// </summary>
 public class ProcessManager : IProcessManager
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly Dictionary<string, Process> _managedProcesses;
     private readonly Dictionary<string, ServiceConfiguration> _serviceConfigurations;
 
-    public ProcessManager(ILogger logger)
+    public ProcessManager(ITradingLogger logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _managedProcesses = new Dictionary<string, Process>();
@@ -54,7 +54,7 @@ public class ProcessManager : IProcessManager
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, "Error getting process info for {ServiceName}", serviceName);
+                TradingLogOrchestrator.Instance.LogError("Error getting process info for {ServiceName}", serviceName, ex);
                 processInfos.Add(new ProcessInfo(
                     serviceName, 0, ProcessStatus.Error, TimeSpan.Zero,
                     0, 0, 0, Array.Empty<int>(), ProcessPriorityLevel.Normal));
@@ -123,7 +123,7 @@ public class ProcessManager : IProcessManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to start service {ServiceName}", serviceName);
+            TradingLogOrchestrator.Instance.LogError("Failed to start service {ServiceName}", serviceName, ex);
             throw;
         }
     }
@@ -159,7 +159,7 @@ public class ProcessManager : IProcessManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to stop service {ServiceName}", serviceName);
+            TradingLogOrchestrator.Instance.LogError("Failed to stop service {ServiceName}", serviceName, ex);
             throw;
         }
 
@@ -207,7 +207,7 @@ public class ProcessManager : IProcessManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to set CPU affinity for {ServiceName}", serviceName);
+            TradingLogOrchestrator.Instance.LogError("Failed to set CPU affinity for {ServiceName}", serviceName, ex);
         }
 
         await Task.CompletedTask;
@@ -240,7 +240,7 @@ public class ProcessManager : IProcessManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to set process priority for {ServiceName}", serviceName);
+            TradingLogOrchestrator.Instance.LogError("Failed to set process priority for {ServiceName}", serviceName, ex);
         }
 
         await Task.CompletedTask;
@@ -272,7 +272,7 @@ public class ProcessManager : IProcessManager
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, "Error getting performance metrics for {ServiceName}", serviceName);
+                TradingLogOrchestrator.Instance.LogError("Error getting performance metrics for {ServiceName}", serviceName, ex);
             }
         }
 
@@ -299,7 +299,7 @@ public class ProcessManager : IProcessManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to optimize Windows 11 for trading");
+            TradingLogOrchestrator.Instance.LogError("Failed to optimize Windows 11 for trading", ex);
         }
     }
 

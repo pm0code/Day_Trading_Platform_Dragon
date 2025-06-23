@@ -153,6 +153,16 @@ Key documentation files in the MainDocs directory:
 • Remember that Windows does not have rsync. use scp instead
 • All work has to be done on DRAGON at IP address 192.168.1.35, as this is a Windows project and the current machine is Ubuntu Linux.
 
+## Project Directory Structure (CRITICAL - DO NOT CONFUSE)
+• PROJECT ROOT: `/home/nader/my_projects/C#/DayTradingPlatform/DayTradinPlatform` (note the typo in folder name)
+• CLAUDE.md: `/home/nader/my_projects/C#/DayTradingPlatform/CLAUDE.md`
+• SOLUTION FILE: `/home/nader/my_projects/C#/DayTradingPlatform/DayTradinPlatform/DayTradingPlatform.sln`
+• JOURNALS: `/home/nader/my_projects/C#/DayTradingPlatform/Journals`
+• RESEARCH DOCS: `/home/nader/my_projects/C#/DayTradingPlatform/ResearchDocs`
+• SCRIPTS: `/home/nader/my_projects/C#/DayTradingPlatform/scripts`
+• MISC FILES: `/home/nader/my_projects/C#/DayTradingPlatform/MiscFiles` (for temporary/noise files)
+• DO NOT create noise files in project root - use MiscFiles directory
+
 ## Machine Credentials
 
 • DRAGON is a Windows 11 X64 machine @ 192.168.1.35

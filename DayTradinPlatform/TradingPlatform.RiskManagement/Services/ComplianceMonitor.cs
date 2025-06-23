@@ -10,11 +10,11 @@ namespace TradingPlatform.RiskManagement.Services;
 public class ComplianceMonitor : IComplianceMonitor
 {
     private readonly IMessageBus _messageBus;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, ComplianceEvent> _complianceEvents = new();
     private readonly ConcurrentDictionary<string, PatternDayTradingStatus> _pdtStatus = new();
 
-    public ComplianceMonitor(IMessageBus messageBus, ILogger logger)
+    public ComplianceMonitor(IMessageBus messageBus, ITradingLogger logger)
     {
         _messageBus = messageBus;
         _logger = logger;

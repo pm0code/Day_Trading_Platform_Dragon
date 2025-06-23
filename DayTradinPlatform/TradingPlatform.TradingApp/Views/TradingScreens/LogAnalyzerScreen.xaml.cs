@@ -32,7 +32,7 @@ public sealed partial class LogAnalyzerScreen : Window
     
     private readonly ObservableCollection<LogDisplayItem> _logItems = new();
     private readonly ObservableCollection<AlertDisplayItem> _alertItems = new();
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ILogAnalyticsService _analyticsService;
     private ClientWebSocket? _webSocket;
     private CancellationTokenSource? _cancellationTokenSource;
@@ -132,8 +132,7 @@ public sealed partial class LogAnalyzerScreen : Window
         catch (Exception ex)
         {
             ConnectionStatusText.Text = "🔴 Connection Failed";
-            _logger.LogError("Failed to connect to log stream", ex, "WebSocket Connection", 
-                           "Real-time logs unavailable", "Check if log streaming service is running");
+            TradingLogOrchestrator.Instance.LogError("Failed to connect to log stream", ex);
         }
     }
     
@@ -168,7 +167,7 @@ public sealed partial class LogAnalyzerScreen : Window
             await DispatcherQueue.TryEnqueue(() =>
             {
                 ConnectionStatusText.Text = "🔴 Connection Lost";
-                _logger.LogError("WebSocket connection error", ex);
+                TradingLogOrchestrator.Instance.LogError("WebSocket connection error", ex);
             });
         }
     }
@@ -199,7 +198,7 @@ public sealed partial class LogAnalyzerScreen : Window
                 var displayItem = CreateLogDisplayItem(entry);
                 _logItems.Insert(0, displayItem);
                 ProcessPotentialAlert(entry);
-                _logger.LogError("Failed to analyze log entry with AI service", ex);
+                TradingLogOrchestrator.Instance.LogError("Failed to analyze log entry with AI service", ex);
             }
             
             // Limit display to 1000 items for performance
@@ -749,7 +748,7 @@ public sealed partial class LogAnalyzerScreen : Window
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to export logs", ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to export logs", ex);
         }
     }
     
@@ -786,7 +785,7 @@ public sealed partial class LogAnalyzerScreen : Window
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to apply configuration", ex);
+            TradingLogOrchestrator.Instance.LogError("Failed to apply configuration", ex);
         }
     }
     

@@ -52,7 +52,7 @@ public interface IDisplaySessionService
 /// </summary>
 public class DisplaySessionService : BackgroundService, IDisplaySessionService
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly DisplaySessionOptions _options;
     private readonly Subject<DisplaySessionChangedEventArgs> _sessionChangedSubject = new();
 
@@ -99,7 +99,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
     public IObservable<DisplaySessionChangedEventArgs> SessionChanged => _sessionChangedSubject.AsObservable();
 
     public DisplaySessionService(
-        ILogger logger,
+        ITradingLogger logger,
         IOptions<DisplaySessionOptions> options)
     {
         _logger = logger;
@@ -130,7 +130,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, "Error during session monitoring");
+                TradingLogOrchestrator.Instance.LogError("Error during session monitoring", ex);
                 await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken); // Retry after 30 seconds
             }
         }
@@ -178,7 +178,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to refresh session information");
+            TradingLogOrchestrator.Instance.LogError("Failed to refresh session information", ex);
         }
     }
 
@@ -614,7 +614,7 @@ public class DisplaySessionService : BackgroundService, IDisplaySessionService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to notify session change");
+            TradingLogOrchestrator.Instance.LogError("Failed to notify session change", ex);
         }
     }
 

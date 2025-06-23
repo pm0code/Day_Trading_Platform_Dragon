@@ -1,4 +1,4 @@
-// TradingPlatform.Core.Interfaces.ILogger - Comprehensive Logging Interface
+// TradingPlatform.Core.Interfaces.ITradingLogger - Comprehensive Logging Interface
 // Enhanced for maximum operational intelligence, troubleshooting, and performance monitoring
 
 using System.Runtime.CompilerServices;
@@ -9,8 +9,9 @@ namespace TradingPlatform.Core.Interfaces
     /// Comprehensive logging interface designed for day trading platform operations.
     /// Provides rich context, performance metrics, and actionable troubleshooting information.
     /// All log entries include automatic method/class context, timestamps, and relevant metadata.
+    /// RENAMED FROM ITradingLogger TO ITradingLogger to avoid confusion with Microsoft.Extensions.Logging.ITradingLogger
     /// </summary>
-    public interface ILogger
+    public interface ITradingLogger
     {
         #region Core Logging Methods with Rich Context
         
@@ -27,6 +28,20 @@ namespace TradingPlatform.Core.Interfaces
                     [CallerMemberName] string memberName = "",
                     [CallerFilePath] string sourceFilePath = "",
                     [CallerLineNumber] int sourceLineNumber = 0);
+        
+        /// <summary>
+        /// Logs debug information for development and troubleshooting
+        /// </summary>
+        /// <param name="message">Debug message</param>
+        /// <param name="additionalData">Optional structured data for enhanced context</param>
+        /// <param name="memberName">Auto-populated calling method name</param>
+        /// <param name="sourceFilePath">Auto-populated source file path</param>
+        /// <param name="sourceLineNumber">Auto-populated source line number</param>
+        void LogDebug(string message, 
+                     object? additionalData = null,
+                     [CallerMemberName] string memberName = "",
+                     [CallerFilePath] string sourceFilePath = "",
+                     [CallerLineNumber] int sourceLineNumber = 0);
         
         /// <summary>
         /// Logs warning with context and potential impact assessment

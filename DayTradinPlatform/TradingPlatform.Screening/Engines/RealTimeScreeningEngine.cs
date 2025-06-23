@@ -19,7 +19,7 @@ namespace TradingPlatform.Screening.Engines
     {
         private readonly IMarketDataProvider _marketDataProvider;
         private readonly ScreeningOrchestrator _orchestrator;
-        private readonly ILogger _logger;
+        private readonly ITradingLogger _logger;
         private readonly Subject<ScreeningResult> _screeningResults;
         private readonly ConcurrentDictionary<string, ScreeningResult> _lastResults;
         private readonly ConcurrentDictionary<string, DateTime> _lastScreeningTimes;
@@ -30,7 +30,7 @@ namespace TradingPlatform.Screening.Engines
         public RealTimeScreeningEngine(
             IMarketDataProvider marketDataProvider,
             ScreeningOrchestrator orchestrator,
-            ILogger logger)
+            ITradingLogger logger)
         {
             _marketDataProvider = marketDataProvider;
             _orchestrator = orchestrator;
@@ -89,7 +89,7 @@ namespace TradingPlatform.Screening.Engines
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, "Error during batch screening");
+                TradingLogOrchestrator.Instance.LogError("Error during batch screening", ex);
                 return new List<ScreeningResult>();
             }
         }
@@ -131,7 +131,7 @@ namespace TradingPlatform.Screening.Engines
                     }
                     catch (Exception ex)
                     {
-                        TradingLogOrchestrator.Instance.LogError(ex, "Error in real-time screening loop");
+                        TradingLogOrchestrator.Instance.LogError("Error in real-time screening loop", ex);
                         await Task.Delay(TimeSpan.FromSeconds(10), _cancellationTokenSource.Token);
                     }
                 }

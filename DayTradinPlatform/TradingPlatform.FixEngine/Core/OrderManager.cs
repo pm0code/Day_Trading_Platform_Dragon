@@ -12,7 +12,7 @@ namespace TradingPlatform.FixEngine.Core;
 public sealed class OrderManager : IDisposable
 {
     private readonly FixSession _fixSession;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, Order> _activeOrders = new();
     private readonly ConcurrentDictionary<string, List<Execution>> _orderExecutions = new();
     private readonly Timer _orderTimeoutChecker;
@@ -24,7 +24,7 @@ public sealed class OrderManager : IDisposable
     public event EventHandler<Execution>? ExecutionReceived;
     public event EventHandler<OrderReject>? OrderRejected;
     
-    public OrderManager(FixSession fixSession, ILogger logger)
+    public OrderManager(FixSession fixSession, ITradingLogger logger)
     {
         _fixSession = fixSession ?? throw new ArgumentNullException(nameof(fixSession));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

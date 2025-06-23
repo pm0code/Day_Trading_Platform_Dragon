@@ -42,6 +42,14 @@ namespace TradingPlatform.Core.Interfaces
         /// Includes rate limits, subscription tier, and feature availability.
         /// </summary>
         Task<ApiResponse<ProviderStatus>> GetProviderStatusAsync();
+
+        /// <summary>
+        /// Gets real-time market data for a specific symbol.
+        /// This is the primary method for fetching current market data.
+        /// </summary>
+        /// <param name="symbol">The stock symbol to fetch data for</param>
+        /// <returns>Current market data for the symbol</returns>
+        Task<MarketData?> GetRealTimeDataAsync(string symbol);
     }
 
     /// <summary>

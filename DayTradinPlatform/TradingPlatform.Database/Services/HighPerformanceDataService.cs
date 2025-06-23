@@ -15,7 +15,7 @@ namespace TradingPlatform.Database.Services;
 public class HighPerformanceDataService : IDisposable
 {
     private readonly TradingDbContext _context;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     
     // High-performance channels for async data processing
@@ -36,7 +36,7 @@ public class HighPerformanceDataService : IDisposable
     private const int BatchSize = 1000;
     private const int MaxBatchWaitMs = 100; // Maximum wait time before flushing partial batch
     
-    public HighPerformanceDataService(TradingDbContext context, ILogger logger)
+    public HighPerformanceDataService(TradingDbContext context, ITradingLogger logger)
     {
         _context = context;
         _logger = logger;

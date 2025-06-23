@@ -10,13 +10,13 @@ namespace TradingPlatform.StrategyEngine.Strategies;
 /// </summary>
 public class GoldenRulesStrategy : IGoldenRulesStrategy
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly GoldenRule[] _goldenRules;
 
     public string StrategyName => "Golden Rules Strategy";
     public string Description => "Rule-based trading strategy implementing the 12 Golden Rules of Day Trading for disciplined execution";
 
-    public GoldenRulesStrategy(ILogger logger)
+    public GoldenRulesStrategy(ITradingLogger logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _goldenRules = InitializeGoldenRules();
@@ -92,7 +92,7 @@ public class GoldenRulesStrategy : IGoldenRulesStrategy
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error generating Golden Rules signals for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error generating Golden Rules signals for {Symbol}", symbol, ex);
             return Array.Empty<TradingSignal>();
         }
     }
@@ -134,7 +134,7 @@ public class GoldenRulesStrategy : IGoldenRulesStrategy
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error evaluating Golden Rules for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error evaluating Golden Rules for {Symbol}", symbol, ex);
             return new GoldenRulesAssessment(false, 0, _goldenRules.Length, 
                 new[] { "Evaluation Error" }, 0.0m, "Do not trade - evaluation failed");
         }

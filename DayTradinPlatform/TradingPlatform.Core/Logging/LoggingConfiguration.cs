@@ -209,7 +209,7 @@ public enum LogLevel
     Info = 1,
     Warning = 2,
     Error = 3,
-    Critical = 4
+    Critical = 4, Trade = 5, Position = 6, Performance = 7, Health = 8, Risk = 9, DataPipeline = 10, MarketData = 11
 }
 
 /// <summary>

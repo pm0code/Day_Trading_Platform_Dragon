@@ -1,5 +1,8 @@
-// d:\Projects\C#.Net\DayTradingPlatform-P\DayTradinPlatform\ApiRateLimiter.cs
+// File: TradingPlatform.DataIngestion\RateLimiting\ApiRateLimiter.cs
+using System;
 using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.DataIngestion.Interfaces;
@@ -11,46 +14,63 @@ namespace TradingPlatform.DataIngestion.RateLimiting
     public class ApiRateLimiter : IRateLimiter
     {
         private readonly IMemoryCache _cache;
-        private readonly ILogger _logger;
+        private readonly ITradingLogger _logger;
         private readonly ApiConfiguration _config;
         private readonly ConcurrentDictionary<string, DateTime> _lastRequestTimes;
         private readonly ConcurrentDictionary<string, int> _requestCounts;
+        private readonly ConcurrentDictionary<string, RateLimitingStatistics> _statistics;
+        private readonly SemaphoreSlim _semaphore;
+        
+        // Configuration
+        private int _requestsPerMinute = 60;
+        private int _requestsPerDay = 500;
+        private readonly string _defaultProvider = "default";
+        
+        // Events
+        public event EventHandler<RateLimitReachedEventArgs> RateLimitReached;
+        public event EventHandler<RateLimitStatusChangedEventArgs> StatusChanged;
+        public event EventHandler<QuotaThresholdEventArgs> QuotaThresholdReached;
 
-        public ApiRateLimiter(IMemoryCache cache, ILogger logger, ApiConfiguration config)
+        public ApiRateLimiter(IMemoryCache cache, ITradingLogger logger, ApiConfiguration config)
         {
             _cache = cache;
             _logger = logger;
             _config = config;
             _lastRequestTimes = new ConcurrentDictionary<string, DateTime>();
             _requestCounts = new ConcurrentDictionary<string, int>();
+            _statistics = new ConcurrentDictionary<string, RateLimitingStatistics>();
+            _semaphore = new SemaphoreSlim(1, 1);
         }
 
         public async Task<bool> CanMakeRequestAsync(string provider)
         {
-            var cacheKey = $"rate_limit_{provider}";
+            var cacheKey = GetCacheKey(provider);
             var requestCount = _cache.Get<int>(cacheKey);
 
             var limit = provider.ToLower() switch
             {
-                "alphavantage" => _config.AlphaVantage.RequestsPerMinute,
-                "finnhub" => _config.Finnhub.RequestsPerMinute,
+                "alphavantage" => 5, // Free tier: 5 requests per minute
+                "finnhub" => 60, // Free tier: 60 requests per minute
                 _ => 60
             };
-
-            TradingLogOrchestrator.Instance.LogInfo($"Rate limit check for {provider}: {requestCount}/{limit} requests");
 
             return requestCount < limit;
         }
 
         public async Task RecordRequestAsync(string provider)
         {
-            var cacheKey = $"rate_limit_{provider}";
+            var cacheKey = GetCacheKey(provider);
             var currentCount = _cache.Get<int>(cacheKey);
 
             _cache.Set(cacheKey, currentCount + 1, TimeSpan.FromMinutes(1));
             _lastRequestTimes.AddOrUpdate(provider, DateTime.UtcNow, (k, v) => DateTime.UtcNow);
-
-            TradingLogOrchestrator.Instance.LogInfo($"Recorded API request for {provider}. Count: {currentCount + 1}");
+            
+            // Update statistics
+            var stats = GetOrCreateStatistics(provider);
+            stats.TotalRequests++;
+            stats.CurrentRpm = currentCount + 1;
+            
+            await Task.CompletedTask;
         }
 
         public async Task<TimeSpan> GetWaitTimeAsync(string provider)
@@ -59,8 +79,6 @@ namespace TradingPlatform.DataIngestion.RateLimiting
             {
                 var minInterval = provider.ToLower() switch
                 {
-                    "alphavantage" => TimeSpan.FromSeconds(12), // 5 requests per minute
-                    "finnhub" => TimeSpan.FromSeconds(1), // 60 requests per minute
                     _ => TimeSpan.FromSeconds(1)
                 };
 
@@ -73,26 +91,26 @@ namespace TradingPlatform.DataIngestion.RateLimiting
 
         public async Task<int> GetRemainingRequestsAsync(string provider, TimeSpan window)
         {
-            var cacheKey = $"rate_limit_{provider}";
+            var cacheKey = GetCacheKey(provider);
             var currentCount = _cache.Get<int>(cacheKey);
 
             var limit = provider.ToLower() switch
             {
-                "alphavantage" => _config.AlphaVantage.RequestsPerMinute,
-                "finnhub" => _config.Finnhub.RequestsPerMinute,
+                "alphavantage" => 5,
+                "finnhub" => 60,
                 _ => 60
             };
 
-            return Math.Max(0, limit - currentCount);
+            return await Task.FromResult(Math.Max(0, limit - currentCount));
         }
 
         public async Task ResetLimitsAsync(string provider)
         {
-            var cacheKey = $"rate_limit_{provider}";
+            var cacheKey = GetCacheKey(provider);
             _cache.Remove(cacheKey);
             _lastRequestTimes.TryRemove(provider, out _);
-
-            TradingLogOrchestrator.Instance.LogInfo($"Rate limits reset for {provider}");
+            
+            await Task.CompletedTask;
         }
 
         public async Task<bool> IsProviderAvailableAsync(string provider)
@@ -105,41 +123,53 @@ namespace TradingPlatform.DataIngestion.RateLimiting
 
         public async Task WaitForPermitAsync()
         {
-            // Wait until a permit is available
+            await WaitForPermitAsync(_defaultProvider);
+        }
+        
+        public async Task WaitForPermitAsync(string provider)
+        {
+            var stats = GetOrCreateStatistics(provider);
+            var startTime = DateTime.UtcNow;
+            
             while (!TryAcquirePermit())
             {
-                await Task.Delay(100); // Wait 100ms before trying again
+                stats.RateLimitedRequests++;
+                await Task.Delay(100);
             }
+            
+            var delay = (DateTime.UtcNow - startTime).TotalMilliseconds;
+            stats.AverageDelayMs = (stats.AverageDelayMs * (stats.RateLimitedRequests - 1) + delay) / stats.RateLimitedRequests;
+            stats.MaxDelayMs = Math.Max(stats.MaxDelayMs, delay);
         }
 
         public bool TryAcquirePermit()
         {
-            // Use the default provider for generic permit requests
-            return TryAcquirePermit("default");
+            return TryAcquirePermit(_defaultProvider);
         }
-
-        public async Task<bool> TryAcquirePermit(string provider)
+        
+        public bool TryAcquirePermit(string provider)
         {
-            return await CanMakeRequestAsync(provider);
+            return CanMakeRequestAsync(provider).Result;
         }
 
         public void RecordRequest()
         {
-            // Record request for default provider
-            RecordRequestAsync("default").Wait();
+            RecordRequestAsync(_defaultProvider).Wait();
         }
 
         public void RecordFailure(Exception exception)
         {
-            TradingLogOrchestrator.Instance.LogWarning($"API request failed: {exception.Message}");
-            // For now, just log the failure. Could implement backoff logic here.
+            var stats = GetOrCreateStatistics(_defaultProvider);
+            stats.FailedRequests++;
+            
+            _logger.LogError($"Rate limiter recorded failure: {exception.Message}", exception);
         }
 
         public bool IsLimitReached()
         {
-            return IsLimitReached("default");
+            return IsLimitReached(_defaultProvider);
         }
-
+        
         public bool IsLimitReached(string provider)
         {
             return !CanMakeRequestAsync(provider).Result;
@@ -147,23 +177,83 @@ namespace TradingPlatform.DataIngestion.RateLimiting
 
         public int GetRemainingCalls()
         {
-            return GetRemainingCalls("default");
+            return GetRemainingCalls(_defaultProvider);
         }
-
+        
         public int GetRemainingCalls(string provider)
         {
-            return GetRemainingRequestsAsync(provider).Result;
+            return GetRemainingRequestsAsync(provider, TimeSpan.FromMinutes(1)).Result;
         }
-
-        public TimeSpan GetTimeUntilNextPermit()
+        
+        public int GetUsedCalls()
         {
-            return GetRequestWindowAsync("default").Result;
+            var cacheKey = GetCacheKey(_defaultProvider);
+            return _cache.Get<int>(cacheKey);
+        }
+        
+        public int GetMaxCalls()
+        {
+            return _requestsPerMinute;
+        }
+        
+        public DateTime GetResetTime()
+        {
+            // Rate limits reset every minute
+            return DateTime.UtcNow.AddMinutes(1).AddSeconds(-DateTime.UtcNow.Second);
+        }
+        
+        public TimeSpan GetRecommendedDelay()
+        {
+            if (IsLimitReached())
+            {
+                return GetResetTime() - DateTime.UtcNow;
+            }
+            return TimeSpan.Zero;
+        }
+        
+        public void UpdateLimits(int requestsPerMinute, int requestsPerDay = -1)
+        {
+            _requestsPerMinute = requestsPerMinute;
+            if (requestsPerDay > 0)
+            {
+                _requestsPerDay = requestsPerDay;
+            }
+            
+            _logger.LogInfo($"Rate limits updated: {requestsPerMinute}/min, {requestsPerDay}/day");
+        }
+        
+        public void Reset()
+        {
+            _cache.Remove(GetCacheKey(_defaultProvider));
+            _lastRequestTimes.Clear();
+            _requestCounts.Clear();
+            _statistics.Clear();
+            
+            _logger.LogInfo("Rate limiter reset completed");
+        }
+        
+        public RateLimitingStatistics GetStatistics()
+        {
+            return GetOrCreateStatistics(_defaultProvider);
         }
 
         public async Task<TimeSpan> GetRequestWindowAsync(string provider)
         {
             return await GetWaitTimeAsync(provider);
         }
+        
+        // Helper methods
+        private string GetCacheKey(string provider)
+        {
+            return $"rate_limit_{provider}_{DateTime.UtcNow:yyyyMMddHHmm}";
+        }
+        
+        private RateLimitingStatistics GetOrCreateStatistics(string provider)
+        {
+            return _statistics.GetOrAdd(provider, p => new RateLimitingStatistics
+            {
+                StatisticsStartTime = DateTime.UtcNow
+            });
+        }
     }
 }
-// 85 lines

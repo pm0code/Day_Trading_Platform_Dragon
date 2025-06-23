@@ -11,11 +11,11 @@ namespace TradingPlatform.StrategyEngine.Services;
 /// </summary>
 public class StrategyManager : IStrategyManager
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, StrategyInfo> _activeStrategies;
     private readonly ConcurrentDictionary<string, StrategyConfig> _strategyConfigs;
 
-    public StrategyManager(ILogger logger)
+    public StrategyManager(ITradingLogger logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _activeStrategies = new ConcurrentDictionary<string, StrategyInfo>();
@@ -79,7 +79,7 @@ public class StrategyManager : IStrategyManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error starting strategy {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogError("Error starting strategy {StrategyId}", strategyId, ex);
             return new StrategyResult(false, ex.Message, "START_ERROR");
         }
     }
@@ -116,7 +116,7 @@ public class StrategyManager : IStrategyManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error stopping strategy {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogError("Error stopping strategy {StrategyId}", strategyId, ex);
             return new StrategyResult(false, ex.Message, "STOP_ERROR");
         }
     }
@@ -152,7 +152,7 @@ public class StrategyManager : IStrategyManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error updating strategy configuration for {StrategyId}", config.StrategyId);
+            TradingLogOrchestrator.Instance.LogError("Error updating strategy configuration for {StrategyId}", config.StrategyId, ex);
             return new StrategyResult(false, ex.Message, "CONFIG_UPDATE_ERROR");
         }
     }
@@ -193,7 +193,7 @@ public class StrategyManager : IStrategyManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error updating strategy metrics for {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogError("Error updating strategy metrics for {StrategyId}", strategyId, ex);
         }
     }
 
@@ -233,7 +233,7 @@ public class StrategyManager : IStrategyManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error pausing strategy {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogError("Error pausing strategy {StrategyId}", strategyId, ex);
             return new StrategyResult(false, ex.Message, "PAUSE_ERROR");
         }
     }
@@ -265,7 +265,7 @@ public class StrategyManager : IStrategyManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error resuming strategy {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogError("Error resuming strategy {StrategyId}", strategyId, ex);
             return new StrategyResult(false, ex.Message, "RESUME_ERROR");
         }
     }

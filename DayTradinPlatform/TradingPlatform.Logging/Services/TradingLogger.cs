@@ -14,7 +14,7 @@ namespace TradingPlatform.Logging.Services;
 /// This ensures ALL logging throughout the platform goes through the single LogOrchestrator
 /// CRITICAL: Use TradingLogOrchestrator.Instance directly for best performance
 /// </summary>
-public class TradingLogger : ILogger, ITradingLogger
+public class TradingLogger : ITradingOperationsLogger
 {
     private readonly TradingLogOrchestrator _orchestrator;
     private readonly string _serviceName;
@@ -29,7 +29,7 @@ public class TradingLogger : ILogger, ITradingLogger
             new { ServiceName = serviceName, DelegationType = "Canonical" });
     }
 
-    #region ILogger Interface - Delegated to TradingLogOrchestrator
+    #region ITradingLogger Interface - Delegated to TradingLogOrchestrator
 
     public void LogInfo(string message, 
                         object? additionalData = null,
@@ -38,6 +38,15 @@ public class TradingLogger : ILogger, ITradingLogger
                         [CallerLineNumber] int sourceLineNumber = 0)
     {
         _orchestrator.LogInfo(message, additionalData, memberName, sourceFilePath, sourceLineNumber);
+    }
+
+    public void LogDebug(string message, 
+                         object? additionalData = null,
+                         [CallerMemberName] string memberName = "",
+                         [CallerFilePath] string sourceFilePath = "",
+                         [CallerLineNumber] int sourceLineNumber = 0)
+    {
+        _orchestrator.LogDebug(message, additionalData, memberName, sourceFilePath, sourceLineNumber);
     }
 
     public void LogWarning(string message,
@@ -143,32 +152,6 @@ public class TradingLogger : ILogger, ITradingLogger
                               [CallerMemberName] string memberName = "")
     {
         _orchestrator.LogMarketData(symbol, dataType, source, latency, quality, volume, memberName);
-    }
-
-    public void LogMethodEntry(object? parameters = null,
-                               [CallerMemberName] string memberName = "",
-                               [CallerFilePath] string sourceFilePath = "")
-    {
-        _orchestrator.LogMethodEntry(parameters, memberName, sourceFilePath);
-    }
-
-    public void LogMethodExit(object? result = null,
-                              TimeSpan? executionTime = null,
-                              bool success = true,
-                              [CallerMemberName] string memberName = "")
-    {
-        _orchestrator.LogMethodExit(result, executionTime, success, memberName);
-    }
-
-    // Explicit interface implementation for ITradingLogger
-    void ITradingLogger.LogMethodEntry(string methodName, object? parameters, string callerName)
-    {
-        _orchestrator.LogMethodEntry(parameters, methodName, sourceFilePath: string.Empty);
-    }
-
-    void ITradingLogger.LogMethodExit(string methodName, TimeSpan duration, object? result, string callerName)
-    {
-        _orchestrator.LogMethodExit(result, duration, true, methodName);
     }
 
     #endregion
@@ -549,6 +532,30 @@ public class TradingLogger : ILogger, ITradingLogger
         // Correlation ID is handled by the orchestrator
     }
 
+
+    // ITradingLogger.LogMethodEntry implementation
+    public void LogMethodEntry(object? parameters = null, [CallerMemberName] string memberName = "", [CallerFilePath] string sourceFilePath = "")
+    {
+        _orchestrator.LogMethodEntry(parameters, memberName, sourceFilePath);
+    }
+
+    // ITradingLogger.LogMethodEntry implementation
+    public void LogMethodEntry(string methodName, object? parameters = null, [CallerMemberName] string callerName = "")
+    {
+        _orchestrator.LogMethodEntry(parameters, methodName, "");
+    }
+
+    // ITradingLogger.LogMethodExit implementation
+    public void LogMethodExit(object? result = null, TimeSpan? executionTime = null, bool success = true, [CallerMemberName] string memberName = "")
+    {
+        _orchestrator.LogMethodExit(result, executionTime, success, memberName);
+    }
+
+    // ITradingLogger.LogMethodExit implementation
+    public void LogMethodExit(string methodName, TimeSpan duration, object? result = null, [CallerMemberName] string callerName = "")
+    {
+        _orchestrator.LogMethodExit(result, duration, true, methodName);
+    }
     #endregion
 }
 
@@ -557,8 +564,15 @@ public class TradingLogger : ILogger, ITradingLogger
 /// </summary>
 internal class LogScope : IDisposable
 {
+    
+
+
+
+
     public void Dispose()
     {
         // No-op for delegation pattern
     }
 }
+
+

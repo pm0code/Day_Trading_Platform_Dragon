@@ -15,7 +15,7 @@ public class SignalProcessor : ISignalProcessor
     private readonly IGoldenRulesStrategy _goldenRulesStrategy;
     private readonly IMomentumStrategy _momentumStrategy;
     private readonly IGapStrategy _gapStrategy;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, List<TradingSignal>> _recentSignals;
     private readonly Timer _cleanupTimer;
 
@@ -23,7 +23,7 @@ public class SignalProcessor : ISignalProcessor
         IGoldenRulesStrategy goldenRulesStrategy,
         IMomentumStrategy momentumStrategy,
         IGapStrategy gapStrategy,
-        ILogger logger)
+        ITradingLogger logger)
     {
         _goldenRulesStrategy = goldenRulesStrategy ?? throw new ArgumentNullException(nameof(goldenRulesStrategy));
         _momentumStrategy = momentumStrategy ?? throw new ArgumentNullException(nameof(momentumStrategy));
@@ -77,7 +77,7 @@ public class SignalProcessor : ISignalProcessor
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error processing market data for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error processing market data for {Symbol}", symbol, ex);
             return Array.Empty<TradingSignal>();
         }
     }
@@ -121,7 +121,7 @@ public class SignalProcessor : ISignalProcessor
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error processing manual signal for {Symbol}", request.Symbol);
+            TradingLogOrchestrator.Instance.LogError("Error processing manual signal for {Symbol}", request.Symbol, ex);
             return new StrategyResult(false, ex.Message, "MANUAL_SIGNAL_ERROR");
         }
     }
@@ -189,7 +189,7 @@ public class SignalProcessor : ISignalProcessor
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error validating signal for {Symbol}", signal.Symbol);
+            TradingLogOrchestrator.Instance.LogError("Error validating signal for {Symbol}", signal.Symbol, ex);
             return new RiskAssessment(0, 0, 0, 0, 0, false);
         }
     }
@@ -244,7 +244,7 @@ public class SignalProcessor : ISignalProcessor
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error cancelling signals for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error cancelling signals for {Symbol}", symbol, ex);
         }
     }
 
@@ -331,7 +331,7 @@ public class SignalProcessor : ISignalProcessor
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error during signal cleanup");
+            TradingLogOrchestrator.Instance.LogError("Error during signal cleanup", ex);
         }
     }
 }

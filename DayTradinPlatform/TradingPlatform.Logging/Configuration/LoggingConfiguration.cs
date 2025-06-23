@@ -5,6 +5,7 @@ using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
+using TradingPlatform.Core.Logging;
 using TradingPlatform.Logging.Interfaces;
 using TradingPlatform.Logging.Services;
 
@@ -162,7 +163,9 @@ public static class LoggingConfiguration
     public static IServiceCollection AddTradingLogging(this IServiceCollection services, string serviceName)
     {
         // Register core logging services using CANONICAL TradingLogOrchestrator
-        services.AddSingleton<ITradingLogger>(provider => 
+        services.AddSingleton<Core.Interfaces.ITradingLogger>(provider => 
+            TradingLogOrchestrator.Instance);
+        services.AddSingleton<ITradingOperationsLogger>(provider => 
             new TradingLogger(serviceName));
         
         services.AddSingleton<IPerformanceLogger, PerformanceLogger>();

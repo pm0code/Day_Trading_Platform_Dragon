@@ -9,14 +9,14 @@ namespace TradingPlatform.TradingApp.Views.TradingScreens;
 
 public sealed partial class PortfolioRiskScreen : Window
 {
-    private readonly ITradingLogger _logger;
+    private readonly Core.Interfaces.ITradingLogger _logger;
     private readonly IMonitorService _monitorService;
     private readonly TradingScreenType _screenType = TradingScreenType.PortfolioRisk;
     
     public ObservableCollection<PositionData> Positions { get; } = new();
     private readonly DispatcherTimer _updateTimer;
     
-    public PortfolioRiskScreen(ITradingLogger logger, IMonitorService monitorService)
+    public PortfolioRiskScreen(Core.Interfaces.ITradingLogger logger, IMonitorService monitorService)
     {
         _logger = logger;
         _monitorService = monitorService;

@@ -6,10 +6,10 @@ namespace TradingPlatform.PaperTrading.Services;
 
 public class SlippageCalculator : ISlippageCalculator
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly Dictionary<string, decimal> _averageDailyVolumes = new();
 
-    public SlippageCalculator(ILogger logger)
+    public SlippageCalculator(ITradingLogger logger)
     {
         _logger = logger;
         InitializeVolumeData();
@@ -30,7 +30,7 @@ public class SlippageCalculator : ISlippageCalculator
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating slippage");
+            TradingLogOrchestrator.Instance.LogError("Error calculating slippage", ex);
             return 0m;
         }
     }
@@ -58,7 +58,7 @@ public class SlippageCalculator : ISlippageCalculator
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error estimating slippage for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error estimating slippage for {Symbol}", symbol, ex);
             return 0.001m; // Default 10 basis points
         }
     }
@@ -90,7 +90,7 @@ public class SlippageCalculator : ISlippageCalculator
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating market impact for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error calculating market impact for {Symbol}", symbol, ex);
             return 0.001m;
         }
     }

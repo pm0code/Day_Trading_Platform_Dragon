@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using TradingPlatform.Core.Models;
 using TradingPlatform.DataIngestion.Models;
 
 namespace TradingPlatform.DataIngestion.Interfaces
@@ -35,7 +36,7 @@ namespace TradingPlatform.DataIngestion.Interfaces
         /// <param name="to">End timestamp (Unix)</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Raw candle data response</returns>
-        Task<FinnhubApiResponse<FinnhubCandleResponse>> GetCandleRawAsync(string symbol, string resolution, long from, long to, CancellationToken cancellationToken = default);
+        Task<FinnhubApiResponse<TradingPlatform.DataIngestion.Models.FinnhubCandleResponse>> GetCandleRawAsync(string symbol, string resolution, long from, long to, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Makes direct call to Finnhub company profile endpoint (/stock/profile2).
@@ -95,7 +96,7 @@ namespace TradingPlatform.DataIngestion.Interfaces
         /// Gets current rate limit status.
         /// </summary>
         /// <returns>Rate limit information</returns>
-        Task<RateLimitStatus> GetRateLimitStatusAsync();
+        Task<FinnhubRateLimitStatus> GetRateLimitStatusAsync();
     }
 
     // ========== CLIENT RESPONSE TYPES ==========
@@ -147,7 +148,7 @@ namespace TradingPlatform.DataIngestion.Interfaces
     /// <summary>
     /// Rate limit status information.
     /// </summary>
-    public class RateLimitStatus
+    public class FinnhubRateLimitStatus
     {
         public int RequestsRemaining { get; set; }
         public DateTime ResetTime { get; set; }

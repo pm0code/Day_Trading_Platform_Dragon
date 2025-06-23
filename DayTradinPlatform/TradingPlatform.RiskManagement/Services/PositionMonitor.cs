@@ -10,10 +10,10 @@ namespace TradingPlatform.RiskManagement.Services;
 public class PositionMonitor : IPositionMonitor
 {
     private readonly IMessageBus _messageBus;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, Position> _positions = new();
 
-    public PositionMonitor(IMessageBus messageBus, ILogger logger)
+    public PositionMonitor(IMessageBus messageBus, ITradingLogger logger)
     {
         _messageBus = messageBus;
         _logger = logger;
@@ -134,7 +134,7 @@ public class PositionMonitor : IPositionMonitor
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error handling price update");
+            TradingLogOrchestrator.Instance.LogError("Error handling price update", ex);
         }
     }
 
@@ -205,7 +205,7 @@ public class PositionMonitor : IPositionMonitor
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error handling order execution");
+            TradingLogOrchestrator.Instance.LogError("Error handling order execution", ex);
         }
     }
 }

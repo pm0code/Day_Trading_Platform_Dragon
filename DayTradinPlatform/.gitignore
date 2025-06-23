@@ -93,3 +93,10 @@ FodyWeavers.xsd
 # Other files
 *.DS_Store
 Thumbs.db
+
+# Exclude MiscFiles directories
+MiscFiles/
+**/MiscFiles/
+
+# Exclude large zip files
+*.zip

@@ -14,10 +14,10 @@ namespace TradingPlatform.Screening.Services
     /// </summary>
     public class CriteriaConfigurationService
     {
-        private readonly ILogger _logger; // Inject logger
+        private readonly ITradingLogger _logger; // Inject logger
         private readonly Dictionary<string, TradingCriteria> _criteriaConfigs = new();
 
-        public CriteriaConfigurationService(ILogger logger) // Add logger to constructor
+        public CriteriaConfigurationService(ITradingLogger logger) // Add logger to constructor
         {
             _logger = logger;
         }
@@ -68,7 +68,67 @@ namespace TradingPlatform.Screening.Services
             };
         }
 
-        // ... (ValidateCriteria and ListKeys methods remain unchanged)
+        /// <summary>
+        /// Validates trading criteria to ensure they meet standards and are logically consistent.
+        /// </summary>
+        private void ValidateCriteria(TradingCriteria criteria)
+        {
+            if (criteria == null)
+            {
+                throw new ArgumentNullException(nameof(criteria));
+            }
+
+            // Price validation
+            if (criteria.MinimumPrice < 0)
+            {
+                throw new ArgumentException("Minimum price cannot be negative", nameof(criteria));
+            }
+            
+            if (criteria.MaximumPrice > 0 && criteria.MinimumPrice > criteria.MaximumPrice)
+            {
+                throw new ArgumentException("Minimum price cannot exceed maximum price", nameof(criteria));
+            }
+
+            // Volume validation
+            if (criteria.MinimumVolume < 0)
+            {
+                throw new ArgumentException("Minimum volume cannot be negative", nameof(criteria));
+            }
+
+            // Relative volume validation
+            if (criteria.MinimumRelativeVolume < 0)
+            {
+                throw new ArgumentException("Minimum relative volume cannot be negative", nameof(criteria));
+            }
+
+            // ATR validation
+            if (criteria.MinimumATR < 0)
+            {
+                throw new ArgumentException("Minimum ATR cannot be negative", nameof(criteria));
+            }
+
+            // Market cap validation
+            if (criteria.MinimumMarketCap < 0)
+            {
+                throw new ArgumentException("Minimum market cap cannot be negative", nameof(criteria));
+            }
+
+            // Spread validation
+            if (criteria.MaximumSpread < 0)
+            {
+                throw new ArgumentException("Maximum spread cannot be negative", nameof(criteria));
+            }
+
+            TradingLogOrchestrator.Instance.LogInfo($"Criteria validation passed for {criteria.GetType().Name}");
+        }
+
+        /// <summary>
+        /// Lists all configured criteria keys.
+        /// </summary>
+        public List<string> ListKeys()
+        {
+            return _criteriaConfigs.Keys.ToList();
+        }
     }
 }
 // Total Lines: 62

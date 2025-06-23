@@ -10,13 +10,13 @@ namespace TradingPlatform.PaperTrading.Services;
 public class OrderProcessingBackgroundService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly TimeSpan _processingInterval = TimeSpan.FromMilliseconds(10); // 100Hz processing
     private readonly ConcurrentQueue<Order> _orderQueue = new();
 
     public OrderProcessingBackgroundService(
         IServiceProvider serviceProvider,
-        ILogger logger)
+        ITradingLogger logger)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
@@ -53,7 +53,7 @@ public class OrderProcessingBackgroundService : BackgroundService
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, "Error in order processing cycle");
+                TradingLogOrchestrator.Instance.LogError("Error in order processing cycle", ex);
                 await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken); // Brief delay before retry
             }
         }
@@ -83,7 +83,7 @@ public class OrderProcessingBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error processing pending orders");
+            TradingLogOrchestrator.Instance.LogError("Error processing pending orders", ex);
         }
     }
 
@@ -145,7 +145,7 @@ public class OrderProcessingBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error processing order {OrderId}", order.OrderId);
+            TradingLogOrchestrator.Instance.LogError("Error processing order {OrderId}", order.OrderId, ex);
         }
     }
 
@@ -178,7 +178,7 @@ public class OrderProcessingBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error updating market data");
+            TradingLogOrchestrator.Instance.LogError("Error updating market data", ex);
         }
     }
 
@@ -220,7 +220,7 @@ public class OrderProcessingBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error expiring order {OrderId}", order.OrderId);
+            TradingLogOrchestrator.Instance.LogError("Error expiring order {OrderId}", order.OrderId, ex);
         }
     }
 

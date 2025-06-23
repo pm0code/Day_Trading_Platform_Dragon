@@ -10,12 +10,12 @@ namespace TradingPlatform.StrategyEngine.Strategies;
 /// </summary>
 public class MomentumStrategy : IMomentumStrategy
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
 
     public string StrategyName => "Momentum Breakout Strategy";
     public string Description => "Momentum-based trading strategy that identifies breakouts with volume confirmation";
 
-    public MomentumStrategy(ILogger logger)
+    public MomentumStrategy(ITradingLogger logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -69,7 +69,7 @@ public class MomentumStrategy : IMomentumStrategy
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error generating momentum signals for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error generating momentum signals for {Symbol}", symbol, ex);
             return Array.Empty<TradingSignal>();
         }
     }
@@ -115,7 +115,7 @@ public class MomentumStrategy : IMomentumStrategy
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error detecting momentum for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error detecting momentum for {Symbol}", symbol, ex);
             return Array.Empty<MomentumSignal>();
         }
     }
@@ -154,7 +154,7 @@ public class MomentumStrategy : IMomentumStrategy
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating momentum strength for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error calculating momentum strength for {Symbol}", symbol, ex);
             return 0.0m;
         }
     }
@@ -222,7 +222,7 @@ public class MomentumStrategy : IMomentumStrategy
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating sustainability score for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error calculating sustainability score for {Symbol}", symbol, ex);
             return 0.0m;
         }
     }

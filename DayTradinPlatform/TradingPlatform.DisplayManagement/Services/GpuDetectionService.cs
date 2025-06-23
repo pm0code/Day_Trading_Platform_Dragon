@@ -38,12 +38,12 @@ public interface IGpuDetectionService
 /// </summary>
 public class GpuDetectionService : IGpuDetectionService
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly List<GpuInfo> _cachedGpuInfo = new();
     private DateTime _lastCacheUpdate = DateTime.MinValue;
     private readonly TimeSpan _cacheExpiry = TimeSpan.FromMinutes(5);
 
-    public GpuDetectionService(ILogger logger)
+    public GpuDetectionService(ITradingLogger logger)
     {
         _logger = logger;
     }
@@ -95,7 +95,7 @@ public class GpuDetectionService : IGpuDetectionService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to detect GPU information");
+            TradingLogOrchestrator.Instance.LogError("Failed to detect GPU information", ex);
             return new List<GpuInfo>();
         }
     }

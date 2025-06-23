@@ -1,0 +1,1854 @@
+<!DOCTYPE html>
+<html><head>
+<title>Trading Platform Code Quality Report</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 20px; }
+.critical { color: #d32f2f; font-weight: bold; }
+.high { color: #f57c00; }
+.medium { color: #fbc02d; }
+.low { color: #388e3c; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+th { background-color: #f2f2f2; }
+</style>
+</head><body>
+<h1>Code Quality Report</h1>
+<p>Generated: 6/23/2025 11:39:35 AM</p>
+<p>Analysis Time: 15.38 seconds</p>
+<h2>Summary</h2>
+<table>
+<tr><th>Severity</th><th>Count</th></tr>
+<tr><td class='critical'>Critical</td><td>304</td></tr>
+<tr><td class='high'>High</td><td>514</td></tr>
+<tr><td class='medium'>Medium</td><td>264</td></tr>
+<tr><td class='low'>Low</td><td>0</td></tr>
+</table>
+<h2>Critical Issues</h2>
+<table>
+<tr><th>File</th><th>Line</th><th>Issue</th><th>Category</th></tr>
+<tr>
+<td>ApiRateLimiter.cs</td>
+<td>165</td>
+<td>LogError has exception as first parameter - should be (string message, Exception? exception, ...)</td>
+<td>Logging</td>
+</tr>
+<tr>
+<td>ScreeningRequest.cs</td>
+<td>28</td>
+<td>The type or namespace name &#39;ScreeningMode&#39; could not be found (are you missing a using directive or an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ScreeningRequest.cs</td>
+<td>28</td>
+<td>The name &#39;ScreeningMode&#39; does not exist in the current context</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>CriteriaConfigurationService.cs</td>
+<td>30</td>
+<td>The name &#39;ValidateCriteria&#39; does not exist in the current context</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RealTimeScreeningEngine.cs</td>
+<td>58</td>
+<td>&#39;IMarketDataProvider&#39; does not contain a definition for &#39;GetRealTimeDataAsync&#39; and no accessible extension method &#39;GetRealTimeDataAsync&#39; accepting a first argument of type &#39;IMarketDataProvider&#39; could be found (are you missing a using directive or an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataManager.cs</td>
+<td>96</td>
+<td>The name &#39;ex&#39; does not exist in the current context</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderManager.cs</td>
+<td>87</td>
+<td>Argument 1 may not be passed with the &#39;out&#39; keyword</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderManager.cs</td>
+<td>87</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderManager.cs</td>
+<td>95</td>
+<td>Argument 1: cannot convert from &#39;string&#39; to &#39;System.Collections.Generic.KeyValuePair&lt;string, TradingPlatform.FixEngine.Core.Order&gt;&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>FixEngine.cs</td>
+<td>477</td>
+<td>The name &#39;ex&#39; does not exist in the current context</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>57</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>57</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>HealthMonitor.cs</td>
+<td>70</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>HealthMonitor.cs</td>
+<td>70</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GatewayOrchestrator.cs</td>
+<td>82</td>
+<td>Argument 1: cannot convert from &#39;Microsoft.Extensions.Logging.ILogger&lt;TradingPlatform.Core.Models.MarketData&gt;&#39; to &#39;TradingPlatform.Core.Interfaces.ITradingLogger&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>116</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>122</td>
+<td>Argument 3: cannot convert from &#39;int&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>126</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>126</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>162</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>162</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>210</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>210</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>239</td>
+<td>Argument 3: cannot convert from &#39;TradingPlatform.Gateway.Services.ProcessPriorityLevel&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>243</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>243</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GatewayOrchestrator.cs</td>
+<td>193</td>
+<td>Argument 2: cannot convert from &#39;double&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GatewayOrchestrator.cs</td>
+<td>197</td>
+<td>Argument 4: cannot convert from &#39;double&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GatewayOrchestrator.cs</td>
+<td>203</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GatewayOrchestrator.cs</td>
+<td>203</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GatewayOrchestrator.cs</td>
+<td>229</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GatewayOrchestrator.cs</td>
+<td>229</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>275</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>275</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GatewayOrchestrator.cs</td>
+<td>251</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GatewayOrchestrator.cs</td>
+<td>251</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>418</td>
+<td>Argument 1: cannot convert from &#39;System.Exception&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>HealthMonitor.cs</td>
+<td>373</td>
+<td>Argument 2: cannot convert from &#39;TradingPlatform.Gateway.Services.AlertSeverity&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>439</td>
+<td>Argument 1: cannot convert from &#39;System.Exception&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>453</td>
+<td>Argument 1: cannot convert from &#39;System.Exception&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GatewayOrchestrator.cs</td>
+<td>411</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GatewayOrchestrator.cs</td>
+<td>411</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GatewayOrchestrator.cs</td>
+<td>488</td>
+<td>Argument 1: cannot convert from &#39;System.Exception&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GatewayOrchestrator.cs</td>
+<td>513</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GatewayOrchestrator.cs</td>
+<td>513</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>IMarketDataService.cs</td>
+<td>14</td>
+<td>&#39;MarketData&#39; is a namespace but is used like a type</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>IMarketDataService.cs</td>
+<td>86</td>
+<td>&#39;MarketData&#39; is a namespace but is used like a type</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>IMarketDataService.cs</td>
+<td>91</td>
+<td>&#39;MarketData&#39; is a namespace but is used like a type</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>IMarketDataService.cs</td>
+<td>19</td>
+<td>&#39;MarketData&#39; is a namespace but is used like a type</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataCache.cs</td>
+<td>35</td>
+<td>&#39;MarketData&#39; is a namespace but is used like a type</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataCache.cs</td>
+<td>71</td>
+<td>&#39;MarketData&#39; is a namespace but is used like a type</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>49</td>
+<td>&#39;MarketData&#39; is a namespace but is used like a type</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>117</td>
+<td>&#39;MarketData&#39; is a namespace but is used like a type</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataCache.cs</td>
+<td>172</td>
+<td>&#39;MarketData&#39; is a namespace but is used like a type</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataCache.cs</td>
+<td>177</td>
+<td>&#39;MarketData&#39; is a namespace but is used like a type</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>302</td>
+<td>The type or namespace name &#39;MarketDataRequestEvent&#39; could not be found (are you missing a using directive or an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SubscriptionManager.cs</td>
+<td>70</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SubscriptionManager.cs</td>
+<td>70</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataCache.cs</td>
+<td>65</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataCache.cs</td>
+<td>65</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SubscriptionManager.cs</td>
+<td>98</td>
+<td>Argument 3: cannot convert from &#39;System.TimeSpan&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SubscriptionManager.cs</td>
+<td>102</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SubscriptionManager.cs</td>
+<td>102</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>58</td>
+<td>Operator &#39;!=&#39; cannot be applied to operands of type &#39;MarketData?&#39; and &#39;&lt;null&gt;&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>58</td>
+<td>&#39;MarketData?&#39; does not contain a definition for &#39;Timestamp&#39; and no accessible extension method &#39;Timestamp&#39; accepting a first argument of type &#39;MarketData?&#39; could be found (are you missing a using directive or an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>65</td>
+<td>Argument 3: cannot convert from &#39;double&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>76</td>
+<td>Argument 2: cannot convert from &#39;TradingPlatform.Core.Models.MarketData&#39; to &#39;TradingPlatform.MarketData&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>100</td>
+<td>Argument 3: cannot convert from &#39;double&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>112</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>112</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataCache.cs</td>
+<td>89</td>
+<td>Argument 3: cannot convert from &#39;double&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataCache.cs</td>
+<td>93</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataCache.cs</td>
+<td>93</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataCache.cs</td>
+<td>111</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataCache.cs</td>
+<td>111</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>120</td>
+<td>&#39;MarketData&#39; is a namespace but is used like a type</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>135</td>
+<td>Operator &#39;!=&#39; cannot be applied to operands of type &#39;MarketData?&#39; and &#39;&lt;null&gt;&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>143</td>
+<td>Argument 3: cannot convert from &#39;double&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>162</td>
+<td>There is no argument given that corresponds to the required parameter &#39;endDate&#39; of &#39;IDataIngestionService.GetHistoricalDataAsync(string, DateTime, DateTime)&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>166</td>
+<td>Argument 4: cannot convert from &#39;double&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>173</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>173</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>185</td>
+<td>The type or namespace name &#39;MarketDataRequestEvent&#39; could not be found (are you missing a using directive or an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>274</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>274</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MarketDataService.cs</td>
+<td>320</td>
+<td>&#39;MarketDataEvent&#39; does not contain a definition for &#39;RequestId&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>Program.cs</td>
+<td>95</td>
+<td>Operator &#39;!=&#39; cannot be applied to operands of type &#39;MarketData?&#39; and &#39;&lt;null&gt;&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GapStrategy.cs</td>
+<td>57</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GapStrategy.cs</td>
+<td>57</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PerformanceTracker.cs</td>
+<td>67</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PerformanceTracker.cs</td>
+<td>67</td>
+<td>Argument 4: cannot convert from &#39;bool&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PerformanceTracker.cs</td>
+<td>73</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PerformanceTracker.cs</td>
+<td>73</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>46</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>46</td>
+<td>Argument 4: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>46</td>
+<td>Argument 5: cannot convert from &#39;decimal&#39; to &#39;int&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>74</td>
+<td>Argument 4: cannot convert from &#39;int&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>80</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>80</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MomentumStrategy.cs</td>
+<td>72</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MomentumStrategy.cs</td>
+<td>72</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyManager.cs</td>
+<td>82</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyManager.cs</td>
+<td>82</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GoldenRulesStrategy.cs</td>
+<td>37</td>
+<td>Argument 3: cannot convert from &#39;bool&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GoldenRulesStrategy.cs</td>
+<td>37</td>
+<td>Argument 4: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GoldenRulesStrategy.cs</td>
+<td>95</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GoldenRulesStrategy.cs</td>
+<td>95</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>90</td>
+<td>Argument 3: cannot convert from &#39;int&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>90</td>
+<td>Argument 5: cannot convert from &#39;decimal&#39; to &#39;int&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>124</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>124</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GapStrategy.cs</td>
+<td>96</td>
+<td>Argument 4: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GapStrategy.cs</td>
+<td>96</td>
+<td>Argument 5: cannot convert from &#39;bool&#39; to &#39;int&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GapStrategy.cs</td>
+<td>103</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GapStrategy.cs</td>
+<td>103</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyManager.cs</td>
+<td>119</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyManager.cs</td>
+<td>119</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MomentumStrategy.cs</td>
+<td>111</td>
+<td>Argument 3: cannot convert from &#39;TradingPlatform.StrategyEngine.Models.TrendDirection&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MomentumStrategy.cs</td>
+<td>111</td>
+<td>Argument 4: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MomentumStrategy.cs</td>
+<td>111</td>
+<td>Argument 5: cannot convert from &#39;decimal&#39; to &#39;int&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MomentumStrategy.cs</td>
+<td>118</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MomentumStrategy.cs</td>
+<td>118</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyManager.cs</td>
+<td>155</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyManager.cs</td>
+<td>155</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GapStrategy.cs</td>
+<td>148</td>
+<td>No overload for method &#39;LogInfo&#39; takes 6 arguments</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GapStrategy.cs</td>
+<td>155</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GapStrategy.cs</td>
+<td>155</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyManager.cs</td>
+<td>189</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyManager.cs</td>
+<td>189</td>
+<td>Argument 4: cannot convert from &#39;int&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyManager.cs</td>
+<td>196</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyManager.cs</td>
+<td>196</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyExecutionService.cs</td>
+<td>189</td>
+<td>Argument 2: cannot convert from &#39;double&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyExecutionService.cs</td>
+<td>193</td>
+<td>Argument 3: cannot convert from &#39;double&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GoldenRulesStrategy.cs</td>
+<td>137</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GoldenRulesStrategy.cs</td>
+<td>137</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MomentumStrategy.cs</td>
+<td>150</td>
+<td>No overload for method &#39;LogInfo&#39; takes 6 arguments</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MomentumStrategy.cs</td>
+<td>157</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MomentumStrategy.cs</td>
+<td>157</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>184</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>184</td>
+<td>Argument 5: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>192</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>192</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyManager.cs</td>
+<td>236</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyManager.cs</td>
+<td>236</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PerformanceTracker.cs</td>
+<td>129</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PerformanceTracker.cs</td>
+<td>129</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyManager.cs</td>
+<td>268</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>StrategyManager.cs</td>
+<td>268</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MomentumStrategy.cs</td>
+<td>225</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MomentumStrategy.cs</td>
+<td>225</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GapStrategy.cs</td>
+<td>292</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GapStrategy.cs</td>
+<td>292</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>247</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SignalProcessor.cs</td>
+<td>247</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PerformanceTracker.cs</td>
+<td>238</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PerformanceTracker.cs</td>
+<td>238</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ComplianceMonitor.cs</td>
+<td>40</td>
+<td>Argument 3: cannot convert from &#39;int&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskCalculator.cs</td>
+<td>26</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskMonitoringBackgroundService.cs</td>
+<td>79</td>
+<td>Argument 2: cannot convert from &#39;TradingPlatform.RiskManagement.Models.RiskLevel&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskMonitoringBackgroundService.cs</td>
+<td>79</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskMonitoringBackgroundService.cs</td>
+<td>99</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskAlertService.cs</td>
+<td>42</td>
+<td>Argument 2: cannot convert from &#39;TradingPlatform.RiskManagement.Models.RiskAlertType&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskCalculator.cs</td>
+<td>44</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PositionMonitor.cs</td>
+<td>66</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PositionMonitor.cs</td>
+<td>66</td>
+<td>Argument 4: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PositionMonitor.cs</td>
+<td>66</td>
+<td>Argument 5: cannot convert from &#39;decimal&#39; to &#39;int&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskManagementService.cs</td>
+<td>65</td>
+<td>Argument 3: cannot convert from &#39;TradingPlatform.RiskManagement.Models.RiskLevel&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskMonitoringBackgroundService.cs</td>
+<td>117</td>
+<td>Argument 2: cannot convert from &#39;int&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskMonitoringBackgroundService.cs</td>
+<td>121</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskMonitoringBackgroundService.cs</td>
+<td>129</td>
+<td>Argument 2: cannot convert from &#39;int&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskMonitoringBackgroundService.cs</td>
+<td>135</td>
+<td>&#39;ITradingLogger&#39; does not contain a definition for &#39;LogCritical&#39; and the best extension method overload &#39;LoggerExtensions.LogCritical(ILogger, string?, params object?[])&#39; requires a receiver of type &#39;Microsoft.Extensions.Logging.ILogger&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskManagementService.cs</td>
+<td>108</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ComplianceMonitor.cs</td>
+<td>163</td>
+<td>Argument 4: cannot convert from &#39;int&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PositionMonitor.cs</td>
+<td>97</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskManagementService.cs</td>
+<td>159</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskManagementService.cs</td>
+<td>159</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PositionMonitor.cs</td>
+<td>110</td>
+<td>Argument 2: cannot convert from &#39;int&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskCalculator.cs</td>
+<td>98</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskCalculator.cs</td>
+<td>98</td>
+<td>Argument 4: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskMonitoringBackgroundService.cs</td>
+<td>155</td>
+<td>&#39;ITradingLogger&#39; does not contain a definition for &#39;LogCritical&#39; and the best extension method overload &#39;LoggerExtensions.LogCritical(ILogger, EventId, string?, params object?[])&#39; requires a receiver of type &#39;Microsoft.Extensions.Logging.ILogger&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskCalculator.cs</td>
+<td>136</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskCalculator.cs</td>
+<td>136</td>
+<td>Argument 4: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskAlertService.cs</td>
+<td>157</td>
+<td>&#39;ITradingLogger&#39; does not contain a definition for &#39;LogCritical&#39; and the best extension method overload &#39;LoggerExtensions.LogCritical(ILogger, EventId, Exception?, string?, params object?[])&#39; requires a receiver of type &#39;Microsoft.Extensions.Logging.ILogger&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskAlertService.cs</td>
+<td>162</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>RiskAlertService.cs</td>
+<td>162</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PositionMonitor.cs</td>
+<td>203</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PositionMonitor.cs</td>
+<td>203</td>
+<td>Argument 4: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderBookSimulator.cs</td>
+<td>42</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderBookSimulator.cs</td>
+<td>42</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderExecutionEngine.cs</td>
+<td>65</td>
+<td>No overload for method &#39;LogInfo&#39; takes 6 arguments</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderExecutionEngine.cs</td>
+<td>72</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderExecutionEngine.cs</td>
+<td>72</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SlippageCalculator.cs</td>
+<td>55</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SlippageCalculator.cs</td>
+<td>55</td>
+<td>Argument 4: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SlippageCalculator.cs</td>
+<td>61</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SlippageCalculator.cs</td>
+<td>61</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderExecutionEngine.cs</td>
+<td>93</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderExecutionEngine.cs</td>
+<td>93</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderBookSimulator.cs</td>
+<td>68</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderBookSimulator.cs</td>
+<td>68</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PaperTradingService.cs</td>
+<td>97</td>
+<td>Argument 4: cannot convert from &#39;double&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PaperTradingService.cs</td>
+<td>103</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PaperTradingService.cs</td>
+<td>103</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PortfolioManager.cs</td>
+<td>78</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PortfolioManager.cs</td>
+<td>78</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SlippageCalculator.cs</td>
+<td>87</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SlippageCalculator.cs</td>
+<td>87</td>
+<td>Argument 4: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SlippageCalculator.cs</td>
+<td>87</td>
+<td>Argument 5: cannot convert from &#39;decimal&#39; to &#39;int&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SlippageCalculator.cs</td>
+<td>93</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SlippageCalculator.cs</td>
+<td>93</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderExecutionEngine.cs</td>
+<td>108</td>
+<td>The type or namespace name &#39;Common&#39; does not exist in the namespace &#39;TradingPlatform&#39; (are you missing an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderExecutionEngine.cs</td>
+<td>124</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderExecutionEngine.cs</td>
+<td>124</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PortfolioManager.cs</td>
+<td>105</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PortfolioManager.cs</td>
+<td>105</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderProcessingBackgroundService.cs</td>
+<td>144</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderProcessingBackgroundService.cs</td>
+<td>144</td>
+<td>Argument 4: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderProcessingBackgroundService.cs</td>
+<td>144</td>
+<td>Argument 5: cannot convert from &#39;string&#39; to &#39;int&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderProcessingBackgroundService.cs</td>
+<td>148</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderProcessingBackgroundService.cs</td>
+<td>148</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderExecutionEngine.cs</td>
+<td>145</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderExecutionEngine.cs</td>
+<td>145</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PaperTradingService.cs</td>
+<td>166</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PaperTradingService.cs</td>
+<td>166</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderBookSimulator.cs</td>
+<td>106</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderBookSimulator.cs</td>
+<td>106</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderBookSimulator.cs</td>
+<td>126</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderBookSimulator.cs</td>
+<td>126</td>
+<td>Argument 4: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderBookSimulator.cs</td>
+<td>132</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderBookSimulator.cs</td>
+<td>132</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PaperTradingService.cs</td>
+<td>204</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PaperTradingService.cs</td>
+<td>204</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderProcessingBackgroundService.cs</td>
+<td>223</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>OrderProcessingBackgroundService.cs</td>
+<td>223</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PortfolioManager.cs</td>
+<td>141</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PortfolioManager.cs</td>
+<td>141</td>
+<td>Argument 4: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PortfolioManager.cs</td>
+<td>211</td>
+<td>Argument 3: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PortfolioManager.cs</td>
+<td>211</td>
+<td>Argument 4: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PortfolioManager.cs</td>
+<td>211</td>
+<td>Argument 5: cannot convert from &#39;decimal&#39; to &#39;int&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PortfolioManager.cs</td>
+<td>218</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PortfolioManager.cs</td>
+<td>218</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PortfolioManager.cs</td>
+<td>258</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>PortfolioManager.cs</td>
+<td>258</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ExecutionAnalytics.cs</td>
+<td>141</td>
+<td>Argument 4: cannot convert from &#39;decimal&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ExecutionAnalytics.cs</td>
+<td>141</td>
+<td>Argument 5: cannot convert from &#39;decimal&#39; to &#39;int&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ExecutionAnalytics.cs</td>
+<td>147</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ExecutionAnalytics.cs</td>
+<td>147</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ExecutionAnalytics.cs</td>
+<td>233</td>
+<td>The type or namespace name &#39;Common&#39; does not exist in the namespace &#39;TradingPlatform&#39; (are you missing an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ExecutionAnalytics.cs</td>
+<td>240</td>
+<td>The type or namespace name &#39;Common&#39; does not exist in the namespace &#39;TradingPlatform&#39; (are you missing an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>13</td>
+<td>&#39;ProcessManager&#39; does not implement interface member &#39;IProcessManager.GetTradingProcessesAsync()&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>13</td>
+<td>&#39;ProcessManager&#39; does not implement interface member &#39;IProcessManager.StartProcessWithOptimizationAsync(string, ProcessPriorityConfiguration)&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>13</td>
+<td>&#39;ProcessManager&#39; does not implement interface member &#39;IProcessManager.KillProcessGracefullyAsync(string, TimeSpan)&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>13</td>
+<td>&#39;ProcessManager&#39; does not implement interface member &#39;IProcessManager.RestartProcessWithOptimizationAsync(string, ProcessPriorityConfiguration)&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>ProcessManager.cs</td>
+<td>13</td>
+<td>&#39;ProcessManager&#39; does not implement interface member &#39;IProcessManager.MonitorProcessesAsync(string[])&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>87</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>87</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>105</td>
+<td>Argument 2: cannot convert from &#39;int&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>110</td>
+<td>Argument 3: cannot convert from &#39;System.Diagnostics.ProcessPriorityClass&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>115</td>
+<td>Argument 2: cannot convert from &#39;int&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>115</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>144</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>144</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SystemMonitor.cs</td>
+<td>103</td>
+<td>No overload for method &#39;LogInfo&#39; takes 7 arguments</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>161</td>
+<td>Argument 2: cannot convert from &#39;int&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>171</td>
+<td>Argument 2: cannot convert from &#39;int&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>171</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>247</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>247</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>276</td>
+<td>Argument 2: cannot convert from &#39;int&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>276</td>
+<td>Argument 3: cannot convert from &#39;System.Exception&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>WindowsOptimizationService.cs</td>
+<td>365</td>
+<td>Argument 2: cannot convert from &#39;int&#39; to &#39;string?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SystemMonitor.cs</td>
+<td>297</td>
+<td>Argument 1: cannot convert from &#39;System.Exception&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SystemMonitor.cs</td>
+<td>310</td>
+<td>Argument 1: cannot convert from &#39;System.Exception&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SystemMonitor.cs</td>
+<td>352</td>
+<td>Argument 1: cannot convert from &#39;System.Exception&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SystemMonitor.cs</td>
+<td>381</td>
+<td>Argument 1: cannot convert from &#39;System.Exception&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SystemMonitor.cs</td>
+<td>434</td>
+<td>Argument 3: cannot convert from &#39;bool&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SystemMonitor.cs</td>
+<td>440</td>
+<td>Argument 1: cannot convert from &#39;System.Exception&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SystemMonitor.cs</td>
+<td>478</td>
+<td>Argument 3: cannot convert from &#39;int&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SystemMonitor.cs</td>
+<td>478</td>
+<td>Argument 4: cannot convert from &#39;double&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SystemMonitor.cs</td>
+<td>484</td>
+<td>Argument 1: cannot convert from &#39;System.Exception&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SystemMonitor.cs</td>
+<td>523</td>
+<td>Argument 3: cannot convert from &#39;bool&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>SystemMonitor.cs</td>
+<td>528</td>
+<td>Argument 1: cannot convert from &#39;System.Exception&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MockMessageBus.cs</td>
+<td>42</td>
+<td>&#39;ITradingLogger&#39; does not contain a definition for &#39;LogDebug&#39; and no accessible extension method &#39;LogDebug&#39; accepting a first argument of type &#39;ITradingLogger&#39; could be found (are you missing a using directive or an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MockMessageBus.cs</td>
+<td>51</td>
+<td>&#39;ITradingLogger&#39; does not contain a definition for &#39;LogDebug&#39; and no accessible extension method &#39;LogDebug&#39; accepting a first argument of type &#39;ITradingLogger&#39; could be found (are you missing a using directive or an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MockMessageBus.cs</td>
+<td>61</td>
+<td>&#39;ITradingLogger&#39; does not contain a definition for &#39;LogDebug&#39; and no accessible extension method &#39;LogDebug&#39; accepting a first argument of type &#39;ITradingLogger&#39; could be found (are you missing a using directive or an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MockMessageBus.cs</td>
+<td>75</td>
+<td>&#39;ITradingLogger&#39; does not contain a definition for &#39;LogDebug&#39; and no accessible extension method &#39;LogDebug&#39; accepting a first argument of type &#39;ITradingLogger&#39; could be found (are you missing a using directive or an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MockMessageBus.cs</td>
+<td>94</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MockMessageBus.cs</td>
+<td>132</td>
+<td>&#39;ITradingLogger&#39; does not contain a definition for &#39;LogDebug&#39; and no accessible extension method &#39;LogDebug&#39; accepting a first argument of type &#39;ITradingLogger&#39; could be found (are you missing a using directive or an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MockMessageBus.cs</td>
+<td>150</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MockMessageBus.cs</td>
+<td>178</td>
+<td>&#39;ITradingLogger&#39; does not contain a definition for &#39;LogDebug&#39; and no accessible extension method &#39;LogDebug&#39; accepting a first argument of type &#39;ITradingLogger&#39; could be found (are you missing a using directive or an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MockMessageBus.cs</td>
+<td>190</td>
+<td>Argument 2: cannot convert from &#39;string&#39; to &#39;System.Exception?&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MockMessageBus.cs</td>
+<td>201</td>
+<td>&#39;ITradingLogger&#39; does not contain a definition for &#39;LogDebug&#39; and no accessible extension method &#39;LogDebug&#39; accepting a first argument of type &#39;ITradingLogger&#39; could be found (are you missing a using directive or an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MockMessageBus.cs</td>
+<td>351</td>
+<td>&#39;ITradingLogger&#39; does not contain a definition for &#39;LogDebug&#39; and no accessible extension method &#39;LogDebug&#39; accepting a first argument of type &#39;ITradingLogger&#39; could be found (are you missing a using directive or an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MockMessageBus.cs</td>
+<td>365</td>
+<td>&#39;ITradingLogger&#39; does not contain a definition for &#39;LogDebug&#39; and no accessible extension method &#39;LogDebug&#39; accepting a first argument of type &#39;ITradingLogger&#39; could be found (are you missing a using directive or an assembly reference?)</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GpuDetectionService.cs</td>
+<td>82</td>
+<td>Argument 3: cannot convert from &#39;int&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GpuDetectionService.cs</td>
+<td>82</td>
+<td>Argument 4: cannot convert from &#39;double&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GpuDetectionService.cs</td>
+<td>87</td>
+<td>Argument 1: cannot convert from &#39;System.Exception&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>MonitorDetectionService.cs</td>
+<td>129</td>
+<td>No overload for method &#39;LogInfo&#39; takes 7 arguments</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GpuDetectionService.cs</td>
+<td>128</td>
+<td>Argument 3: cannot convert from &#39;int&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>DisplaySessionService.cs</td>
+<td>320</td>
+<td>Argument 1: cannot convert from &#39;System.Exception&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>DisplaySessionService.cs</td>
+<td>378</td>
+<td>Argument 1: cannot convert from &#39;System.Exception&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>DisplaySessionService.cs</td>
+<td>612</td>
+<td>Argument 3: cannot convert from &#39;TradingPlatform.DisplayManagement.Models.DisplaySessionType&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GpuDetectionService.cs</td>
+<td>211</td>
+<td>Argument 3: cannot convert from &#39;bool&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+<tr>
+<td>GpuDetectionService.cs</td>
+<td>250</td>
+<td>Argument 1: cannot convert from &#39;System.Exception&#39; to &#39;string&#39;</td>
+<td>Compiler</td>
+</tr>
+</table>
+</body></html>

@@ -17,7 +17,7 @@ namespace TradingPlatform.DataIngestion.Providers
     {
         private readonly IAlphaVantageProvider _alphaVantageProvider;
         private readonly IFinnhubProvider _finnhubProvider;
-        private readonly ILogger _logger;
+        private readonly ITradingLogger _logger;
         private readonly IMemoryCache _cache;
         private readonly DataIngestionConfig _config;
         private readonly Dictionary<string, DateTime> _providerFailures;
@@ -31,7 +31,7 @@ namespace TradingPlatform.DataIngestion.Providers
         public MarketDataAggregator(
             IAlphaVantageProvider alphaVantageProvider,
             IFinnhubProvider finnhubProvider,
-            ILogger logger,
+            ITradingLogger logger,
             IMemoryCache cache,
             DataIngestionConfig config)
         {
@@ -72,7 +72,9 @@ namespace TradingPlatform.DataIngestion.Providers
                         result = MapAlphaVantageQuote(alphaQuote);
                         break;
                     case FinnhubQuoteResponse finnhubQuote:
-                        result = MapFinnhubQuote(finnhubQuote);
+                        // FinnhubQuoteResponse doesn't include symbol, so we can't map it directly
+                        TradingLogOrchestrator.Instance.LogWarning($"FinnhubQuoteResponse aggregation requires symbol context");
+                        result = null;
                         break;
                     default:
                         TradingLogOrchestrator.Instance.LogError($"Unknown data type from {providerName}: {typeof(T).Name}");
@@ -94,7 +96,7 @@ namespace TradingPlatform.DataIngestion.Providers
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, $"Error aggregating data from {providerName}");
+                TradingLogOrchestrator.Instance.LogError($"Error aggregating data from {providerName}", ex);
                 await RecordProviderFailureAsync(providerName, ex);
                 _statistics.FailedAggregations++;
                 return null;
@@ -282,7 +284,7 @@ namespace TradingPlatform.DataIngestion.Providers
             if (marketData == null)
                 return null;
 
-            return new MarketData(_logger as CoreLogger)
+            return new MarketData(_logger)
             {
                 Symbol = marketData.Symbol,
                 Price = Math.Round(marketData.Price, 4),
@@ -367,6 +369,20 @@ namespace TradingPlatform.DataIngestion.Providers
             return healthStatus;
         }
 
+        // ========== INTERFACE IMPLEMENTATION METHODS ==========
+        
+        public async Task<MarketData> GetMarketDataAsync(string symbol)
+        {
+            // Use the existing GetRealTimeDataAsync implementation
+            return await GetRealTimeDataAsync(symbol);
+        }
+        
+        public async Task<List<MarketData>> GetBatchMarketDataAsync(List<string> symbols)
+        {
+            // Use the existing GetMultipleQuotesAsync implementation
+            return await GetMultipleQuotesAsync(symbols);
+        }
+        
         // ========== LEGACY COMPATIBILITY METHODS ==========
 
         public async Task<MarketData?> GetRealTimeDataAsync(string symbol)
@@ -374,7 +390,7 @@ namespace TradingPlatform.DataIngestion.Providers
             TradingLogOrchestrator.Instance.LogInfo($"Getting real-time data for {symbol}");
 
             var primaryData = await TryGetDataFromProvider("AlphaVantage",
-                async () => await _alphaVantageProvider.GetQuoteAsync(symbol));
+                async () => await _alphaVantageProvider.GetGlobalQuoteAsync(symbol));
 
             if (primaryData != null)
             {
@@ -407,12 +423,27 @@ namespace TradingPlatform.DataIngestion.Providers
             var alphaVantageSymbols = symbols.Take(GetAlphaVantageQuota()).ToList();
             if (alphaVantageSymbols.Any())
             {
-                var alphaVantageResults = await TryGetBatchDataFromProvider("AlphaVantage", async () => await _alphaVantageProvider.GetBatchQuotesAsync(alphaVantageSymbols));
-
-                if (alphaVantageResults?.Any() == true)
+                // AlphaVantage doesn't support batch in the interface, process individually
+                foreach (var symbol in alphaVantageSymbols)
                 {
-                    results.AddRange(alphaVantageResults);
-                    TradingLogOrchestrator.Instance.LogInfo($"Retrieved {alphaVantageResults.Count} quotes from AlphaVantage");
+                    try
+                    {
+                        var data = await TryGetDataFromProvider("AlphaVantage", 
+                            async () => await _alphaVantageProvider.GetGlobalQuoteAsync(symbol));
+                        if (data != null)
+                        {
+                            results.Add(data);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        TradingLogOrchestrator.Instance.LogError($"Error fetching AlphaVantage data for {symbol}", ex);
+                    }
+                }
+                
+                if (results.Any())
+                {
+                    TradingLogOrchestrator.Instance.LogInfo($"Retrieved {results.Count} quotes from AlphaVantage");
                 }
             }
 
@@ -454,7 +485,7 @@ namespace TradingPlatform.DataIngestion.Providers
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, $"Error retrieving data from {providerName}");
+                TradingLogOrchestrator.Instance.LogError($"Error retrieving data from {providerName}", ex);
                 await RecordProviderFailureAsync(providerName, ex);
                 return null;
             }
@@ -483,7 +514,7 @@ namespace TradingPlatform.DataIngestion.Providers
         {
             try
             {
-                return new MarketData(_logger as CoreLogger)
+                return new MarketData(_logger)
                 {
                     Symbol = quote.Symbol,
                     Price = decimal.Parse(quote.Price),
@@ -499,18 +530,18 @@ namespace TradingPlatform.DataIngestion.Providers
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, $"Error mapping AlphaVantage quote for {quote?.Symbol}");
+                TradingLogOrchestrator.Instance.LogError($"Error mapping AlphaVantage quote for {quote?.Symbol}", ex);
                 return null;
             }
         }
 
-        private MarketData? MapFinnhubQuote(FinnhubQuoteResponse quote)
+        private MarketData? MapFinnhubQuote(string symbol, FinnhubQuoteResponse quote)
         {
             try
             {
-                return new MarketData(_logger as CoreLogger)
+                return new MarketData(_logger)
                 {
-                    Symbol = quote.Symbol,
+                    Symbol = symbol,
                     Price = quote.Current,
                     Open = quote.Open,
                     High = quote.High,
@@ -523,7 +554,7 @@ namespace TradingPlatform.DataIngestion.Providers
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, $"Error mapping Finnhub quote for {quote?.Symbol}");
+                TradingLogOrchestrator.Instance.LogError($"Error mapping Finnhub quote for {symbol}", ex);
                 return null;
             }
         }

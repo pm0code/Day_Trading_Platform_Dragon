@@ -12,9 +12,9 @@ namespace TradingPlatform.Screening.Criteria
     /// </summary>
     public class GapCriteria
     {
-        private readonly ILogger _logger;
+        private readonly ITradingLogger _logger;
 
-        public GapCriteria(ILogger logger)
+        public GapCriteria(ITradingLogger logger)
         {
             _logger = logger;
         }
@@ -59,7 +59,7 @@ namespace TradingPlatform.Screening.Criteria
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, $"Error evaluating gap criteria for {marketData.Symbol}");
+                TradingLogOrchestrator.Instance.LogError($"Error evaluating gap criteria for {marketData.Symbol}", ex);
                 result.Passed = false;
                 result.Score = 0m;
                 result.Reason = $"Evaluation error: {ex.Message}";

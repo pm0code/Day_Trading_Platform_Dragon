@@ -248,42 +248,28 @@ public static class MethodInstrumentationInterceptor
 
     private static bool ShouldInstrument(MethodInstrumentationInfo methodInfo)
     {
-        var config = TradingLogOrchestrator.Instance.GetConfiguration();
-        
+        // Since GetConfiguration doesn't exist, default to instrumenting all
         // Check global instrumentation level
         if (methodInfo.Attribute?.Level == InstrumentationLevel.None)
             return false;
 
-        // Check configuration scope
-        return config.Scope switch
-        {
-            LoggingScope.Critical => methodInfo.Attribute?.IsTradingCritical == true || 
-                                   methodInfo.Attribute?.Level >= InstrumentationLevel.Comprehensive,
-            LoggingScope.ProjectSpecific => IsEnabledProject(methodInfo.SourceFilePath),
-            LoggingScope.All => true,
-            _ => false
-        };
+        // Default to instrumenting all methods
+        return true;
     }
 
     private static bool IsEnabledProject(string sourceFilePath)
     {
-        var config = TradingLogOrchestrator.Instance.GetConfiguration();
-        return config.EnabledProjects.Any(p => sourceFilePath.Contains(p, StringComparison.OrdinalIgnoreCase));
+        // Default to enabling all projects
+        return true;
     }
 
     private static void LogMethodEntry(MethodExecutionContext context, object?[]? parameters)
     {
-        var tradingContext = CreateTradingContext(context);
-        var performanceContext = CreatePerformanceContext(context, 0);
-
+        // LogMethodEntry only accepts parameters, memberName, and sourceFilePath
         _logger.LogMethodEntry(
-            $"Entering {context.MethodName}",
+            parameters,
             context.MethodName,
-            context.SourceFilePath,
-            context.SourceLineNumber,
-            tradingContext,
-            performanceContext,
-            parameters
+            context.SourceFilePath
         );
     }
 
@@ -298,37 +284,45 @@ public static class MethodInstrumentationInterceptor
             _logger.LogError(
                 $"Method {context.MethodName} failed after {executionMicroseconds}μs",
                 exception,
-                context.MethodName,
-                "Method execution failed",
-                "Check method implementation and input parameters",
+                context.MethodName, // operationContext
+                "Method execution failed", // userImpact
+                "Check method implementation and input parameters", // troubleshootingHints
                 new { 
                     ExecutionTime = $"{executionMicroseconds}μs",
                     CorrelationId = context.CorrelationId,
                     ReturnValue = returnValue
-                },
-                context.SourceFilePath,
-                context.SourceLineNumber,
-                tradingContext,
-                performanceContext
+                }, // additionalData
+                context.MethodName, // memberName
+                context.SourceFilePath, // sourceFilePath
+                context.SourceLineNumber // sourceLineNumber
             );
         }
         else
         {
-            var level = isPerformanceViolation ? LogLevel.Warning : LogLevel.Debug;
-            var message = isPerformanceViolation 
-                ? $"Method {context.MethodName} exceeded performance threshold: {executionMicroseconds}μs"
-                : $"Exiting {context.MethodName} after {executionMicroseconds}μs";
-
+            // LogMethodExit only accepts result, executionTime, success, and memberName
+            var executionTime = TimeSpan.FromTicks(executionMicroseconds * 10); // Convert microseconds to TimeSpan
             _logger.LogMethodExit(
-                message,
-                context.MethodName,
-                context.SourceFilePath,
-                context.SourceLineNumber,
-                tradingContext,
-                performanceContext,
                 returnValue,
-                level
+                executionTime,
+                true, // success
+                context.MethodName
             );
+            
+            // Log performance warning separately if needed
+            if (isPerformanceViolation)
+            {
+                _logger.LogWarning(
+                    $"Method {context.MethodName} exceeded performance threshold: {executionMicroseconds}μs",
+                    "Performance degradation detected", // impact
+                    "Review method implementation for optimization opportunities", // recommendedAction
+                    new { 
+                        Method = context.MethodName,
+                        ExecutionMicroseconds = executionMicroseconds,
+                        Threshold = context.InstrumentationInfo.Attribute?.ExpectedMaxExecutionMicroseconds ?? 1000
+                    }, // additionalData
+                    context.MethodName // memberName (CallerMemberName)
+                );
+            }
         }
     }
 
@@ -337,13 +331,10 @@ public static class MethodInstrumentationInterceptor
         var attr = context.InstrumentationInfo.Attribute as TradingOperationAttribute;
         if (attr == null) return;
 
-        _logger.LogTrade(
-            $"Trading operation: {context.MethodName}",
-            attr.Category.ToString(),
-            exception?.Message ?? "Success",
-            null, // symbol
-            null, // quantity
-            null, // price
+        // LogTrade expects: symbol, action, quantity, price, orderId, strategy, executionTime, marketConditions, riskMetrics, memberName
+        // Since we don't have real trade data, we'll log it as Info with trade context
+        _logger.LogInfo(
+            $"Trading operation: {context.MethodName} | Category: {attr.Category} | Status: {(exception == null ? "Success" : "Failed")} | Execution: {executionMicroseconds}μs",
             new
             {
                 OperationCategory = attr.Category,
@@ -353,8 +344,10 @@ public static class MethodInstrumentationInterceptor
                 BusinessImpact = attr.BusinessImpact,
                 ExecutionTime = $"{executionMicroseconds}μs",
                 CorrelationId = context.CorrelationId,
-                Status = exception == null ? "Success" : "Failed"
+                Status = exception == null ? "Success" : "Failed",
+                Exception = exception?.Message
             },
+            context.MethodName,
             context.SourceFilePath,
             context.SourceLineNumber
         );

@@ -186,7 +186,7 @@ namespace TradingPlatform.DataIngestion.Models
                 }
             }
 
-            return result.OrderBy(x => x.Date).ToList();
+            return result.OrderBy(x => x.Item1).ToList();
         }
 
         /// <summary>

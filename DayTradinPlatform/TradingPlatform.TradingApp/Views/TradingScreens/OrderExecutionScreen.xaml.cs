@@ -9,14 +9,14 @@ namespace TradingPlatform.TradingApp.Views.TradingScreens;
 
 public sealed partial class OrderExecutionScreen : Window
 {
-    private readonly ITradingLogger _logger;
+    private readonly Core.Interfaces.ITradingLogger _logger;
     private readonly IMonitorService _monitorService;
     private readonly TradingScreenType _screenType = TradingScreenType.OrderExecution;
     
     public ObservableCollection<MarketDepthLevel> BidLevels { get; } = new();
     public ObservableCollection<MarketDepthLevel> AskLevels { get; } = new();
     
-    public OrderExecutionScreen(ITradingLogger logger, IMonitorService monitorService)
+    public OrderExecutionScreen(Core.Interfaces.ITradingLogger logger, IMonitorService monitorService)
     {
         _logger = logger;
         _monitorService = monitorService;

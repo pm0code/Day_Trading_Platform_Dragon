@@ -14,7 +14,7 @@ public class PaperTradingService : IPaperTradingService
     private readonly IOrderBookSimulator _orderBookSimulator;
     private readonly IExecutionAnalytics _analytics;
     private readonly IMessageBus _messageBus;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, Order> _orders = new();
     private readonly ConcurrentQueue<Order> _pendingOrders = new();
 
@@ -24,7 +24,7 @@ public class PaperTradingService : IPaperTradingService
         IOrderBookSimulator orderBookSimulator,
         IExecutionAnalytics analytics,
         IMessageBus messageBus,
-        ILogger logger)
+        ITradingLogger logger)
     {
         _executionEngine = executionEngine;
         _portfolioManager = portfolioManager;
@@ -100,7 +100,7 @@ public class PaperTradingService : IPaperTradingService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error submitting order for {Symbol}", orderRequest.Symbol);
+            TradingLogOrchestrator.Instance.LogError("Error submitting order for {Symbol}", orderRequest.Symbol, ex);
             return new OrderResult(false, null, $"Internal error: {ex.Message}", OrderStatus.Rejected, DateTime.UtcNow);
         }
     }
@@ -163,7 +163,7 @@ public class PaperTradingService : IPaperTradingService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error cancelling order {OrderId}", orderId);
+            TradingLogOrchestrator.Instance.LogError("Error cancelling order {OrderId}", orderId, ex);
             return new OrderResult(false, orderId, $"Error cancelling order: {ex.Message}", OrderStatus.Rejected, DateTime.UtcNow);
         }
     }
@@ -201,7 +201,7 @@ public class PaperTradingService : IPaperTradingService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error modifying order {OrderId}", orderId);
+            TradingLogOrchestrator.Instance.LogError("Error modifying order {OrderId}", orderId, ex);
             return Task.FromResult(new OrderResult(false, orderId, $"Error modifying order: {ex.Message}", OrderStatus.Rejected, DateTime.UtcNow));
         }
     }

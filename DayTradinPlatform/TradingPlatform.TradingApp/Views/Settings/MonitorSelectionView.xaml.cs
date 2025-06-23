@@ -18,7 +18,7 @@ namespace TradingPlatform.TradingApp.Views.Settings;
 /// </summary>
 public sealed partial class MonitorSelectionView : UserControl
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly IGpuDetectionService _gpuDetectionService;
     private readonly IMonitorDetectionService _monitorDetectionService;
     
@@ -33,7 +33,7 @@ public sealed partial class MonitorSelectionView : UserControl
         
         // Get services from DI container (assuming they're registered)
         var serviceProvider = App.Current.Services;
-        _logger = serviceProvider.GetRequiredService<ILogger>();
+        _logger = serviceProvider.GetRequiredService<ITradingLogger>();
         _gpuDetectionService = serviceProvider.GetRequiredService<IGpuDetectionService>();
         _monitorDetectionService = serviceProvider.GetRequiredService<IMonitorDetectionService>();
         
@@ -57,7 +57,7 @@ public sealed partial class MonitorSelectionView : UserControl
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to initialize monitor selection interface");
+            TradingLogOrchestrator.Instance.LogError("Failed to initialize monitor selection interface", ex);
             ShowErrorMessage("Failed to initialize monitor detection. Please check your system configuration.");
         }
     }
@@ -438,7 +438,7 @@ public sealed partial class MonitorSelectionView : UserControl
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to refresh GPU detection");
+            TradingLogOrchestrator.Instance.LogError("Failed to refresh GPU detection", ex);
             ShowErrorMessage("Failed to refresh GPU information.");
         }
     }
@@ -465,7 +465,7 @@ public sealed partial class MonitorSelectionView : UserControl
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to save monitor configuration");
+            TradingLogOrchestrator.Instance.LogError("Failed to save monitor configuration", ex);
             ShowErrorMessage("Failed to save configuration.");
         }
     }
@@ -486,7 +486,7 @@ public sealed partial class MonitorSelectionView : UserControl
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to test monitor configuration");
+            TradingLogOrchestrator.Instance.LogError("Failed to test monitor configuration", ex);
             ShowErrorMessage("Failed to test configuration.");
         }
     }
@@ -511,7 +511,7 @@ public sealed partial class MonitorSelectionView : UserControl
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to reset configuration");
+            TradingLogOrchestrator.Instance.LogError("Failed to reset configuration", ex);
             ShowErrorMessage("Failed to reset configuration.");
         }
     }

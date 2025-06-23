@@ -13,7 +13,7 @@ namespace TradingPlatform.Testing.Mocks;
 /// </summary>
 public class MockMessageBus : IMessageBus
 {
-    private readonly ILogger? _logger;
+    private readonly ITradingLogger? _logger;
     private readonly ConcurrentDictionary<string, List<PublishedMessage>> _publishedMessages = new();
     private readonly ConcurrentDictionary<string, List<SubscriptionInfo>> _subscriptions = new();
     private readonly ConcurrentQueue<string> _acknowledgments = new();
@@ -26,7 +26,7 @@ public class MockMessageBus : IMessageBus
     private bool _captureMessages = true;
     private int _maxCapturedMessages = 10000;
 
-    public MockMessageBus(ILogger? logger = null)
+    public MockMessageBus(ITradingLogger? logger = null)
     {
         _logger = logger;
     }

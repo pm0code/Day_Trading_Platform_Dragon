@@ -18,12 +18,12 @@ namespace TradingPlatform.Logging.Services;
 public class PerformanceLogger : IPerformanceLogger
 {
     private readonly TradingLogOrchestrator _orchestrator;
-    private readonly ILogger _logger;
+    private readonly Core.Interfaces.ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, List<double>> _latencyHistograms = new();
     private readonly ConcurrentDictionary<string, PerformanceCounters> _performanceCounters = new();
     private readonly Timer _reportingTimer;
 
-    public PerformanceLogger(ITradingLogger tradingLogger, ILogger logger)
+    public PerformanceLogger(Core.Interfaces.ITradingLogger logger)
     {
         _orchestrator = TradingLogOrchestrator.Instance;
         _logger = logger;

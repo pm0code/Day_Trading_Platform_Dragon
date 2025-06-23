@@ -10,7 +10,7 @@ namespace TradingPlatform.TradingApp.Views.TradingScreens;
 
 public sealed partial class MarketScannerScreen : Window
 {
-    private readonly ITradingLogger _logger;
+    private readonly Core.Interfaces.ITradingLogger _logger;
     private readonly IMonitorService _monitorService;
     private readonly TradingScreenType _screenType = TradingScreenType.MarketScanner;
     
@@ -19,7 +19,7 @@ public sealed partial class MarketScannerScreen : Window
     private readonly DispatcherTimer _scanTimer;
     private readonly DispatcherTimer _newsTimer;
     
-    public MarketScannerScreen(ITradingLogger logger, IMonitorService monitorService)
+    public MarketScannerScreen(Core.Interfaces.ITradingLogger logger, IMonitorService monitorService)
     {
         _logger = logger;
         _monitorService = monitorService;

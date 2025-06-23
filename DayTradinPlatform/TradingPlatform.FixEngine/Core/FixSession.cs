@@ -16,7 +16,7 @@ public sealed class FixSession : IDisposable
 {
     private readonly string _senderCompId;
     private readonly string _targetCompId;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private readonly ConcurrentDictionary<int, TaskCompletionSource<FixMessage>> _pendingRequests = new();
     
@@ -55,7 +55,7 @@ public sealed class FixSession : IDisposable
     public string TargetCompId => _targetCompId;
     public int HeartbeatInterval { get; set; } = 30; // seconds
     
-    public FixSession(string senderCompId, string targetCompId, ILogger logger)
+    public FixSession(string senderCompId, string targetCompId, ITradingLogger logger)
     {
         _senderCompId = senderCompId;
         _targetCompId = targetCompId;

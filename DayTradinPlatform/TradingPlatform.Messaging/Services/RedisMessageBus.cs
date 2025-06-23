@@ -18,12 +18,12 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
 {
     private readonly IConnectionMultiplexer _redis;
     private readonly IDatabase _database;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly SemaphoreSlim _connectionSemaphore;
     private volatile bool _disposed;
 
-    public RedisMessageBus(IConnectionMultiplexer redis, ILogger logger)
+    public RedisMessageBus(IConnectionMultiplexer redis, ITradingLogger logger)
     {
         _redis = redis ?? throw new ArgumentNullException(nameof(redis));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -71,23 +71,23 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
             // Performance monitoring - log if exceeding sub-millisecond target
             if (stopwatch.ElapsedTicks > TimeSpan.TicksPerMillisecond)
             {
-                TradingLogOrchestrator.Instance.LogWarning("Publish latency exceeded 1ms: {ElapsedMs}ms for stream {Stream}", 
-                    stopwatch.Elapsed.TotalMilliseconds, stream);
+                TradingLogOrchestrator.Instance.LogWarning($"Publish latency exceeded 1ms: {stopwatch.Elapsed.TotalMilliseconds}ms for stream {stream}", 
+                    impact: "Performance degradation",
+                    recommendedAction: "Consider scaling or optimizing");
             }
 
-            TradingLogOrchestrator.Instance.LogInfo("Published message {MessageId} to stream {Stream} in {ElapsedMicroseconds}μs", 
-                messageId, stream, stopwatch.Elapsed.TotalMicroseconds);
+            TradingLogOrchestrator.Instance.LogInfo($"Published message {messageId} to stream {stream} in {stopwatch.Elapsed.TotalMicroseconds}μs");
 
             return messageId.ToString();
         }
         catch (RedisException ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Redis error publishing to stream {Stream}", stream);
+            TradingLogOrchestrator.Instance.LogError("Redis error publishing to stream {Stream}", ex, "Redis publish", null, null, new { Stream = stream });
             throw;
         }
         catch (JsonException ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "JSON serialization error for stream {Stream}", stream);
+            TradingLogOrchestrator.Instance.LogError("JSON serialization error for stream {Stream}", ex, "JSON serialization", null, null, new { Stream = stream });
             throw;
         }
     }
@@ -157,15 +157,15 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
                 }
                 catch (RedisException ex)
                 {
-                    TradingLogOrchestrator.Instance.LogError(ex, "Redis error reading from stream {Stream}", stream);
+                    TradingLogOrchestrator.Instance.LogError("Redis error reading from stream {Stream}", ex, "Redis read", null, null, new { Stream = stream });
                     await Task.Delay(1000, cancellationToken); // Backoff on errors
                 }
             }
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Subscription error for stream {Stream}, consumer {ConsumerName}", 
-                stream, consumerName);
+            TradingLogOrchestrator.Instance.LogError("Subscription error for stream {Stream}, consumer {ConsumerName}", ex, 
+                "Redis subscription", null, null, new { Stream = stream, ConsumerName = consumerName });
             throw;
         }
     }
@@ -196,19 +196,18 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
             await AcknowledgeAsync(stream, consumerGroup, messageId.ToString());
 
             processingStopwatch.Stop();
-            TradingLogOrchestrator.Instance.LogInfo("Processed message {MessageId} in {ElapsedMicroseconds}μs", 
-                messageId, processingStopwatch.Elapsed.TotalMicroseconds);
+            TradingLogOrchestrator.Instance.LogInfo($"Processed message {messageId} in {processingStopwatch.Elapsed.TotalMicroseconds}μs");
         }
         catch (JsonException ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "JSON deserialization error for message {MessageId} from stream {Stream}", 
-                messageId, stream);
+            TradingLogOrchestrator.Instance.LogError("JSON deserialization error for message {MessageId} from stream {Stream}", ex, 
+                "JSON deserialization", null, null, new { MessageId = messageId, Stream = stream });
             // Don't acknowledge - message will be retried
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error processing message {MessageId} from stream {Stream}", 
-                messageId, stream);
+            TradingLogOrchestrator.Instance.LogError("Error processing message {MessageId} from stream {Stream}", ex, 
+                "Message processing", null, null, new { MessageId = messageId, Stream = stream });
             // Don't acknowledge - message will be retried
         }
     }
@@ -232,7 +231,7 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
         }
         catch (RedisException ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Redis error acknowledging message {MessageId}", messageId);
+            TradingLogOrchestrator.Instance.LogError("Redis error acknowledging message {MessageId}", ex, "Redis acknowledge", null, null, new { MessageId = messageId });
             throw;
         }
     }
@@ -254,7 +253,7 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
         }
         catch (RedisException ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Redis latency check failed");
+            TradingLogOrchestrator.Instance.LogError("Redis latency check failed", ex);
             throw;
         }
     }
@@ -281,14 +280,13 @@ public sealed class RedisMessageBus : IMessageBus, IDisposable
             // Consider healthy if latency is reasonable (< 10ms)
             var isHealthy = latency.TotalMilliseconds < 10;
             
-            TradingLogOrchestrator.Instance.LogInfo("Health check completed: {IsHealthy}, latency: {LatencyMs}ms", 
-                isHealthy, latency.TotalMilliseconds);
+            TradingLogOrchestrator.Instance.LogInfo($"Health check completed: {isHealthy}, latency: {latency.TotalMilliseconds}ms");
 
             return isHealthy;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Health check failed");
+            TradingLogOrchestrator.Instance.LogError("Health check failed", ex);
             return false;
         }
     }

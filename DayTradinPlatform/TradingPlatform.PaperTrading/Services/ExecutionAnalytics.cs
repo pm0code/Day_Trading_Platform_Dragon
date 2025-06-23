@@ -7,11 +7,11 @@ namespace TradingPlatform.PaperTrading.Services;
 
 public class ExecutionAnalytics : IExecutionAnalytics
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ConcurrentQueue<Execution> _executions = new();
     private readonly ConcurrentDictionary<string, List<Execution>> _executionsBySymbol = new();
 
-    public ExecutionAnalytics(ILogger logger)
+    public ExecutionAnalytics(ITradingLogger logger)
     {
         _logger = logger;
     }
@@ -64,7 +64,7 @@ public class ExecutionAnalytics : IExecutionAnalytics
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating performance metrics");
+            TradingLogOrchestrator.Instance.LogError("Error calculating performance metrics", ex);
             return CreateEmptyPerformanceMetrics();
         }
     }
@@ -103,7 +103,7 @@ public class ExecutionAnalytics : IExecutionAnalytics
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating execution analytics");
+            TradingLogOrchestrator.Instance.LogError("Error calculating execution analytics", ex);
             return CreateEmptyExecutionAnalytics();
         }
     }
@@ -144,7 +144,7 @@ public class ExecutionAnalytics : IExecutionAnalytics
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error recording execution {ExecutionId}", execution.ExecutionId);
+            TradingLogOrchestrator.Instance.LogError("Error recording execution {ExecutionId}", execution.ExecutionId, ex);
         }
     }
 

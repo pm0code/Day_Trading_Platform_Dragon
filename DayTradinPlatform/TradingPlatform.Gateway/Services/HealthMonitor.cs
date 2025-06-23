@@ -13,13 +13,13 @@ public class HealthMonitor : IHealthMonitor
 {
     private readonly IMessageBus _messageBus;
     private readonly IProcessManager _processManager;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly Dictionary<string, Func<Task<HealthCheckResult>>> _healthChecks;
     private readonly List<SystemAlert> _activeAlerts;
     private readonly object _alertLock = new();
     private readonly Timer _monitoringTimer;
 
-    public HealthMonitor(IMessageBus messageBus, IProcessManager processManager, ILogger logger)
+    public HealthMonitor(IMessageBus messageBus, IProcessManager processManager, ITradingLogger logger)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _processManager = processManager ?? throw new ArgumentNullException(nameof(processManager));
@@ -67,7 +67,7 @@ public class HealthMonitor : IHealthMonitor
                 }
                 catch (Exception ex)
                 {
-                    TradingLogOrchestrator.Instance.LogError(ex, "Health check failed for {HealthCheckName}", name);
+                    TradingLogOrchestrator.Instance.LogError("Health check failed for {HealthCheckName}", name, ex);
                     serviceHealth[name] = false;
                     overallHealthy = false;
                 }
@@ -82,7 +82,7 @@ public class HealthMonitor : IHealthMonitor
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error performing health check");
+            TradingLogOrchestrator.Instance.LogError("Error performing health check", ex);
             stopwatch.Stop();
             
             return new HealthStatus(false, "Error", stopwatch.Elapsed, serviceHealth, 
@@ -142,7 +142,7 @@ public class HealthMonitor : IHealthMonitor
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error getting detailed health information");
+            TradingLogOrchestrator.Instance.LogError("Error getting detailed health information", ex);
         }
 
         return healthInfos.ToArray();
@@ -170,7 +170,7 @@ public class HealthMonitor : IHealthMonitor
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error checking critical systems health");
+            TradingLogOrchestrator.Instance.LogError("Error checking critical systems health", ex);
             return false;
         }
     }
@@ -199,7 +199,7 @@ public class HealthMonitor : IHealthMonitor
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error getting trading health metrics");
+            TradingLogOrchestrator.Instance.LogError("Error getting trading health metrics", ex);
             throw;
         }
     }
@@ -228,7 +228,7 @@ public class HealthMonitor : IHealthMonitor
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error in health monitoring loop");
+            TradingLogOrchestrator.Instance.LogError("Error in health monitoring loop", ex);
         }
     }
 
@@ -339,7 +339,7 @@ public class HealthMonitor : IHealthMonitor
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error performing periodic health checks");
+            TradingLogOrchestrator.Instance.LogError("Error performing periodic health checks", ex);
         }
     }
 

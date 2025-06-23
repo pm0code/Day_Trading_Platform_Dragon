@@ -13,12 +13,12 @@ namespace TradingPlatform.MarketData.Services;
 public class SubscriptionManager : ISubscriptionManager
 {
     private readonly IMessageBus _messageBus;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, SubscriptionInfo> _activeSubscriptions;
     private readonly Timer _heartbeatTimer;
     private readonly CancellationTokenSource _cancellationTokenSource;
 
-    public SubscriptionManager(IMessageBus messageBus, ILogger logger)
+    public SubscriptionManager(IMessageBus messageBus, ITradingLogger logger)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -67,7 +67,7 @@ public class SubscriptionManager : ISubscriptionManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error subscribing to {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error subscribing to {Symbol}", symbol, ex);
             throw;
         }
     }
@@ -99,7 +99,7 @@ public class SubscriptionManager : ISubscriptionManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error unsubscribing from {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error unsubscribing from {Symbol}", symbol, ex);
             throw;
         }
     }
@@ -170,7 +170,7 @@ public class SubscriptionManager : ISubscriptionManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error cleaning up stale subscriptions");
+            TradingLogOrchestrator.Instance.LogError("Error cleaning up stale subscriptions", ex);
         }
     }
 
@@ -235,7 +235,7 @@ public class SubscriptionManager : ISubscriptionManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error sending subscription heartbeat");
+            TradingLogOrchestrator.Instance.LogError("Error sending subscription heartbeat", ex);
         }
     }
 

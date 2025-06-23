@@ -22,7 +22,7 @@ namespace TradingPlatform.Core.Logging;
 /// EVERYTHING logged to /logs directory with comprehensive debugging information
 /// ZERO Microsoft dependencies - Complete custom implementation optimized for <100μs
 /// </summary>
-public sealed class TradingLogOrchestrator : ILogger, IDisposable
+public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
 {
     #region Configuration Constants
     
@@ -120,7 +120,7 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
         });
     }
 
-    #region Enhanced ILogger Interface Implementation - NON-BLOCKING
+    #region Enhanced ITradingLogger Interface Implementation - NON-BLOCKING
     
     /// <summary>
     /// NON-BLOCKING informational logging with automatic method context
@@ -132,6 +132,18 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
                         [CallerLineNumber] int sourceLineNumber = 0)
     {
         EnqueueLogEntry(LogLevel.Info, message, null, memberName, sourceFilePath, sourceLineNumber, additionalData);
+    }
+    
+    /// <summary>
+    /// NON-BLOCKING debug logging for development and troubleshooting
+    /// </summary>
+    public void LogDebug(string message, 
+                        object? additionalData = null,
+                        [CallerMemberName] string memberName = "",
+                        [CallerFilePath] string sourceFilePath = "",
+                        [CallerLineNumber] int sourceLineNumber = 0)
+    {
+        EnqueueLogEntry(LogLevel.Debug, message, null, memberName, sourceFilePath, sourceLineNumber, additionalData);
     }
     
     /// <summary>
@@ -223,7 +235,7 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
                      $"Execution: {executionTime?.TotalMicroseconds}μs ({performanceStatus}) | " +
                      $"Notional: ${quantity * price:F2} | Correlation: {correlationId}";
 
-        EnqueueLogEntry(LogLevel.Info, message, null, memberName, "", 0, tradeData);
+        EnqueueLogEntry(LogLevel.Trade, message, null, memberName, "", 0, tradeData);
         
         // NON-BLOCKING performance tracking
         if (executionTime.HasValue)
@@ -262,7 +274,7 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
         var message = $"POSITION CHANGE: {symbol} {oldPosition} → {newPosition} (Δ{positionChange}) | " +
                      $"Reason: {reason} | P&L Impact: ${pnlImpact:F2} | Correlation: {correlationId}";
 
-        EnqueueLogEntry(LogLevel.Info, message, null, memberName, "", 0, positionData);
+        EnqueueLogEntry(LogLevel.Position, message, null, memberName, "", 0, positionData);
     }
 
     /// <summary>
@@ -303,7 +315,7 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
                      $"Success: {success} | Target: {percentOfTarget}" +
                      (throughput.HasValue ? $" | Throughput: {throughput}/sec" : "");
 
-        EnqueueLogEntry(LogLevel.Debug, message, null, memberName, "", 0, performanceData);
+        EnqueueLogEntry(LogLevel.Performance, message, null, memberName, "", 0, performanceData);
         
         TrackPerformanceAsync(operation, duration.TotalMicroseconds, "microseconds");
     }
@@ -340,7 +352,7 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
                      (alerts?.Any() == true ? $" | Alerts: [{string.Join(", ", alerts)}]" : "") +
                      (recommendedActions?.Any() == true ? $" | Actions: [{string.Join(", ", recommendedActions)}]" : "");
 
-        EnqueueLogEntry(LogLevel.Info, message, null, memberName, "", 0, healthData);
+        EnqueueLogEntry(LogLevel.Health, message, null, memberName, "", 0, healthData);
     }
     
     /// <summary>
@@ -385,7 +397,7 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
                      (mitigationActions?.Any() == true ? $" | Mitigations: [{string.Join(", ", mitigationActions)}]" : "") +
                      $" | Regulatory: {regulatoryImplications}";
 
-        EnqueueLogEntry(LogLevel.Warning, message, null, memberName, "", 0, riskData);
+        EnqueueLogEntry(LogLevel.Risk, message, null, memberName, "", 0, riskData);
     }
     
     /// <summary>
@@ -415,7 +427,7 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
         var message = $"DATA PIPELINE: {pipelineIcon} {pipeline} [{stage}] processed {recordsProcessed} records" +
                      (errors?.Any() == true ? $" | Errors({errors.Length}): [{string.Join(", ", errors)}]" : "");
 
-        EnqueueLogEntry(LogLevel.Info, message, null, memberName, "", 0, pipelineData);
+        EnqueueLogEntry(LogLevel.DataPipeline, message, null, memberName, "", 0, pipelineData);
     }
     
     /// <summary>
@@ -452,7 +464,7 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
                      $"Quality: {qualityIcon} {quality}" +
                      (latency.HasValue ? $" | Latency: {latency.Value.TotalMicroseconds}μs" : "");
 
-        EnqueueLogEntry(LogLevel.Info, message, null, memberName, "", 0, marketDataObject);
+        EnqueueLogEntry(LogLevel.MarketData, message, null, memberName, "", 0, marketDataObject);
     }
     
     /// <summary>
@@ -583,6 +595,24 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
         };
 
         EnqueueLogEntry(LogLevel.Error, $"💥 EXCEPTION: {exception.GetType().Name} in {callerName}:{lineNumber} [T{Environment.CurrentManagedThreadId}] - {exception.Message}", exception, callerName, "", lineNumber, exceptionData);
+    }
+
+    /// <summary>
+    /// NON-BLOCKING stack trace logging for debugging
+    /// </summary>
+    public void LogStackTrace(string reason, [CallerMemberName] string callerName = "")
+    {
+        var stackTrace = Environment.StackTrace;
+        var stackData = new
+        {
+            Reason = reason,
+            CallerName = callerName,
+            StackTrace = stackTrace,
+            ThreadId = Environment.CurrentManagedThreadId,
+            Timestamp = DateTime.UtcNow
+        };
+        
+        EnqueueLogEntry(LogLevel.Debug, $"📚 STACK TRACE: {reason} requested by {callerName} [T{Environment.CurrentManagedThreadId}]", null, callerName, "", 0, stackData);
     }
 
     #endregion
@@ -739,12 +769,12 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
         // Multiple specialized log files for different purposes
         var logFiles = new Dictionary<string, List<LogEntry>>
         {
-            [$"trading-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Info || e.Level == LogLevel.Info).ToList(),
-            [$"performance-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Debug).ToList(),
+            [$"trading-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Trade || e.Level == LogLevel.Position).ToList(),
+            [$"performance-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Performance).ToList(),
             [$"errors-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Error || e.Level == LogLevel.Critical).ToList(),
             [$"debug-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Debug).ToList(),
-            [$"risk-compliance-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Warning).ToList(),
-            [$"market-data-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Info).ToList(),
+            [$"risk-compliance-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.Risk).ToList(),
+            [$"market-data-{date:yyyy-MM-dd}.log"] = entries.Where(e => e.Level == LogLevel.MarketData).ToList(),
             [$"comprehensive-{date:yyyy-MM-dd}.log"] = entries // All logs for complete audit trail
         };
 
@@ -804,24 +834,24 @@ public sealed class TradingLogOrchestrator : ILogger, IDisposable
         // Core log line with all essential information
         sb.Append($"[{entry.Timestamp:yyyy-MM-dd HH:mm:ss.fff}] ");
         sb.Append($"[{entry.Level.ToString().ToUpper()}] ");
-        sb.Append($"[{entry.Source.Service}] ");
-        sb.Append($"[{entry.Source.MethodName ?? "Unknown"}");
+        sb.Append($"[{entry.Source?.Service}] ");
+        sb.Append($"[{entry.Source?.MethodName}");
         
-        if (!string.IsNullOrEmpty(entry.Source.FilePath))
-            sb.Append($":{Path.GetFileName(entry.Source.FilePath)}");
+        if (!string.IsNullOrEmpty(entry.Source?.FilePath))
+            sb.Append($":{entry.Source?.FilePath}");
             
-        if (entry.Source.LineNumber > 0)
-            sb.Append($":{entry.Source.LineNumber}");
+        if (entry.Source?.LineNumber > 0)
+            sb.Append($":{entry.Source?.LineNumber}");
             
         sb.Append("] ");
-        sb.Append($"[T{entry.Thread.ThreadId}] ");
+        sb.Append($"[T{entry.Thread?.ThreadId}] ");
         sb.Append($"[{entry.CorrelationId}] ");
         sb.AppendLine(entry.Message);
 
         // Exception details if present
         if (entry.Exception != null)
         {
-            sb.AppendLine($"    EXCEPTION: {entry.Exception.Type}: {entry.Exception.Message}");
+            sb.AppendLine($"    EXCEPTION: {entry.Exception.GetType().Name}: {entry.Exception.Message}");
             if (!string.IsNullOrEmpty(entry.Exception.StackTrace))
             {
                 sb.AppendLine($"    STACK TRACE: {entry.Exception.StackTrace}");

@@ -8,12 +8,12 @@ public class OrderExecutionEngine : IOrderExecutionEngine
 {
     private readonly IOrderBookSimulator _orderBookSimulator;
     private readonly ISlippageCalculator _slippageCalculator;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
 
     public OrderExecutionEngine(
         IOrderBookSimulator orderBookSimulator,
         ISlippageCalculator slippageCalculator,
-        ILogger logger)
+        ITradingLogger logger)
     {
         _orderBookSimulator = orderBookSimulator;
         _slippageCalculator = slippageCalculator;
@@ -69,7 +69,7 @@ public class OrderExecutionEngine : IOrderExecutionEngine
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error executing order {OrderId}", order.OrderId);
+            TradingLogOrchestrator.Instance.LogError("Error executing order {OrderId}", order.OrderId, ex);
             return null;
         }
     }
@@ -90,7 +90,7 @@ public class OrderExecutionEngine : IOrderExecutionEngine
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating execution price for order {OrderId}", order.OrderId);
+            TradingLogOrchestrator.Instance.LogError("Error calculating execution price for order {OrderId}", order.OrderId, ex);
             throw;
         }
     }
@@ -121,7 +121,7 @@ public class OrderExecutionEngine : IOrderExecutionEngine
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating market impact for order {OrderId}", order.OrderId);
+            TradingLogOrchestrator.Instance.LogError("Error calculating market impact for order {OrderId}", order.OrderId, ex);
             throw;
         }
     }
@@ -142,7 +142,7 @@ public class OrderExecutionEngine : IOrderExecutionEngine
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error checking execution conditions for order {OrderId}", order.OrderId);
+            TradingLogOrchestrator.Instance.LogError("Error checking execution conditions for order {OrderId}", order.OrderId, ex);
             return false;
         }
     }

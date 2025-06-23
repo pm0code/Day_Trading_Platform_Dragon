@@ -11,7 +11,7 @@ namespace TradingPlatform.WindowsOptimization.Services;
 
 public class WindowsOptimizationService : IWindowsOptimizationService
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ProcessPriorityConfiguration _config;
 
     [DllImport("kernel32.dll", SetLastError = true)]
@@ -53,7 +53,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
     private const uint ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000;
 
     public WindowsOptimizationService(
-        ILogger logger,
+        ITradingLogger logger,
         IOptions<ProcessPriorityConfiguration> config)
     {
         _logger = logger;
@@ -84,7 +84,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to set process priority for {ProcessName}", processName);
+            TradingLogOrchestrator.Instance.LogError("Failed to set process priority for {ProcessName}", processName, ex);
             return false;
         }
     }
@@ -112,7 +112,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to set process priority for process {ProcessId}", processId);
+            TradingLogOrchestrator.Instance.LogError("Failed to set process priority for process {ProcessId}", processId, ex);
             return false;
         }
     }
@@ -141,7 +141,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to set CPU affinity for {ProcessName}", processName);
+            TradingLogOrchestrator.Instance.LogError("Failed to set CPU affinity for {ProcessName}", processName, ex);
             return false;
         }
     }
@@ -168,7 +168,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to set CPU affinity for process {ProcessId}", processId);
+            TradingLogOrchestrator.Instance.LogError("Failed to set CPU affinity for process {ProcessId}", processId, ex);
             return false;
         }
     }
@@ -225,7 +225,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to optimize current process");
+            TradingLogOrchestrator.Instance.LogError("Failed to optimize current process", ex);
             return false;
         }
     }
@@ -244,7 +244,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to get process metrics for {ProcessName}", processName);
+            TradingLogOrchestrator.Instance.LogError("Failed to get process metrics for {ProcessName}", processName, ex);
             throw;
         }
     }
@@ -273,7 +273,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to get process metrics for process {ProcessId}", processId);
+            TradingLogOrchestrator.Instance.LogError("Failed to get process metrics for process {ProcessId}", processId, ex);
             throw;
         }
     }
@@ -313,7 +313,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to apply system optimizations");
+            TradingLogOrchestrator.Instance.LogError("Failed to apply system optimizations", ex);
             return false;
         }
     }
@@ -350,7 +350,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to get system performance metrics");
+            TradingLogOrchestrator.Instance.LogError("Failed to get system performance metrics", ex);
             throw;
         }
     }
@@ -371,7 +371,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to set timer resolution");
+            TradingLogOrchestrator.Instance.LogError("Failed to set timer resolution", ex);
             return false;
         }
     }
@@ -386,7 +386,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to enable low-latency GC");
+            TradingLogOrchestrator.Instance.LogError("Failed to enable low-latency GC", ex);
             return false;
         }
     }
@@ -404,7 +404,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to enable pre-JIT compilation");
+            TradingLogOrchestrator.Instance.LogError("Failed to enable pre-JIT compilation", ex);
             return false;
         }
     }
@@ -427,7 +427,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to optimize memory usage");
+            TradingLogOrchestrator.Instance.LogError("Failed to optimize memory usage", ex);
             return false;
         }
     }
@@ -509,7 +509,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to set high-performance power plan");
+            TradingLogOrchestrator.Instance.LogError("Failed to set high-performance power plan", ex);
             return false;
         }
     }
@@ -537,7 +537,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to disable hibernation");
+            TradingLogOrchestrator.Instance.LogError("Failed to disable hibernation", ex);
             return false;
         }
     }
@@ -580,7 +580,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to optimize network stack");
+            TradingLogOrchestrator.Instance.LogError("Failed to optimize network stack", ex);
             return false;
         }
     }

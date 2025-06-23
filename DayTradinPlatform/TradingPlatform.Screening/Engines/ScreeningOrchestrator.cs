@@ -14,9 +14,9 @@ namespace TradingPlatform.Screening.Engines
     public class ScreeningOrchestrator
     {
         private readonly IEnumerable<ICriteriaEvaluator> _criteriaEvaluators;
-        private readonly ILogger _logger;
+        private readonly ITradingLogger _logger;
 
-        public ScreeningOrchestrator(IEnumerable<ICriteriaEvaluator> criteriaEvaluators, ILogger logger)
+        public ScreeningOrchestrator(IEnumerable<ICriteriaEvaluator> criteriaEvaluators, ITradingLogger logger)
         {
             _criteriaEvaluators = criteriaEvaluators;
             _logger = logger;
@@ -63,7 +63,7 @@ namespace TradingPlatform.Screening.Engines
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, $"Error orchestrating criteria evaluation for {marketData.Symbol}");
+                TradingLogOrchestrator.Instance.LogError($"Error orchestrating criteria evaluation for {marketData.Symbol}", ex);
                 result.MeetsCriteria = false;
                 result.OverallScore = 0m;
                 result.CriteriaResults = new List<CriteriaResult>

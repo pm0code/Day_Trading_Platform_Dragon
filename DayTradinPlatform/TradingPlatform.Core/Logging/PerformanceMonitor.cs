@@ -89,7 +89,7 @@ internal class PerformanceMonitor
             return new PerformanceContext
             {
                 Operation = methodName,
-                DurationNanoseconds = stats.TotalDurationNs / Math.Max(1, stats.CallCount),
+                DurationNanoseconds = (long)(stats.TotalDurationNs / Math.Max(1, stats.CallCount)),
                 DurationMilliseconds = (stats.TotalDurationNs / Math.Max(1, stats.CallCount)) / 1_000_000.0,
                 ResourceUsage = new Dictionary<string, object>
                 {

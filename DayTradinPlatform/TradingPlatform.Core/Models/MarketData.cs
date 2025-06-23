@@ -9,9 +9,9 @@ namespace TradingPlatform.Core.Models
 {
     public class MarketData
     {
-        private readonly ILogger _logger; // Add logger
+        private readonly ITradingLogger _logger; // Add logger
 
-        public MarketData(ILogger logger) // Inject logger
+        public MarketData(ITradingLogger logger) // Inject logger
         {
             _logger = logger;
         }

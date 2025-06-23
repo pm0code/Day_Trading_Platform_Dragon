@@ -7,12 +7,12 @@ namespace TradingPlatform.PaperTrading.Services;
 
 public class OrderBookSimulator : IOrderBookSimulator
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, OrderBook> _orderBooks = new();
     private readonly ConcurrentDictionary<string, decimal> _currentPrices = new();
     private readonly Random _random = new();
 
-    public OrderBookSimulator(ILogger logger)
+    public OrderBookSimulator(ITradingLogger logger)
     {
         _logger = logger;
         
@@ -39,7 +39,7 @@ public class OrderBookSimulator : IOrderBookSimulator
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error getting order book for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error getting order book for {Symbol}", symbol, ex);
             throw;
         }
     }
@@ -65,7 +65,7 @@ public class OrderBookSimulator : IOrderBookSimulator
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error getting current price for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error getting current price for {Symbol}", symbol, ex);
             throw;
         }
     }
@@ -103,7 +103,7 @@ public class OrderBookSimulator : IOrderBookSimulator
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating slippage for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error calculating slippage for {Symbol}", symbol, ex);
             return 0.001m; // Default 10 basis points slippage
         }
     }
@@ -129,7 +129,7 @@ public class OrderBookSimulator : IOrderBookSimulator
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error updating order book for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error updating order book for {Symbol}", symbol, ex);
         }
     }
 

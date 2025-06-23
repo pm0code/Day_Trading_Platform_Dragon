@@ -12,9 +12,9 @@ namespace TradingPlatform.Screening.Criteria
     /// </summary>
     public class NewsCriteria
     {
-        private readonly ILogger _logger;
+        private readonly ITradingLogger _logger;
 
-        public NewsCriteria(ILogger logger)
+        public NewsCriteria(ITradingLogger logger)
         {
             _logger = logger;
         }
@@ -72,7 +72,7 @@ namespace TradingPlatform.Screening.Criteria
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, $"Error evaluating news criteria for {symbol}");
+                TradingLogOrchestrator.Instance.LogError($"Error evaluating news criteria for {symbol}", ex);
                 result.Passed = false;
                 result.Score = 0m;
                 result.Reason = $"Evaluation error: {ex.Message}";

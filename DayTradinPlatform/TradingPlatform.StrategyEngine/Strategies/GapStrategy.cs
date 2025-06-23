@@ -10,12 +10,12 @@ namespace TradingPlatform.StrategyEngine.Strategies;
 /// </summary>
 public class GapStrategy : IGapStrategy
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
 
     public string StrategyName => "Gap Trading Strategy";
     public string Description => "Gap-based trading strategy focusing on gap fill probabilities and reversal patterns";
 
-    public GapStrategy(ILogger logger)
+    public GapStrategy(ITradingLogger logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -54,7 +54,7 @@ public class GapStrategy : IGapStrategy
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error generating gap signals for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error generating gap signals for {Symbol}", symbol, ex);
             return Array.Empty<TradingSignal>();
         }
     }
@@ -100,7 +100,7 @@ public class GapStrategy : IGapStrategy
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error detecting gaps for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error detecting gaps for {Symbol}", symbol, ex);
             return Array.Empty<GapPattern>();
         }
     }
@@ -152,7 +152,7 @@ public class GapStrategy : IGapStrategy
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error assessing gap fill probability for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error assessing gap fill probability for {Symbol}", symbol, ex);
             return 0.0m;
         }
     }
@@ -289,7 +289,7 @@ public class GapStrategy : IGapStrategy
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error creating gap signal for {Symbol}", gap.Symbol);
+            TradingLogOrchestrator.Instance.LogError("Error creating gap signal for {Symbol}", gap.Symbol, ex);
             return null;
         }
     }

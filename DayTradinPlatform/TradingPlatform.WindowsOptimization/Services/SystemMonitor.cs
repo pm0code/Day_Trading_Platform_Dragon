@@ -8,7 +8,7 @@ namespace TradingPlatform.WindowsOptimization.Services;
 
 public class SystemMonitor : ISystemMonitor, IDisposable
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly IWindowsOptimizationService _optimizationService;
     private readonly Timer? _monitoringTimer;
     private readonly Dictionary<string, PerformanceCounter> _performanceCounters;
@@ -24,7 +24,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
     private const int DISK_QUEUE_THRESHOLD = 5; // Lower threshold for trading system
 
     public SystemMonitor(
-        ILogger logger,
+        ITradingLogger logger,
         IWindowsOptimizationService optimizationService)
     {
         _logger = logger;
@@ -54,7 +54,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to start system monitoring");
+            TradingLogOrchestrator.Instance.LogError("Failed to start system monitoring", ex);
             _isMonitoring = false;
             throw;
         }
@@ -77,7 +77,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to stop system monitoring");
+            TradingLogOrchestrator.Instance.LogError("Failed to stop system monitoring", ex);
             throw;
         }
     }
@@ -107,7 +107,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to check if DRAGON system is optimal for trading");
+            TradingLogOrchestrator.Instance.LogError("Failed to check if DRAGON system is optimal for trading", ex);
             return false;
         }
     }
@@ -212,7 +212,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to get real-time metrics from DRAGON system");
+            TradingLogOrchestrator.Instance.LogError("Failed to get real-time metrics from DRAGON system", ex);
             return metrics;
         }
     }
@@ -272,7 +272,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to check critical resources on DRAGON system");
+            TradingLogOrchestrator.Instance.LogError("Failed to check critical resources on DRAGON system", ex);
             return false;
         }
     }
@@ -356,7 +356,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to initialize some performance counters");
+            TradingLogOrchestrator.Instance.LogError("Failed to initialize some performance counters", ex);
         }
 
         return counters;
@@ -410,7 +410,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error during DRAGON system performance monitoring");
+            TradingLogOrchestrator.Instance.LogError("Error during DRAGON system performance monitoring", ex);
         }
     }
 
@@ -549,7 +549,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error disposing DRAGON system monitor");
+            TradingLogOrchestrator.Instance.LogError("Error disposing DRAGON system monitor", ex);
         }
         finally
         {

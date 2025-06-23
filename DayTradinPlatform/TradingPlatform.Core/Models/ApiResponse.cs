@@ -17,7 +17,11 @@ namespace TradingPlatform.Core.Models
         public string Status { get; set; }
     }
 
-    public class AlphaVantageGlobalQuoteResponse : ApiResponse<AlphaVantageQuote> { }
+    public class AlphaVantageGlobalQuoteResponse
+    {
+        [JsonPropertyName("Global Quote")]
+        public AlphaVantageQuote GlobalQuote { get; set; }
+    }
     public class AlphaVantageQuote
     {
         [JsonPropertyName("01. symbol")]
@@ -49,9 +53,97 @@ namespace TradingPlatform.Core.Models
 
         [JsonPropertyName("10. change percent")]
         public string ChangePercent { get; set; }
+        
+        // Helper properties for decimal conversion
+        [JsonIgnore]
+        public decimal PriceAsDecimal => decimal.TryParse(Price, out var val) ? val : 0m;
+        
+        [JsonIgnore]
+        public long VolumeAsLong => long.TryParse(Volume, out var val) ? val : 0L;
+        
+        [JsonIgnore]
+        public decimal ChangeAsDecimal => decimal.TryParse(Change, out var val) ? val : 0m;
+        
+        [JsonIgnore]
+        public decimal ChangePercentAsDecimal
+        {
+            get
+            {
+                var cleanPercent = ChangePercent?.Replace("%", "").Trim();
+                return decimal.TryParse(cleanPercent, out var val) ? val : 0m;
+            }
+        }
     }
 
-    public class FinnhubQuoteResponse : ApiResponse<FinnhubQuote> { }
+    public class AlphaVantageTimeSeriesResponse
+    {
+        [JsonPropertyName("Meta Data")]
+        public Dictionary<string, string> MetaData { get; set; }
+        
+        [JsonPropertyName("Time Series (Daily)")]
+        public Dictionary<string, AlphaVantageTimeSeriesData> TimeSeries { get; set; }
+        
+        public List<DailyData> ToDailyData()
+        {
+            var result = new List<DailyData>();
+            if (TimeSeries != null)
+            {
+                foreach (var kvp in TimeSeries)
+                {
+                    if (DateTime.TryParse(kvp.Key, out var date))
+                    {
+                        result.Add(new DailyData
+                        {
+                            Symbol = MetaData?["2. Symbol"] ?? "",
+                            Date = date,
+                            Open = kvp.Value.OpenAsDecimal,
+                            High = kvp.Value.HighAsDecimal,
+                            Low = kvp.Value.LowAsDecimal,
+                            Close = kvp.Value.CloseAsDecimal,
+                            Volume = kvp.Value.VolumeAsLong,
+                            AdjustedClose = kvp.Value.CloseAsDecimal
+                        });
+                    }
+                }
+            }
+            return result;
+        }
+    }
+    
+    public class AlphaVantageTimeSeriesData
+    {
+        [JsonPropertyName("1. open")]
+        public string Open { get; set; }
+        
+        [JsonPropertyName("2. high")]
+        public string High { get; set; }
+        
+        [JsonPropertyName("3. low")]
+        public string Low { get; set; }
+        
+        [JsonPropertyName("4. close")]
+        public string Close { get; set; }
+        
+        [JsonPropertyName("5. volume")]
+        public string Volume { get; set; }
+        
+        // Helper properties
+        [JsonIgnore]
+        public decimal OpenAsDecimal => decimal.TryParse(Open, out var val) ? val : 0m;
+        
+        [JsonIgnore]
+        public decimal HighAsDecimal => decimal.TryParse(High, out var val) ? val : 0m;
+        
+        [JsonIgnore]
+        public decimal LowAsDecimal => decimal.TryParse(Low, out var val) ? val : 0m;
+        
+        [JsonIgnore]
+        public decimal CloseAsDecimal => decimal.TryParse(Close, out var val) ? val : 0m;
+        
+        [JsonIgnore]
+        public long VolumeAsLong => long.TryParse(Volume, out var val) ? val : 0L;
+    }
+
     public class FinnhubQuote
     {
         [JsonPropertyName("c")]
@@ -76,8 +168,31 @@ namespace TradingPlatform.Core.Models
         public decimal PreviousClose { get; set; }
     }
 
-    public class FinnhubCandleResponse : ApiResponse<FinnhubCandleData> { }
-    public class FinnhubCandleData
+    public class FinnhubQuoteResponse
+    {
+        [JsonPropertyName("c")]
+        public decimal Current { get; set; }
+
+        [JsonPropertyName("d")]
+        public decimal Change { get; set; }
+
+        [JsonPropertyName("dp")]
+        public decimal PercentChange { get; set; }
+
+        [JsonPropertyName("h")]
+        public decimal High { get; set; }
+
+        [JsonPropertyName("l")]
+        public decimal Low { get; set; }
+
+        [JsonPropertyName("o")]
+        public decimal Open { get; set; }
+
+        [JsonPropertyName("pc")]
+        public decimal PreviousClose { get; set; }
+    }
+    
+    public class FinnhubCandleResponse
     {
         [JsonPropertyName("o")]
         public decimal[] Open { get; set; }

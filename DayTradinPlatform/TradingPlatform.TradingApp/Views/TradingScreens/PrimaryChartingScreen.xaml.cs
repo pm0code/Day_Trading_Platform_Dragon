@@ -11,11 +11,11 @@ namespace TradingPlatform.TradingApp.Views.TradingScreens;
 /// </summary>
 public sealed partial class PrimaryChartingScreen : Window
 {
-    private readonly ITradingLogger _logger;
+    private readonly Core.Interfaces.ITradingLogger _logger;
     private readonly IMonitorService _monitorService;
     private readonly TradingScreenType _screenType = TradingScreenType.PrimaryCharting;
     
-    public PrimaryChartingScreen(ITradingLogger logger, IMonitorService monitorService)
+    public PrimaryChartingScreen(Core.Interfaces.ITradingLogger logger, IMonitorService monitorService)
     {
         _logger = logger;
         _monitorService = monitorService;

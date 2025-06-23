@@ -8,14 +8,14 @@ namespace TradingPlatform.PaperTrading.Services;
 public class PortfolioManager : IPortfolioManager
 {
     private readonly IOrderBookSimulator _orderBookSimulator;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, Position> _positions = new();
     private decimal _cashBalance = 100000m; // Starting with $100k for paper trading
     private decimal _totalRealizedPnL = 0m;
 
     public PortfolioManager(
         IOrderBookSimulator orderBookSimulator,
-        ILogger logger)
+        ITradingLogger logger)
     {
         _orderBookSimulator = orderBookSimulator;
         _logger = logger;
@@ -44,7 +44,7 @@ public class PortfolioManager : IPortfolioManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error getting portfolio");
+            TradingLogOrchestrator.Instance.LogError("Error getting portfolio", ex);
             throw;
         }
     }
@@ -75,7 +75,7 @@ public class PortfolioManager : IPortfolioManager
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, "Error updating position for {Symbol}", kvp.Key);
+                TradingLogOrchestrator.Instance.LogError("Error updating position for {Symbol}", kvp.Key, ex);
                 positionsList.Add(kvp.Value); // Add stale position data
             }
         }
@@ -102,7 +102,7 @@ public class PortfolioManager : IPortfolioManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error getting current position for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error getting current position for {Symbol}", symbol, ex);
             return position;
         }
     }
@@ -215,7 +215,7 @@ public class PortfolioManager : IPortfolioManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error updating position for {Symbol}", symbol);
+            TradingLogOrchestrator.Instance.LogError("Error updating position for {Symbol}", symbol, ex);
             throw;
         }
     }
@@ -234,7 +234,7 @@ public class PortfolioManager : IPortfolioManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error calculating buying power");
+            TradingLogOrchestrator.Instance.LogError("Error calculating buying power", ex);
             return _cashBalance; // Conservative fallback
         }
     }
@@ -255,7 +255,7 @@ public class PortfolioManager : IPortfolioManager
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error checking buying power for {Symbol}", orderRequest.Symbol);
+            TradingLogOrchestrator.Instance.LogError("Error checking buying power for {Symbol}", orderRequest.Symbol, ex);
             return false; // Conservative approach
         }
     }

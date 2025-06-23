@@ -11,7 +11,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
     private readonly IRiskAlertService _alertService;
     private readonly IPositionMonitor _positionMonitor;
     private readonly IComplianceMonitor _complianceMonitor;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly TimeSpan _monitoringInterval = TimeSpan.FromSeconds(5); // Real-time monitoring
 
     public RiskMonitoringBackgroundService(
@@ -19,7 +19,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
         IRiskAlertService alertService,
         IPositionMonitor positionMonitor,
         IComplianceMonitor complianceMonitor,
-        ILogger logger)
+        ITradingLogger logger)
     {
         _riskService = riskService;
         _alertService = alertService;
@@ -58,7 +58,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, "Error in risk monitoring cycle");
+                TradingLogOrchestrator.Instance.LogError("Error in risk monitoring cycle", ex);
                 await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken); // Brief delay before retry
             }
         }
@@ -81,7 +81,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error monitoring risk status");
+            TradingLogOrchestrator.Instance.LogError("Error monitoring risk status", ex);
         }
     }
 
@@ -101,7 +101,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error monitoring position limits");
+            TradingLogOrchestrator.Instance.LogError("Error monitoring position limits", ex);
         }
     }
 
@@ -137,7 +137,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error monitoring compliance");
+            TradingLogOrchestrator.Instance.LogError("Error monitoring compliance", ex);
         }
     }
 
@@ -157,7 +157,7 @@ public class RiskMonitoringBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error checking drawdown limits");
+            TradingLogOrchestrator.Instance.LogError("Error checking drawdown limits", ex);
         }
     }
 }

@@ -13,7 +13,7 @@ namespace TradingPlatform.FixEngine.Trading;
 /// </summary>
 public sealed class OrderRouter : IDisposable
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly Dictionary<string, FixSession> _venueSessions = new();
     private readonly SemaphoreSlim _routingLock = new(1, 1);
     
@@ -67,7 +67,7 @@ public sealed class OrderRouter : IDisposable
         }
     };
     
-    public OrderRouter(ILogger logger)
+    public OrderRouter(ITradingLogger logger)
     {
         _logger = logger;
     }

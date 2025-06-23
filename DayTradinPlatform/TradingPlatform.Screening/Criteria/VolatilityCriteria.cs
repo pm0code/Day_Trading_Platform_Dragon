@@ -12,9 +12,9 @@ namespace TradingPlatform.Screening.Criteria
     /// </summary>
     public class VolatilityCriteria
     {
-        private readonly ILogger _logger;
+        private readonly ITradingLogger _logger;
 
-        public VolatilityCriteria(ILogger logger)
+        public VolatilityCriteria(ITradingLogger logger)
         {
             _logger = logger;
         }
@@ -69,7 +69,7 @@ namespace TradingPlatform.Screening.Criteria
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, $"Error evaluating volatility criteria for {marketData?.Symbol ?? "N/A"}");
+                TradingLogOrchestrator.Instance.LogError($"Error evaluating volatility criteria for {marketData?.Symbol ?? "N/A"}", ex);
                 result.Passed = false;
                 result.Score = 0m;
                 result.Reason = $"Evaluation error: {ex.Message}";

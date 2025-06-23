@@ -8,9 +8,9 @@ namespace TradingPlatform.Core.Models
 {
     public class TradingCriteria
     {
-        private readonly ILogger _logger; // Add logger for validation messages
+        private readonly ITradingLogger _logger; // Add logger for validation messages
 
-        public TradingCriteria(ILogger logger)
+        public TradingCriteria(ITradingLogger logger)
         {
             _logger = logger;
         }

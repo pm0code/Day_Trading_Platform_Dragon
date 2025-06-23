@@ -17,7 +17,7 @@ public static class MessageBusTestHelpers
     /// </summary>
     /// <param name="logger">Optional logger for debugging test issues</param>
     /// <returns>Configured MockMessageBus instance</returns>
-    public static MockMessageBus CreateStandardMock(ILogger? logger = null)
+    public static MockMessageBus CreateStandardMock(ITradingLogger? logger = null)
     {
         var mock = new MockMessageBus(logger);
         mock.SetSimulatedLatency(TimeSpan.FromMicroseconds(50)); // Realistic low latency
@@ -30,7 +30,7 @@ public static class MessageBusTestHelpers
     /// <summary>
     /// Creates a MockMessageBus configured for high-latency testing scenarios.
     /// </summary>
-    public static MockMessageBus CreateHighLatencyMock(TimeSpan latency, ILogger? logger = null)
+    public static MockMessageBus CreateHighLatencyMock(TimeSpan latency, ITradingLogger? logger = null)
     {
         var mock = new MockMessageBus(logger);
         mock.SetSimulatedLatency(latency);
@@ -44,7 +44,7 @@ public static class MessageBusTestHelpers
     /// Creates a MockMessageBus configured for error injection testing.
     /// </summary>
     /// <param name="errorRate">Probability (0-1) of operations failing</param>
-    public static MockMessageBus CreateErrorInjectingMock(double errorRate, ILogger? logger = null)
+    public static MockMessageBus CreateErrorInjectingMock(double errorRate, ITradingLogger? logger = null)
     {
         var mock = new MockMessageBus(logger);
         mock.SetSimulatedLatency(TimeSpan.FromMicroseconds(50));
@@ -57,7 +57,7 @@ public static class MessageBusTestHelpers
     /// <summary>
     /// Creates a MockMessageBus configured for unhealthy system testing.
     /// </summary>
-    public static MockMessageBus CreateUnhealthyMock(ILogger? logger = null)
+    public static MockMessageBus CreateUnhealthyMock(ITradingLogger? logger = null)
     {
         var mock = new MockMessageBus(logger);
         mock.SetSimulatedLatency(TimeSpan.FromMilliseconds(100)); // High latency when unhealthy
@@ -70,7 +70,7 @@ public static class MessageBusTestHelpers
     /// <summary>
     /// Creates a MockMessageBus optimized for performance testing scenarios.
     /// </summary>
-    public static MockMessageBus CreatePerformanceMock(ILogger? logger = null)
+    public static MockMessageBus CreatePerformanceMock(ITradingLogger? logger = null)
     {
         var mock = new MockMessageBus(logger);
         mock.SetSimulatedLatency(TimeSpan.FromMicroseconds(10)); // Ultra-low latency
@@ -92,7 +92,7 @@ public static class MessageBusTestHelpers
     {
         return services.AddSingleton<IMessageBus>(provider =>
         {
-            var logger = provider.GetService<ILogger>();
+            var logger = provider.GetService<ITradingLogger>();
             var mock = CreateStandardMock(logger);
             configureAction?.Invoke(mock);
             return mock;
@@ -186,7 +186,7 @@ public static class MessageBusTestHelpers
     /// <param name="scenario">Predefined test scenario</param>
     /// <param name="logger">Optional logger</param>
     /// <returns>Configured MockMessageBus for the scenario</returns>
-    public static MockMessageBus CreateScenarioMock(TestScenario scenario, ILogger? logger = null)
+    public static MockMessageBus CreateScenarioMock(TestScenario scenario, ITradingLogger? logger = null)
     {
         return scenario switch
         {

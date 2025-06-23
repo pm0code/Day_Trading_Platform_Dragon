@@ -17,7 +17,7 @@ public class StrategyExecutionService : IStrategyExecutionService
     private readonly IStrategyManager _strategyManager;
     private readonly ISignalProcessor _signalProcessor;
     private readonly IPerformanceTracker _performanceTracker;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly CancellationTokenSource _cancellationTokenSource;
     
     // Performance tracking
@@ -32,7 +32,7 @@ public class StrategyExecutionService : IStrategyExecutionService
         IStrategyManager strategyManager,
         ISignalProcessor signalProcessor,
         IPerformanceTracker performanceTracker,
-        ILogger logger)
+        ITradingLogger logger)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _strategyManager = strategyManager ?? throw new ArgumentNullException(nameof(strategyManager));
@@ -62,7 +62,7 @@ public class StrategyExecutionService : IStrategyExecutionService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error starting background processing");
+            TradingLogOrchestrator.Instance.LogError("Error starting background processing", ex);
             throw;
         }
     }
@@ -118,7 +118,7 @@ public class StrategyExecutionService : IStrategyExecutionService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error getting health status");
+            TradingLogOrchestrator.Instance.LogError("Error getting health status", ex);
             return new StrategyHealthStatus(false, "Error", 0, 0, TimeSpan.Zero, DateTime.UtcNow, 
                 new[] { ex.Message });
         }
@@ -202,7 +202,7 @@ public class StrategyExecutionService : IStrategyExecutionService
         catch (Exception ex)
         {
             stopwatch.Stop();
-            TradingLogOrchestrator.Instance.LogError(ex, "Error executing strategy {StrategyId}", strategyId);
+            TradingLogOrchestrator.Instance.LogError("Error executing strategy {StrategyId}", ex, strategyId);
             return new StrategyResult(false, ex.Message, "EXECUTION_ERROR");
         }
     }
@@ -259,7 +259,7 @@ public class StrategyExecutionService : IStrategyExecutionService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error handling market data event for {Symbol}", marketDataEvent.Symbol);
+            TradingLogOrchestrator.Instance.LogError("Error handling market data event for {Symbol}", ex, marketDataEvent.Symbol);
         }
     }
 
@@ -285,7 +285,7 @@ public class StrategyExecutionService : IStrategyExecutionService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Error handling strategy control event for {StrategyName}", 
+            TradingLogOrchestrator.Instance.LogError("Error handling strategy control event for {StrategyName}", ex, 
                 strategyEvent.StrategyName);
         }
     }

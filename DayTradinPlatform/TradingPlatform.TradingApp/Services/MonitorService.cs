@@ -13,7 +13,7 @@ namespace TradingPlatform.TradingApp.Services;
 /// </summary>
 public class MonitorService : IMonitorService
 {
-    private readonly ITradingLogger _logger;
+    private readonly Core.Interfaces.ITradingLogger _logger;
     private readonly string _configFilePath;
     private readonly string _positionsFilePath;
     private MultiMonitorConfiguration? _currentConfiguration;
@@ -23,7 +23,7 @@ public class MonitorService : IMonitorService
     public event EventHandler<MultiMonitorConfiguration>? ConfigurationChanged;
     public event EventHandler<WindowPositionInfo>? WindowPositionSaved;
 
-    public MonitorService(ITradingLogger logger)
+    public MonitorService(Core.Interfaces.ITradingLogger logger)
     {
         _logger = logger;
         

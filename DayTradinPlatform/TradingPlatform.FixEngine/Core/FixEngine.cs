@@ -16,7 +16,7 @@ namespace TradingPlatform.FixEngine.Core;
 /// </summary>
 public sealed class FixEngine : IFixEngine
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ITradingMetrics _tradingMetrics;
     private readonly IInfrastructureMetrics _infrastructureMetrics;
     private readonly IObservabilityEnricher _observabilityEnricher;
@@ -37,7 +37,7 @@ public sealed class FixEngine : IFixEngine
     public event EventHandler<VenueStatusUpdate>? VenueStatusChanged;
     
     public FixEngine(
-        ILogger logger,
+        ITradingLogger logger,
         ITradingMetrics tradingMetrics,
         IInfrastructureMetrics infrastructureMetrics,
         IObservabilityEnricher observabilityEnricher)
@@ -474,13 +474,13 @@ public sealed class FixEngine : IFixEngine
                 // Record failed venue connection audit
                 TradingLogOrchestrator.Instance.LogError($"Venue initialization failure: VenueName={venueName}, Duration={stopwatch.Elapsed.TotalMilliseconds}ms, ErrorType=ConnectionFailure, CorrelationId={correlationId}");
                 
-                TradingLogOrchestrator.Instance.LogError(error);
+                TradingLogOrchestrator.Instance.LogError(error.Message, error);
             }
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
-            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetStatus(ActivityStatusCode.Error);
             
             // Record venue initialization failure audit
             TradingLogOrchestrator.Instance.LogError($"Venue initialization failure: VenueName={venueName}, Duration={stopwatch.Elapsed.TotalMilliseconds}ms, CorrelationId={correlationId}", ex);

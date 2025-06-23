@@ -12,9 +12,9 @@ namespace TradingPlatform.Screening.Criteria
     /// </summary>
     public class PriceCriteria
     {
-        private readonly ILogger _logger;
+        private readonly ITradingLogger _logger;
 
-        public PriceCriteria(ILogger logger)
+        public PriceCriteria(ITradingLogger logger)
         {
             _logger = logger;
         }
@@ -68,7 +68,7 @@ namespace TradingPlatform.Screening.Criteria
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError(ex, $"Error evaluating price criteria for {marketData.Symbol}");
+                TradingLogOrchestrator.Instance.LogError($"Error evaluating price criteria for {marketData.Symbol}", ex);
                 result.Passed = false;
                 result.Score = 0m;
                 result.Reason = $"Evaluation error: {ex.Message}";

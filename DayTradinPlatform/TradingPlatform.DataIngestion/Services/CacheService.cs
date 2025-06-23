@@ -18,10 +18,10 @@ namespace TradingPlatform.DataIngestion.Services
     public class CacheService : ICacheService
     {
         private readonly IMemoryCache _cache;
-        private readonly ILogger _logger;
+        private readonly ITradingLogger _logger;
         private readonly ApiConfiguration _config;
 
-        public CacheService(IMemoryCache cache, ILogger logger, ApiConfiguration config)
+        public CacheService(IMemoryCache cache, ITradingLogger logger, ApiConfiguration config)
         {
             _cache = cache;
             _logger = logger;

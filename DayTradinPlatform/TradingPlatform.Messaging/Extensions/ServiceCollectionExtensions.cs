@@ -49,7 +49,7 @@ public static class ServiceCollectionExtensions
         // Register Redis connection as singleton
         services.AddSingleton<IConnectionMultiplexer>(provider =>
         {
-            var logger = provider.GetRequiredService<ILogger>();
+            var logger = provider.GetRequiredService<ITradingLogger>();
             
             try
             {
@@ -58,28 +58,30 @@ public static class ServiceCollectionExtensions
                 // Log connection events for monitoring
                 connection.ConnectionFailed += (sender, args) =>
                 {
-                    logger.LogError("Redis connection failed: {EndPoint} - {FailureType}", 
-                        args.EndPoint, args.FailureType);
+                    logger.LogError("Redis connection failed", null, "Redis connection", null, null, 
+                        new { EndPoint = args.EndPoint?.ToString(), FailureType = args.FailureType.ToString() });
                 };
 
                 connection.ConnectionRestored += (sender, args) =>
                 {
-                    logger.LogInformation("Redis connection restored: {EndPoint}", args.EndPoint);
+                    logger.LogInfo("Redis connection restored: {EndPoint}", args.EndPoint);
                 };
 
                 connection.ErrorMessage += (sender, args) =>
                 {
-                    logger.LogError("Redis error: {EndPoint} - {Message}", args.EndPoint, args.Message);
+                    logger.LogError("Redis error occurred", null, "Redis operation", null, null, 
+                        new { EndPoint = args.EndPoint?.ToString(), Message = args.Message });
                 };
 
-                logger.LogInformation("Redis connection established to {EndPoints}", 
+                logger.LogInfo("Redis connection established to {EndPoints}", 
                     string.Join(", ", connection.GetEndPoints().Select(ep => ep.ToString())));
 
                 return connection;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to connect to Redis at {ConnectionString}", connectionString);
+                logger.LogError("Failed to connect to Redis", ex, "Redis connection", null, null, 
+                    new { ConnectionString = connectionString });
                 throw;
             }
         });

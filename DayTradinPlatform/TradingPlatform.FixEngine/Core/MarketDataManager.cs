@@ -12,7 +12,7 @@ namespace TradingPlatform.FixEngine.Core;
 public sealed class MarketDataManager : IDisposable
 {
     private readonly FixSession _fixSession;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, MarketDataSubscription> _subscriptions = new();
     private readonly ConcurrentDictionary<string, MarketDataSnapshot> _snapshots = new();
     private readonly Timer _subscriptionHeartbeat;
@@ -23,7 +23,7 @@ public sealed class MarketDataManager : IDisposable
     public event EventHandler<MarketDataUpdate>? MarketDataReceived;
     public event EventHandler<string>? SubscriptionStatusChanged;
     
-    public MarketDataManager(FixSession fixSession, ILogger logger)
+    public MarketDataManager(FixSession fixSession, ITradingLogger logger)
     {
         _fixSession = fixSession ?? throw new ArgumentNullException(nameof(fixSession));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -100,7 +100,7 @@ public sealed class MarketDataManager : IDisposable
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError($"Error subscribing to market data for {symbol}", ex);
+            TradingLogOrchestrator.Instance.LogError($"Error subscribing to market data for {symbol}");
             _subscriptions.TryRemove(symbol, out _);
             return false;
         }

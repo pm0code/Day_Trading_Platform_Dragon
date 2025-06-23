@@ -10,10 +10,10 @@ namespace TradingPlatform.RiskManagement.Services;
 public class RiskAlertService : IRiskAlertService
 {
     private readonly IMessageBus _messageBus;
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, RiskAlert> _activeAlerts = new();
 
-    public RiskAlertService(IMessageBus messageBus, ILogger logger)
+    public RiskAlertService(IMessageBus messageBus, ITradingLogger logger)
     {
         _messageBus = messageBus;
         _logger = logger;
@@ -159,7 +159,7 @@ public class RiskAlertService : IRiskAlertService
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError(ex, "Failed to send high priority notification for alert {AlertId}", alert.Id);
+            TradingLogOrchestrator.Instance.LogError("Failed to send high priority notification for alert {AlertId}", alert.Id, ex);
         }
     }
 }

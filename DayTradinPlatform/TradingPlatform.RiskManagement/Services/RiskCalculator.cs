@@ -6,9 +6,9 @@ namespace TradingPlatform.RiskManagement.Services;
 
 public class RiskCalculator : IRiskCalculator
 {
-    private readonly ILogger _logger;
+    private readonly ITradingLogger _logger;
 
-    public RiskCalculator(ILogger logger)
+    public RiskCalculator(ITradingLogger logger)
     {
         _logger = logger;
     }

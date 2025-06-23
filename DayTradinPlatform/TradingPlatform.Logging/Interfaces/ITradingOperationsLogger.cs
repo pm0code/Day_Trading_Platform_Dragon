@@ -8,7 +8,7 @@ namespace TradingPlatform.Logging.Interfaces;
 /// CRITICAL: Every trading operation, method, class, and data movement MUST be logged with full context
 /// All logs saved to /logs directory with timestamps and complete traceability for debugging
 /// </summary>
-public interface ITradingLogger : ILogger
+public interface ITradingOperationsLogger : Core.Interfaces.ITradingLogger
 {
     // Trading Operation Logging
     void LogOrderSubmission(string orderId, string symbol, decimal quantity, decimal price, string side, string correlationId);
