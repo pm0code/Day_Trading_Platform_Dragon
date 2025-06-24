@@ -17,11 +17,17 @@ This index provides a chronological overview of all journal entries documenting 
    - Changed hardcoded `/logs` path to relative path
    - 84 of 94 tests passing (10 are negative test cases)
 
+3. **[Canonical Specialized Classes](Journal_2025-06-24_Canonical_Specialized_Classes.md)**
+   - Created CanonicalProvider<TData> base class for data providers
+   - Created CanonicalEngine<TInput,TOutput> base class for processing engines
+   - Implemented caching, rate limiting, retry logic, and pipeline management
+
 ## Categories
 
 ### Canonical System Implementation
 - [Canonical Unit Tests Creation](Journal_2025-06-24_Canonical_Unit_Tests.md)
 - [Canonical Tests Fixed](Journal_2025-06-24_Canonical_Tests_Fixed.md)
+- [Canonical Specialized Classes](Journal_2025-06-24_Canonical_Specialized_Classes.md)
 
 ### Testing & Quality Assurance
 - [Canonical Unit Tests Creation](Journal_2025-06-24_Canonical_Unit_Tests.md)

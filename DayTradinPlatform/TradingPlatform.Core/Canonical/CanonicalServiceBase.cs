@@ -24,6 +24,11 @@ namespace TradingPlatform.Core.Canonical
         private ServiceState _currentState;
         private DateTime _lastStateChange;
 
+        /// <summary>
+        /// Gets the current service state
+        /// </summary>
+        protected ServiceState ServiceState => _currentState;
+
         protected CanonicalServiceBase(ITradingLogger logger, string serviceName) 
             : base(logger, serviceName)
         {
@@ -234,7 +239,7 @@ namespace TradingPlatform.Core.Canonical
         /// <summary>
         /// Gets all service metrics
         /// </summary>
-        public IReadOnlyDictionary<string, object> GetMetrics()
+        public virtual IReadOnlyDictionary<string, object> GetMetrics()
         {
             var metrics = new Dictionary<string, object>(_serviceMetrics)
             {
