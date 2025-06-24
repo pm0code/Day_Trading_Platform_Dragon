@@ -174,3 +174,56 @@ Key documentation files in the MainDocs directory:
 ## Model Guidance
 
 • /model opus: Always use Opus for complex code generation, architectural design, and detailed technical tasks requiring high precision and advanced reasoning
+
+## MANDATORY Standard Development Workflow
+
+**CRITICAL**: The following workflow from `MainDocs/Coding Standard Development Workflow - Clean.md` is MANDATORY for ALL code work:
+
+### 1. Canonical Service Implementation (MANDATORY)
+- **Reuse Existing Services**: Always use existing canonical implementations (data access, messaging, config, auth, logging, error reporting, caching, validation, notifications, security, telemetry, background tasks)
+- **Avoid Duplication**: Never create new implementations where canonical versions exist
+- **Pattern Adherence**: All code must follow established architectural patterns and coding standards
+- **Documentation**: Ensure all canonical services are well-documented and discoverable
+
+### 2. Development Standards (MANDATORY)
+- **Consistent Environments**: Standardized IDE settings, SDK versions, containerization
+- **Project Structure**: Follow standardized layouts, naming conventions, directory structures
+- **Build/Deployment**: Standardized scripts, dependency resolution, deployment pipelines
+
+### 3. Comprehensive Documentation (MANDATORY)
+- **Code-level**: Clear inline comments for complex logic, functions, classes, APIs
+- **Project-level**: READMEs, architectural diagrams, design docs, API specs, deployment guides
+- **Regular Updates**: Keep documentation synchronized with code changes
+
+### 4. Static Analysis & Code Quality (MANDATORY)
+- **Roslyn Analyzers**: Microsoft.CodeAnalysis.NetAnalyzers, StyleCop Analyzers, custom analyzers
+- **SonarLint**: Real-time code quality and security detection
+- **Zero-Warning Policy**: Maintain zero warnings from all analysis tools
+- **Metrics Tracking**: Track cyclomatic complexity, maintainability index, technical debt
+
+### 5. Error Handling & Logging (MANDATORY)
+- **Canonical Error Pattern**: Standardized error handling across all code
+- **Contextual Errors**: Detailed messages, exception objects, operational context, troubleshooting hints
+- **No Silent Failures**: Every error must be logged
+- **Method Tracking**: Log entry/exit for EVERY class constructor and method
+- **Centralized Logging**: Use consistent logging mechanism
+
+### 6. Testing Requirements (MANDATORY)
+- **Unit Testing**: Minimum 80% code coverage, test all public methods, edge cases, AAA pattern
+- **Integration Testing**: Module interactions, interface validation, dependency verification
+- **Performance Testing**: Load, stress, scalability testing with benchmarks
+- **Security Testing**: Vulnerability assessment, auth/authz verification, data protection
+- **Regression Testing**: Automated suite to ensure no functionality breaks
+
+### 7. Code Analysis & Review (MANDATORY)
+- **Dynamic Analysis**: Runtime behavior analysis, DAST tools in CI/CD
+- **Manual Code Review**: Self-inspection for defects, quality, standards adherence
+- **Dependency Management**: Track all dependencies, scan for vulnerabilities, license compliance
+
+### 8. Progress Reporting (MANDATORY for long operations)
+- **Status Updates**: Percentage completion for long-running operations
+- **Time Estimation**: Calculate and report ETA where feasible
+- **User Feedback**: Clear, informative status messages
+
+### Audit Requirements
+Once current todo list is complete, a comprehensive top-to-bottom code audit must be conducted to ensure full adherence to this workflow across the entire codebase.

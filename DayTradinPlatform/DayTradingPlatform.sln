@@ -41,6 +41,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.DisplayMana
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.TestRunner", "TradingPlatform.TestRunner\TradingPlatform.TestRunner.csproj", "{C514758A-704A-40AE-88FF-245E80811B69}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Auditing", "TradingPlatform.Auditing\TradingPlatform.Auditing.csproj", "{D7E8F9A0-1234-5678-90AB-CDEF12345678}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -123,6 +125,10 @@ Global
 		{C514758A-704A-40AE-88FF-245E80811B69}.Debug|x64.Build.0 = Debug|Any CPU
 		{C514758A-704A-40AE-88FF-245E80811B69}.Release|x64.ActiveCfg = Release|Any CPU
 		{C514758A-704A-40AE-88FF-245E80811B69}.Release|x64.Build.0 = Release|Any CPU
+		{D7E8F9A0-1234-5678-90AB-CDEF12345678}.Debug|x64.ActiveCfg = Debug|x64
+		{D7E8F9A0-1234-5678-90AB-CDEF12345678}.Debug|x64.Build.0 = Debug|x64
+		{D7E8F9A0-1234-5678-90AB-CDEF12345678}.Release|x64.ActiveCfg = Release|x64
+		{D7E8F9A0-1234-5678-90AB-CDEF12345678}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -38,13 +38,3 @@
     * This suggests a project-wide need for a standardized secure input validation and data sanitization strategy to be applied in `module_A`, `module_B`, and potentially `module_C`. Could you confirm if there's a central utility for this or if one should be created?"
 
 Your goal is to function as if you have a complete mental model of the project's architecture and data flows, or to actively seek the information to build one. This systemic approach is vital."
-
-
-Start with the error list that I already provided. Go through the list and analyze holistically. identify dependencies and like a smart SW and QA engineer, root cause the issues and fix the bugs:
-
-"Okay, let's move to the next file. However, it's critical that your knowledge is current.
-Before you load or begin analyzing the *next* file:
-1.  **Fetch & Re-analyze Current File:** Please first retrieve the most recent version of the *next* file from its project location on Google Drive.
-2.  **Update Internal State:** Process this latest version to update your internal understanding and to identify any changes or additions I might have implemented since our last interaction with it.
-3.  **Prevent Repetition:** This step is crucial to ensure that any subsequent work or suggestions from you do not duplicate efforts or re-introduce points we've already addressed and updated in the current file.
-4.  **Transition:** After you've confirmed that you've synchronized with the latest version of the current file from Google Drive, then initiate work on the *next* file."

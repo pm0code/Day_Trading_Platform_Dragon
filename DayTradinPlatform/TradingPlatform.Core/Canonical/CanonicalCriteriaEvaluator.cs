@@ -3,12 +3,11 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
-using TradingPlatform.Core.Foundation;
+using TradingPlatform.Foundation;
+using TradingPlatform.Foundation.Models;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
 using TradingPlatform.Core.Models;
-using TradingPlatform.Screening.Interfaces;
-using TradingPlatform.Screening.Models;
 
 namespace TradingPlatform.Core.Canonical
 {
@@ -32,7 +31,7 @@ namespace TradingPlatform.Core.Canonical
             ITradingLogger logger,
             string serviceName,
             int maxConcurrentEvaluations = 10)
-            : base(serviceProvider, logger, serviceName)
+            : base(logger, serviceName)
         {
             _maxConcurrentEvaluations = maxConcurrentEvaluations;
             _evaluationSemaphore = new SemaphoreSlim(maxConcurrentEvaluations, maxConcurrentEvaluations);
@@ -49,16 +48,16 @@ namespace TradingPlatform.Core.Canonical
         protected virtual TradingResult ValidateInput(MarketData marketData, TradingCriteria criteria)
         {
             if (marketData == null)
-                return TradingResult.Failure("Market data is null");
+                return TradingResult.Failure(new TradingError("INVALID_INPUT", "Market data is null"));
 
             if (criteria == null)
-                return TradingResult.Failure("Trading criteria is null");
+                return TradingResult.Failure(new TradingError("INVALID_INPUT", "Trading criteria is null"));
 
             if (string.IsNullOrWhiteSpace(marketData.Symbol))
-                return TradingResult.Failure("Market data symbol is null or empty");
+                return TradingResult.Failure(new TradingError("INVALID_INPUT", "Market data symbol is null or empty"));
 
             if (marketData.Price <= 0)
-                return TradingResult.Failure($"Invalid price: {marketData.Price}");
+                return TradingResult.Failure(new TradingError("INVALID_INPUT", $"Invalid price: {marketData.Price}"));
 
             return TradingResult.Success();
         }
@@ -68,17 +67,30 @@ namespace TradingPlatform.Core.Canonical
         /// </summary>
         public async Task<CriteriaResult> EvaluateAsync(MarketData marketData, TradingCriteria criteria)
         {
-            return await ExecuteOperationAsync(
-                nameof(EvaluateAsync),
-                async () => await PerformEvaluationAsync(marketData, criteria),
-                createDefaultResult: () => new CriteriaResult
+            try
+            {
+                var result = await PerformEvaluationAsync(marketData, criteria);
+                return result.IsSuccess ? result.Value : new CriteriaResult
                 {
                     CriteriaName = CriteriaName,
                     EvaluatedAt = DateTime.UtcNow,
                     Passed = false,
                     Score = 0m,
-                    Reason = "Evaluation failed"
-                });
+                    Reason = result.Error?.Message ?? "Evaluation failed"
+                };
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error evaluating {CriteriaName}", ex);
+                return new CriteriaResult
+                {
+                    CriteriaName = CriteriaName,
+                    EvaluatedAt = DateTime.UtcNow,
+                    Passed = false,
+                    Score = 0m,
+                    Reason = $"Evaluation failed: {ex.Message}"
+                };
+            }
         }
 
         private async Task<TradingResult<CriteriaResult>> PerformEvaluationAsync(
@@ -98,7 +110,7 @@ namespace TradingPlatform.Core.Canonical
                 if (!validationResult.IsSuccess)
                 {
                     Interlocked.Increment(ref _failedEvaluations);
-                    return TradingResult<CriteriaResult>.Failure(validationResult.ErrorMessage ?? "Validation failed");
+                    return TradingResult<CriteriaResult>.Failure(new TradingError("VALIDATION_FAILED", validationResult.Error?.Message ?? "Validation failed"));
                 }
 
                 // Create criteria result
@@ -117,12 +129,12 @@ namespace TradingPlatform.Core.Canonical
                     Interlocked.Increment(ref _successfulEvaluations);
                     
                     // Log performance metrics
-                    _logger.LogPerformance(
+                    Logger.LogPerformance(
                         $"{CriteriaName} evaluation for {marketData.Symbol}",
                         stopwatch.Elapsed,
                         true,
                         throughput: CalculateThroughput(),
-                        metrics: new
+                        businessMetrics: new
                         {
                             Symbol = marketData.Symbol,
                             Passed = result.Passed,
@@ -135,13 +147,16 @@ namespace TradingPlatform.Core.Canonical
                 else
                 {
                     Interlocked.Increment(ref _failedEvaluations);
-                    _logger.LogError(
+                    LogError(
                         $"{CriteriaName} evaluation failed",
-                        evaluationResult.Error,
+                        evaluationResult.Error?.Exception,
+                        "Criteria evaluation",
+                        "Evaluation result unavailable",
+                        "Check criteria configuration",
                         new
                         {
                             Symbol = marketData.Symbol,
-                            ErrorMessage = evaluationResult.ErrorMessage
+                            ErrorMessage = evaluationResult.Error?.Message
                         });
 
                     return evaluationResult;
@@ -150,13 +165,17 @@ namespace TradingPlatform.Core.Canonical
             catch (Exception ex)
             {
                 Interlocked.Increment(ref _failedEvaluations);
-                _logger.LogError($"{CriteriaName} evaluation error", ex, new { Symbol = marketData.Symbol });
-                return TradingResult<CriteriaResult>.Failure($"Evaluation error: {ex.Message}", ex);
+                LogError($"{CriteriaName} evaluation error", ex, 
+                    "Criteria evaluation",
+                    "Evaluation failed",
+                    "Check criteria configuration",
+                    new { Symbol = marketData.Symbol });
+                return TradingResult<CriteriaResult>.Failure(new TradingError("EVALUATION_ERROR", $"Evaluation error: {ex.Message}", ex));
             }
             finally
             {
                 _evaluationSemaphore.Release();
-                RecordMetric($"{CriteriaName}.EvaluationDuration", stopwatch.ElapsedMilliseconds);
+                UpdateMetric($"{CriteriaName}.EvaluationDuration", stopwatch.ElapsedMilliseconds);
             }
         }
 
@@ -203,9 +222,9 @@ namespace TradingPlatform.Core.Canonical
             return uptime > 0 ? _totalEvaluations / uptime : 0;
         }
 
-        protected override Dictionary<string, object> GetServiceMetrics()
+        protected Dictionary<string, object?> GetCustomMetrics()
         {
-            var baseMetrics = base.GetServiceMetrics();
+            var baseMetrics = new Dictionary<string, object?>();
             
             baseMetrics["TotalEvaluations"] = _totalEvaluations;
             baseMetrics["SuccessfulEvaluations"] = _successfulEvaluations;
@@ -229,6 +248,26 @@ namespace TradingPlatform.Core.Canonical
         protected void RecordMetric(string name, object value)
         {
             _evaluationMetrics[name] = value;
+        }
+
+        protected override async Task OnInitializeAsync(CancellationToken cancellationToken)
+        {
+            LogInfo($"Initializing {CriteriaName} evaluator");
+            await Task.CompletedTask;
+        }
+
+        protected override async Task OnStartAsync(CancellationToken cancellationToken)
+        {
+            LogInfo($"Starting {CriteriaName} evaluator");
+            _uptimeStopwatch.Start();
+            await Task.CompletedTask;
+        }
+
+        protected override async Task OnStopAsync(CancellationToken cancellationToken)
+        {
+            LogInfo($"Stopping {CriteriaName} evaluator");
+            _uptimeStopwatch.Stop();
+            await Task.CompletedTask;
         }
 
         protected override void Dispose(bool disposing)

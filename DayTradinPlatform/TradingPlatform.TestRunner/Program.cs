@@ -6,8 +6,16 @@ namespace TradingPlatform.TestRunner
     {
         static async Task Main(string[] args)
         {
-            // Use the canonical implementation
-            await DataProviderTestHarness_Canonical.Main(args);
+            if (args.Length > 0 && args[0] == "test-api-keys")
+            {
+                // Test API keys
+                await ApiKeyTester.TestApiKeys();
+            }
+            else
+            {
+                // Use the canonical implementation
+                await DataProviderTestHarness_Canonical.Main(args);
+            }
         }
     }
 }
