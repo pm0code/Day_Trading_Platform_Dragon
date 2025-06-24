@@ -14,7 +14,7 @@ namespace TradingPlatform.Screening.Interfaces
         /// <summary>
         /// Evaluates the given market data and trading criteria, returning a unified CriteriaResult.
         /// </summary>
-        Task<CriteriaResult> EvaluateAsync(MarketData marketData, TradingCriteria criteria);
+        Task<TradingPlatform.Screening.Models.CriteriaResult> EvaluateAsync(MarketData marketData, TradingCriteria criteria);
     }
 }
 

@@ -27,20 +27,25 @@
 - Fixed RecordRiskMetric calls (kept as-is, method exists)
 - Fixed all Logger method calls to use canonical wrappers
 
-### TradingPlatform.DataIngestion Fixes (In Progress)
+### TradingPlatform.DataIngestion Fixes (Completed)
 
 #### FinnhubProviderCanonical.cs
 - Added `using System.Text.Json.Serialization;`
-- Fixed JsonPropertyName attribute references
+- Fixed MarketData constructor to pass ITradingLogger
+- Changed FetchDataAsync to ExecuteWithLoggingAsync for non-MarketData types
+- Fixed SentimentData required properties
 
-#### AlphaVantageProviderCanonical.cs
+#### AlphaVantageProviderCanonical.cs  
 - Added `using System.Text.Json.Serialization;`
-- Added missing response types:
-  - AlphaVantageGlobalQuoteResponse
-  - GlobalQuote
-- Fixed SymbolSearchResult type conflict:
-  - Renamed to AlphaVantageSymbolMatch
-  - Added mapping to Core.Models.SymbolSearchResult
+- Added missing response types (GlobalQuote, etc.)
+- Fixed SymbolSearchResult mapping (removed Exchange property)
+- Fixed IRateLimiter method calls (async to sync)
+- Fixed ApiResponse properties (Message to ErrorMessage/Status)
+- Changed FetchDataAsync to ExecuteWithLoggingAsync for non-MarketData types
+
+#### AlphaVantageProvider.cs
+- Fixed GlobalQuote type references with fully qualified names
+- Added type aliases to resolve ambiguity
 
 ### TradingPlatform.TestRunner Fixes
 
@@ -79,15 +84,18 @@
 - ✅ TradingPlatform.Foundation
 - ✅ TradingPlatform.Common
 - ✅ TradingPlatform.Core
-- 🟡 TradingPlatform.DataIngestion (in progress)
-- ❌ TradingPlatform.Screening
-- ❌ TradingPlatform.RiskManagement
-- ❌ TradingPlatform.Auditing
+- ✅ TradingPlatform.DataIngestion
+- 🟡 TradingPlatform.Screening (in progress - 296 errors)
+- ❌ TradingPlatform.RiskManagement (78 errors)
+- ❌ TradingPlatform.Auditing (174 errors)
+- ❌ TradingPlatform.Logging (8 errors)
 - ❌ Other dependent projects
 
 ## Next Steps
-1. Complete DataIngestion compilation fixes
-2. Fix Screening project errors
-3. Fix RiskManagement project errors
-4. Update all projects to use new APIs
-5. Run comprehensive audit
+1. ~~Complete DataIngestion compilation fixes~~ ✅
+2. Fix Screening project errors (296 errors - in progress)
+3. Fix RiskManagement project errors (78 errors)
+4. Fix Auditing project errors (174 errors)
+5. Fix Logging project errors (8 errors)
+6. Update all remaining projects to use new APIs
+7. Run comprehensive audit

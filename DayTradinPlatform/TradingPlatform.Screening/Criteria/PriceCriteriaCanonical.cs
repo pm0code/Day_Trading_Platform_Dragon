@@ -2,7 +2,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using TradingPlatform.Core.Canonical;
-using TradingPlatform.Core.Foundation;
+using TradingPlatform.Foundation.Models;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
 using TradingPlatform.Core.Models;

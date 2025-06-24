@@ -69,9 +69,9 @@ namespace TradingPlatform.DataIngestion.Providers
         {
             return await ExecuteWithLoggingAsync(async () =>
             {
-                var isReached = await _rateLimiter.IsRateLimitReachedAsync();
+                var isReached = _rateLimiter.IsLimitReached();
                 UpdateMetric("RateLimitReached", isReached);
-                return isReached;
+                return await Task.FromResult(isReached);
             }, "Check rate limit status", "Rate limit check failed", "Verify rate limiter configuration");
         }
 
@@ -79,9 +79,9 @@ namespace TradingPlatform.DataIngestion.Providers
         {
             return await ExecuteWithLoggingAsync(async () =>
             {
-                var remaining = await _rateLimiter.GetRemainingCallsAsync();
+                var remaining = _rateLimiter.GetRemainingCalls();
                 UpdateMetric("RemainingCalls", remaining);
-                return remaining;
+                return await Task.FromResult(remaining);
             }, "Get remaining API calls", "Failed to get remaining calls", "Check rate limiter state");
         }
 
@@ -95,9 +95,10 @@ namespace TradingPlatform.DataIngestion.Providers
                 {
                     Success = validationResult.IsSuccess,
                     Data = validationResult.IsSuccess,
-                    Message = validationResult.IsSuccess 
-                        ? "Connection successful" 
+                    ErrorMessage = validationResult.IsSuccess 
+                        ? "" 
                         : validationResult.Error?.Message ?? "Connection failed",
+                    Status = validationResult.IsSuccess ? "Connected" : "Failed",
                     Timestamp = DateTime.UtcNow
                 };
             }, "Test Finnhub connection", "Connection test failed", "Check network and API credentials");
@@ -132,7 +133,8 @@ namespace TradingPlatform.DataIngestion.Providers
                 {
                     Success = true,
                     Data = status,
-                    Message = "Provider status retrieved",
+                    ErrorMessage = "",
+                    Status = "Retrieved",
                     Timestamp = DateTime.UtcNow
                 };
             }, "Get provider status", "Failed to get provider status", "Check provider health");
@@ -204,7 +206,7 @@ namespace TradingPlatform.DataIngestion.Providers
                     var lastIndex = candleData.Close.Count - 1;
                     if (lastIndex < 0) return null;
 
-                    return new MarketData
+                    return new MarketData(Logger)
                     {
                         Symbol = symbol,
                         Open = candleData.Open[lastIndex],
@@ -212,8 +214,7 @@ namespace TradingPlatform.DataIngestion.Providers
                         Low = candleData.Low[lastIndex],
                         Price = candleData.Close[lastIndex],
                         Volume = candleData.Volume[lastIndex],
-                        Timestamp = DateTimeOffset.FromUnixTimeSeconds(candleData.Timestamp[lastIndex]).UtcDateTime,
-                        Provider = ProviderName
+                        Timestamp = DateTimeOffset.FromUnixTimeSeconds(candleData.Timestamp[lastIndex]).UtcDateTime
                     };
                 },
                 new CachePolicy { AbsoluteExpiration = TimeSpan.FromMinutes(5) });
@@ -223,180 +224,164 @@ namespace TradingPlatform.DataIngestion.Providers
 
         public async Task<CompanyProfile> GetCompanyProfileAsync(string symbol)
         {
-            var result = await FetchDataAsync(
-                $"profile_{symbol}",
-                async () =>
-                {
-                    var request = new RestRequest("/stock/profile2")
-                        .AddParameter("symbol", symbol);
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                var request = new RestRequest("/stock/profile2")
+                    .AddParameter("symbol", symbol);
 
-                    var response = await _client.ExecuteAsync(request);
-                    ValidateResponse(response, symbol);
+                var response = await _client.ExecuteAsync(request);
+                ValidateResponse(response, symbol);
 
-                    return JsonSerializer.Deserialize<CompanyProfile>(response.Content!)
-                        ?? throw new InvalidOperationException($"Failed to parse company profile for {symbol}");
-                },
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromHours(24) });
-
-            return result.IsSuccess ? result.Value! : new CompanyProfile();
+                return JsonSerializer.Deserialize<CompanyProfile>(response.Content!)
+                    ?? throw new InvalidOperationException($"Failed to parse company profile for {symbol}");
+            }, 
+            $"Fetch company profile for {symbol}", 
+            $"Failed to fetch company profile for {symbol}", 
+            "Check API response format");
         }
 
         public async Task<CompanyFinancials> GetCompanyFinancialsAsync(string symbol)
         {
-            var result = await FetchDataAsync(
-                $"financials_{symbol}",
-                async () =>
-                {
-                    var request = new RestRequest("/stock/financials-reported")
-                        .AddParameter("symbol", symbol);
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                var request = new RestRequest("/stock/financials-reported")
+                    .AddParameter("symbol", symbol);
 
-                    var response = await _client.ExecuteAsync(request);
-                    ValidateResponse(response, symbol);
+                var response = await _client.ExecuteAsync(request);
+                ValidateResponse(response, symbol);
 
-                    return JsonSerializer.Deserialize<CompanyFinancials>(response.Content!)
-                        ?? throw new InvalidOperationException($"Failed to parse financials for {symbol}");
-                },
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromHours(24) });
-
-            return result.IsSuccess ? result.Value! : new CompanyFinancials();
+                return JsonSerializer.Deserialize<CompanyFinancials>(response.Content!)
+                    ?? throw new InvalidOperationException($"Failed to parse financials for {symbol}");
+            }, 
+            $"Fetch company financials for {symbol}", 
+            $"Failed to fetch financials for {symbol}", 
+            "Check API response format");
         }
 
         public async Task<bool> IsMarketOpenAsync()
         {
-            var result = await FetchDataAsync(
-                "market_status",
-                async () =>
-                {
-                    var request = new RestRequest("/stock/market-status");
-                    var response = await _client.ExecuteAsync(request);
-                    ValidateResponse(response, "market status");
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                var request = new RestRequest("/stock/market-status");
+                var response = await _client.ExecuteAsync(request);
+                ValidateResponse(response, "market status");
 
-                    var status = JsonSerializer.Deserialize<FinnhubMarketStatus>(response.Content!);
-                    return status?.IsOpen ?? false;
-                },
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromMinutes(1) });
-
-            return result.IsSuccess && result.Value;
+                var status = JsonSerializer.Deserialize<FinnhubMarketStatus>(response.Content!);
+                return status?.IsOpen ?? false;
+            }, 
+            "Check market status", 
+            "Failed to check market status", 
+            "Check API response format");
         }
 
         public async Task<List<string>?> GetStockSymbolsAsync(string exchange = "US")
         {
-            var result = await FetchDataAsync(
-                $"symbols_{exchange}",
-                async () =>
-                {
-                    var request = new RestRequest("/stock/symbol")
-                        .AddParameter("exchange", exchange);
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                var request = new RestRequest("/stock/symbol")
+                    .AddParameter("exchange", exchange);
 
-                    var response = await _client.ExecuteAsync(request);
-                    ValidateResponse(response, $"symbols for {exchange}");
+                var response = await _client.ExecuteAsync(request);
+                ValidateResponse(response, $"symbols for {exchange}");
 
-                    var symbols = JsonSerializer.Deserialize<List<FinnhubSymbol>>(response.Content!);
-                    return symbols?.Select(s => s.Symbol).ToList() ?? new List<string>();
-                },
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromHours(24) });
-
-            return result.IsSuccess ? result.Value?.ToList() : null;
+                var symbols = JsonSerializer.Deserialize<List<FinnhubSymbol>>(response.Content!);
+                return symbols?.Select(s => s.Symbol).ToList() ?? new List<string>();
+            }, 
+            $"Fetch stock symbols for {exchange}", 
+            $"Failed to fetch symbols for {exchange}", 
+            "Check API response format");
         }
 
         public async Task<SentimentData> GetInsiderSentimentAsync(string symbol)
         {
-            var result = await FetchDataAsync(
-                $"sentiment_{symbol}",
-                async () =>
-                {
-                    var request = new RestRequest("/stock/insider-sentiment")
-                        .AddParameter("symbol", symbol);
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                var request = new RestRequest("/stock/insider-sentiment")
+                    .AddParameter("symbol", symbol);
 
-                    var response = await _client.ExecuteAsync(request);
-                    ValidateResponse(response, symbol);
+                var response = await _client.ExecuteAsync(request);
+                ValidateResponse(response, symbol);
 
-                    return JsonSerializer.Deserialize<SentimentData>(response.Content!)
-                        ?? new SentimentData();
-                },
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromHours(1) });
-
-            return result.IsSuccess ? result.Value! : new SentimentData();
+                return JsonSerializer.Deserialize<SentimentData>(response.Content!)
+                    ?? new SentimentData { Symbol = symbol, Sentiment = "neutral" };
+            }, 
+            $"Fetch insider sentiment for {symbol}", 
+            $"Failed to fetch sentiment for {symbol}", 
+            "Check API response format");
         }
 
         public async Task<List<NewsItem>> GetMarketNewsAsync(string category = "general")
         {
-            var result = await FetchDataAsync(
-                $"news_{category}",
-                async () =>
-                {
-                    var request = new RestRequest("/news")
-                        .AddParameter("category", category);
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                var request = new RestRequest("/news")
+                    .AddParameter("category", category);
 
-                    var response = await _client.ExecuteAsync(request);
-                    ValidateResponse(response, $"news category {category}");
+                var response = await _client.ExecuteAsync(request);
+                ValidateResponse(response, $"news category {category}");
 
-                    return JsonSerializer.Deserialize<List<NewsItem>>(response.Content!)
-                        ?? new List<NewsItem>();
-                },
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromMinutes(15) });
-
-            return result.IsSuccess ? result.Value!.ToList() : new List<NewsItem>();
+                return JsonSerializer.Deserialize<List<NewsItem>>(response.Content!)
+                    ?? new List<NewsItem>();
+            }, 
+            $"Fetch market news for {category}", 
+            $"Failed to fetch market news for {category}", 
+            "Check API response format");
         }
 
         public async Task<List<NewsItem>> GetCompanyNewsAsync(string symbol, DateTime from, DateTime to)
         {
-            var result = await FetchDataAsync(
-                $"company_news_{symbol}_{from:yyyyMMdd}_{to:yyyyMMdd}",
-                async () =>
-                {
-                    var request = new RestRequest("/company-news")
-                        .AddParameter("symbol", symbol)
-                        .AddParameter("from", from.ToString("yyyy-MM-dd"))
-                        .AddParameter("to", to.ToString("yyyy-MM-dd"));
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                var request = new RestRequest("/company-news")
+                    .AddParameter("symbol", symbol)
+                    .AddParameter("from", from.ToString("yyyy-MM-dd"))
+                    .AddParameter("to", to.ToString("yyyy-MM-dd"));
 
-                    var response = await _client.ExecuteAsync(request);
-                    ValidateResponse(response, $"news for {symbol}");
+                var response = await _client.ExecuteAsync(request);
+                ValidateResponse(response, $"news for {symbol}");
 
-                    return JsonSerializer.Deserialize<List<NewsItem>>(response.Content!)
-                        ?? new List<NewsItem>();
-                },
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromMinutes(30) });
-
-            return result.IsSuccess ? result.Value!.ToList() : new List<NewsItem>();
+                return JsonSerializer.Deserialize<List<NewsItem>>(response.Content!)
+                    ?? new List<NewsItem>();
+            }, 
+            $"Fetch company news for {symbol}", 
+            $"Failed to fetch news for {symbol}", 
+            "Check API response format");
         }
 
         public async Task<Dictionary<string, decimal>> GetTechnicalIndicatorsAsync(string symbol, string indicator)
         {
-            var result = await FetchDataAsync(
-                $"indicator_{symbol}_{indicator}",
-                async () =>
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                var request = new RestRequest("/indicator")
+                    .AddParameter("symbol", symbol)
+                    .AddParameter("indicator", indicator)
+                    .AddParameter("resolution", "D") // Daily by default
+                    .AddParameter("from", ((DateTimeOffset)DateTime.UtcNow.AddDays(-30)).ToUnixTimeSeconds())
+                    .AddParameter("to", ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds());
+
+                var response = await _client.ExecuteAsync(request);
+                ValidateResponse(response, $"{indicator} for {symbol}");
+
+                var indicatorData = JsonSerializer.Deserialize<Dictionary<string, object>>(response.Content!);
+                var result = new Dictionary<string, decimal>();
+                
+                // Parse indicator values (structure varies by indicator)
+                if (indicatorData != null)
                 {
-                    var request = new RestRequest("/indicator")
-                        .AddParameter("symbol", symbol)
-                        .AddParameter("indicator", indicator)
-                        .AddParameter("resolution", "D") // Daily by default
-                        .AddParameter("from", ((DateTimeOffset)DateTime.UtcNow.AddDays(-30)).ToUnixTimeSeconds())
-                        .AddParameter("to", ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds());
-
-                    var response = await _client.ExecuteAsync(request);
-                    ValidateResponse(response, $"{indicator} for {symbol}");
-
-                    var indicatorData = JsonSerializer.Deserialize<Dictionary<string, object>>(response.Content!);
-                    var result = new Dictionary<string, decimal>();
-                    
-                    // Parse indicator values (structure varies by indicator)
-                    if (indicatorData != null)
+                    foreach (var kvp in indicatorData)
                     {
-                        foreach (var kvp in indicatorData)
+                        if (decimal.TryParse(kvp.Value?.ToString(), out var value))
                         {
-                            if (decimal.TryParse(kvp.Value?.ToString(), out var value))
-                            {
-                                result[kvp.Key] = value;
-                            }
+                            result[kvp.Key] = value;
                         }
                     }
+                }
 
-                    return result;
-                },
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromMinutes(15) });
-
-            return result.IsSuccess ? result.Value! : new Dictionary<string, decimal>();
+                return result;
+            }, 
+            $"Fetch technical indicators {indicator} for {symbol}", 
+            $"Failed to fetch indicators for {symbol}", 
+            "Check API response format");
         }
 
         #endregion
@@ -503,7 +488,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 throw new InvalidOperationException($"Failed to parse quote for {symbol}");
             }
 
-            return new MarketData
+            return new MarketData(Logger)
             {
                 Symbol = symbol,
                 Price = quote.CurrentPrice,
@@ -513,8 +498,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 PreviousClose = quote.PreviousClose,
                 Change = quote.Change,
                 ChangePercent = quote.PercentChange,
-                Timestamp = DateTimeOffset.FromUnixTimeSeconds(quote.Timestamp).UtcDateTime,
-                Provider = ProviderName
+                Timestamp = DateTimeOffset.FromUnixTimeSeconds(quote.Timestamp).UtcDateTime
             };
         }
 

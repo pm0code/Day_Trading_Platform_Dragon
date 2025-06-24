@@ -66,9 +66,9 @@ namespace TradingPlatform.DataIngestion.Providers
         {
             return await ExecuteWithLoggingAsync(async () =>
             {
-                var isReached = await _rateLimiter.IsRateLimitReachedAsync();
+                var isReached = _rateLimiter.IsLimitReached();
                 UpdateMetric("RateLimitReached", isReached);
-                return isReached;
+                return await Task.FromResult(isReached);
             }, "Check rate limit status", "Rate limit check failed", "Verify rate limiter configuration");
         }
 
@@ -76,9 +76,9 @@ namespace TradingPlatform.DataIngestion.Providers
         {
             return await ExecuteWithLoggingAsync(async () =>
             {
-                var remaining = await _rateLimiter.GetRemainingCallsAsync();
+                var remaining = _rateLimiter.GetRemainingCalls();
                 UpdateMetric("RemainingCalls", remaining);
-                return remaining;
+                return await Task.FromResult(remaining);
             }, "Get remaining API calls", "Failed to get remaining calls", "Check rate limiter state");
         }
 
@@ -92,9 +92,10 @@ namespace TradingPlatform.DataIngestion.Providers
                 {
                     Success = validationResult.IsSuccess,
                     Data = validationResult.IsSuccess,
-                    Message = validationResult.IsSuccess 
-                        ? "Connection successful" 
+                    ErrorMessage = validationResult.IsSuccess 
+                        ? "" 
                         : validationResult.Error?.Message ?? "Connection failed",
+                    Status = validationResult.IsSuccess ? "Connected" : "Failed",
                     Timestamp = DateTime.UtcNow
                 };
             }, "Test AlphaVantage connection", "Connection test failed", "Check network and API credentials");
@@ -129,7 +130,8 @@ namespace TradingPlatform.DataIngestion.Providers
                 {
                     Success = true,
                     Data = status,
-                    Message = "Provider status retrieved",
+                    ErrorMessage = "",
+                    Status = "Retrieved",
                     Timestamp = DateTime.UtcNow
                 };
             }, "Get provider status", "Failed to get provider status", "Check provider health");
@@ -162,165 +164,158 @@ namespace TradingPlatform.DataIngestion.Providers
 
         public async Task<List<MarketData>> GetIntradayDataAsync(string symbol, string interval = "5min")
         {
-            var result = await FetchDataAsync(
-                $"intraday_{symbol}_{interval}",
-                async () =>
-                {
-                    var request = new RestRequest()
-                        .AddParameter("function", "TIME_SERIES_INTRADAY")
-                        .AddParameter("symbol", symbol)
-                        .AddParameter("interval", interval)
-                        .AddParameter("apikey", _config.AlphaVantage.ApiKey);
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                var request = new RestRequest()
+                    .AddParameter("function", "TIME_SERIES_INTRADAY")
+                    .AddParameter("symbol", symbol)
+                    .AddParameter("interval", interval)
+                    .AddParameter("apikey", _config.AlphaVantage.ApiKey);
 
-                    var response = await _client.ExecuteAsync(request);
-                    ValidateResponse(response, symbol);
+                var response = await _client.ExecuteAsync(request);
+                ValidateResponse(response, symbol);
 
-                    // Parse and convert to MarketData list
-                    var jsonResponse = JsonSerializer.Deserialize<Dictionary<string, object>>(response.Content!);
-                    return ParseIntradayData(jsonResponse, symbol);
-                },
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromMinutes(1) });
-
-            return result.IsSuccess ? result.Value!.ToList() : new List<MarketData>();
+                // Parse and convert to MarketData list
+                var jsonResponse = JsonSerializer.Deserialize<Dictionary<string, object>>(response.Content!);
+                return ParseIntradayData(jsonResponse, symbol);
+            }, 
+            $"Fetch intraday data for {symbol}", 
+            $"Failed to fetch intraday data for {symbol}", 
+            "Check API response format");
         }
 
         public async Task<List<DailyData>> GetDailyTimeSeriesAsync(string symbol, string outputSize = "compact")
         {
-            var result = await FetchDataAsync(
-                $"daily_{symbol}_{outputSize}",
-                async () => await FetchDailyDataAsync("TIME_SERIES_DAILY", symbol, outputSize),
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromHours(1) });
-
-            return result.IsSuccess ? result.Value!.ToList() : new List<DailyData>();
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                return await FetchDailyDataAsync("TIME_SERIES_DAILY", symbol, outputSize);
+            }, 
+            $"Fetch daily time series for {symbol}", 
+            $"Failed to fetch daily data for {symbol}", 
+            "Check API response format");
         }
 
         public async Task<List<DailyData>> GetDailyAdjustedTimeSeriesAsync(string symbol, string outputSize = "compact")
         {
-            var result = await FetchDataAsync(
-                $"daily_adjusted_{symbol}_{outputSize}",
-                async () => await FetchDailyDataAsync("TIME_SERIES_DAILY_ADJUSTED", symbol, outputSize),
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromHours(1) });
-
-            return result.IsSuccess ? result.Value!.ToList() : new List<DailyData>();
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                return await FetchDailyDataAsync("TIME_SERIES_DAILY_ADJUSTED", symbol, outputSize);
+            }, 
+            $"Fetch daily adjusted time series for {symbol}", 
+            $"Failed to fetch daily adjusted data for {symbol}", 
+            "Check API response format");
         }
 
         public async Task<List<DailyData>> GetWeeklyTimeSeriesAsync(string symbol)
         {
-            var result = await FetchDataAsync(
-                $"weekly_{symbol}",
-                async () => await FetchDailyDataAsync("TIME_SERIES_WEEKLY", symbol, "full"),
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromHours(6) });
-
-            return result.IsSuccess ? result.Value!.ToList() : new List<DailyData>();
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                return await FetchDailyDataAsync("TIME_SERIES_WEEKLY", symbol, "full");
+            }, 
+            $"Fetch weekly time series for {symbol}", 
+            $"Failed to fetch weekly data for {symbol}", 
+            "Check API response format");
         }
 
         public async Task<List<DailyData>> GetMonthlyTimeSeriesAsync(string symbol)
         {
-            var result = await FetchDataAsync(
-                $"monthly_{symbol}",
-                async () => await FetchDailyDataAsync("TIME_SERIES_MONTHLY", symbol, "full"),
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromHours(12) });
-
-            return result.IsSuccess ? result.Value!.ToList() : new List<DailyData>();
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                return await FetchDailyDataAsync("TIME_SERIES_MONTHLY", symbol, "full");
+            }, 
+            $"Fetch monthly time series for {symbol}", 
+            $"Failed to fetch monthly data for {symbol}", 
+            "Check API response format");
         }
 
         public async Task<CompanyOverview> GetCompanyOverviewAsync(string symbol)
         {
-            var result = await FetchDataAsync(
-                $"overview_{symbol}",
-                async () =>
-                {
-                    var request = new RestRequest()
-                        .AddParameter("function", "OVERVIEW")
-                        .AddParameter("symbol", symbol)
-                        .AddParameter("apikey", _config.AlphaVantage.ApiKey);
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                var request = new RestRequest()
+                    .AddParameter("function", "OVERVIEW")
+                    .AddParameter("symbol", symbol)
+                    .AddParameter("apikey", _config.AlphaVantage.ApiKey);
 
-                    var response = await _client.ExecuteAsync(request);
-                    ValidateResponse(response, symbol);
+                var response = await _client.ExecuteAsync(request);
+                ValidateResponse(response, symbol);
 
-                    return JsonSerializer.Deserialize<CompanyOverview>(response.Content!)
-                        ?? throw new InvalidOperationException($"Failed to parse company overview for {symbol}");
-                },
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromHours(24) });
-
-            return result.IsSuccess ? result.Value! : new CompanyOverview();
+                return JsonSerializer.Deserialize<CompanyOverview>(response.Content!)
+                    ?? throw new InvalidOperationException($"Failed to parse company overview for {symbol}");
+            }, 
+            $"Fetch company overview for {symbol}", 
+            $"Failed to fetch company overview for {symbol}", 
+            "Check API response format");
         }
 
         public async Task<EarningsData> GetEarningsAsync(string symbol)
         {
-            var result = await FetchDataAsync(
-                $"earnings_{symbol}",
-                async () =>
-                {
-                    var request = new RestRequest()
-                        .AddParameter("function", "EARNINGS")
-                        .AddParameter("symbol", symbol)
-                        .AddParameter("apikey", _config.AlphaVantage.ApiKey);
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                var request = new RestRequest()
+                    .AddParameter("function", "EARNINGS")
+                    .AddParameter("symbol", symbol)
+                    .AddParameter("apikey", _config.AlphaVantage.ApiKey);
 
-                    var response = await _client.ExecuteAsync(request);
-                    ValidateResponse(response, symbol);
+                var response = await _client.ExecuteAsync(request);
+                ValidateResponse(response, symbol);
 
-                    return JsonSerializer.Deserialize<EarningsData>(response.Content!)
-                        ?? throw new InvalidOperationException($"Failed to parse earnings data for {symbol}");
-                },
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromHours(24) });
-
-            return result.IsSuccess ? result.Value! : new EarningsData();
+                return JsonSerializer.Deserialize<EarningsData>(response.Content!)
+                    ?? throw new InvalidOperationException($"Failed to parse earnings data for {symbol}");
+            }, 
+            $"Fetch earnings data for {symbol}", 
+            $"Failed to fetch earnings for {symbol}", 
+            "Check API response format");
         }
 
         public async Task<IncomeStatement> GetIncomeStatementAsync(string symbol)
         {
-            var result = await FetchDataAsync(
-                $"income_{symbol}",
-                async () =>
-                {
-                    var request = new RestRequest()
-                        .AddParameter("function", "INCOME_STATEMENT")
-                        .AddParameter("symbol", symbol)
-                        .AddParameter("apikey", _config.AlphaVantage.ApiKey);
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                var request = new RestRequest()
+                    .AddParameter("function", "INCOME_STATEMENT")
+                    .AddParameter("symbol", symbol)
+                    .AddParameter("apikey", _config.AlphaVantage.ApiKey);
 
-                    var response = await _client.ExecuteAsync(request);
-                    ValidateResponse(response, symbol);
+                var response = await _client.ExecuteAsync(request);
+                ValidateResponse(response, symbol);
 
-                    return JsonSerializer.Deserialize<IncomeStatement>(response.Content!)
-                        ?? throw new InvalidOperationException($"Failed to parse income statement for {symbol}");
-                },
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromHours(24) });
-
-            return result.IsSuccess ? result.Value! : new IncomeStatement();
+                return JsonSerializer.Deserialize<IncomeStatement>(response.Content!)
+                    ?? throw new InvalidOperationException($"Failed to parse income statement for {symbol}");
+            }, 
+            $"Fetch income statement for {symbol}", 
+            $"Failed to fetch income statement for {symbol}", 
+            "Check API response format");
         }
 
         public async Task<List<SymbolSearchResult>> SearchSymbolsAsync(string keywords)
         {
-            var result = await FetchDataAsync(
-                $"search_{keywords}",
-                async () =>
+            return await ExecuteWithLoggingAsync(async () =>
+            {
+                var request = new RestRequest()
+                    .AddParameter("function", "SYMBOL_SEARCH")
+                    .AddParameter("keywords", keywords)
+                    .AddParameter("apikey", _config.AlphaVantage.ApiKey);
+
+                var response = await _client.ExecuteAsync(request);
+                ValidateResponse(response, keywords);
+
+                var searchResponse = JsonSerializer.Deserialize<SymbolSearchResponse>(response.Content!);
+                var matches = searchResponse?.Matches ?? new List<AlphaVantageSymbolMatch>();
+                
+                // Map AlphaVantageSymbolMatch to SymbolSearchResult
+                return matches.Select(m => new SymbolSearchResult
                 {
-                    var request = new RestRequest()
-                        .AddParameter("function", "SYMBOL_SEARCH")
-                        .AddParameter("keywords", keywords)
-                        .AddParameter("apikey", _config.AlphaVantage.ApiKey);
-
-                    var response = await _client.ExecuteAsync(request);
-                    ValidateResponse(response, keywords);
-
-                    var searchResponse = JsonSerializer.Deserialize<SymbolSearchResponse>(response.Content!);
-                    var matches = searchResponse?.Matches ?? new List<AlphaVantageSymbolMatch>();
-                    
-                    // Map AlphaVantageSymbolMatch to SymbolSearchResult
-                    return matches.Select(m => new SymbolSearchResult
-                    {
-                        Symbol = m.Symbol,
-                        Name = m.Name,
-                        Type = m.Type,
-                        Region = m.Region,
-                        Exchange = "", // AlphaVantage doesn't provide exchange in search
-                        Currency = "" // AlphaVantage doesn't provide currency in search
-                    }).ToList();
-                },
-                new CachePolicy { AbsoluteExpiration = TimeSpan.FromHours(1) });
-
-            return result.IsSuccess ? result.Value!.ToList() : new List<SymbolSearchResult>();
+                    Symbol = m.Symbol,
+                    Name = m.Name,
+                    Type = m.Type,
+                    Region = m.Region,
+                    Currency = "" // AlphaVantage doesn't provide currency in search
+                }).ToList();
+            }, 
+            $"Search symbols for {keywords}", 
+            $"Failed to search symbols for {keywords}", 
+            "Check API response format");
         }
 
         public async Task<bool> IsMarketOpenAsync()
@@ -502,7 +497,7 @@ namespace TradingPlatform.DataIngestion.Providers
             var response = await _client.ExecuteAsync(request);
             ValidateResponse(response, symbol);
 
-            var jsonResponse = JsonSerializer.Deserialize<AlphaVantageTimeSeriesResponse>(response.Content!);
+            var jsonResponse = JsonSerializer.Deserialize<TradingPlatform.Core.Models.AlphaVantageTimeSeriesResponse>(response.Content!);
             if (jsonResponse?.TimeSeries == null)
             {
                 return new List<DailyData>();
@@ -530,7 +525,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
         private MarketData MapToMarketData(GlobalQuote quote)
         {
-            return new MarketData
+            return new MarketData(Logger)
             {
                 Symbol = quote.Symbol,
                 Price = decimal.Parse(quote.Price),
@@ -541,8 +536,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 PreviousClose = decimal.Parse(quote.PreviousClose),
                 Change = decimal.Parse(quote.Change),
                 ChangePercent = ParsePercentage(quote.ChangePercent),
-                Timestamp = DateTime.Parse(quote.LatestTradingDay),
-                Provider = ProviderName
+                Timestamp = DateTime.Parse(quote.LatestTradingDay)
             };
         }
 
@@ -574,7 +568,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 var timestamp = DateTime.Parse(kvp.Key);
                 var data = kvp.Value;
                 
-                result.Add(new MarketData
+                result.Add(new MarketData(Logger)
                 {
                     Symbol = symbol,
                     Timestamp = timestamp,
@@ -582,8 +576,7 @@ namespace TradingPlatform.DataIngestion.Providers
                     High = decimal.Parse(data["2. high"]),
                     Low = decimal.Parse(data["3. low"]),
                     Price = decimal.Parse(data["4. close"]),
-                    Volume = long.Parse(data["5. volume"]),
-                    Provider = ProviderName
+                    Volume = long.Parse(data["5. volume"])
                 });
             }
 

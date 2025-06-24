@@ -12,6 +12,8 @@ using TradingPlatform.DataIngestion.Interfaces;
 using TradingPlatform.DataIngestion.Models;
 using System.Text.Json;
 using TradingPlatform.Core.Logging;
+using AlphaVantageGlobalQuoteResponse = TradingPlatform.Core.Models.AlphaVantageGlobalQuoteResponse;
+using AlphaVantageQuote = TradingPlatform.Core.Models.AlphaVantageQuote;
 
 namespace TradingPlatform.DataIngestion.Providers
 {
@@ -73,7 +75,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 }
 
                 // 6. Parse JSON Response using external model
-                var jsonResponse = JsonSerializer.Deserialize<AlphaVantageGlobalQuoteResponse>(response.Content);
+                var jsonResponse = JsonSerializer.Deserialize<TradingPlatform.Core.Models.AlphaVantageGlobalQuoteResponse>(response.Content);
                 if (jsonResponse?.GlobalQuote == null)
                 {
                     TradingLogOrchestrator.Instance.LogError($"Failed to deserialize AlphaVantage response for {symbol}");
