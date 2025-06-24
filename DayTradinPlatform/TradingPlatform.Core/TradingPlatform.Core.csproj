@@ -46,5 +46,10 @@
 		<None Remove="MyDocs/**/*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TradingPlatform.Foundation\TradingPlatform.Foundation.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Common\TradingPlatform.Common.csproj" />
+  </ItemGroup>
+
 </Project>
 

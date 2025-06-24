@@ -1,233 +1,206 @@
 using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
-using TradingPlatform.Core.Logging;
+using TradingPlatform.Core.Interfaces;
 
 namespace TradingPlatform.Core.Canonical
 {
     /// <summary>
-    /// Canonical progress reporting implementation for consistent progress tracking across the platform
+    /// Canonical progress reporting implementation for long-running operations
     /// </summary>
-    public class CanonicalProgressReporter : IProgress<ProgressReport>, IDisposable
+    public class CanonicalProgressReporter : IDisposable, IProgress<ProgressReport>
     {
+        private readonly ITradingLogger? _logger;
         private readonly string _operationName;
-        private readonly string _correlationId;
-        private readonly Stopwatch _stopwatch;
-        private readonly ConcurrentDictionary<string, ProgressStage> _stages;
-        private readonly Timer? _periodicReporter;
-        private ProgressReport _currentProgress;
+        private readonly int _totalStages;
+        private readonly Action<ProgressReport>? _progressHandler;
         private readonly object _lock = new object();
+        
+        private ProgressReport _currentReport;
+        private DateTime _startTime;
+        private DateTime? _completionTime;
+        private bool _disposed;
 
-        public CanonicalProgressReporter(string operationName, bool enablePeriodicReporting = false)
+        public CanonicalProgressReporter(
+            string operationName,
+            Action<ProgressReport>? progressHandler = null,
+            int totalStages = 1)
         {
             _operationName = operationName;
-            _correlationId = Guid.NewGuid().ToString();
-            _stopwatch = Stopwatch.StartNew();
-            _stages = new ConcurrentDictionary<string, ProgressStage>();
-            _currentProgress = new ProgressReport { OperationName = operationName };
-
-            TradingLogOrchestrator.Instance.LogInfo(
-                $"Progress tracking started for: {operationName}",
-                new { OperationName = operationName, CorrelationId = _correlationId });
-
-            if (enablePeriodicReporting)
+            _progressHandler = progressHandler;
+            _totalStages = totalStages;
+            _startTime = DateTime.UtcNow;
+            
+            _currentReport = new ProgressReport
             {
-                _periodicReporter = new Timer(
-                    ReportPeriodicProgress,
-                    null,
-                    TimeSpan.FromSeconds(5),
-                    TimeSpan.FromSeconds(5));
-            }
+                OperationName = operationName,
+                ProgressPercentage = 0,
+                Message = "Started",
+                StartedAt = _startTime,
+                IsCompleted = false,
+                HasError = false
+            };
+        }
+
+        public CanonicalProgressReporter(
+            ITradingLogger logger,
+            string operationName,
+            Action<ProgressReport>? progressHandler = null,
+            int totalStages = 1)
+            : this(operationName, progressHandler, totalStages)
+        {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
-        /// Reports progress update
+        /// Reports progress with a percentage and message
         /// </summary>
-        public void Report(ProgressReport value)
+        public void ReportProgress(double percentage, string message)
         {
             lock (_lock)
             {
-                _currentProgress = value;
-                _currentProgress.OperationName = _operationName;
-                _currentProgress.ElapsedTime = _stopwatch.Elapsed;
-                
-                LogProgress(_currentProgress);
-            }
-        }
+                if (_currentReport.IsCompleted)
+                    return;
 
-        /// <summary>
-        /// Reports progress with simple percentage
-        /// </summary>
-        public void ReportProgress(double percentComplete, string? message = null)
-        {
-            Report(new ProgressReport
-            {
-                PercentComplete = percentComplete,
-                Message = message ?? $"{percentComplete:F1}% complete"
-            });
+                _currentReport.ProgressPercentage = Math.Max(0, Math.Min(100, percentage));
+                _currentReport.Message = message;
+                _currentReport.UpdatedAt = DateTime.UtcNow;
+
+                // Calculate estimated time remaining
+                if (percentage > 0 && percentage < 100)
+                {
+                    var elapsed = DateTime.UtcNow - _startTime;
+                    var estimatedTotal = elapsed.TotalSeconds * (100 / percentage);
+                    var remaining = estimatedTotal - elapsed.TotalSeconds;
+                    _currentReport.EstimatedTimeRemaining = TimeSpan.FromSeconds(remaining);
+                }
+
+                ReportCurrentProgress();
+            }
         }
 
         /// <summary>
         /// Reports progress for a specific stage
         /// </summary>
-        public void ReportStageProgress(string stageName, double stagePercentComplete, string? message = null)
+        public void ReportStageProgress(int stage, double stagePercentage, string message)
         {
-            var stage = _stages.GetOrAdd(stageName, new ProgressStage { Name = stageName });
-            stage.PercentComplete = stagePercentComplete;
-            stage.Message = message;
-            stage.LastUpdated = DateTime.UtcNow;
+            if (stage < 1 || stage > _totalStages)
+                return;
 
-            var overallProgress = CalculateOverallProgress();
-            Report(new ProgressReport
-            {
-                PercentComplete = overallProgress,
-                Message = $"{stageName}: {message ?? $"{stagePercentComplete:F1}% complete"}",
-                CurrentStage = stageName,
-                Stages = _stages.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Clone())
-            });
+            var overallPercentage = ((stage - 1) * 100.0 + stagePercentage) / _totalStages;
+            ReportProgress(overallPercentage, $"Stage {stage}/{_totalStages}: {message}");
         }
 
         /// <summary>
-        /// Marks a stage as complete
+        /// Marks the operation as complete
         /// </summary>
-        public void CompleteStage(string stageName)
-        {
-            ReportStageProgress(stageName, 100, "Complete");
-        }
-
-        /// <summary>
-        /// Reports an error during progress
-        /// </summary>
-        public void ReportError(string errorMessage, Exception? exception = null)
-        {
-            var errorReport = new ProgressReport
-            {
-                OperationName = _operationName,
-                Message = $"Error: {errorMessage}",
-                HasError = true,
-                ErrorMessage = errorMessage,
-                ElapsedTime = _stopwatch.Elapsed
-            };
-
-            TradingLogOrchestrator.Instance.LogError(
-                $"Progress error for {_operationName}: {errorMessage}",
-                exception,
-                _operationName,
-                "Operation interrupted by error",
-                "Check error details and retry if appropriate",
-                new { Progress = _currentProgress, CorrelationId = _correlationId });
-
-            Report(errorReport);
-        }
-
-        /// <summary>
-        /// Completes the progress reporting
-        /// </summary>
-        public void Complete(string? completionMessage = null)
-        {
-            _stopwatch.Stop();
-            
-            Report(new ProgressReport
-            {
-                PercentComplete = 100,
-                Message = completionMessage ?? "Operation completed successfully",
-                IsComplete = true,
-                ElapsedTime = _stopwatch.Elapsed
-            });
-
-            TradingLogOrchestrator.Instance.LogInfo(
-                $"Progress completed for: {_operationName}",
-                new 
-                { 
-                    OperationName = _operationName,
-                    ElapsedTime = _stopwatch.Elapsed.ToString(@"mm\:ss\.fff"),
-                    CorrelationId = _correlationId
-                });
-        }
-
-        /// <summary>
-        /// Creates a sub-progress reporter for nested operations
-        /// </summary>
-        public CanonicalProgressReporter CreateSubProgress(string subOperationName, double weightInParent = 1.0)
-        {
-            var subReporter = new CanonicalProgressReporter($"{_operationName} > {subOperationName}");
-            
-            // Link sub-progress to parent
-            subReporter.ProgressChanged += (progress) =>
-            {
-                ReportStageProgress(subOperationName, progress.PercentComplete, progress.Message);
-            };
-
-            return subReporter;
-        }
-
-        public event Action<ProgressReport>? ProgressChanged;
-
-        private void LogProgress(ProgressReport progress)
-        {
-            var logData = new
-            {
-                Operation = progress.OperationName,
-                PercentComplete = progress.PercentComplete,
-                Message = progress.Message,
-                ElapsedTime = progress.ElapsedTime?.ToString(@"mm\:ss\.fff"),
-                EstimatedTimeRemaining = progress.EstimatedTimeRemaining?.ToString(@"mm\:ss\.fff"),
-                CurrentStage = progress.CurrentStage,
-                StageCount = progress.Stages?.Count ?? 0,
-                CorrelationId = _correlationId
-            };
-
-            TradingLogOrchestrator.Instance.LogInfo(
-                $"[Progress] {progress.OperationName}: {progress.PercentComplete:F1}% - {progress.Message}",
-                logData,
-                correlationId: _correlationId);
-
-            // Notify listeners
-            ProgressChanged?.Invoke(progress);
-        }
-
-        private double CalculateOverallProgress()
-        {
-            if (_stages.IsEmpty) return 0;
-            
-            var totalProgress = _stages.Values.Sum(s => s.PercentComplete);
-            return totalProgress / _stages.Count;
-        }
-
-        private void ReportPeriodicProgress(object? state)
+        public void Complete(string message = "Operation completed successfully")
         {
             lock (_lock)
             {
-                if (_currentProgress.IsComplete || _currentProgress.HasError)
-                {
-                    _periodicReporter?.Dispose();
+                if (_currentReport.IsCompleted)
                     return;
-                }
 
-                // Estimate time remaining based on current progress
-                if (_currentProgress.PercentComplete > 0 && _currentProgress.PercentComplete < 100)
-                {
-                    var elapsedSeconds = _stopwatch.Elapsed.TotalSeconds;
-                    var estimatedTotalSeconds = elapsedSeconds / (_currentProgress.PercentComplete / 100);
-                    var estimatedRemainingSeconds = estimatedTotalSeconds - elapsedSeconds;
-                    _currentProgress.EstimatedTimeRemaining = TimeSpan.FromSeconds(estimatedRemainingSeconds);
-                }
+                _currentReport.ProgressPercentage = 100;
+                _currentReport.Message = message;
+                _currentReport.IsCompleted = true;
+                _currentReport.CompletedAt = DateTime.UtcNow;
+                _completionTime = DateTime.UtcNow;
 
-                LogProgress(_currentProgress);
+                ReportCurrentProgress();
             }
+        }
+
+        /// <summary>
+        /// Reports an error during the operation
+        /// </summary>
+        public void ReportError(Exception exception, string message)
+        {
+            lock (_lock)
+            {
+                _currentReport.HasError = true;
+                _currentReport.ErrorMessage = message;
+                _currentReport.LastException = exception;
+                _currentReport.UpdatedAt = DateTime.UtcNow;
+
+                ReportCurrentProgress();
+            }
+        }
+
+        /// <summary>
+        /// Gets the current progress report
+        /// </summary>
+        public ProgressReport GetCurrentReport()
+        {
+            lock (_lock)
+            {
+                return new ProgressReport
+                {
+                    OperationName = _currentReport.OperationName,
+                    ProgressPercentage = _currentReport.ProgressPercentage,
+                    Message = _currentReport.Message,
+                    StartedAt = _currentReport.StartedAt,
+                    UpdatedAt = _currentReport.UpdatedAt,
+                    CompletedAt = _currentReport.CompletedAt,
+                    EstimatedTimeRemaining = _currentReport.EstimatedTimeRemaining,
+                    IsCompleted = _currentReport.IsCompleted,
+                    HasError = _currentReport.HasError,
+                    ErrorMessage = _currentReport.ErrorMessage,
+                    LastException = _currentReport.LastException
+                };
+            }
+        }
+
+        /// <summary>
+        /// IProgress<T> implementation
+        /// </summary>
+        public void Report(ProgressReport value)
+        {
+            ReportProgress(value.ProgressPercentage, value.Message ?? string.Empty);
+        }
+
+        /// <summary>
+        /// Returns this reporter as IProgress<ProgressReport>
+        /// </summary>
+        public IProgress<ProgressReport> AsIProgress() => this;
+
+        private void ReportCurrentProgress()
+        {
+            // Notify handler if provided
+            _progressHandler?.Invoke(GetCurrentReport());
+
+            // Log progress if logger is available
+            _logger?.LogInfo($"[Progress] {_currentReport.OperationName}: {_currentReport.ProgressPercentage:F1}% - {_currentReport.Message}",
+                new
+                {
+                    Operation = _currentReport.OperationName,
+                    ProgressPercentage = _currentReport.ProgressPercentage,
+                    Message = _currentReport.Message,
+                    StartedAt = _currentReport.StartedAt,
+                    UpdatedAt = _currentReport.UpdatedAt,
+                    EstimatedTimeRemaining = _currentReport.EstimatedTimeRemaining,
+                    HasError = _currentReport.HasError,
+                    IsCompleted = _currentReport.IsCompleted
+                });
         }
 
         public void Dispose()
         {
-            _periodicReporter?.Dispose();
-            
-            if (!_currentProgress.IsComplete && !_currentProgress.HasError)
+            if (_disposed)
+                return;
+
+            lock (_lock)
             {
-                TradingLogOrchestrator.Instance.LogWarning(
-                    $"Progress reporter disposed without completion: {_operationName}",
-                    new { Progress = _currentProgress, CorrelationId = _correlationId });
+                if (!_currentReport.IsCompleted && !_currentReport.HasError)
+                {
+                    _currentReport.Message = "Operation disposed without completion";
+                    _currentReport.UpdatedAt = DateTime.UtcNow;
+                    Complete("Operation was disposed");
+                }
+
+                _disposed = true;
             }
         }
     }
@@ -238,84 +211,15 @@ namespace TradingPlatform.Core.Canonical
     public class ProgressReport
     {
         public string OperationName { get; set; } = string.Empty;
-        public double PercentComplete { get; set; }
+        public double ProgressPercentage { get; set; }
         public string? Message { get; set; }
-        public string? CurrentStage { get; set; }
-        public TimeSpan? ElapsedTime { get; set; }
+        public DateTime StartedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        public DateTime? CompletedAt { get; set; }
         public TimeSpan? EstimatedTimeRemaining { get; set; }
-        public bool IsComplete { get; set; }
+        public bool IsCompleted { get; set; }
         public bool HasError { get; set; }
         public string? ErrorMessage { get; set; }
-        public Dictionary<string, ProgressStage>? Stages { get; set; }
-    }
-
-    /// <summary>
-    /// Progress stage information
-    /// </summary>
-    public class ProgressStage
-    {
-        public string Name { get; set; } = string.Empty;
-        public double PercentComplete { get; set; }
-        public string? Message { get; set; }
-        public DateTime LastUpdated { get; set; }
-
-        public ProgressStage Clone()
-        {
-            return new ProgressStage
-            {
-                Name = Name,
-                PercentComplete = PercentComplete,
-                Message = Message,
-                LastUpdated = LastUpdated
-            };
-        }
-    }
-
-    /// <summary>
-    /// Extension methods for easy progress reporting
-    /// </summary>
-    public static class ProgressReportingExtensions
-    {
-        /// <summary>
-        /// Executes an operation with progress reporting
-        /// </summary>
-        public static async Task<T> ExecuteWithProgressAsync<T>(
-            this Func<IProgress<ProgressReport>, Task<T>> operation,
-            string operationName,
-            bool enablePeriodicReporting = false)
-        {
-            using var progressReporter = new CanonicalProgressReporter(operationName, enablePeriodicReporting);
-            
-            try
-            {
-                var result = await operation(progressReporter);
-                progressReporter.Complete();
-                return result;
-            }
-            catch (Exception ex)
-            {
-                progressReporter.ReportError(ex.Message, ex);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Reports progress for a batch operation
-        /// </summary>
-        public static void ReportBatchProgress<T>(
-            this IProgress<ProgressReport> progress,
-            IList<T> items,
-            int currentIndex,
-            string? currentItemDescription = null)
-        {
-            var percentComplete = items.Count > 0 ? (currentIndex + 1) * 100.0 / items.Count : 100;
-            var message = currentItemDescription ?? $"Processing item {currentIndex + 1} of {items.Count}";
-            
-            progress.Report(new ProgressReport
-            {
-                PercentComplete = percentComplete,
-                Message = message
-            });
-        }
+        public Exception? LastException { get; set; }
     }
 }

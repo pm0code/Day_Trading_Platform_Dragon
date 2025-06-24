@@ -24,7 +24,7 @@ namespace TradingPlatform.Screening.Engines
         private readonly ConcurrentDictionary<string, ScreeningResult> _lastResults;
         private readonly ConcurrentDictionary<string, DateTime> _lastScreeningTimes;
         private readonly SemaphoreSlim _screeningSemaphore;
-        private CancellationTokenSource _cancellationTokenSource;
+        private CancellationTokenSource? _cancellationTokenSource;
         private bool _isScreeningActive;
 
         public RealTimeScreeningEngine(

@@ -12,7 +12,7 @@ namespace TradingPlatform.Core.Observability;
 /// </summary>
 public class ObservabilityEnricher : IObservabilityEnricher
 {
-    private static readonly ThreadLocal<TradingContext> _tradingContext = new();
+    private static readonly ThreadLocal<TradingContext?> _tradingContext = new();
     private static readonly string _machineId = Environment.MachineName;
     private static readonly string _processId = Environment.ProcessId.ToString();
 

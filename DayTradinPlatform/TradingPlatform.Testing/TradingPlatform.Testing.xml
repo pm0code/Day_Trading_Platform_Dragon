@@ -4,6 +4,122 @@
         <name>TradingPlatform.Testing</name>
     </assembly>
     <members>
+        <member name="T:TradingPlatform.Testing.CanonicalTestBase">
+            <summary>
+            Canonical base class for all unit tests in the trading platform.
+            Provides standardized test execution, logging, and verification patterns.
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.LogTestMethodStart(System.String)">
+            <summary>
+            Logs test method entry with automatic method name detection
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.LogTestMethodEnd(System.Boolean,System.String,System.String)">
+            <summary>
+            Logs test method completion
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.LogTestStep(System.String,System.Object)">
+            <summary>
+            Logs test step for detailed tracking
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.LogTestData(System.String,System.Object)">
+            <summary>
+            Logs test data for transparency
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.LogAssertion(System.String,System.Boolean,System.Object,System.Object)">
+            <summary>
+            Logs test assertion
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.ExecuteTestAsync(System.Func{System.Threading.Tasks.Task},System.String)">
+            <summary>
+            Executes a test with canonical error handling and logging
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.ExecuteTestWithExpectedExceptionAsync``1(System.Func{System.Threading.Tasks.Task},System.String,System.String)">
+            <summary>
+            Executes a test with expected exception handling
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.ExecuteParameterizedTestAsync``1(``0,System.Func{``0,System.Threading.Tasks.Task},System.String)">
+            <summary>
+            Executes a parameterized test with canonical logging
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.AssertWithLogging``1(``0,``0,System.String,System.Collections.Generic.IEqualityComparer{``0})">
+            <summary>
+            Asserts with logging
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.AssertNotNull``1(``0,System.String)">
+            <summary>
+            Asserts that the value is not null with logging
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.AssertNull``1(``0,System.String)">
+            <summary>
+            Asserts that the value is null with logging
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.AssertConditionWithLogging(System.Boolean,System.String,System.String)">
+            <summary>
+            Asserts condition with logging
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.AssertCollectionWithLogging``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IEnumerable{``0},System.String)">
+            <summary>
+            Asserts collection with logging
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.CreateTestData``1(System.Func{``0},System.String)">
+            <summary>
+            Creates test data with logging
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.MeasurePerformanceAsync``1(System.Func{System.Threading.Tasks.Task{``0}},System.String,System.Nullable{System.TimeSpan})">
+            <summary>
+            Measures performance of an operation
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.RetryTestOperationAsync``1(System.Func{System.Threading.Tasks.Task{``0}},System.Int32,System.Int32)">
+            <summary>
+            Retries a flaky test operation
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.LogTestInfo(System.String,System.Object)">
+            <summary>
+            Logs test info message
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.LogTestWarning(System.String,System.String,System.Object)">
+            <summary>
+            Logs test warning message
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.LogTestError(System.String,System.Exception,System.Object)">
+            <summary>
+            Logs test error message
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.ConfigureTestServices(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Override to configure test-specific services
+            </summary>
+        </member>
+        <member name="M:TradingPlatform.Testing.CanonicalTestBase.RegisterTestArtifact(System.String)">
+            <summary>
+            Adds a test artifact for cleanup
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Testing.TestContextInfo">
+            <summary>
+            Test context information
+            </summary>
+        </member>
         <member name="T:TradingPlatform.Testing.Examples.MockMessageBusExamples">
             <summary>
             Example usage patterns for the standardized MockMessageBus implementation.
@@ -252,6 +368,42 @@
         <member name="T:TradingPlatform.Testing.Utilities.TestScenario">
             <summary>
             Predefined test scenarios for comprehensive testing.
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Tests.Canonical.CanonicalBaseTests">
+            <summary>
+            Comprehensive unit tests for CanonicalBase following canonical test patterns
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Tests.Canonical.CanonicalBaseTests.TestCanonicalImplementation">
+            <summary>
+            Test implementation of CanonicalBase for testing purposes
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Tests.Canonical.CanonicalErrorHandlerTests">
+            <summary>
+            Comprehensive unit tests for CanonicalErrorHandler following canonical test patterns
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Tests.Canonical.CanonicalProgressReporterTests">
+            <summary>
+            Comprehensive unit tests for CanonicalProgressReporter following canonical test patterns
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Tests.Canonical.CanonicalServiceBaseTests">
+            <summary>
+            Comprehensive unit tests for CanonicalServiceBase following canonical test patterns
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Tests.Canonical.CanonicalServiceBaseTests.TestServiceImplementation">
+            <summary>
+            Test implementation of CanonicalServiceBase for testing purposes
+            </summary>
+        </member>
+        <member name="T:TradingPlatform.Tests.Canonical.CanonicalTestBaseTests">
+            <summary>
+            Comprehensive unit tests for CanonicalTestBase to ensure the test framework itself
+            follows canonical patterns and provides reliable test infrastructure
             </summary>
         </member>
     </members>

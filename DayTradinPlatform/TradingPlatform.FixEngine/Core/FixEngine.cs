@@ -60,7 +60,8 @@ public sealed class FixEngine : IFixEngine
         using var activity = OpenTelemetryInstrumentation.FixEngineActivitySource.StartActivity("FixEngineInitialization");
         var correlationId = _observabilityEnricher.GenerateCorrelationId();
 
-        _observabilityEnricher.EnrichActivity(activity, "FixEngineInitialization", config);
+        if (activity != null)
+            _observabilityEnricher.EnrichActivity(activity, "FixEngineInitialization", config);
         activity?.SetTag("fix.correlation_id", correlationId);
 
         if (_isInitialized)
@@ -124,7 +125,8 @@ public sealed class FixEngine : IFixEngine
 
         EnsureInitialized();
 
-        _observabilityEnricher.EnrichActivity(activity, "OrderSubmission", request);
+        if (activity != null)
+            _observabilityEnricher.EnrichActivity(activity, "OrderSubmission", request);
         activity?.SetTag("fix.correlation_id", correlationId);
         activity?.SetTag("fix.order.symbol", request.Symbol);
         activity?.SetTag("fix.order.side", request.Side);
@@ -376,7 +378,8 @@ public sealed class FixEngine : IFixEngine
     {
         using var activity = OpenTelemetryInstrumentation.FixEngineActivitySource.StartActivity("VenueInitialization");
 
-        _observabilityEnricher.EnrichActivity(activity, "VenueInitialization", config);
+        if (activity != null)
+            _observabilityEnricher.EnrichActivity(activity, "VenueInitialization", config);
         activity?.SetTag("fix.correlation_id", correlationId);
         activity?.SetTag("fix.venue.name", venueName);
         activity?.SetTag("fix.venue.host", config.Host);
@@ -494,7 +497,8 @@ public sealed class FixEngine : IFixEngine
     {
         using var activity = OpenTelemetryInstrumentation.MarketDataActivitySource.StartActivity("MarketDataReceived");
 
-        _observabilityEnricher.EnrichActivity(activity, "MarketDataReceived", update);
+        if (activity != null)
+            _observabilityEnricher.EnrichActivity(activity, "MarketDataReceived", update);
         activity?.SetTag("fix.correlation_id", correlationId);
         activity?.SetTag("fix.market_data.symbol", update.Symbol);
         activity?.SetTag("fix.market_data.price", update.Snapshot.LastPrice.ToString());

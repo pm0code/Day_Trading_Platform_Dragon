@@ -20,12 +20,12 @@ namespace TradingPlatform.DataIngestion.Interfaces
         /// <summary>
         /// Gets real-time quote using Finnhub's /quote endpoint.
         /// </summary>
-        Task<MarketData> GetQuoteAsync(string symbol);
+        Task<MarketData?> GetQuoteAsync(string symbol);
 
         /// <summary>
         /// Gets batch quotes for multiple symbols (sequential calls due to Finnhub limitations).
         /// </summary>
-        Task<List<MarketData>> GetBatchQuotesAsync(List<string> symbols);
+        Task<List<MarketData>?> GetBatchQuotesAsync(List<string> symbols);
 
         // ========== FINNHUB-SPECIFIC CANDLE DATA ==========
 
@@ -33,7 +33,7 @@ namespace TradingPlatform.DataIngestion.Interfaces
         /// Gets OHLCV candle data using Finnhub's resolution system.
         /// Resolutions: 1, 5, 15, 30, 60, D, W, M
         /// </summary>
-        Task<MarketData> GetCandleDataAsync(string symbol, string resolution, DateTime from, DateTime to);
+        Task<MarketData?> GetCandleDataAsync(string symbol, string resolution, DateTime from, DateTime to);
 
         // ========== FINNHUB-SPECIFIC COMPANY DATA ==========
 
@@ -57,7 +57,7 @@ namespace TradingPlatform.DataIngestion.Interfaces
         /// <summary>
         /// Gets available stock symbols for exchange using Finnhub's /stock/symbol endpoint.
         /// </summary>
-        Task<List<string>> GetStockSymbolsAsync(string exchange = "US");
+        Task<List<string>?> GetStockSymbolsAsync(string exchange = "US");
 
         // ========== FINNHUB-SPECIFIC SENTIMENT & NEWS ==========
 

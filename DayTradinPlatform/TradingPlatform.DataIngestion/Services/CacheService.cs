@@ -28,24 +28,24 @@ namespace TradingPlatform.DataIngestion.Services
             _config = config;
         }
 
-        public async Task<T> GetAsync<T>(string key) where T : class
+        public Task<T?> GetAsync<T>(string key) where T : class
         {
-            if (_cache.TryGetValue(key, out T value))
+            if (_cache.TryGetValue(key, out T? value))
             {
                 TradingLogOrchestrator.Instance.LogInfo($"Cache hit for key: {key}");
-                return value;
+                return Task.FromResult(value);
             }
 
             TradingLogOrchestrator.Instance.LogInfo($"Cache miss for key: {key}");
-            return null;
+            return Task.FromResult<T?>(null);
         }
 
-        public async Task SetAsync<T>(string key, T value, TimeSpan expiration) where T : class
+        public Task SetAsync<T>(string key, T value, TimeSpan expiration) where T : class
         {
             if (value == null)
             {
                 TradingLogOrchestrator.Instance.LogWarning($"Attempted to cache null value for key: {key}");
-                return;
+                return Task.CompletedTask;
             }
 
             var options = new MemoryCacheEntryOptions
@@ -57,15 +57,17 @@ namespace TradingPlatform.DataIngestion.Services
 
             _cache.Set(key, value, options);
             TradingLogOrchestrator.Instance.LogInfo($"Cached value for key: {key}, expires in: {expiration}");
+            return Task.CompletedTask;
         }
 
-        public async Task RemoveAsync(string key)
+        public Task RemoveAsync(string key)
         {
             _cache.Remove(key);
             TradingLogOrchestrator.Instance.LogInfo($"Removed cache entry for key: {key}");
+            return Task.CompletedTask;
         }
 
-        public async Task ClearMarketDataAsync(string marketCode)
+        public Task ClearMarketDataAsync(string marketCode)
         {
             // In a real implementation, we'd need to track keys by market
             // For MVP, we'll implement a simple approach
@@ -73,13 +75,14 @@ namespace TradingPlatform.DataIngestion.Services
 
             // This is a simplified implementation
             // In production, we'd maintain a key registry by market
+            return Task.CompletedTask;
         }
 
-        public async Task<bool> ExistsAsync(string key)
+        public Task<bool> ExistsAsync(string key)
         {
             var exists = _cache.TryGetValue(key, out _);
             TradingLogOrchestrator.Instance.LogInfo($"Cache existence check for key: {key} = {exists}");
-            return exists;
+            return Task.FromResult(exists);
         }
     }
 }

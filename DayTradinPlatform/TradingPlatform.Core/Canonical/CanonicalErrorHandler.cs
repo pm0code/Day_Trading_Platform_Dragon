@@ -1,310 +1,288 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using TradingPlatform.Core.Logging;
+using System.Linq;
+using System.Threading.Tasks;
+using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.Core.Canonical
 {
     /// <summary>
-    /// Canonical error handling implementation for consistent error management across the platform
+    /// Canonical error handler providing consistent error handling patterns across the platform
     /// </summary>
-    public static class CanonicalErrorHandler
+    public class CanonicalErrorHandler
     {
-        /// <summary>
-        /// Handles an exception with full canonical logging and context
-        /// </summary>
-        public static void HandleError(
-            Exception exception,
-            string componentName,
-            string operationDescription,
-            ErrorSeverity severity = ErrorSeverity.Error,
-            string? userImpact = null,
-            string? troubleshootingHints = null,
-            Dictionary<string, object>? additionalContext = null,
-            string? correlationId = null,
-            [CallerMemberName] string methodName = "",
-            [CallerFilePath] string filePath = "",
-            [CallerLineNumber] int lineNumber = 0)
+        private readonly ITradingLogger _logger;
+
+        public CanonicalErrorHandler(ITradingLogger logger)
         {
-            correlationId ??= Guid.NewGuid().ToString();
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        /// <summary>
+        /// Handles an error and returns a result with error information
+        /// </summary>
+        public TradingResult<T> HandleError<T>(
+            Exception exception,
+            string operationContext,
+            string userImpact,
+            string troubleshootingHints,
+            ErrorSeverity? severity = null)
+        {
+            var determinedSeverity = severity ?? DetermineSeverity(exception);
             
-            var errorContext = new Dictionary<string, object>
-            {
-                ["Component"] = componentName,
-                ["Method"] = methodName,
-                ["File"] = filePath,
-                ["Line"] = lineNumber,
-                ["ErrorType"] = exception.GetType().Name,
-                ["Severity"] = severity.ToString(),
-                ["Timestamp"] = DateTime.UtcNow.ToString("O"),
-                ["CorrelationId"] = correlationId
-            };
-
-            // Add any additional context
-            if (additionalContext != null)
-            {
-                foreach (var kvp in additionalContext)
-                {
-                    errorContext[kvp.Key] = kvp.Value;
-                }
-            }
-
-            // Determine user impact if not provided
-            userImpact ??= DetermineUserImpact(exception, severity);
-            
-            // Determine troubleshooting hints if not provided
-            troubleshootingHints ??= DetermineTroubleshootingHints(exception);
-
-            // Log the error using TradingLogOrchestrator
-            TradingLogOrchestrator.Instance.LogError(
-                $"[{componentName}] {operationDescription} failed: {exception.Message}",
+            _logger.LogError(
+                $"Operation failed: {exception.Message}",
                 exception,
-                operationDescription,
+                operationContext,
                 userImpact,
                 troubleshootingHints,
-                errorContext,
-                correlationId: correlationId
-            );
-
-            // For critical errors, also log to system event log (if available)
-            if (severity == ErrorSeverity.Critical)
-            {
-                LogCriticalError(componentName, exception, errorContext);
-            }
-        }
-
-        /// <summary>
-        /// Wraps an operation with canonical error handling
-        /// </summary>
-        public static async Task<T> ExecuteWithErrorHandlingAsync<T>(
-            Func<Task<T>> operation,
-            string componentName,
-            string operationDescription,
-            Func<Exception, T>? fallbackFunc = null,
-            string? correlationId = null,
-            [CallerMemberName] string methodName = "")
-        {
-            correlationId ??= Guid.NewGuid().ToString();
-            
-            try
-            {
-                return await operation();
-            }
-            catch (Exception ex)
-            {
-                HandleError(
-                    ex,
-                    componentName,
-                    operationDescription,
-                    DetermineSeverity(ex),
-                    correlationId: correlationId,
-                    methodName: methodName);
-
-                if (fallbackFunc != null)
+                new
                 {
-                    TradingLogOrchestrator.Instance.LogWarning(
-                        $"[{componentName}] Executing fallback for {operationDescription}",
-                        correlationId: correlationId);
-                    
-                    return fallbackFunc(ex);
-                }
+                    Severity = determinedSeverity,
+                    ExceptionType = exception.GetType().Name
+                });
 
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Wraps an operation with canonical error handling (synchronous)
-        /// </summary>
-        public static T ExecuteWithErrorHandling<T>(
-            Func<T> operation,
-            string componentName,
-            string operationDescription,
-            Func<Exception, T>? fallbackFunc = null,
-            string? correlationId = null,
-            [CallerMemberName] string methodName = "")
-        {
-            correlationId ??= Guid.NewGuid().ToString();
+            var errorCode = $"{exception.GetType().Name}_{determinedSeverity}";
             
-            try
-            {
-                return operation();
-            }
-            catch (Exception ex)
-            {
-                HandleError(
-                    ex,
-                    componentName,
-                    operationDescription,
-                    DetermineSeverity(ex),
-                    correlationId: correlationId,
-                    methodName: methodName);
-
-                if (fallbackFunc != null)
-                {
-                    TradingLogOrchestrator.Instance.LogWarning(
-                        $"[{componentName}] Executing fallback for {operationDescription}",
-                        correlationId: correlationId);
-                    
-                    return fallbackFunc(ex);
-                }
-
-                throw;
-            }
+            return TradingResult<T>.Failure(
+                errorCode,
+                exception.Message,
+                exception);
         }
 
         /// <summary>
-        /// Creates a standardized error response
+        /// Handles an error asynchronously and returns a result with error information
         /// </summary>
-        public static ErrorResponse CreateErrorResponse(
+        public async Task<TradingResult<T>> HandleErrorAsync<T>(
             Exception exception,
-            string componentName,
-            string operationDescription,
-            string? correlationId = null)
+            string operationContext,
+            string userImpact,
+            string troubleshootingHints,
+            ErrorSeverity? severity = null)
         {
-            correlationId ??= Guid.NewGuid().ToString();
-            
-            return new ErrorResponse
-            {
-                Success = false,
-                ErrorCode = DetermineErrorCode(exception),
-                ErrorMessage = exception.Message,
-                UserMessage = DetermineUserMessage(exception),
-                TechnicalDetails = exception.ToString(),
-                CorrelationId = correlationId,
-                Timestamp = DateTime.UtcNow,
-                Component = componentName,
-                Operation = operationDescription,
-                Severity = DetermineSeverity(exception).ToString()
-            };
+            return await Task.FromResult(HandleError<T>(
+                exception,
+                operationContext,
+                userImpact,
+                troubleshootingHints,
+                severity));
         }
 
-        #region Private Helper Methods
+        /// <summary>
+        /// Handles an aggregate exception with multiple inner errors
+        /// </summary>
+        public TradingResult<T> HandleAggregateError<T>(
+            AggregateException aggregateException,
+            string operationContext,
+            string userImpact,
+            string troubleshootingHints)
+        {
+            var innerExceptions = aggregateException.InnerExceptions;
+            var maxSeverity = innerExceptions.Any() 
+                ? innerExceptions.Max(DetermineSeverity) 
+                : ErrorSeverity.Medium;
 
-        private static ErrorSeverity DetermineSeverity(Exception exception)
+            _logger.LogError(
+                $"Aggregate operation failed with {innerExceptions.Count} errors",
+                aggregateException,
+                operationContext,
+                userImpact,
+                troubleshootingHints,
+                new
+                {
+                    ErrorCount = innerExceptions.Count,
+                    MaxSeverity = maxSeverity,
+                    InnerErrors = innerExceptions.Select(ex => new
+                    {
+                        Type = ex.GetType().Name,
+                        Message = ex.Message,
+                        Severity = DetermineSeverity(ex)
+                    })
+                });
+
+            var errorCode = $"AggregateError_{maxSeverity}";
+            
+            return TradingResult<T>.Failure(
+                errorCode,
+                aggregateException.Message,
+                aggregateException);
+        }
+
+        /// <summary>
+        /// Wraps an exception with additional context
+        /// </summary>
+        public TradingException WrapException(
+            Exception innerException,
+            string additionalContext,
+            string operationContext,
+            string userImpact,
+            string troubleshootingHints)
+        {
+            var message = $"{additionalContext}: {innerException.Message}";
+            
+            _logger.LogError(
+                message,
+                innerException,
+                operationContext,
+                userImpact,
+                troubleshootingHints,
+                new { AdditionalContext = additionalContext });
+
+            return new TradingException(
+                message,
+                operationContext,
+                userImpact,
+                troubleshootingHints,
+                innerException);
+        }
+
+        /// <summary>
+        /// Tries to execute an operation and returns a result
+        /// </summary>
+        public TradingResult<T> TryExecute<T>(
+            Func<T> operation,
+            string operationContext,
+            string userImpact = "Operation could not be completed",
+            string troubleshootingHints = "Check logs for details")
+        {
+            try
+            {
+                var result = operation();
+                return TradingResult<T>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return HandleError<T>(ex, operationContext, userImpact, troubleshootingHints);
+            }
+        }
+
+        /// <summary>
+        /// Tries to execute an async operation and returns a result
+        /// </summary>
+        public async Task<TradingResult<T>> TryExecuteAsync<T>(
+            Func<Task<T>> operation,
+            string operationContext,
+            string userImpact = "Operation could not be completed",
+            string troubleshootingHints = "Check logs for details")
+        {
+            try
+            {
+                var result = await operation();
+                return TradingResult<T>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return HandleError<T>(ex, operationContext, userImpact, troubleshootingHints);
+            }
+        }
+
+        /// <summary>
+        /// Tries to execute an operation with retry logic
+        /// </summary>
+        public async Task<TradingResult<T>> TryExecuteWithRetryAsync<T>(
+            Func<Task<T>> operation,
+            string operationContext,
+            int maxRetries = 3,
+            TimeSpan? initialDelay = null,
+            string userImpact = "Operation could not be completed after retries",
+            string troubleshootingHints = "Check logs for details")
+        {
+            var delay = initialDelay ?? TimeSpan.FromSeconds(1);
+            var lastException = default(Exception);
+
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                try
+                {
+                    var result = await operation();
+                    return TradingResult<T>.Success(result);
+                }
+                catch (Exception ex)
+                {
+                    lastException = ex;
+                    
+                    if (attempt < maxRetries)
+                    {
+                        _logger.LogWarning(
+                            $"Attempt {attempt}/{maxRetries} failed for {operationContext}. Retrying in {delay.TotalSeconds}s",
+                            $"Temporary failure in {operationContext}",
+                            "System will retry automatically",
+                            new { Attempt = attempt, MaxRetries = maxRetries, Exception = ex.Message });
+                        
+                        await Task.Delay(delay);
+                        delay = TimeSpan.FromSeconds(delay.TotalSeconds * 2); // Exponential backoff
+                    }
+                }
+            }
+
+            return HandleError<T>(
+                lastException ?? new InvalidOperationException("Operation failed"),
+                operationContext,
+                userImpact,
+                troubleshootingHints);
+        }
+
+        /// <summary>
+        /// Determines error severity based on exception type
+        /// </summary>
+        private ErrorSeverity DetermineSeverity(Exception exception)
         {
             return exception switch
             {
                 OutOfMemoryException => ErrorSeverity.Critical,
                 StackOverflowException => ErrorSeverity.Critical,
                 AccessViolationException => ErrorSeverity.Critical,
-                InvalidOperationException => ErrorSeverity.Error,
-                ArgumentException => ErrorSeverity.Warning,
-                NotImplementedException => ErrorSeverity.Error,
-                TimeoutException => ErrorSeverity.Warning,
-                _ => ErrorSeverity.Error
+                
+                UnauthorizedAccessException => ErrorSeverity.High,
+                TimeoutException => ErrorSeverity.High,
+                AggregateException ae when ae.InnerExceptions.Any(e => DetermineSeverity(e) == ErrorSeverity.Critical) => ErrorSeverity.Critical,
+                AggregateException ae when ae.InnerExceptions.Any(e => DetermineSeverity(e) == ErrorSeverity.High) => ErrorSeverity.High,
+                
+                InvalidOperationException => ErrorSeverity.Medium,
+                NotSupportedException => ErrorSeverity.Medium,
+                NotImplementedException => ErrorSeverity.Medium,
+                
+                ArgumentNullException => ErrorSeverity.Low,
+                ArgumentOutOfRangeException => ErrorSeverity.Low,
+                ArgumentException => ErrorSeverity.Low,
+                
+                _ => ErrorSeverity.Medium
             };
         }
-
-        private static string DetermineUserImpact(Exception exception, ErrorSeverity severity)
-        {
-            return severity switch
-            {
-                ErrorSeverity.Critical => "Service is unavailable. Please contact support immediately.",
-                ErrorSeverity.Error => "The requested operation could not be completed.",
-                ErrorSeverity.Warning => "The operation completed with warnings.",
-                _ => "An unexpected error occurred."
-            };
-        }
-
-        private static string DetermineTroubleshootingHints(Exception exception)
-        {
-            return exception switch
-            {
-                ArgumentNullException argNull => $"Ensure the parameter '{argNull.ParamName}' is not null.",
-                ArgumentException argEx => $"Check the parameter '{argEx.ParamName}' for valid values.",
-                InvalidOperationException => "Ensure the system is in a valid state for this operation.",
-                TimeoutException => "The operation timed out. Try again or check network connectivity.",
-                UnauthorizedAccessException => "Check your permissions for this operation.",
-                NotImplementedException => "This feature is not yet implemented.",
-                _ => "Review the error details and logs for more information."
-            };
-        }
-
-        private static string DetermineErrorCode(Exception exception)
-        {
-            return exception switch
-            {
-                ArgumentNullException => "ERR_NULL_ARGUMENT",
-                ArgumentException => "ERR_INVALID_ARGUMENT",
-                InvalidOperationException => "ERR_INVALID_OPERATION",
-                TimeoutException => "ERR_TIMEOUT",
-                UnauthorizedAccessException => "ERR_UNAUTHORIZED",
-                NotImplementedException => "ERR_NOT_IMPLEMENTED",
-                OutOfMemoryException => "ERR_OUT_OF_MEMORY",
-                _ => "ERR_GENERAL"
-            };
-        }
-
-        private static string DetermineUserMessage(Exception exception)
-        {
-            return exception switch
-            {
-                ArgumentException => "Invalid input provided. Please check your data and try again.",
-                TimeoutException => "The operation took too long to complete. Please try again.",
-                UnauthorizedAccessException => "You don't have permission to perform this action.",
-                NotImplementedException => "This feature is coming soon.",
-                _ => "An error occurred while processing your request."
-            };
-        }
-
-        private static void LogCriticalError(string componentName, Exception exception, Dictionary<string, object> context)
-        {
-            // In a real implementation, this would write to Windows Event Log or similar
-            // For now, we'll use the highest priority logging
-            TradingLogOrchestrator.Instance.LogError(
-                $"CRITICAL ERROR in {componentName}",
-                exception,
-                "Critical system error",
-                "System stability may be affected",
-                "Restart the application and contact support if the issue persists",
-                context
-            );
-        }
-
-        #endregion
     }
 
     /// <summary>
-    /// Error severity levels
+    /// Error severity levels for categorization
     /// </summary>
     public enum ErrorSeverity
     {
-        /// <summary>
-        /// Informational - not really an error
-        /// </summary>
-        Info,
-        
-        /// <summary>
-        /// Warning - operation completed but with issues
-        /// </summary>
-        Warning,
-        
-        /// <summary>
-        /// Error - operation failed
-        /// </summary>
-        Error,
-        
-        /// <summary>
-        /// Critical - system stability affected
-        /// </summary>
-        Critical
+        Low = 1,
+        Medium = 2,
+        High = 3,
+        Critical = 4
     }
 
     /// <summary>
-    /// Standardized error response structure
+    /// Custom exception for trading platform operations
     /// </summary>
-    public class ErrorResponse
+    public class TradingException : Exception
     {
-        public bool Success { get; set; }
-        public string ErrorCode { get; set; } = string.Empty;
-        public string ErrorMessage { get; set; } = string.Empty;
-        public string UserMessage { get; set; } = string.Empty;
-        public string TechnicalDetails { get; set; } = string.Empty;
-        public string CorrelationId { get; set; } = string.Empty;
-        public DateTime Timestamp { get; set; }
-        public string Component { get; set; } = string.Empty;
-        public string Operation { get; set; } = string.Empty;
-        public string Severity { get; set; } = string.Empty;
+        public string OperationContext { get; }
+        public string UserImpact { get; }
+        public string TroubleshootingHints { get; }
+
+        public TradingException(
+            string message,
+            string operationContext,
+            string userImpact,
+            string troubleshootingHints,
+            Exception? innerException = null)
+            : base(message, innerException)
+        {
+            OperationContext = operationContext;
+            UserImpact = userImpact;
+            TroubleshootingHints = troubleshootingHints;
+        }
     }
 }

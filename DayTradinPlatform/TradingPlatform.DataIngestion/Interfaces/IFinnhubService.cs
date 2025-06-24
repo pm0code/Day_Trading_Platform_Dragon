@@ -146,7 +146,7 @@ namespace TradingPlatform.DataIngestion.Interfaces
     /// </summary>
     public class MarketDataWithAssessment
     {
-        public MarketData MarketData { get; set; } = new(null);
+        public MarketData MarketData { get; set; } = null!;
         public DayTradingAssessment Assessment { get; set; } = new();
         public ValidationResult ValidationResult { get; set; } = new();
         public DateTime ProcessedAt { get; set; } = DateTime.UtcNow;

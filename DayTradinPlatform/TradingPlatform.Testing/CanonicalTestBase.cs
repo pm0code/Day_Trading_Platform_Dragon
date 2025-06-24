@@ -9,7 +9,7 @@ using TradingPlatform.Core.Logging;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace TradingPlatform.Core.Canonical
+namespace TradingPlatform.Testing
 {
     /// <summary>
     /// Canonical base class for all unit tests in the trading platform.
@@ -23,6 +23,8 @@ namespace TradingPlatform.Core.Canonical
         protected readonly Stopwatch _testStopwatch;
         protected readonly IServiceProvider _serviceProvider;
         protected readonly List<string> _testArtifacts;
+        protected TestContextInfo TestContext { get; private set; }
+        private string _testMethodName = "Unknown";
 
         protected CanonicalTestBase(ITestOutputHelper output, [CallerFilePath] string sourceFilePath = "")
         {
@@ -36,6 +38,14 @@ namespace TradingPlatform.Core.Canonical
             var services = new ServiceCollection();
             ConfigureTestServices(services);
             _serviceProvider = services.BuildServiceProvider();
+            
+            // Initialize test context
+            TestContext = new TestContextInfo
+            {
+                TestName = _testClassName,
+                CorrelationId = _correlationId,
+                StartTime = DateTime.UtcNow
+            };
 
             LogTestStart(sourceFilePath);
         }
@@ -47,6 +57,7 @@ namespace TradingPlatform.Core.Canonical
         /// </summary>
         protected void LogTestMethodStart([CallerMemberName] string testMethodName = "")
         {
+            _testMethodName = testMethodName; // Store for later use
             var message = $"[TEST START] {_testClassName}.{testMethodName}";
             _output.WriteLine($"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff} - {message}");
             
@@ -102,8 +113,7 @@ namespace TradingPlatform.Core.Canonical
             
             TradingLogOrchestrator.Instance.LogDebug(
                 $"{_testClassName} - {message}",
-                context ?? new { Step = stepDescription },
-                correlationId: _correlationId);
+                new { Step = stepDescription, Context = context, CorrelationId = _correlationId });
         }
 
         /// <summary>
@@ -116,8 +126,7 @@ namespace TradingPlatform.Core.Canonical
             
             TradingLogOrchestrator.Instance.LogDebug(
                 $"{_testClassName} - {message}",
-                data,
-                correlationId: _correlationId);
+                new { Data = data, CorrelationId = _correlationId });
         }
 
         /// <summary>
@@ -137,8 +146,7 @@ namespace TradingPlatform.Core.Canonical
 
             TradingLogOrchestrator.Instance.LogDebug(
                 $"{_testClassName} - {message}",
-                new { Assertion = assertionDescription, Passed = passed, Expected = expected, Actual = actual },
-                correlationId: _correlationId);
+                new { Assertion = assertionDescription, Passed = passed, Expected = expected, Actual = actual, CorrelationId = _correlationId });
         }
 
         #endregion
@@ -169,8 +177,7 @@ namespace TradingPlatform.Core.Canonical
                     $"Test execution: {testMethodName}",
                     "Test case failed",
                     "Review test implementation and system under test",
-                    new { TestClass = _testClassName, TestMethod = testMethodName },
-                    correlationId: _correlationId);
+                    new { TestClass = _testClassName, TestMethod = testMethodName, CorrelationId = _correlationId });
                 
                 throw;
             }
@@ -264,6 +271,34 @@ namespace TradingPlatform.Core.Canonical
             if (!passed)
             {
                 Assert.Equal(expected, actual);
+            }
+        }
+
+        /// <summary>
+        /// Asserts that the value is not null with logging
+        /// </summary>
+        protected void AssertNotNull<T>(T? value, string assertionDescription) where T : class
+        {
+            var passed = value != null;
+            LogAssertion(assertionDescription, passed, value, "not null");
+            
+            if (!passed)
+            {
+                Assert.NotNull(value);
+            }
+        }
+
+        /// <summary>
+        /// Asserts that the value is null with logging
+        /// </summary>
+        protected void AssertNull<T>(T? value, string assertionDescription) where T : class
+        {
+            var passed = value == null;
+            LogAssertion(assertionDescription, passed, value, "null");
+            
+            if (!passed)
+            {
+                Assert.Null(value);
             }
         }
 
@@ -378,6 +413,49 @@ namespace TradingPlatform.Core.Canonical
             return await operation();
         }
 
+        /// <summary>
+        /// Logs test info message
+        /// </summary>
+        protected void LogTestInfo(string message, object? context = null)
+        {
+            _output.WriteLine($"  ℹ️ [INFO] {message}");
+            TradingLogOrchestrator.Instance.LogInfo(
+                $"{_testClassName} - {message}",
+                new { Context = context, CorrelationId = _correlationId });
+        }
+
+        /// <summary>
+        /// Logs test warning message
+        /// </summary>
+        protected void LogTestWarning(string message, string? impact = null, object? context = null)
+        {
+            _output.WriteLine($"  ⚠️ [WARNING] {message}");
+            TradingLogOrchestrator.Instance.LogWarning(
+                $"{_testClassName} - {message}",
+                impact,
+                null,
+                new { Context = context, CorrelationId = _correlationId });
+        }
+
+        /// <summary>
+        /// Logs test error message
+        /// </summary>
+        protected void LogTestError(string message, Exception? exception = null, object? context = null)
+        {
+            _output.WriteLine($"  ❌ [ERROR] {message}");
+            if (exception != null)
+            {
+                _output.WriteLine($"    Exception: {exception.Message}");
+            }
+            TradingLogOrchestrator.Instance.LogError(
+                $"{_testClassName} - {message}",
+                exception,
+                _testMethodName,
+                "Test error occurred",
+                "Check test implementation",
+                new { Context = context, CorrelationId = _correlationId });
+        }
+
         #endregion
 
         #region Setup and Teardown
@@ -441,5 +519,15 @@ namespace TradingPlatform.Core.Canonical
         }
 
         #endregion
+    }
+    
+    /// <summary>
+    /// Test context information
+    /// </summary>
+    public class TestContextInfo
+    {
+        public string TestName { get; set; } = string.Empty;
+        public string CorrelationId { get; set; } = string.Empty;
+        public DateTime StartTime { get; set; }
     }
 }

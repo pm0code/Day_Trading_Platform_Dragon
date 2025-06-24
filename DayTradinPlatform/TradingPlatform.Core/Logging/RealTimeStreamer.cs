@@ -18,7 +18,7 @@ internal class RealTimeStreamer : IDisposable
     private readonly StreamingConfiguration _config;
     private readonly ConcurrentDictionary<string, WebSocket> _connectedClients = new();
     private readonly ConcurrentQueue<LogEntry> _streamBuffer = new();
-    private readonly Timer _streamTimer;
+    private readonly Timer? _streamTimer;
     private HttpListener? _httpListener;
     private CancellationTokenSource _cancellationTokenSource = new();
 

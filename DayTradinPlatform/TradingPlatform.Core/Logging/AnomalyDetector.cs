@@ -14,7 +14,7 @@ internal class AnomalyDetector : IDisposable
 {
     private readonly AiConfiguration _config;
     private readonly ConcurrentQueue<LogEntry> _trainingData = new();
-    private readonly Timer _modelUpdateTimer;
+    private readonly Timer? _modelUpdateTimer;
     private volatile bool _modelTrained = false;
 
     public AnomalyDetector(AiConfiguration config)

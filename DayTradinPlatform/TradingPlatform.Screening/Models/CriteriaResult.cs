@@ -7,10 +7,10 @@ namespace TradingPlatform.Screening.Models
     /// </summary>
     public class CriteriaResult
     {
-        public string CriteriaName { get; set; }
+        public string CriteriaName { get; set; } = string.Empty;
         public bool Passed { get; set; }
         public decimal Score { get; set; }
-        public string Reason { get; set; }
+        public string Reason { get; set; } = string.Empty;
         public Dictionary<string, object> Metrics { get; set; } = new();
         public DateTime EvaluatedAt { get; set; } = DateTime.UtcNow;
         public decimal Confidence { get; set; } = 1.0m;

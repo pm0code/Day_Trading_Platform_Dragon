@@ -9,50 +9,50 @@ namespace TradingPlatform.Core.Models
     public class ApiResponse<T>
     {
         public bool Success { get; set; }
-        public T Data { get; set; }
-        public string ErrorMessage { get; set; }
+        public T Data { get; set; } = default!;
+        public string ErrorMessage { get; set; } = string.Empty;
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-        public string Provider { get; set; }
+        public string Provider { get; set; } = string.Empty;
         public int RemainingCalls { get; set; }
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
     }
 
     public class AlphaVantageGlobalQuoteResponse
     {
         [JsonPropertyName("Global Quote")]
-        public AlphaVantageQuote GlobalQuote { get; set; }
+        public AlphaVantageQuote GlobalQuote { get; set; } = new();
     }
     public class AlphaVantageQuote
     {
         [JsonPropertyName("01. symbol")]
-        public string Symbol { get; set; }
+        public string Symbol { get; set; } = string.Empty;
 
         [JsonPropertyName("02. open")]
-        public string Open { get; set; }
+        public string Open { get; set; } = string.Empty;
 
         [JsonPropertyName("03. high")]
-        public string High { get; set; }
+        public string High { get; set; } = string.Empty;
 
         [JsonPropertyName("04. low")]
-        public string Low { get; set; }
+        public string Low { get; set; } = string.Empty;
 
         [JsonPropertyName("05. price")]
-        public string Price { get; set; }
+        public string Price { get; set; } = string.Empty;
 
         [JsonPropertyName("06. volume")]
-        public string Volume { get; set; }
+        public string Volume { get; set; } = string.Empty;
 
         [JsonPropertyName("07. latest trading day")]
-        public string LatestTradingDay { get; set; }
+        public string LatestTradingDay { get; set; } = string.Empty;
 
         [JsonPropertyName("08. previous close")]
-        public string PreviousClose { get; set; }
+        public string PreviousClose { get; set; } = string.Empty;
 
         [JsonPropertyName("09. change")]
-        public string Change { get; set; }
+        public string Change { get; set; } = string.Empty;
 
         [JsonPropertyName("10. change percent")]
-        public string ChangePercent { get; set; }
+        public string ChangePercent { get; set; } = string.Empty;
 
         // Helper properties for decimal conversion
         [JsonIgnore]
@@ -78,10 +78,10 @@ namespace TradingPlatform.Core.Models
     public class AlphaVantageTimeSeriesResponse
     {
         [JsonPropertyName("Meta Data")]
-        public Dictionary<string, string> MetaData { get; set; }
+        public Dictionary<string, string> MetaData { get; set; } = new();
 
         [JsonPropertyName("Time Series (Daily)")]
-        public Dictionary<string, AlphaVantageTimeSeriesData> TimeSeries { get; set; }
+        public Dictionary<string, AlphaVantageTimeSeriesData> TimeSeries { get; set; } = new();
 
         public List<DailyData> ToDailyData()
         {
@@ -113,19 +113,19 @@ namespace TradingPlatform.Core.Models
     public class AlphaVantageTimeSeriesData
     {
         [JsonPropertyName("1. open")]
-        public string Open { get; set; }
+        public string Open { get; set; } = string.Empty;
 
         [JsonPropertyName("2. high")]
-        public string High { get; set; }
+        public string High { get; set; } = string.Empty;
 
         [JsonPropertyName("3. low")]
-        public string Low { get; set; }
+        public string Low { get; set; } = string.Empty;
 
         [JsonPropertyName("4. close")]
-        public string Close { get; set; }
+        public string Close { get; set; } = string.Empty;
 
         [JsonPropertyName("5. volume")]
-        public string Volume { get; set; }
+        public string Volume { get; set; } = string.Empty;
 
         // Helper properties
         [JsonIgnore]
@@ -195,25 +195,25 @@ namespace TradingPlatform.Core.Models
     public class FinnhubCandleResponse
     {
         [JsonPropertyName("o")]
-        public decimal[] Open { get; set; }
+        public decimal[] Open { get; set; } = Array.Empty<decimal>();
 
         [JsonPropertyName("h")]
-        public decimal[] High { get; set; }
+        public decimal[] High { get; set; } = Array.Empty<decimal>();
 
         [JsonPropertyName("l")]
-        public decimal[] Low { get; set; }
+        public decimal[] Low { get; set; } = Array.Empty<decimal>();
 
         [JsonPropertyName("c")]
-        public decimal[] Close { get; set; }
+        public decimal[] Close { get; set; } = Array.Empty<decimal>();
 
         [JsonPropertyName("v")]
-        public long[] Volume { get; set; }
+        public long[] Volume { get; set; } = Array.Empty<long>();
 
         [JsonPropertyName("t")]
-        public long[] Timestamp { get; set; }
+        public long[] Timestamp { get; set; } = Array.Empty<long>();
 
         [JsonPropertyName("s")]
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
     }
 
     public class AlphaVantageTimeSeriesDailyAdjustedResponse : ApiResponse<Dictionary<string, AlphaVantageDailyAdjustedData>> { }

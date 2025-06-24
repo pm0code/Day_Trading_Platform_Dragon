@@ -19,9 +19,9 @@ namespace TradingPlatform.Screening.Indicators
             _logger = logger;
         }
 
-        public async Task<decimal> CalculateRSIAsync(List<DailyData> priceData, int period = 14)
+        public Task<decimal> CalculateRSIAsync(List<DailyData> priceData, int period = 14)
         {
-            if (priceData.Count < period + 1) return 50m;
+            if (priceData.Count < period + 1) return Task.FromResult(50m);
 
             var gains = new List<decimal>();
             var losses = new List<decimal>();
@@ -36,16 +36,16 @@ namespace TradingPlatform.Screening.Indicators
             var avgGain = gains.TakeLast(period).Average();
             var avgLoss = losses.TakeLast(period).Average();
 
-            if (avgLoss == 0m) return 100m;
+            if (avgLoss == 0m) return Task.FromResult(100m);
 
             var rs = avgGain / avgLoss;
             var rsi = 100m - (100m / (1m + rs));
 
             TradingLogOrchestrator.Instance.LogInfo($"RSI calculated: {rsi:F2}");
-            return rsi;
+            return Task.FromResult(rsi);
         }
 
-        public async Task<(decimal SMA20, decimal SMA50)> CalculateMovingAveragesAsync(List<DailyData> priceData)
+        public Task<(decimal SMA20, decimal SMA50)> CalculateMovingAveragesAsync(List<DailyData> priceData)
         {
             var sma20 = priceData.Count >= 20
                 ? priceData.TakeLast(20).Average(d => d.Close)
@@ -56,12 +56,12 @@ namespace TradingPlatform.Screening.Indicators
                 : priceData.Average(d => d.Close);
 
             TradingLogOrchestrator.Instance.LogInfo($"SMAs calculated: SMA20={sma20:F2}, SMA50={sma50:F2}");
-            return (sma20, sma50);
+            return Task.FromResult((sma20, sma50));
         }
 
-        public async Task<decimal> CalculateBollingerBandPositionAsync(MarketData marketData, List<DailyData> priceData, int period = 20)
+        public Task<decimal> CalculateBollingerBandPositionAsync(MarketData marketData, List<DailyData> priceData, int period = 20)
         {
-            if (priceData.Count < period) return 0.5m;
+            if (priceData.Count < period) return Task.FromResult(0.5m);
 
             var recentPrices = priceData.TakeLast(period).Select(d => d.Close).ToList();
             var sma = recentPrices.Average();
@@ -70,35 +70,35 @@ namespace TradingPlatform.Screening.Indicators
             var upperBand = sma + (2m * stdDev);
             var lowerBand = sma - (2m * stdDev);
 
-            if ((upperBand - lowerBand) == 0m) return 0.5m;
+            if ((upperBand - lowerBand) == 0m) return Task.FromResult(0.5m);
 
             var position = (marketData.Price - lowerBand) / (upperBand - lowerBand);
             position = Math.Max(0m, Math.Min(1m, position));
 
             TradingLogOrchestrator.Instance.LogInfo($"Bollinger position: {position:F2} (Price: {marketData.Price:F2}, Upper: {upperBand:F2}, Lower: {lowerBand:F2})");
-            return position;
+            return Task.FromResult(position);
         }
 
-        public async Task<string> DetectCandlestickPatternAsync(List<DailyData> priceData)
+        public Task<string> DetectCandlestickPatternAsync(List<DailyData> priceData)
         {
-            if (priceData.Count < 3) return "Insufficient Data";
+            if (priceData.Count < 3) return Task.FromResult("Insufficient Data");
 
             var current = priceData.Last();
             var previous = priceData[priceData.Count - 2];
             var beforePrevious = priceData[priceData.Count - 3];
 
-            if (IsDoji(current)) return "Doji";
-            if (IsHammer(current, previous)) return "Hammer";
-            if (IsEngulfing(current, previous)) return "Engulfing";
-            if (IsThreeWhiteSoldiers(current, previous, beforePrevious)) return "Three White Soldiers";
-            if (IsThreeBlackCrows(current, previous, beforePrevious)) return "Three Black Crows";
+            if (IsDoji(current)) return Task.FromResult("Doji");
+            if (IsHammer(current, previous)) return Task.FromResult("Hammer");
+            if (IsEngulfing(current, previous)) return Task.FromResult("Engulfing");
+            if (IsThreeWhiteSoldiers(current, previous, beforePrevious)) return Task.FromResult("Three White Soldiers");
+            if (IsThreeBlackCrows(current, previous, beforePrevious)) return Task.FromResult("Three Black Crows");
 
-            return "No Pattern";
+            return Task.FromResult("No Pattern");
         }
 
-        public async Task<TrendDirection> AnalyzeTrendAsync(List<DailyData> priceData, int period = 20)
+        public Task<TrendDirection> AnalyzeTrendAsync(List<DailyData> priceData, int period = 20)
         {
-            if (priceData.Count < period) return TrendDirection.Sideways;
+            if (priceData.Count < period) return Task.FromResult(TrendDirection.Sideways);
 
             var recentData = priceData.TakeLast(period).ToList();
             var firstPrice = recentData.First().Close;
@@ -107,23 +107,23 @@ namespace TradingPlatform.Screening.Indicators
 
             var slope = CalculateLinearRegressionSlope(recentData);
 
-            if (changePercent > 5m && slope > 0.1m) return TrendDirection.StrongUptrend;
-            if (changePercent > 2m && slope > 0.05m) return TrendDirection.Uptrend;
-            if (changePercent < -5m && slope < -0.1m) return TrendDirection.StrongDowntrend;
-            if (changePercent < -2m && slope < -0.05m) return TrendDirection.Downtrend;
+            if (changePercent > 5m && slope > 0.1m) return Task.FromResult(TrendDirection.StrongUptrend);
+            if (changePercent > 2m && slope > 0.05m) return Task.FromResult(TrendDirection.Uptrend);
+            if (changePercent < -5m && slope < -0.1m) return Task.FromResult(TrendDirection.StrongDowntrend);
+            if (changePercent < -2m && slope < -0.05m) return Task.FromResult(TrendDirection.Downtrend);
 
-            return TrendDirection.Sideways;
+            return Task.FromResult(TrendDirection.Sideways);
         }
 
-        public async Task<bool> IsBreakoutSetupAsync(MarketData marketData, List<DailyData> priceData)
+        public Task<bool> IsBreakoutSetupAsync(MarketData marketData, List<DailyData> priceData)
         {
-            if (priceData.Count < 20) return false;
+            if (priceData.Count < 20) return Task.FromResult(false);
 
             var recentHigh = priceData.TakeLast(20).Max(d => d.High);
             var recentLow = priceData.TakeLast(20).Min(d => d.Low);
             var range = recentHigh - recentLow;
 
-            if (range == 0m) return false;
+            if (range == 0m) return Task.FromResult(false);
 
             var nearResistance = (recentHigh - marketData.Price) / range < 0.05m;
             var nearSupport = (marketData.Price - recentLow) / range < 0.05m;
@@ -132,7 +132,7 @@ namespace TradingPlatform.Screening.Indicators
             var avgVolume = priceData.TakeLast(10).Average(d => (decimal)d.Volume);
             var volumeSpike = marketData.Volume > (avgVolume * 1.5m);
 
-            return (nearResistance || nearSupport) && volumeSpike;
+            return Task.FromResult((nearResistance || nearSupport) && volumeSpike);
         }
 
         // --- Candlestick Pattern Helpers ---

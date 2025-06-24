@@ -11,17 +11,28 @@ namespace TradingPlatform.Core.Canonical
     /// </summary>
     public abstract class CanonicalBase
     {
-        protected readonly string _componentName;
-        protected readonly string _correlationId;
-        protected readonly ITradingLogger _logger;
+        /// <summary>
+        /// The logger instance for this component
+        /// </summary>
+        protected ITradingLogger Logger { get; }
+        
+        /// <summary>
+        /// The component name for logging context
+        /// </summary>
+        protected string ComponentName { get; }
+        
+        /// <summary>
+        /// The correlation ID for this instance
+        /// </summary>
+        protected string CorrelationId { get; }
 
         protected CanonicalBase(
             ITradingLogger logger,
-            [CallerMemberName] string componentName = "")
+            string componentName)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _componentName = componentName;
-            _correlationId = Guid.NewGuid().ToString();
+            Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            ComponentName = componentName;
+            CorrelationId = Guid.NewGuid().ToString();
             
             LogMethodEntry();
         }
@@ -31,76 +42,82 @@ namespace TradingPlatform.Core.Canonical
         /// <summary>
         /// Logs method entry with automatic method name detection
         /// </summary>
-        protected void LogMethodEntry([CallerMemberName] string methodName = "")
+        protected void LogMethodEntry(
+            object? parameters = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string sourceFilePath = "")
         {
-            TradingLogOrchestrator.Instance.LogMethodEntry(
-                $"{_componentName}.{methodName}",
-                correlationId: _correlationId);
+            Logger.LogMethodEntry(parameters, memberName, sourceFilePath);
         }
 
         /// <summary>
         /// Logs method exit with automatic method name detection
         /// </summary>
-        protected void LogMethodExit([CallerMemberName] string methodName = "")
+        protected void LogMethodExit(
+            object? result = null,
+            TimeSpan? duration = null,
+            bool success = true,
+            [CallerMemberName] string memberName = "")
         {
-            TradingLogOrchestrator.Instance.LogMethodExit(
-                $"{_componentName}.{methodName}",
-                correlationId: _correlationId);
+            Logger.LogMethodExit(result, duration, success, memberName);
         }
 
         /// <summary>
         /// Logs informational message with context
         /// </summary>
-        protected void LogInfo(string message, object? context = null, [CallerMemberName] string methodName = "")
+        protected void LogInfo(
+            string message,
+            object? additionalData = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string sourceFilePath = "",
+            [CallerLineNumber] int sourceLineNumber = 0)
         {
-            TradingLogOrchestrator.Instance.LogInfo(
-                $"[{_componentName}.{methodName}] {message}",
-                context,
-                correlationId: _correlationId);
+            Logger.LogInfo(message, additionalData, memberName, sourceFilePath, sourceLineNumber);
         }
 
         /// <summary>
         /// Logs debug message with context
         /// </summary>
-        protected void LogDebug(string message, object? context = null, [CallerMemberName] string methodName = "")
+        protected void LogDebug(
+            string message,
+            object? additionalData = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string sourceFilePath = "",
+            [CallerLineNumber] int sourceLineNumber = 0)
         {
-            TradingLogOrchestrator.Instance.LogDebug(
-                $"[{_componentName}.{methodName}] {message}",
-                context,
-                correlationId: _correlationId);
+            Logger.LogDebug(message, additionalData, memberName, sourceFilePath, sourceLineNumber);
         }
 
         /// <summary>
         /// Logs warning message with context
         /// </summary>
-        protected void LogWarning(string message, object? context = null, [CallerMemberName] string methodName = "")
+        protected void LogWarning(
+            string message,
+            string? impact = null,
+            string? troubleshooting = null,
+            object? additionalData = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string sourceFilePath = "",
+            [CallerLineNumber] int sourceLineNumber = 0)
         {
-            TradingLogOrchestrator.Instance.LogWarning(
-                $"[{_componentName}.{methodName}] {message}",
-                context,
-                correlationId: _correlationId);
+            Logger.LogWarning(message, impact, troubleshooting, additionalData, memberName, sourceFilePath, sourceLineNumber);
         }
 
         /// <summary>
         /// Logs error with full canonical context
         /// </summary>
         protected void LogError(
-            string message, 
+            string message,
             Exception? exception = null,
             string? operationContext = null,
             string? userImpact = null,
             string? troubleshootingHints = null,
-            object? additionalContext = null,
-            [CallerMemberName] string methodName = "")
+            object? additionalData = null,
+            [CallerMemberName] string memberName = "",
+            [CallerFilePath] string sourceFilePath = "",
+            [CallerLineNumber] int sourceLineNumber = 0)
         {
-            TradingLogOrchestrator.Instance.LogError(
-                $"[{_componentName}.{methodName}] {message}",
-                exception,
-                operationContext ?? methodName,
-                userImpact ?? "Operation failed",
-                troubleshootingHints ?? "Check logs for details",
-                additionalContext,
-                correlationId: _correlationId);
+            Logger.LogError(message, exception, operationContext, userImpact, troubleshootingHints, additionalData, memberName, sourceFilePath, sourceLineNumber);
         }
 
         /// <summary>
@@ -127,10 +144,7 @@ namespace TradingPlatform.Core.Canonical
                 MethodName = methodName
             };
 
-            TradingLogOrchestrator.Instance.LogInfo(
-                $"[{_componentName}] Progress: {operation} - {percentComplete:F1}% complete",
-                progressInfo,
-                correlationId: _correlationId);
+            LogInfo($"Progress: {operation} - {percentComplete:F1}% complete", progressInfo);
         }
 
         #endregion
@@ -234,7 +248,7 @@ namespace TradingPlatform.Core.Canonical
                 {
                     LogWarning(
                         $"Attempt {attempt} failed: {operationDescription}. Retrying in {delay.TotalSeconds}s",
-                        new { Exception = ex.Message, Attempt = attempt });
+                        additionalData: new { Exception = ex.Message, Attempt = attempt });
                     
                     await Task.Delay(delay);
                     delay = TimeSpan.FromSeconds(delay.TotalSeconds * 2); // Exponential backoff
@@ -264,10 +278,11 @@ namespace TradingPlatform.Core.Canonical
                 var message = $"Invalid parameter '{parameterName}': {validationErrorMessage}";
                 LogError(
                     message,
-                    operationContext: $"{methodName} validation",
-                    userImpact: "Operation cannot proceed with invalid parameters",
-                    troubleshootingHints: $"Ensure {parameterName} meets requirements: {validationErrorMessage}",
-                    additionalContext: new { ParameterName = parameterName, ParameterValue = parameter });
+                    null,
+                    $"{methodName} validation",
+                    "Operation cannot proceed with invalid parameters",
+                    $"Ensure {parameterName} meets requirements: {validationErrorMessage}",
+                    new { ParameterName = parameterName, ParameterValue = parameter });
                 
                 throw new ArgumentException(message, parameterName);
             }
@@ -336,7 +351,7 @@ namespace TradingPlatform.Core.Canonical
                 {
                     LogWarning(
                         $"Performance warning: {operationName} took {stopwatch.ElapsedMilliseconds}ms (threshold: {warningThreshold.Value.TotalMilliseconds}ms)",
-                        performanceData);
+                        additionalData: performanceData);
                 }
                 else
                 {
@@ -350,7 +365,7 @@ namespace TradingPlatform.Core.Canonical
                 stopwatch.Stop();
                 LogError(
                     $"Performance tracking: {operationName} failed after {stopwatch.ElapsedMilliseconds}ms",
-                    additionalContext: new { ElapsedMs = stopwatch.ElapsedMilliseconds });
+                    additionalData: new { ElapsedMs = stopwatch.ElapsedMilliseconds });
                 throw;
             }
         }

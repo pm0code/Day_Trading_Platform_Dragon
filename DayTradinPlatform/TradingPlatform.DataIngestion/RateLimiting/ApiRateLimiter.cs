@@ -27,9 +27,9 @@ namespace TradingPlatform.DataIngestion.RateLimiting
         private readonly string _defaultProvider = "default";
 
         // Events
-        public event EventHandler<RateLimitReachedEventArgs> RateLimitReached;
-        public event EventHandler<RateLimitStatusChangedEventArgs> StatusChanged;
-        public event EventHandler<QuotaThresholdEventArgs> QuotaThresholdReached;
+        public event EventHandler<RateLimitReachedEventArgs>? RateLimitReached;
+        public event EventHandler<RateLimitStatusChangedEventArgs>? StatusChanged;
+        public event EventHandler<QuotaThresholdEventArgs>? QuotaThresholdReached;
 
         public ApiRateLimiter(IMemoryCache cache, ITradingLogger logger, ApiConfiguration config)
         {
@@ -42,7 +42,7 @@ namespace TradingPlatform.DataIngestion.RateLimiting
             _semaphore = new SemaphoreSlim(1, 1);
         }
 
-        public async Task<bool> CanMakeRequestAsync(string provider)
+        public Task<bool> CanMakeRequestAsync(string provider)
         {
             var cacheKey = GetCacheKey(provider);
             var requestCount = _cache.Get<int>(cacheKey);
@@ -54,7 +54,7 @@ namespace TradingPlatform.DataIngestion.RateLimiting
                 _ => 60
             };
 
-            return requestCount < limit;
+            return Task.FromResult(requestCount < limit);
         }
 
         public async Task RecordRequestAsync(string provider)
@@ -73,7 +73,7 @@ namespace TradingPlatform.DataIngestion.RateLimiting
             await Task.CompletedTask;
         }
 
-        public async Task<TimeSpan> GetWaitTimeAsync(string provider)
+        public Task<TimeSpan> GetWaitTimeAsync(string provider)
         {
             if (_lastRequestTimes.TryGetValue(provider, out var lastRequest))
             {
@@ -83,10 +83,10 @@ namespace TradingPlatform.DataIngestion.RateLimiting
                 };
 
                 var elapsed = DateTime.UtcNow - lastRequest;
-                return elapsed < minInterval ? minInterval - elapsed : TimeSpan.Zero;
+                return Task.FromResult(elapsed < minInterval ? minInterval - elapsed : TimeSpan.Zero);
             }
 
-            return TimeSpan.Zero;
+            return Task.FromResult(TimeSpan.Zero);
         }
 
         public async Task<int> GetRemainingRequestsAsync(string provider, TimeSpan window)

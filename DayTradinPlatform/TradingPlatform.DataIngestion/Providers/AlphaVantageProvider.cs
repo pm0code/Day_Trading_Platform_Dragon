@@ -37,13 +37,14 @@ namespace TradingPlatform.DataIngestion.Providers
             _client = new RestClient(_config.AlphaVantage.BaseUrl);
         }
 
-        public async Task<MarketData> GetRealTimeDataAsync(string symbol)
+        public async Task<MarketData?> GetRealTimeDataAsync(string symbol)
         {
             TradingLogOrchestrator.Instance.LogInfo($"Fetching real-time data for {symbol} from AlphaVantage");
 
             // 1. Check Cache
             string cacheKey = $"alphavantage_{symbol}_realtime";
-            if (_cache.TryGetValue(cacheKey, out MarketData cachedData) &&
+            if (_cache.TryGetValue(cacheKey, out MarketData? cachedData) &&
+                cachedData != null &&
                 cachedData.Timestamp > DateTime.UtcNow.AddMinutes(-_config.Cache.QuoteCacheMinutes))
             {
                 TradingLogOrchestrator.Instance.LogInfo($"Real-time data for {symbol} retrieved from cache.");
@@ -94,7 +95,7 @@ namespace TradingPlatform.DataIngestion.Providers
             }
         }
 
-        public async Task<List<DailyData>> FetchHistoricalDataAsync(string symbol, DateTime startDate, DateTime endDate)
+        public async Task<List<DailyData>?> FetchHistoricalDataAsync(string symbol, DateTime startDate, DateTime endDate)
         {
             TradingLogOrchestrator.Instance.LogInfo($"Fetching historical data for {symbol} from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
 
@@ -150,7 +151,7 @@ namespace TradingPlatform.DataIngestion.Providers
             }
         }
 
-        public async Task<List<MarketData>> GetBatchRealTimeDataAsync(List<string> symbols)
+        public async Task<List<MarketData>?> GetBatchRealTimeDataAsync(List<string> symbols)
         {
             TradingLogOrchestrator.Instance.LogInfo($"Fetching batch real-time data for {symbols.Count} symbols from AlphaVantage");
             var results = new List<MarketData>();
@@ -177,7 +178,7 @@ namespace TradingPlatform.DataIngestion.Providers
             TradingLogOrchestrator.Instance.LogInfo($"Setting up real-time subscription for {symbol} using AlphaVantage polling");
 
             // AlphaVantage doesn't support WebSocket streaming, so we implement polling-based subscription
-            return System.Reactive.Linq.Observable.Create<MarketData>(async observer =>
+            return System.Reactive.Linq.Observable.Create<MarketData>(observer =>
             {
                 var cancellationTokenSource = new System.Threading.CancellationTokenSource();
 
@@ -211,7 +212,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
         // ========== LEGACY COMPATIBILITY METHODS (Previously NotImplementedException) ==========
 
-        public async Task<MarketData> FetchMarketDataAsync(string symbol)
+        public async Task<MarketData?> FetchMarketDataAsync(string symbol)
         {
             TradingLogOrchestrator.Instance.LogInfo($"Fetching market data for {symbol} from AlphaVantage");
 

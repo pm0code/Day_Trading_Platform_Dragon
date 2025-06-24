@@ -146,7 +146,7 @@ namespace TradingPlatform.DataIngestion.Services
                 .DistinctUntilChanged(x => x.Price);
         }
 
-        private async Task<MarketData> GetMarketDataAsync(string symbol)
+        private async Task<MarketData?> GetMarketDataAsync(string symbol)
         {
             // Check cache first
             var cacheKey = $"marketdata_{symbol}";

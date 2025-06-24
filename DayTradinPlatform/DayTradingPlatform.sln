@@ -39,6 +39,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Testing", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.DisplayManagement", "TradingPlatform.DisplayManagement\TradingPlatform.DisplayManagement.csproj", "{B16CC41B-1EFE-4A48-B635-A7FB1333FB2D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.TestRunner", "TradingPlatform.TestRunner\TradingPlatform.TestRunner.csproj", "{C514758A-704A-40AE-88FF-245E80811B69}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -117,6 +119,10 @@ Global
 		{B16CC41B-1EFE-4A48-B635-A7FB1333FB2D}.Debug|x64.Build.0 = Debug|x64
 		{B16CC41B-1EFE-4A48-B635-A7FB1333FB2D}.Release|x64.ActiveCfg = Release|x64
 		{B16CC41B-1EFE-4A48-B635-A7FB1333FB2D}.Release|x64.Build.0 = Release|x64
+		{C514758A-704A-40AE-88FF-245E80811B69}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C514758A-704A-40AE-88FF-245E80811B69}.Debug|x64.Build.0 = Debug|Any CPU
+		{C514758A-704A-40AE-88FF-245E80811B69}.Release|x64.ActiveCfg = Release|Any CPU
+		{C514758A-704A-40AE-88FF-245E80811B69}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

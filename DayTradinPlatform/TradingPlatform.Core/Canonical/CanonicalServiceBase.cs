@@ -1,42 +1,47 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using TradingPlatform.Core.Interfaces;
-using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.Core.Canonical
 {
     /// <summary>
-    /// Canonical base class for all services in the trading platform.
-    /// Provides standardized service lifecycle, health monitoring, and operational patterns.
+    /// Base class for all canonical service implementations.
+    /// Provides lifecycle management, health checks, and metrics collection.
     /// </summary>
     public abstract class CanonicalServiceBase : CanonicalBase, IDisposable
     {
         private readonly string _serviceName;
-        private readonly Dictionary<string, object> _serviceMetrics;
         private readonly Stopwatch _uptimeStopwatch;
-        private ServiceState _currentState;
+        private readonly ConcurrentDictionary<string, object> _serviceMetrics;
         private readonly SemaphoreSlim _stateChangeSemaphore;
         private readonly CancellationTokenSource _serviceCancellation;
-        private DateTime _lastHealthCheck;
+        
+        private ServiceState _currentState;
+        private DateTime _lastStateChange;
 
-        protected CanonicalServiceBase(
-            ITradingLogger logger,
-            string? serviceName = null) : base(logger)
+        protected CanonicalServiceBase(ITradingLogger logger, string serviceName) 
+            : base(logger, serviceName)
         {
-            _serviceName = serviceName ?? GetType().Name;
-            _serviceMetrics = new Dictionary<string, object>();
-            _uptimeStopwatch = Stopwatch.StartNew();
-            _currentState = ServiceState.Created;
+            _serviceName = serviceName;
+            _uptimeStopwatch = new Stopwatch();
+            _serviceMetrics = new ConcurrentDictionary<string, object>();
             _stateChangeSemaphore = new SemaphoreSlim(1, 1);
             _serviceCancellation = new CancellationTokenSource();
-            _lastHealthCheck = DateTime.UtcNow;
-
-            LogServiceLifecycle("Service created", ServiceState.Created);
+            
+            _currentState = ServiceState.Created;
+            _lastStateChange = DateTime.UtcNow;
+            
+            _uptimeStopwatch.Start();
+            
+            // Initialize default metrics
+            UpdateMetric("ServiceName", _serviceName);
+            UpdateMetric("CurrentState", _currentState.ToString());
+            UpdateMetric("CorrelationId", CorrelationId);
         }
 
         #region Service Lifecycle
@@ -46,33 +51,35 @@ namespace TradingPlatform.Core.Canonical
         /// </summary>
         public async Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
         {
-            return await ChangeStateAsync(
-                ServiceState.Initializing,
-                async () =>
-                {
-                    LogInfo($"Initializing {_serviceName}");
-                    
-                    try
-                    {
-                        await OnInitializeAsync(cancellationToken);
-                        await ChangeStateAsync(ServiceState.Initialized, () => Task.CompletedTask);
-                        
-                        LogInfo($"{_serviceName} initialized successfully");
-                        return true;
-                    }
-                    catch (Exception ex)
-                    {
-                        LogError(
-                            $"Failed to initialize {_serviceName}",
-                            ex,
-                            "Service initialization",
-                            "Service will not be available",
-                            "Check configuration and dependencies");
-                        
-                        await ChangeStateAsync(ServiceState.Failed, () => Task.CompletedTask);
-                        throw;
-                    }
-                });
+            if (_currentState != ServiceState.Created)
+            {
+                LogWarning($"Cannot initialize {_serviceName} from state: {_currentState}");
+                return false;
+            }
+
+            try
+            {
+                await ChangeStateAsync(ServiceState.Initializing);
+                LogInfo($"Initializing {_serviceName}");
+                
+                await OnInitializeAsync(cancellationToken);
+                await ChangeStateAsync(ServiceState.Initialized);
+                
+                LogInfo($"{_serviceName} initialized successfully");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError(
+                    $"Failed to initialize {_serviceName}",
+                    ex,
+                    "Service initialization",
+                    "Service will not be available",
+                    "Check configuration and dependencies");
+                
+                await ChangeStateAsync(ServiceState.Failed);
+                return false;
+            }
         }
 
         /// <summary>
@@ -86,39 +93,35 @@ namespace TradingPlatform.Core.Canonical
                 return false;
             }
 
-            return await ChangeStateAsync(
-                ServiceState.Starting,
-                async () =>
+            try
+            {
+                await ChangeStateAsync(ServiceState.Starting);
+                LogInfo($"Starting {_serviceName}");
+                
+                await OnStartAsync(cancellationToken);
+                await ChangeStateAsync(ServiceState.Running);
+                
+                LogInfo($"{_serviceName} started successfully", new
                 {
-                    LogInfo($"Starting {_serviceName}");
-                    
-                    try
-                    {
-                        await OnStartAsync(cancellationToken);
-                        await ChangeStateAsync(ServiceState.Running, () => Task.CompletedTask);
-                        
-                        LogInfo($"{_serviceName} started successfully", new
-                        {
-                            ServiceName = _serviceName,
-                            State = ServiceState.Running,
-                            UptimeSeconds = _uptimeStopwatch.Elapsed.TotalSeconds
-                        });
-                        
-                        return true;
-                    }
-                    catch (Exception ex)
-                    {
-                        LogError(
-                            $"Failed to start {_serviceName}",
-                            ex,
-                            "Service startup",
-                            "Service failed to start",
-                            "Check logs for startup errors");
-                        
-                        await ChangeStateAsync(ServiceState.Failed, () => Task.CompletedTask);
-                        throw;
-                    }
+                    ServiceName = _serviceName,
+                    State = ServiceState.Running,
+                    UptimeSeconds = _uptimeStopwatch.Elapsed.TotalSeconds
                 });
+                
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError(
+                    $"Failed to start {_serviceName}",
+                    ex,
+                    "Service startup",
+                    "Service failed to start",
+                    "Check logs for startup errors");
+                
+                await ChangeStateAsync(ServiceState.Failed);
+                return false;
+            }
         }
 
         /// <summary>
@@ -132,171 +135,122 @@ namespace TradingPlatform.Core.Canonical
                 return false;
             }
 
-            return await ChangeStateAsync(
-                ServiceState.Stopping,
-                async () =>
+            try
+            {
+                await ChangeStateAsync(ServiceState.Stopping);
+                LogInfo($"Stopping {_serviceName}");
+                
+                await OnStopAsync(cancellationToken);
+                await ChangeStateAsync(ServiceState.Stopped);
+                
+                LogInfo($"{_serviceName} stopped successfully", new
                 {
-                    LogInfo($"Stopping {_serviceName}");
-                    
-                    try
-                    {
-                        _serviceCancellation.Cancel();
-                        await OnStopAsync(cancellationToken);
-                        await ChangeStateAsync(ServiceState.Stopped, () => Task.CompletedTask);
-                        
-                        LogInfo($"{_serviceName} stopped successfully", new
-                        {
-                            ServiceName = _serviceName,
-                            State = ServiceState.Stopped,
-                            TotalUptimeSeconds = _uptimeStopwatch.Elapsed.TotalSeconds
-                        });
-                        
-                        return true;
-                    }
-                    catch (Exception ex)
-                    {
-                        LogError(
-                            $"Error while stopping {_serviceName}",
-                            ex,
-                            "Service shutdown",
-                            "Service may not have stopped cleanly",
-                            "Check for resource leaks or hanging operations");
-                        
-                        await ChangeStateAsync(ServiceState.Failed, () => Task.CompletedTask);
-                        throw;
-                    }
+                    ServiceName = _serviceName,
+                    State = ServiceState.Stopped,
+                    TotalUptimeSeconds = _uptimeStopwatch.Elapsed.TotalSeconds
                 });
+                
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError(
+                    $"Failed to stop {_serviceName}",
+                    ex,
+                    "Service shutdown",
+                    "Service may not have shut down cleanly",
+                    "Check logs for shutdown errors");
+                
+                await ChangeStateAsync(ServiceState.Failed);
+                return false;
+            }
         }
 
         #endregion
 
-        #region Health Monitoring
+        #region Health Checks
 
         /// <summary>
         /// Performs a health check on the service
         /// </summary>
-        public async Task<ServiceHealthStatus> CheckHealthAsync(CancellationToken cancellationToken = default)
+        public async Task<ServiceHealthCheck> CheckHealthAsync(CancellationToken cancellationToken = default)
         {
-            var healthCheckStart = Stopwatch.StartNew();
-            
+            var healthCheck = new ServiceHealthCheck
+            {
+                ServiceName = _serviceName,
+                CurrentState = _currentState,
+                UptimeSeconds = _uptimeStopwatch.Elapsed.TotalSeconds,
+                LastStateChange = _lastStateChange,
+                CheckedAt = DateTime.UtcNow
+            };
+
             try
             {
-                LogDebug($"Performing health check for {_serviceName}");
-                
-                var healthStatus = new ServiceHealthStatus
+                if (_currentState != ServiceState.Running)
                 {
-                    ServiceName = _serviceName,
-                    CurrentState = _currentState,
-                    IsHealthy = _currentState == ServiceState.Running,
-                    UptimeSeconds = _uptimeStopwatch.Elapsed.TotalSeconds,
-                    LastHealthCheck = _lastHealthCheck,
-                    CheckDurationMs = 0
-                };
-
-                if (_currentState == ServiceState.Running)
-                {
-                    var customHealth = await OnCheckHealthAsync(cancellationToken);
-                    healthStatus.IsHealthy = customHealth.IsHealthy;
-                    healthStatus.HealthMessage = customHealth.Message;
-                    healthStatus.HealthDetails = customHealth.Details;
+                    healthCheck.IsHealthy = false;
+                    healthCheck.HealthMessage = $"Service is not running (State: {_currentState})";
                 }
                 else
                 {
-                    healthStatus.HealthMessage = $"Service is in {_currentState} state";
+                    var (isHealthy, message, details) = await OnCheckHealthAsync(cancellationToken);
+                    healthCheck.IsHealthy = isHealthy;
+                    healthCheck.HealthMessage = message;
+                    healthCheck.Details = details;
                 }
-
-                healthCheckStart.Stop();
-                healthStatus.CheckDurationMs = healthCheckStart.ElapsedMilliseconds;
-                
-                _lastHealthCheck = DateTime.UtcNow;
-                UpdateMetric("LastHealthCheckDurationMs", healthCheckStart.ElapsedMilliseconds);
-                UpdateMetric("HealthStatus", healthStatus.IsHealthy ? "Healthy" : "Unhealthy");
-                
-                LogDebug($"Health check completed for {_serviceName}", healthStatus);
-                
-                return healthStatus;
             }
             catch (Exception ex)
             {
-                healthCheckStart.Stop();
-                
-                LogError(
-                    $"Health check failed for {_serviceName}",
-                    ex,
-                    "Health check operation",
-                    "Unable to determine service health",
-                    "Service may be experiencing issues");
-                
-                return new ServiceHealthStatus
-                {
-                    ServiceName = _serviceName,
-                    CurrentState = _currentState,
-                    IsHealthy = false,
-                    HealthMessage = $"Health check failed: {ex.Message}",
-                    CheckDurationMs = healthCheckStart.ElapsedMilliseconds,
-                    UptimeSeconds = _uptimeStopwatch.Elapsed.TotalSeconds,
-                    LastHealthCheck = _lastHealthCheck
-                };
+                healthCheck.IsHealthy = false;
+                healthCheck.HealthMessage = $"Health check failed: {ex.Message}";
+                LogError("Health check failed", ex);
             }
+
+            return healthCheck;
         }
 
         #endregion
 
-        #region Metrics and Monitoring
+        #region Metrics
 
         /// <summary>
         /// Updates a service metric
         /// </summary>
-        protected void UpdateMetric(string metricName, object value)
+        protected void UpdateMetric(string name, object value)
         {
-            lock (_serviceMetrics)
-            {
-                _serviceMetrics[metricName] = value;
-            }
-            
-            LogDebug($"Metric updated: {metricName} = {value}");
+            _serviceMetrics.AddOrUpdate(name, value, (k, v) => value);
         }
 
         /// <summary>
         /// Increments a counter metric
         /// </summary>
-        protected void IncrementCounter(string counterName, long incrementBy = 1)
+        protected void IncrementCounter(string name, long incrementBy = 1)
         {
-            lock (_serviceMetrics)
-            {
-                if (_serviceMetrics.TryGetValue(counterName, out var currentValue) && currentValue is long current)
-                {
-                    _serviceMetrics[counterName] = current + incrementBy;
-                }
-                else
-                {
-                    _serviceMetrics[counterName] = incrementBy;
-                }
-            }
+            _serviceMetrics.AddOrUpdate(name, 
+                incrementBy, 
+                (k, v) => v is long current ? current + incrementBy : incrementBy);
         }
 
         /// <summary>
-        /// Gets current service metrics
+        /// Gets all service metrics
         /// </summary>
-        public Dictionary<string, object> GetMetrics()
+        public IReadOnlyDictionary<string, object> GetMetrics()
         {
-            lock (_serviceMetrics)
+            var metrics = new Dictionary<string, object>(_serviceMetrics)
             {
-                var metrics = new Dictionary<string, object>(_serviceMetrics)
-                {
-                    ["ServiceName"] = _serviceName,
-                    ["CurrentState"] = _currentState.ToString(),
-                    ["UptimeSeconds"] = _uptimeStopwatch.Elapsed.TotalSeconds,
-                    ["CorrelationId"] = _correlationId
-                };
-                
-                return metrics;
-            }
+                ["ServiceName"] = _serviceName,
+                ["CurrentState"] = _currentState.ToString(),
+                ["UptimeSeconds"] = _uptimeStopwatch.Elapsed.TotalSeconds,
+                ["LastStateChange"] = _lastStateChange,
+                ["CorrelationId"] = CorrelationId
+            };
+
+            return metrics;
         }
 
         #endregion
 
-        #region Protected Abstract Methods
+        #region Abstract Methods
 
         /// <summary>
         /// Override to implement service initialization logic
@@ -350,29 +304,26 @@ namespace TradingPlatform.Core.Canonical
             
             try
             {
-                var result = await ExecuteWithLoggingAsync(
-                    operation,
-                    $"{_serviceName}.{operationName}",
-                    "Service operation failed",
-                    $"Check {_serviceName} service health and configuration",
-                    methodName);
-                
+                var result = await operation();
                 stopwatch.Stop();
+                
                 UpdateMetric($"{operationName}LastDurationMs", stopwatch.ElapsedMilliseconds);
                 
                 return result;
             }
-            catch
+            catch (Exception ex)
             {
-                if (incrementOperationCounter)
-                {
-                    IncrementCounter($"{operationName}ErrorCount");
-                }
+                stopwatch.Stop();
+                
+                IncrementCounter($"{operationName}ErrorCount");
+                UpdateMetric($"{operationName}LastErrorTime", DateTime.UtcNow);
+                UpdateMetric($"{operationName}LastError", ex.Message);
+                
                 throw;
             }
         }
 
-        private async Task<bool> ChangeStateAsync(ServiceState newState, Func<Task> stateChangeAction)
+        private async Task ChangeStateAsync(ServiceState newState)
         {
             await _stateChangeSemaphore.WaitAsync();
             
@@ -380,12 +331,11 @@ namespace TradingPlatform.Core.Canonical
             {
                 var oldState = _currentState;
                 _currentState = newState;
+                _lastStateChange = DateTime.UtcNow;
+                
+                UpdateMetric("CurrentState", newState.ToString());
                 
                 LogServiceLifecycle($"State change: {oldState} → {newState}", newState);
-                
-                await stateChangeAction();
-                
-                return true;
             }
             finally
             {
@@ -468,17 +418,17 @@ namespace TradingPlatform.Core.Canonical
     }
 
     /// <summary>
-    /// Service health status structure
+    /// Service health check result
     /// </summary>
-    public class ServiceHealthStatus
+    public class ServiceHealthCheck
     {
         public string ServiceName { get; set; } = string.Empty;
         public ServiceState CurrentState { get; set; }
         public bool IsHealthy { get; set; }
-        public string? HealthMessage { get; set; }
-        public Dictionary<string, object>? HealthDetails { get; set; }
+        public string HealthMessage { get; set; } = string.Empty;
         public double UptimeSeconds { get; set; }
-        public DateTime LastHealthCheck { get; set; }
-        public long CheckDurationMs { get; set; }
+        public DateTime LastStateChange { get; set; }
+        public DateTime CheckedAt { get; set; }
+        public Dictionary<string, object>? Details { get; set; }
     }
 }

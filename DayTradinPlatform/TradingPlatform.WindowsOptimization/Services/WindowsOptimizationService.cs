@@ -89,7 +89,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
     }
 
-    public async Task<bool> SetProcessPriorityAsync(int processId, ProcessPriorityClass priority)
+    public Task<bool> SetProcessPriorityAsync(int processId, ProcessPriorityClass priority)
     {
         try
         {
@@ -103,17 +103,17 @@ public class WindowsOptimizationService : IWindowsOptimizationService
                 if (!result)
                 {
                     TradingLogOrchestrator.Instance.LogWarning($"Failed to set REALTIME priority for process {processId}");
-                    return false;
+                    return Task.FromResult(false);
                 }
             }
 
             TradingLogOrchestrator.Instance.LogInfo($"Set process {processId} priority to {priority}");
-            return true;
+            return Task.FromResult(true);
         }
         catch (Exception ex)
         {
             TradingLogOrchestrator.Instance.LogError($"Failed to set process priority for process {processId}", ex);
-            return false;
+            return Task.FromResult(false);
         }
     }
 
@@ -146,7 +146,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
     }
 
-    public async Task<bool> SetCpuAffinityAsync(int processId, int[] cpuCores)
+    public Task<bool> SetCpuAffinityAsync(int processId, int[] cpuCores)
     {
         try
         {
@@ -159,16 +159,16 @@ public class WindowsOptimizationService : IWindowsOptimizationService
             if (!result)
             {
                 TradingLogOrchestrator.Instance.LogWarning($"Failed to set CPU affinity for process {processId}");
-                return false;
+                return Task.FromResult(false);
             }
 
             TradingLogOrchestrator.Instance.LogInfo($"Set CPU affinity for process {processId} to cores: {string.Join(", ", cpuCores)}");
-            return true;
+            return Task.FromResult(true);
         }
         catch (Exception ex)
         {
             TradingLogOrchestrator.Instance.LogError($"Failed to set CPU affinity for process {processId}", ex);
-            return false;
+            return Task.FromResult(false);
         }
     }
 
@@ -354,7 +354,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
     }
 
-    public async Task<bool> SetTimerResolutionAsync(int milliseconds)
+    public Task<bool> SetTimerResolutionAsync(int milliseconds)
     {
         try
         {
@@ -362,35 +362,35 @@ public class WindowsOptimizationService : IWindowsOptimizationService
             if (result != 0)
             {
                 TradingLogOrchestrator.Instance.LogWarning($"Failed to set timer resolution to {milliseconds}ms");
-                return false;
+                return Task.FromResult(false);
             }
 
             TradingLogOrchestrator.Instance.LogInfo($"Set system timer resolution to {milliseconds}ms");
-            return true;
+            return Task.FromResult(true);
         }
         catch (Exception ex)
         {
             TradingLogOrchestrator.Instance.LogError("Failed to set timer resolution", ex);
-            return false;
+            return Task.FromResult(false);
         }
     }
 
-    public async Task<bool> EnableLowLatencyGcAsync()
+    public Task<bool> EnableLowLatencyGcAsync()
     {
         try
         {
             GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
             TradingLogOrchestrator.Instance.LogInfo("Enabled low-latency garbage collection");
-            return true;
+            return Task.FromResult(true);
         }
         catch (Exception ex)
         {
             TradingLogOrchestrator.Instance.LogError("Failed to enable low-latency GC", ex);
-            return false;
+            return Task.FromResult(false);
         }
     }
 
-    public async Task<bool> PreJitCriticalMethodsAsync()
+    public Task<bool> PreJitCriticalMethodsAsync()
     {
         try
         {
@@ -399,16 +399,16 @@ public class WindowsOptimizationService : IWindowsOptimizationService
             ProfileOptimization.StartProfile("TradingPlatform.profile");
 
             TradingLogOrchestrator.Instance.LogInfo("Pre-JIT compilation enabled for critical methods");
-            return true;
+            return Task.FromResult(true);
         }
         catch (Exception ex)
         {
             TradingLogOrchestrator.Instance.LogError("Failed to enable pre-JIT compilation", ex);
-            return false;
+            return Task.FromResult(false);
         }
     }
 
-    public async Task<bool> OptimizeMemoryUsageAsync()
+    public Task<bool> OptimizeMemoryUsageAsync()
     {
         try
         {
@@ -422,12 +422,12 @@ public class WindowsOptimizationService : IWindowsOptimizationService
             GC.Collect();
 
             TradingLogOrchestrator.Instance.LogInfo("Memory optimization completed");
-            return true;
+            return Task.FromResult(true);
         }
         catch (Exception ex)
         {
             TradingLogOrchestrator.Instance.LogError("Failed to optimize memory usage", ex);
-            return false;
+            return Task.FromResult(false);
         }
     }
 
@@ -468,7 +468,7 @@ public class WindowsOptimizationService : IWindowsOptimizationService
         }
     }
 
-    private async Task<double> MeasureProcessLatencyAsync(Process process)
+    private Task<double> MeasureProcessLatencyAsync(Process process)
     {
         var stopwatch = Stopwatch.StartNew();
         try
@@ -476,12 +476,12 @@ public class WindowsOptimizationService : IWindowsOptimizationService
             // Simulate a quick operation to measure response time
             process.Refresh();
             stopwatch.Stop();
-            return stopwatch.Elapsed.TotalMicroseconds;
+            return Task.FromResult(stopwatch.Elapsed.TotalMicroseconds);
         }
         catch
         {
             stopwatch.Stop();
-            return stopwatch.Elapsed.TotalMicroseconds;
+            return Task.FromResult(stopwatch.Elapsed.TotalMicroseconds);
         }
     }
 

@@ -10,8 +10,8 @@ namespace TradingPlatform.Screening.Models
     /// </summary>
     public class ScreeningResult
     {
-        public string Symbol { get; set; }
-        public MarketData MarketData { get; set; }
+        public string Symbol { get; set; } = string.Empty;
+        public MarketData MarketData { get; set; } = null!;
         public bool MeetsCriteria { get; set; }
         public decimal OverallScore { get; set; } // 0.0 to 1.0
         public List<CriteriaResult> CriteriaResults { get; set; } = new();
@@ -22,7 +22,7 @@ namespace TradingPlatform.Screening.Models
         public Dictionary<string, object> AdditionalMetrics { get; set; } = new();
         public List<string> FailedCriteria { get; set; } = new();
         public List<string> PassedCriteria { get; set; } = new();
-        public string RecommendedAction { get; set; } // "BUY", "SELL", "WATCH", "IGNORE"
+        public string RecommendedAction { get; set; } = "WATCH"; // "BUY", "SELL", "WATCH", "IGNORE"
         public decimal ConfidenceLevel { get; set; } // 0.0 to 1.0
     }
 }

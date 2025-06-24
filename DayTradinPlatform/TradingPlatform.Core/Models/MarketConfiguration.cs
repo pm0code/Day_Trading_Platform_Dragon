@@ -16,10 +16,10 @@ namespace TradingPlatform.Core.Models
             _logger = logger;
         }
 
-        public string MarketCode { get; set; }
-        public string MarketName { get; set; }
+        public string MarketCode { get; set; } = string.Empty;
+        public string MarketName { get; set; } = string.Empty;
         public List<string> Exchanges { get; set; } = new();
-        public TimeZoneInfo TimeZone { get; set; }
+        public TimeZoneInfo TimeZone { get; set; } = TimeZoneInfo.Utc;
 
         private TimeSpan _marketOpen;
         public TimeSpan MarketOpen
@@ -60,7 +60,7 @@ namespace TradingPlatform.Core.Models
 
 
         public List<DayOfWeek> TradingDays { get; set; } = new();
-        public string CurrencyCode { get; set; }
+        public string CurrencyCode { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
         public List<DateTime> MarketHolidays { get; set; } = new();
 

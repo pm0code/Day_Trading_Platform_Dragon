@@ -19,7 +19,7 @@ namespace TradingPlatform.Screening.Criteria
             _logger = logger;
         }
 
-        public async Task<CriteriaResult> EvaluateVolumeAsync(MarketData marketData, TradingCriteria criteria)
+        public Task<CriteriaResult> EvaluateVolumeAsync(MarketData marketData, TradingCriteria criteria)
         {
             var result = new CriteriaResult
             {
@@ -62,7 +62,7 @@ namespace TradingPlatform.Screening.Criteria
                 }
 
                 TradingLogOrchestrator.Instance.LogInfo($"Volume evaluation for {marketData.Symbol}: Score={result.Score:F2}, Passed={result.Passed}");
-                return result;
+                return Task.FromResult(result);
             }
             catch (Exception ex)
             {
@@ -70,7 +70,7 @@ namespace TradingPlatform.Screening.Criteria
                 result.Passed = false;
                 result.Score = 0m;
                 result.Reason = $"Evaluation error: {ex.Message}";
-                return result;
+                return Task.FromResult(result);
             }
         }
 

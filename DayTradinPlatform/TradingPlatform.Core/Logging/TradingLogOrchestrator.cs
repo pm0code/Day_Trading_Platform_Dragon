@@ -26,7 +26,7 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
 {
     #region Configuration Constants
 
-    private const string LogDirectory = "/logs";
+    private static readonly string LogDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
     private const int ChannelCapacity = 100000; // Large buffer for high-frequency logging
     private const int WorkerThreadCount = 4; // Multiple worker threads for parallel processing
     private const int FlushIntervalMs = 500; // 500ms flush interval for real-time logging

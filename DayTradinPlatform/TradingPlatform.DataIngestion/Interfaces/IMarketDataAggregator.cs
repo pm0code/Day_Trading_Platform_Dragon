@@ -28,7 +28,7 @@ namespace TradingPlatform.DataIngestion.Interfaces
         /// <param name="data">The API response data to aggregate</param>
         /// <param name="providerName">The name of the data provider</param>
         /// <returns>A task containing the aggregated MarketData object, or null if aggregation fails</returns>
-        Task<MarketData> AggregateAsync<T>(T data, string providerName) where T : class;
+        Task<MarketData?> AggregateAsync<T>(T data, string providerName) where T : class;
 
         /// <summary>
         /// Aggregates market data from multiple API responses with type safety.
@@ -47,7 +47,7 @@ namespace TradingPlatform.DataIngestion.Interfaces
         /// <param name="primaryData">Data from the primary provider</param>
         /// <param name="fallbackData">Data from the fallback provider (optional)</param>
         /// <returns>A task containing the best available aggregated MarketData</returns>
-        Task<MarketData> AggregateMultiProviderAsync(string symbol, MarketData primaryData, MarketData fallbackData = null);
+        Task<MarketData?> AggregateMultiProviderAsync(string symbol, MarketData? primaryData, MarketData? fallbackData = null);
 
         /// <summary>
         /// Gets market data for a single symbol with intelligent provider selection.
@@ -126,7 +126,7 @@ namespace TradingPlatform.DataIngestion.Interfaces
         /// <param name="symbol">The stock symbol</param>
         /// <param name="maxAge">Maximum age of cached data to accept</param>
         /// <returns>Cached MarketData if available and valid, null otherwise</returns>
-        Task<MarketData> GetCachedDataAsync(string symbol, TimeSpan maxAge);
+        Task<MarketData?> GetCachedDataAsync(string symbol, TimeSpan maxAge);
 
         /// <summary>
         /// Caches aggregated market data for performance optimization.
@@ -176,7 +176,7 @@ namespace TradingPlatform.DataIngestion.Interfaces
         public decimal PriceVariancePercentage { get; set; }
         public long VolumeVariance { get; set; }
         public TimeSpan TimestampDifference { get; set; }
-        public string RecommendedProvider { get; set; }
+        public string RecommendedProvider { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -210,8 +210,8 @@ namespace TradingPlatform.DataIngestion.Interfaces
     /// </summary>
     public class ProviderFailureEventArgs : EventArgs
     {
-        public string ProviderName { get; set; }
-        public Exception Exception { get; set; }
+        public string ProviderName { get; set; } = string.Empty;
+        public Exception Exception { get; set; } = new Exception();
         public DateTime FailureTime { get; set; }
         public int ConsecutiveFailures { get; set; }
     }
@@ -221,11 +221,11 @@ namespace TradingPlatform.DataIngestion.Interfaces
     /// </summary>
     public class DataQualityEventArgs : EventArgs
     {
-        public string Symbol { get; set; }
-        public DataQualityReport QualityReport { get; set; }
+        public string Symbol { get; set; } = string.Empty;
+        public DataQualityReport QualityReport { get; set; } = new();
         public DateTime DetectedTime { get; set; }
-        public string PrimaryProvider { get; set; }
-        public string FallbackProvider { get; set; }
+        public string PrimaryProvider { get; set; } = string.Empty;
+        public string FallbackProvider { get; set; } = string.Empty;
     }
 }
 

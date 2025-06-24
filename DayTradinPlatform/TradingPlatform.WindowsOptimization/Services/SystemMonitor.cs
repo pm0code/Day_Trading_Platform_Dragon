@@ -413,7 +413,7 @@ public class SystemMonitor : ISystemMonitor, IDisposable
         }
     }
 
-    private async Task<bool> CheckSystemResponsivenessAsync()
+    private Task<bool> CheckSystemResponsivenessAsync()
     {
         try
         {
@@ -431,16 +431,16 @@ public class SystemMonitor : ISystemMonitor, IDisposable
 
             TradingLogOrchestrator.Instance.LogInfo($"DRAGON system responsiveness check: {responseTime}μs, Responsive: {isResponsive}");
 
-            return isResponsive;
+            return Task.FromResult(isResponsive);
         }
         catch (Exception ex)
         {
             TradingLogOrchestrator.Instance.LogWarning("Failed to check DRAGON system responsiveness", additionalData: new { Error = ex.Message });
-            return false;
+            return Task.FromResult(false);
         }
     }
 
-    private async Task<bool> CheckTradingProcessesHealthAsync()
+    private Task<bool> CheckTradingProcessesHealthAsync()
     {
         try
         {
@@ -474,16 +474,16 @@ public class SystemMonitor : ISystemMonitor, IDisposable
 
             TradingLogOrchestrator.Instance.LogInfo($"DRAGON trading processes health: {healthyProcesses}/{tradingProcessNames.Length} ({healthPercentage})");
 
-            return isHealthy;
+            return Task.FromResult(isHealthy);
         }
         catch (Exception ex)
         {
             TradingLogOrchestrator.Instance.LogWarning("Failed to check trading processes health on DRAGON system", additionalData: new { Error = ex.Message });
-            return false;
+            return Task.FromResult(false);
         }
     }
 
-    private async Task<(bool, bool)> CheckDualGpuHealthAsync()
+    private Task<(bool, bool)> CheckDualGpuHealthAsync()
     {
         try
         {
@@ -517,12 +517,12 @@ public class SystemMonitor : ISystemMonitor, IDisposable
             }
 
             TradingLogOrchestrator.Instance.LogInfo($"DRAGON dual NVIDIA GPU health check: GPU0={gpu0Healthy}, GPU1(RTX3060Ti)={gpu1Healthy}");
-            return (gpu0Healthy, gpu1Healthy);
+            return Task.FromResult((gpu0Healthy, gpu1Healthy));
         }
         catch (Exception ex)
         {
             TradingLogOrchestrator.Instance.LogWarning("Failed to check dual GPU health on DRAGON system", additionalData: new { Error = ex.Message });
-            return (false, false);
+            return Task.FromResult((false, false));
         }
     }
 

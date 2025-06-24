@@ -17,7 +17,7 @@ namespace TradingPlatform.Core.Models
         }
 
 
-        public string Symbol { get; set; }
+        public string Symbol { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public decimal Change { get; set; }
         public decimal ChangePercent { get; set; }
@@ -92,16 +92,16 @@ namespace TradingPlatform.Core.Models
 
     public class MarketTick
     {
-        public string Symbol { get; set; }
+        public string Symbol { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public long Volume { get; set; }
         public DateTime Timestamp { get; set; }
-        public string Exchange { get; set; }
+        public string Exchange { get; set; } = string.Empty;
     }
 
     public class HistoricalData
     {
-        public string Symbol { get; set; }
+        public string Symbol { get; set; } = string.Empty;
         public List<DailyData> DailyPrices { get; set; } = new();
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
@@ -116,7 +116,7 @@ namespace TradingPlatform.Core.Models
             return true;
         }
 
-        public DailyData GetLatestData()
+        public DailyData? GetLatestData()
         {
             return DailyPrices.Count > 0 ? DailyPrices[DailyPrices.Count - 1] : null;
         }

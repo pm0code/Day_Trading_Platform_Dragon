@@ -127,7 +127,7 @@ namespace TradingPlatform.DataIngestion.Providers
             return results;
         }
 
-        public async Task<MarketData?> AggregateMultiProviderAsync(string symbol, MarketData? primaryData, MarketData? fallbackData = null)
+        public Task<MarketData?> AggregateMultiProviderAsync(string symbol, MarketData? primaryData, MarketData? fallbackData = null)
         {
             TradingLogOrchestrator.Instance.LogInfo($"Aggregating multi-provider data for {symbol}");
 
@@ -148,21 +148,21 @@ namespace TradingPlatform.DataIngestion.Providers
                             FallbackProvider = "Fallback"
                         });
 
-                        return qualityReport.RecommendedProvider == "Primary" ? primaryData : fallbackData;
+                        return Task.FromResult<MarketData?>(qualityReport.RecommendedProvider == "Primary" ? primaryData : fallbackData);
                     }
                 }
 
-                return primaryData;
+                return Task.FromResult<MarketData?>(primaryData);
             }
 
             if (fallbackData != null && ValidateMarketData(fallbackData))
             {
                 TradingLogOrchestrator.Instance.LogInfo($"Using fallback data for {symbol}");
-                return fallbackData;
+                return Task.FromResult<MarketData?>(fallbackData);
             }
 
             TradingLogOrchestrator.Instance.LogError($"No valid data available for {symbol} from any provider");
-            return null;
+            return Task.FromResult<MarketData?>(null);
         }
 
         // ========== PROVIDER MANAGEMENT METHODS ==========

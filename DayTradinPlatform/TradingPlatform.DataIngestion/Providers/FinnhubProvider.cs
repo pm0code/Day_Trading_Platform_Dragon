@@ -35,7 +35,7 @@ namespace TradingPlatform.DataIngestion.Providers
             _client = new RestClient(_config.Finnhub.BaseUrl);
         }
 
-        public async Task<MarketData> GetQuoteAsync(string symbol)
+        public async Task<MarketData?> GetQuoteAsync(string symbol)
         {
             TradingLogOrchestrator.Instance.LogInfo($"Fetching quote for {symbol} from Finnhub");
 
@@ -91,7 +91,7 @@ namespace TradingPlatform.DataIngestion.Providers
             }
         }
 
-        public async Task<List<MarketData>> GetBatchQuotesAsync(List<string> symbols)
+        public async Task<List<MarketData>?> GetBatchQuotesAsync(List<string> symbols)
         {
             TradingLogOrchestrator.Instance.LogInfo($"Fetching batch quotes for {symbols.Count} symbols from Finnhub");
             var results = new List<MarketData>();
@@ -112,7 +112,7 @@ namespace TradingPlatform.DataIngestion.Providers
             return results;
         }
 
-        public async Task<MarketData> GetCandleDataAsync(string symbol, string resolution, DateTime from, DateTime to)
+        public async Task<MarketData?> GetCandleDataAsync(string symbol, string resolution, DateTime from, DateTime to)
         {
             TradingLogOrchestrator.Instance.LogInfo($"Fetching candle data for {symbol} from Finnhub");
 
@@ -173,7 +173,7 @@ namespace TradingPlatform.DataIngestion.Providers
             }
         }
 
-        public async Task<List<DailyData>> FetchHistoricalDataAsync(string symbol, DateTime startDate, DateTime endDate)
+        public async Task<List<DailyData>?> FetchHistoricalDataAsync(string symbol, DateTime startDate, DateTime endDate)
         {
             TradingLogOrchestrator.Instance.LogInfo($"Fetching historical data for {symbol} from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
 
@@ -201,7 +201,7 @@ namespace TradingPlatform.DataIngestion.Providers
 
         // ========== NEWLY IMPLEMENTED MISSING METHODS ==========
 
-        public async Task<List<string>> GetStockSymbolsAsync(string exchange = "US")
+        public async Task<List<string>?> GetStockSymbolsAsync(string exchange = "US")
         {
             TradingLogOrchestrator.Instance.LogInfo($"Fetching stock symbols for exchange: {exchange}");
 

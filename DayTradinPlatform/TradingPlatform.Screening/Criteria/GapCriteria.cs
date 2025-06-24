@@ -19,7 +19,7 @@ namespace TradingPlatform.Screening.Criteria
             _logger = logger;
         }
 
-        public async Task<CriteriaResult> EvaluateGapAsync(MarketData marketData, TradingCriteria criteria)
+        public Task<CriteriaResult> EvaluateGapAsync(MarketData marketData, TradingCriteria criteria)
         {
             var result = new CriteriaResult
             {
@@ -35,7 +35,7 @@ namespace TradingPlatform.Screening.Criteria
                     result.Score = 0m;
                     result.Reason = "Previous close is zero�cannot compute gap.";
                     result.Metrics["GapPercent"] = 0m;
-                    return result;
+                    return Task.FromResult(result);
                 }
 
                 var gapPercent = ((marketData.Open - marketData.PreviousClose) / marketData.PreviousClose) * 100m;
@@ -55,7 +55,7 @@ namespace TradingPlatform.Screening.Criteria
                 }
 
                 TradingLogOrchestrator.Instance.LogInfo($"Gap evaluation for {marketData.Symbol}: Gap={gapPercent:F2}%, Score={result.Score:F2}, Passed={result.Passed}");
-                return result;
+                return Task.FromResult(result);
             }
             catch (Exception ex)
             {
@@ -63,7 +63,7 @@ namespace TradingPlatform.Screening.Criteria
                 result.Passed = false;
                 result.Score = 0m;
                 result.Reason = $"Evaluation error: {ex.Message}";
-                return result;
+                return Task.FromResult(result);
             }
         }
     }

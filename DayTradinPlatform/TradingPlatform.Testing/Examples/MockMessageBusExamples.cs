@@ -181,7 +181,7 @@ public static class MockMessageBusExamples
             {
                 // Attempt standard operations
                 await mockBus.PublishAsync("test", new { Scenario = scenario.ToString() });
-                await mockBus.SubscribeAsync<object>("test", "group1", "consumer1", async msg => { });
+                await mockBus.SubscribeAsync<object>("test", "group1", "consumer1", msg => Task.CompletedTask);
 
                 var latency = await mockBus.GetLatencyAsync();
                 var isHealthy = await mockBus.IsHealthyAsync();

@@ -19,7 +19,7 @@ namespace TradingPlatform.Screening.Criteria
             _logger = logger;
         }
 
-        public async Task<CriteriaResult> EvaluateNewsAsync(string symbol, TradingCriteria criteria)
+        public Task<CriteriaResult> EvaluateNewsAsync(string symbol, TradingCriteria criteria)
         {
             var result = new CriteriaResult
             {
@@ -68,7 +68,7 @@ namespace TradingPlatform.Screening.Criteria
                 }
 
                 TradingLogOrchestrator.Instance.LogInfo($"News evaluation for {symbol}: Sentiment={sentimentScore:F2}, Catalyst={hasCatalyst}, Score={result.Score:F2}, Passed={result.Passed}");
-                return result;
+                return Task.FromResult(result);
             }
             catch (Exception ex)
             {
@@ -76,7 +76,7 @@ namespace TradingPlatform.Screening.Criteria
                 result.Passed = false;
                 result.Score = 0m;
                 result.Reason = $"Evaluation error: {ex.Message}";
-                return result;
+                return Task.FromResult(result);
             }
         }
     }

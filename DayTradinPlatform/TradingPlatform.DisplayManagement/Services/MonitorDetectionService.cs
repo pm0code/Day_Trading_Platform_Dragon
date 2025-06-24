@@ -93,7 +93,7 @@ public class MonitorDetectionService : IMonitorDetectionService
     /// <summary>
     /// Detects all connected monitors using Windows API
     /// </summary>
-    public async Task<List<MonitorConfiguration>> GetConnectedMonitorsAsync()
+    public Task<List<MonitorConfiguration>> GetConnectedMonitorsAsync()
     {
         TradingLogOrchestrator.Instance.LogInfo("Detecting connected monitors for DRAGON trading platform");
 
@@ -133,14 +133,14 @@ public class MonitorDetectionService : IMonitorDetectionService
             }, IntPtr.Zero);
 
             TradingLogOrchestrator.Instance.LogInfo($"Monitor detection complete. Found {monitors.Count} monitor(s)");
-            return monitors;
+            return Task.FromResult(monitors);
         }
         catch (Exception ex)
         {
             TradingLogOrchestrator.Instance.LogError("Failed to detect monitors", ex);
 
             // Fallback: create a single default monitor configuration
-            return new List<MonitorConfiguration>
+            return Task.FromResult(new List<MonitorConfiguration>
             {
                 new MonitorConfiguration
                 {
@@ -154,7 +154,7 @@ public class MonitorDetectionService : IMonitorDetectionService
                     DpiScale = 1.0,
                     IsActive = true
                 }
-            };
+            });
         }
     }
 
