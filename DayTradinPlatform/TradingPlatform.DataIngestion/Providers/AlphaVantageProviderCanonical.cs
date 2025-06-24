@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
@@ -304,7 +305,18 @@ namespace TradingPlatform.DataIngestion.Providers
                     ValidateResponse(response, keywords);
 
                     var searchResponse = JsonSerializer.Deserialize<SymbolSearchResponse>(response.Content!);
-                    return searchResponse?.Matches ?? new List<SymbolSearchResult>();
+                    var matches = searchResponse?.Matches ?? new List<AlphaVantageSymbolMatch>();
+                    
+                    // Map AlphaVantageSymbolMatch to SymbolSearchResult
+                    return matches.Select(m => new SymbolSearchResult
+                    {
+                        Symbol = m.Symbol,
+                        Name = m.Name,
+                        Type = m.Type,
+                        Region = m.Region,
+                        Exchange = "", // AlphaVantage doesn't provide exchange in search
+                        Currency = "" // AlphaVantage doesn't provide currency in search
+                    }).ToList();
                 },
                 new CachePolicy { AbsoluteExpiration = TimeSpan.FromHours(1) });
 
@@ -609,10 +621,10 @@ namespace TradingPlatform.DataIngestion.Providers
     public class SymbolSearchResponse
     {
         [JsonPropertyName("bestMatches")]
-        public List<SymbolSearchResult> Matches { get; set; } = new();
+        public List<AlphaVantageSymbolMatch> Matches { get; set; } = new();
     }
 
-    public class SymbolSearchResult
+    public class AlphaVantageSymbolMatch
     {
         [JsonPropertyName("1. symbol")]
         public string Symbol { get; set; } = string.Empty;
@@ -625,6 +637,45 @@ namespace TradingPlatform.DataIngestion.Providers
         
         [JsonPropertyName("4. region")]
         public string Region { get; set; } = string.Empty;
+    }
+
+    public class AlphaVantageGlobalQuoteResponse
+    {
+        [JsonPropertyName("Global Quote")]
+        public GlobalQuote GlobalQuote { get; set; } = new();
+    }
+
+    public class GlobalQuote
+    {
+        [JsonPropertyName("01. symbol")]
+        public string Symbol { get; set; } = string.Empty;
+        
+        [JsonPropertyName("02. open")]
+        public string Open { get; set; } = "0";
+        
+        [JsonPropertyName("03. high")]
+        public string High { get; set; } = "0";
+        
+        [JsonPropertyName("04. low")]
+        public string Low { get; set; } = "0";
+        
+        [JsonPropertyName("05. price")]
+        public string Price { get; set; } = "0";
+        
+        [JsonPropertyName("06. volume")]
+        public string Volume { get; set; } = "0";
+        
+        [JsonPropertyName("07. latest trading day")]
+        public string LatestTradingDay { get; set; } = string.Empty;
+        
+        [JsonPropertyName("08. previous close")]
+        public string PreviousClose { get; set; } = "0";
+        
+        [JsonPropertyName("09. change")]
+        public string Change { get; set; } = "0";
+        
+        [JsonPropertyName("10. change percent")]
+        public string ChangePercent { get; set; } = "0%";
     }
 
     #endregion
