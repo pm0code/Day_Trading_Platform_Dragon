@@ -3,7 +3,7 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
 using TradingPlatform.Core.Canonical;
-using TradingPlatform.Core.Foundation;
+using TradingPlatform.Foundation.Models;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
 using TradingPlatform.Messaging.Events;
@@ -39,7 +39,7 @@ namespace TradingPlatform.RiskManagement.Services
 
         public async Task<ComplianceStatus> GetComplianceStatusAsync()
         {
-            return await ExecuteOperationAsync(
+            return await ExecuteServiceOperationAsync(
                 nameof(GetComplianceStatusAsync),
                 async () =>
                 {
@@ -86,7 +86,7 @@ namespace TradingPlatform.RiskManagement.Services
 
         public async Task<bool> ValidatePatternDayTradingAsync(string accountId)
         {
-            var result = await ExecuteOperationAsync(
+            var result = await ExecuteServiceOperationAsync(
                 nameof(ValidatePatternDayTradingAsync),
                 async () =>
                 {
@@ -134,7 +134,7 @@ namespace TradingPlatform.RiskManagement.Services
 
         public async Task<bool> ValidateMarginRequirementsAsync(string accountId, decimal orderValue)
         {
-            var result = await ExecuteOperationAsync(
+            var result = await ExecuteServiceOperationAsync(
                 nameof(ValidateMarginRequirementsAsync),
                 async () =>
                 {
@@ -195,7 +195,7 @@ namespace TradingPlatform.RiskManagement.Services
 
         public async Task<bool> ValidateRegulatoryLimitsAsync(OrderRiskRequest request)
         {
-            var result = await ExecuteOperationAsync(
+            var result = await ExecuteServiceOperationAsync(
                 nameof(ValidateRegulatoryLimitsAsync),
                 async () =>
                 {
@@ -256,7 +256,7 @@ namespace TradingPlatform.RiskManagement.Services
 
         public async Task LogComplianceEventAsync(ComplianceEvent complianceEvent)
         {
-            await ExecuteOperationAsync(
+            await ExecuteServiceOperationAsync(
                 nameof(LogComplianceEventAsync),
                 async () =>
                 {

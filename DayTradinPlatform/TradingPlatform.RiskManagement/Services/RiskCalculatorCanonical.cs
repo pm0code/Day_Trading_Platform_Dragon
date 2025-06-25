@@ -2,7 +2,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using TradingPlatform.Core.Canonical;
-using TradingPlatform.Core.Foundation;
+using TradingPlatform.Foundation.Models;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
 using TradingPlatform.RiskManagement.Models;
@@ -31,7 +31,7 @@ namespace TradingPlatform.RiskManagement.Services
         /// </summary>
         public async Task<decimal> CalculateVaRAsync(IEnumerable<decimal> returns, decimal confidenceLevel = DEFAULT_CONFIDENCE_LEVEL)
         {
-            var result = await ExecuteOperationAsync(
+            var result = await ExecuteServiceOperationAsync(
                 nameof(CalculateVaRAsync),
                 async () =>
                 {
@@ -64,7 +64,7 @@ namespace TradingPlatform.RiskManagement.Services
                 },
                 createDefaultResult: () => 0m);
 
-            return result;
+            return result.Value ?? 0m;
         }
 
         /// <summary>
@@ -72,7 +72,7 @@ namespace TradingPlatform.RiskManagement.Services
         /// </summary>
         public async Task<decimal> CalculateExpectedShortfallAsync(IEnumerable<decimal> returns, decimal confidenceLevel = DEFAULT_CONFIDENCE_LEVEL)
         {
-            var result = await ExecuteOperationAsync(
+            var result = await ExecuteServiceOperationAsync(
                 nameof(CalculateExpectedShortfallAsync),
                 async () =>
                 {
@@ -100,7 +100,7 @@ namespace TradingPlatform.RiskManagement.Services
                 },
                 createDefaultResult: () => 0m);
 
-            return result;
+            return result.Value ?? 0m;
         }
 
         /// <summary>
@@ -108,7 +108,7 @@ namespace TradingPlatform.RiskManagement.Services
         /// </summary>
         public async Task<decimal> CalculateMaxDrawdownAsync(IEnumerable<decimal> portfolioValues)
         {
-            var result = await ExecuteOperationAsync(
+            var result = await ExecuteServiceOperationAsync(
                 nameof(CalculateMaxDrawdownAsync),
                 async () =>
                 {
@@ -161,7 +161,7 @@ namespace TradingPlatform.RiskManagement.Services
                 },
                 createDefaultResult: () => 0m);
 
-            return result;
+            return result.Value ?? 0m;
         }
 
         /// <summary>
@@ -169,7 +169,7 @@ namespace TradingPlatform.RiskManagement.Services
         /// </summary>
         public async Task<decimal> CalculateSharpeRatioAsync(IEnumerable<decimal> returns, decimal riskFreeRate)
         {
-            var result = await ExecuteOperationAsync(
+            var result = await ExecuteServiceOperationAsync(
                 nameof(CalculateSharpeRatioAsync),
                 async () =>
                 {
@@ -207,7 +207,7 @@ namespace TradingPlatform.RiskManagement.Services
                 },
                 createDefaultResult: () => 0m);
 
-            return result;
+            return result.Value ?? 0m;
         }
 
         /// <summary>
@@ -215,7 +215,7 @@ namespace TradingPlatform.RiskManagement.Services
         /// </summary>
         public async Task<decimal> CalculateBetaAsync(IEnumerable<decimal> assetReturns, IEnumerable<decimal> marketReturns)
         {
-            var result = await ExecuteOperationAsync(
+            var result = await ExecuteServiceOperationAsync(
                 nameof(CalculateBetaAsync),
                 async () =>
                 {
@@ -256,7 +256,7 @@ namespace TradingPlatform.RiskManagement.Services
                 },
                 createDefaultResult: () => 0m);
 
-            return result;
+            return result.Value ?? 0m;
         }
 
         protected override async Task<TradingResult<RiskAssessment>> EvaluateRiskCoreAsync(
@@ -383,12 +383,12 @@ namespace TradingPlatform.RiskManagement.Services
         }
 
         // IRiskCalculator interface implementations (synchronous wrappers)
-        public decimal CalculateVaR(IEnumerable<decimal> returns, decimal confidenceLevel = DEFAULT_CONFIDENCE_LEVEL)
+        public new decimal CalculateVaR(IEnumerable<decimal> returns, decimal confidenceLevel = DEFAULT_CONFIDENCE_LEVEL)
         {
             return CalculateVaRAsync(returns, confidenceLevel).GetAwaiter().GetResult();
         }
 
-        public decimal CalculateExpectedShortfall(IEnumerable<decimal> returns, decimal confidenceLevel = DEFAULT_CONFIDENCE_LEVEL)
+        public new decimal CalculateExpectedShortfall(IEnumerable<decimal> returns, decimal confidenceLevel = DEFAULT_CONFIDENCE_LEVEL)
         {
             return CalculateExpectedShortfallAsync(returns, confidenceLevel).GetAwaiter().GetResult();
         }

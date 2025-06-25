@@ -3,7 +3,7 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
 using TradingPlatform.Core.Canonical;
-using TradingPlatform.Core.Foundation;
+using TradingPlatform.Foundation.Models;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
 using TradingPlatform.Messaging.Events;
@@ -33,53 +33,56 @@ namespace TradingPlatform.RiskManagement.Services
         private const decimal POSITION_WARNING_THRESHOLD = 0.15m; // 15% of portfolio
 
         public PositionMonitorCanonical(IServiceProvider serviceProvider)
-            : base(serviceProvider, serviceProvider.GetRequiredService<ITradingLogger>(), "PositionMonitor")
+            : base(serviceProvider.GetRequiredService<ITradingLogger>(), "PositionMonitor")
         {
             _messageBus = serviceProvider.GetRequiredService<IMessageBus>();
         }
 
-        protected override async Task InitializeServiceAsync()
+        protected override Task OnInitializeAsync(CancellationToken cancellationToken)
         {
-            await base.InitializeServiceAsync();
-
             // Subscribe to market data updates
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await foreach (var message in _messageBus.SubscribeAsync("marketdata.price.updated"))
-                    {
-                        await HandlePriceUpdateAsync(message);
-                    }
+                    await _messageBus.SubscribeAsync<MarketDataUpdate>(
+                        "marketdata.price.updated",
+                        "risk-management",
+                        "position-monitor",
+                        async (message) => await HandlePriceUpdateAsync(message),
+                        cancellationToken);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("Error in price update subscription", ex);
+                    LogError("Error in price update subscription", ex);
                 }
-            });
+            }, cancellationToken);
 
             // Subscribe to order execution events
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await foreach (var message in _messageBus.SubscribeAsync("orders.executed"))
-                    {
-                        await HandleOrderExecutionAsync(message);
-                    }
+                    await _messageBus.SubscribeAsync<OrderExecutionEvent>(
+                        "orders.executed",
+                        "risk-management",
+                        "position-monitor",
+                        async (message) => await HandleOrderExecutionAsync(message),
+                        cancellationToken);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("Error in order execution subscription", ex);
+                    LogError("Error in order execution subscription", ex);
                 }
-            });
+            }, cancellationToken);
 
-            _logger.LogInformation("Position monitor initialized and subscribed to market events");
+            LogInfo("Position monitor initialized and subscribed to market events");
+            return Task.CompletedTask;
         }
 
         public async Task<IEnumerable<Position>> GetAllPositionsAsync()
         {
-            return await ExecuteOperationAsync(
+            return await ExecuteServiceOperationAsync(
                 nameof(GetAllPositionsAsync),
                 async () =>
                 {
@@ -95,7 +98,7 @@ namespace TradingPlatform.RiskManagement.Services
 
         public async Task<Position?> GetPositionAsync(string symbol)
         {
-            return await ExecuteOperationAsync(
+            return await ExecuteServiceOperationAsync(
                 nameof(GetPositionAsync),
                 async () =>
                 {
@@ -119,7 +122,7 @@ namespace TradingPlatform.RiskManagement.Services
 
         public async Task UpdatePositionAsync(Position position)
         {
-            await ExecuteOperationAsync(
+            await ExecuteServiceOperationAsync(
                 nameof(UpdatePositionAsync),
                 async () =>
                 {
@@ -169,7 +172,7 @@ namespace TradingPlatform.RiskManagement.Services
 
         public async Task<decimal> GetTotalExposureAsync()
         {
-            return await ExecuteOperationAsync(
+            return await ExecuteServiceOperationAsync(
                 nameof(GetTotalExposureAsync),
                 async () =>
                 {
@@ -193,7 +196,7 @@ namespace TradingPlatform.RiskManagement.Services
 
         public async Task<decimal> GetSymbolExposureAsync(string symbol)
         {
-            return await ExecuteOperationAsync(
+            return await ExecuteServiceOperationAsync(
                 nameof(GetSymbolExposureAsync),
                 async () =>
                 {
@@ -201,7 +204,7 @@ namespace TradingPlatform.RiskManagement.Services
                     {
                         var exposure = Math.Abs(position.Quantity * position.CurrentPrice);
                         
-                        _logger.LogDebug($"Symbol exposure for {symbol}: ${exposure:N2}",
+                        LogDebug($"Symbol exposure for {symbol}: ${exposure:N2}",
                             new { Symbol = symbol, Exposure = exposure });
 
                         return TradingResult<decimal>.Success(exposure);
@@ -214,7 +217,7 @@ namespace TradingPlatform.RiskManagement.Services
 
         public async Task<IEnumerable<Position>> GetPositionsExceedingLimitsAsync()
         {
-            return await ExecuteOperationAsync(
+            return await ExecuteServiceOperationAsync(
                 nameof(GetPositionsExceedingLimitsAsync),
                 async () =>
                 {
@@ -316,7 +319,7 @@ namespace TradingPlatform.RiskManagement.Services
                     {
                         _positions.TryRemove(position.Symbol, out _);
                         
-                        _logger.LogInformation($"Position closed for {position.Symbol}",
+                        LogInfo($"Position closed for {position.Symbol}",
                             new { Symbol = position.Symbol, RealizedPnL = orderExecuted.RealizedPnL });
                         
                         return;
@@ -404,9 +407,9 @@ namespace TradingPlatform.RiskManagement.Services
             }
         }
 
-        protected override Dictionary<string, object> GetServiceMetrics()
+        public override IReadOnlyDictionary<string, object> GetMetrics()
         {
-            var baseMetrics = base.GetServiceMetrics();
+            var baseMetrics = base.GetMetrics().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             
             baseMetrics["TotalPositions"] = _positions.Count;
             baseMetrics["TotalExposure"] = _totalExposure;
@@ -423,6 +426,55 @@ namespace TradingPlatform.RiskManagement.Services
             return baseMetrics;
         }
 
+        protected override Task OnStartAsync(CancellationToken cancellationToken)
+        {
+            LogInfo("Position monitor started");
+            return Task.CompletedTask;
+        }
+
+        protected override Task OnStopAsync(CancellationToken cancellationToken)
+        {
+            LogInfo($"Position monitor stopped. Total positions tracked: {_positions.Count}, Total updates: {_positionUpdates}");
+            return Task.CompletedTask;
+        }
+
+        private async Task HandlePriceUpdateAsync(MarketDataUpdate priceUpdate)
+        {
+            try
+            {
+                if (_positions.TryGetValue(priceUpdate.Symbol, out var position))
+                {
+                    var previousPrice = position.CurrentPrice;
+                    position.CurrentPrice = priceUpdate.Price;
+                    position.LastUpdated = priceUpdate.Timestamp;
+                    
+                    await UpdatePositionAsync(position);
+                    
+                    Interlocked.Increment(ref _priceUpdates);
+                    
+                    LogDebug($"Price updated for {priceUpdate.Symbol}: {previousPrice:C} -> {priceUpdate.Price:C}");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error handling price update for {priceUpdate.Symbol}", ex);
+            }
+        }
+
+        private async Task HandleOrderExecutionAsync(OrderExecutionEvent orderEvent)
+        {
+            try
+            {
+                // This is handled in UpdatePositionFromOrderAsync
+                await Task.CompletedTask;
+                LogDebug($"Order execution event received for {orderEvent.Symbol}");
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error handling order execution for {orderEvent.Symbol}", ex);
+            }
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -431,5 +483,9 @@ namespace TradingPlatform.RiskManagement.Services
             }
             base.Dispose(disposing);
         }
+
+        // Internal event types for message handling
+        private record MarketDataUpdate(string Symbol, decimal Price, DateTime Timestamp);
+        private record OrderExecutionEvent(string Symbol, decimal Price, decimal Quantity, string Side);
     }
 }

@@ -19,6 +19,17 @@
 - **Solution Pattern**: `new Models.ExecutionAnalytics(pos1, pos2, pos3...)` (positional, not named)
 - **Journal**: Day_Trading_Platform-PaperTrading_Compilation_Success_Journal_2025-06-18_11-00.md
 
+### **RiskManagement Module Canonical Fixes (Partial)** #canonical #riskmanagement #compilation-fixes #in-progress
+- **Timestamp**: 2025-01-25 (Partial)
+- **Problem**: RiskManagement canonical implementations had numerous compilation errors
+- **Progress**: Fixed ~60% of errors (namespaces, method names, logging)
+- **Files Modified**:
+  - `RiskManagement/Services/RiskCalculatorCanonical.cs` - Fixed namespaces, ExecuteServiceOperationAsync
+  - `RiskManagement/Services/PositionMonitorCanonical.cs` - Added OnStartAsync/OnStopAsync, fixed message bus
+  - `RiskManagement/Services/ComplianceMonitorCanonical.cs` - Fixed namespaces, method signatures
+- **Remaining Issues**: Model mismatches, missing types (RiskLimitBreached), property access errors
+- **Journal**: 2025-01-25_riskmanagement_fixes_partial.md
+
 ### **PaperTrading Module Canonical Conversion Complete** #canonical #papertrading #phase5 #execution-layer #slippage #analytics
 - **Timestamp**: 2025-01-25
 - **Problem**: PaperTrading module needed canonical pattern adoption for consistency
