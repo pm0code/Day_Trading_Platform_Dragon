@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="xunit" Version="2.7.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.7">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
+    <PackageReference Include="Moq" Version="4.20.70" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.2" />
+    <PackageReference Include="Testcontainers" Version="3.7.0" />
+    <PackageReference Include="Testcontainers.Redis" Version="3.7.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="3.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TradingPlatform.Core\TradingPlatform.Core.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Foundation\TradingPlatform.Foundation.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Messaging\TradingPlatform.Messaging.csproj" />
+    <ProjectReference Include="..\TradingPlatform.TimeSeries\TradingPlatform.TimeSeries.csproj" />
+    <ProjectReference Include="..\TradingPlatform.GoldenRules\TradingPlatform.GoldenRules.csproj" />
+    <ProjectReference Include="..\TradingPlatform.StrategyEngine\TradingPlatform.StrategyEngine.csproj" />
+    <ProjectReference Include="..\TradingPlatform.RiskManagement\TradingPlatform.RiskManagement.csproj" />
+    <ProjectReference Include="..\TradingPlatform.PaperTrading\TradingPlatform.PaperTrading.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Testing\TradingPlatform.Testing.csproj" />
+  </ItemGroup>
+
+</Project>
