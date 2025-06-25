@@ -45,6 +45,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Auditing", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.TimeSeries", "TradingPlatform.TimeSeries\TradingPlatform.TimeSeries.csproj", "{E5F6A7B8-2345-6789-01BC-DEF234567890}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.IntegrationTests", "TradingPlatform.IntegrationTests\TradingPlatform.IntegrationTests.csproj", "{8B0EBF8C-2FD1-4886-9434-621B1AC4F1D6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.UnitTests", "TradingPlatform.UnitTests\TradingPlatform.UnitTests.csproj", "{19285DB2-9444-439C-B7A1-60FA6FC38EF0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.PerformanceTests", "TradingPlatform.PerformanceTests\TradingPlatform.PerformanceTests.csproj", "{92273845-A66B-418E-99E5-8CC60C0747AB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.SecurityTests", "TradingPlatform.SecurityTests\TradingPlatform.SecurityTests.csproj", "{6B8DA7E5-DF60-4CBF-B4FB-6AF62545EA13}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.ContractTests", "TradingPlatform.ContractTests\TradingPlatform.ContractTests.csproj", "{374B7FCE-8E94-44CD-95E1-60DC6D7384AE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.ChaosTests", "TradingPlatform.ChaosTests\TradingPlatform.ChaosTests.csproj", "{F11E78C7-4E7D-4355-B043-C057371150B8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -135,6 +147,30 @@ Global
 		{E5F6A7B8-2345-6789-01BC-DEF234567890}.Debug|x64.Build.0 = Debug|x64
 		{E5F6A7B8-2345-6789-01BC-DEF234567890}.Release|x64.ActiveCfg = Release|x64
 		{E5F6A7B8-2345-6789-01BC-DEF234567890}.Release|x64.Build.0 = Release|x64
+		{8B0EBF8C-2FD1-4886-9434-621B1AC4F1D6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8B0EBF8C-2FD1-4886-9434-621B1AC4F1D6}.Debug|x64.Build.0 = Debug|Any CPU
+		{8B0EBF8C-2FD1-4886-9434-621B1AC4F1D6}.Release|x64.ActiveCfg = Release|Any CPU
+		{8B0EBF8C-2FD1-4886-9434-621B1AC4F1D6}.Release|x64.Build.0 = Release|Any CPU
+		{19285DB2-9444-439C-B7A1-60FA6FC38EF0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{19285DB2-9444-439C-B7A1-60FA6FC38EF0}.Debug|x64.Build.0 = Debug|Any CPU
+		{19285DB2-9444-439C-B7A1-60FA6FC38EF0}.Release|x64.ActiveCfg = Release|Any CPU
+		{19285DB2-9444-439C-B7A1-60FA6FC38EF0}.Release|x64.Build.0 = Release|Any CPU
+		{92273845-A66B-418E-99E5-8CC60C0747AB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{92273845-A66B-418E-99E5-8CC60C0747AB}.Debug|x64.Build.0 = Debug|Any CPU
+		{92273845-A66B-418E-99E5-8CC60C0747AB}.Release|x64.ActiveCfg = Release|Any CPU
+		{92273845-A66B-418E-99E5-8CC60C0747AB}.Release|x64.Build.0 = Release|Any CPU
+		{6B8DA7E5-DF60-4CBF-B4FB-6AF62545EA13}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6B8DA7E5-DF60-4CBF-B4FB-6AF62545EA13}.Debug|x64.Build.0 = Debug|Any CPU
+		{6B8DA7E5-DF60-4CBF-B4FB-6AF62545EA13}.Release|x64.ActiveCfg = Release|Any CPU
+		{6B8DA7E5-DF60-4CBF-B4FB-6AF62545EA13}.Release|x64.Build.0 = Release|Any CPU
+		{374B7FCE-8E94-44CD-95E1-60DC6D7384AE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{374B7FCE-8E94-44CD-95E1-60DC6D7384AE}.Debug|x64.Build.0 = Debug|Any CPU
+		{374B7FCE-8E94-44CD-95E1-60DC6D7384AE}.Release|x64.ActiveCfg = Release|Any CPU
+		{374B7FCE-8E94-44CD-95E1-60DC6D7384AE}.Release|x64.Build.0 = Release|Any CPU
+		{F11E78C7-4E7D-4355-B043-C057371150B8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F11E78C7-4E7D-4355-B043-C057371150B8}.Debug|x64.Build.0 = Debug|Any CPU
+		{F11E78C7-4E7D-4355-B043-C057371150B8}.Release|x64.ActiveCfg = Release|Any CPU
+		{F11E78C7-4E7D-4355-B043-C057371150B8}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

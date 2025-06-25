@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="xunit" Version="2.7.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.7">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
+    <PackageReference Include="Moq" Version="4.20.70" />
+    <PackageReference Include="Microsoft.Security.Application" Version="5.0.0" />
+    <PackageReference Include="SecurityCodeScan.VS2019" Version="5.6.7">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="OWASP.AntiSamy" Version="1.6.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TradingPlatform.Core\TradingPlatform.Core.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Foundation\TradingPlatform.Foundation.csproj" />
+    <ProjectReference Include="..\TradingPlatform.DataIngestion\TradingPlatform.DataIngestion.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Screening\TradingPlatform.Screening.csproj" />
+    <ProjectReference Include="..\TradingPlatform.StrategyEngine\TradingPlatform.StrategyEngine.csproj" />
+    <ProjectReference Include="..\TradingPlatform.RiskManagement\TradingPlatform.RiskManagement.csproj" />
+    <ProjectReference Include="..\TradingPlatform.PaperTrading\TradingPlatform.PaperTrading.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Messaging\TradingPlatform.Messaging.csproj" />
+    <ProjectReference Include="..\TradingPlatform.GoldenRules\TradingPlatform.GoldenRules.csproj" />
+  </ItemGroup>
+
+</Project>
