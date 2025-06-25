@@ -93,15 +93,44 @@ public record StrategyHealthStatus(
 /// <summary>
 /// Market conditions assessment
 /// </summary>
-public record MarketConditions(
-    string Symbol,
-    decimal Volatility,
-    decimal Volume,
-    decimal PriceChange,
-    TrendDirection Trend,
-    decimal RSI,
-    decimal MACD,
-    DateTimeOffset Timestamp);
+public record MarketConditions
+{
+    public string Symbol { get; init; } = string.Empty;
+    public decimal Price { get; init; }
+    public decimal Volatility { get; init; }
+    public decimal Volume { get; init; }
+    public decimal PriceChange { get; init; }
+    public TrendDirection Trend { get; init; }
+    public decimal RSI { get; init; }
+    public decimal MACD { get; init; }
+    public decimal MarketBreadth { get; init; }
+    public DateTimeOffset Timestamp { get; init; }
+    
+    // Constructor for backward compatibility
+    public MarketConditions(
+        string symbol,
+        decimal volatility,
+        decimal volume,
+        decimal priceChange,
+        TrendDirection trend,
+        decimal rsi,
+        decimal macd,
+        DateTimeOffset timestamp)
+    {
+        Symbol = symbol;
+        Volatility = volatility;
+        Volume = volume;
+        PriceChange = priceChange;
+        Trend = trend;
+        RSI = rsi;
+        MACD = macd;
+        Timestamp = timestamp;
+        Price = 100m; // Default value
+        MarketBreadth = 0.5m; // Default value
+    }
+    
+    public MarketConditions() { }
+}
 
 /// <summary>
 /// Risk assessment for strategy execution
