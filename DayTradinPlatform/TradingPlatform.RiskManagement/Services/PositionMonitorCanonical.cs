@@ -45,7 +45,7 @@ namespace TradingPlatform.RiskManagement.Services
             {
                 try
                 {
-                    await _messageBus.SubscribeAsync<MarketDataUpdate>(
+                    await _messageBus.SubscribeAsync<MarketDataEvent>(
                         "marketdata.price.updated",
                         "risk-management",
                         "position-monitor",
@@ -63,7 +63,7 @@ namespace TradingPlatform.RiskManagement.Services
             {
                 try
                 {
-                    await _messageBus.SubscribeAsync<OrderExecutionEvent>(
+                    await _messageBus.SubscribeAsync<OrderEvent>(
                         "orders.executed",
                         "risk-management",
                         "position-monitor",
@@ -82,31 +82,31 @@ namespace TradingPlatform.RiskManagement.Services
 
         public async Task<IEnumerable<Position>> GetAllPositionsAsync()
         {
-            return await ExecuteServiceOperationAsync(
-                nameof(GetAllPositionsAsync),
+            var result = await ExecuteServiceOperationAsync(
                 async () =>
                 {
                     var positions = _positions.Values.ToList();
                     
-                    _logger.LogDebug($"Retrieved {positions.Count} positions",
+                    LogDebug($"Retrieved {positions.Count} positions",
                         new { PositionCount = positions.Count, TotalExposure = _totalExposure });
 
                     return await Task.FromResult(TradingResult<IEnumerable<Position>>.Success(positions));
                 },
-                createDefaultResult: () => Enumerable.Empty<Position>());
+                nameof(GetAllPositionsAsync));
+            
+            return result.IsSuccess ? result.Value : Enumerable.Empty<Position>();
         }
 
         public async Task<Position?> GetPositionAsync(string symbol)
         {
-            return await ExecuteServiceOperationAsync(
-                nameof(GetPositionAsync),
+            var result = await ExecuteServiceOperationAsync(
                 async () =>
                 {
                     _positions.TryGetValue(symbol, out var position);
                     
                     if (position != null)
                     {
-                        _logger.LogDebug($"Retrieved position for {symbol}",
+                        LogDebug($"Retrieved position for {symbol}",
                             new 
                             { 
                                 Symbol = symbol, 
@@ -117,13 +117,14 @@ namespace TradingPlatform.RiskManagement.Services
 
                     return await Task.FromResult(TradingResult<Position?>.Success(position));
                 },
-                createDefaultResult: () => (Position?)null);
+                nameof(GetPositionAsync));
+            
+            return result.IsSuccess ? result.Value : null;
         }
 
         public async Task UpdatePositionAsync(Position position)
         {
             await ExecuteServiceOperationAsync(
-                nameof(UpdatePositionAsync),
                 async () =>
                 {
                     await _updateSemaphore.WaitAsync();
@@ -139,23 +140,24 @@ namespace TradingPlatform.RiskManagement.Services
                         await CheckPositionLimitsAsync(position);
 
                         // Publish position update event
-                        await _messageBus.PublishAsync(new PositionUpdated
+                        await _messageBus.PublishAsync("positions.updated", new PositionUpdatedEvent
                         {
+                            Source = "PositionMonitor",
                             Symbol = position.Symbol,
                             Quantity = position.Quantity,
                             CurrentPrice = position.CurrentPrice,
                             UnrealizedPnL = position.UnrealizedPnL,
-                            Timestamp = DateTime.UtcNow
+                            Timestamp = DateTimeOffset.UtcNow
                         });
 
                         Interlocked.Increment(ref _positionUpdates);
 
-                        _logger.LogInformation($"Position updated for {position.Symbol}",
+                        LogInfo($"Position updated for {position.Symbol}",
                             new
                             {
                                 Symbol = position.Symbol,
                                 Quantity = position.Quantity,
-                                EntryPrice = position.EntryPrice,
+                                AveragePrice = position.AveragePrice,
                                 CurrentPrice = position.CurrentPrice,
                                 UnrealizedPnL = position.UnrealizedPnL
                             });
@@ -167,13 +169,12 @@ namespace TradingPlatform.RiskManagement.Services
                         _updateSemaphore.Release();
                     }
                 },
-                createDefaultResult: () => new object());
+                nameof(UpdatePositionAsync));
         }
 
         public async Task<decimal> GetTotalExposureAsync()
         {
-            return await ExecuteServiceOperationAsync(
-                nameof(GetTotalExposureAsync),
+            var result = await ExecuteServiceOperationAsync(
                 async () =>
                 {
                     await _updateSemaphore.WaitAsync();
@@ -181,7 +182,7 @@ namespace TradingPlatform.RiskManagement.Services
                     {
                         _totalExposure = _positions.Values.Sum(p => Math.Abs(p.Quantity * p.CurrentPrice));
                         
-                        _logger.LogDebug($"Total exposure calculated: ${_totalExposure:N2}",
+                        LogDebug($"Total exposure calculated: ${_totalExposure:N2}",
                             new { TotalExposure = _totalExposure });
 
                         return TradingResult<decimal>.Success(_totalExposure);
@@ -191,13 +192,14 @@ namespace TradingPlatform.RiskManagement.Services
                         _updateSemaphore.Release();
                     }
                 },
-                createDefaultResult: () => 0m);
+                nameof(GetTotalExposureAsync));
+            
+            return result.IsSuccess ? result.Value : 0m;
         }
 
         public async Task<decimal> GetSymbolExposureAsync(string symbol)
         {
-            return await ExecuteServiceOperationAsync(
-                nameof(GetSymbolExposureAsync),
+            var result = await ExecuteServiceOperationAsync(
                 async () =>
                 {
                     if (_positions.TryGetValue(symbol, out var position))
@@ -212,13 +214,14 @@ namespace TradingPlatform.RiskManagement.Services
 
                     return await Task.FromResult(TradingResult<decimal>.Success(0m));
                 },
-                createDefaultResult: () => 0m);
+                nameof(GetSymbolExposureAsync));
+            
+            return result.IsSuccess ? result.Value : 0m;
         }
 
         public async Task<IEnumerable<Position>> GetPositionsExceedingLimitsAsync()
         {
-            return await ExecuteServiceOperationAsync(
-                nameof(GetPositionsExceedingLimitsAsync),
+            var result = await ExecuteServiceOperationAsync(
                 async () =>
                 {
                     var totalExposure = await GetTotalExposureAsync();
@@ -233,8 +236,8 @@ namespace TradingPlatform.RiskManagement.Services
                         {
                             exceedingPositions.Add(position);
                             
-                            _logger.LogWarning($"Position exceeds exposure limit: {position.Symbol}",
-                                new
+                            LogWarning($"Position exceeds exposure limit: {position.Symbol}",
+                                additionalData: new
                                 {
                                     Symbol = position.Symbol,
                                     Exposure = positionExposure,
@@ -246,24 +249,29 @@ namespace TradingPlatform.RiskManagement.Services
 
                     return TradingResult<IEnumerable<Position>>.Success(exceedingPositions);
                 },
-                createDefaultResult: () => Enumerable.Empty<Position>());
+                nameof(GetPositionsExceedingLimitsAsync));
+            
+            return result.IsSuccess ? result.Value : Enumerable.Empty<Position>();
         }
 
         private async Task HandlePriceUpdateAsync(object message)
         {
-            if (message is PriceUpdated priceUpdate)
+            if (message is MarketDataEvent priceUpdate && priceUpdate.EventType == "MarketData")
             {
                 if (_positions.TryGetValue(priceUpdate.Symbol, out var position))
                 {
                     var previousPrice = position.CurrentPrice;
-                    position.CurrentPrice = priceUpdate.Price;
-                    position.LastUpdated = priceUpdate.Timestamp;
-
-                    // Update unrealized P&L
-                    position.UnrealizedPnL = position.Quantity * (position.CurrentPrice - position.EntryPrice);
+                    
+                    // Create new position with updated values (immutable record)
+                    var updatedPosition = position with 
+                    { 
+                        CurrentPrice = priceUpdate.Price,
+                        UnrealizedPnL = position.Quantity * (priceUpdate.Price - position.AveragePrice),
+                        LastUpdated = priceUpdate.Timestamp.DateTime
+                    };
 
                     // Update position
-                    await UpdatePositionAsync(position);
+                    await UpdatePositionAsync(updatedPosition);
 
                     Interlocked.Increment(ref _priceUpdates);
 
@@ -273,8 +281,8 @@ namespace TradingPlatform.RiskManagement.Services
                         var priceChange = Math.Abs((priceUpdate.Price - previousPrice) / previousPrice);
                         if (priceChange > 0.05m) // 5% price movement
                         {
-                            _logger.LogWarning($"Significant price movement detected for {priceUpdate.Symbol}",
-                                new
+                            LogWarning($"Significant price movement detected for {priceUpdate.Symbol}",
+                                additionalData: new
                                 {
                                     Symbol = priceUpdate.Symbol,
                                     PreviousPrice = previousPrice,
@@ -289,47 +297,80 @@ namespace TradingPlatform.RiskManagement.Services
 
         private async Task HandleOrderExecutionAsync(object message)
         {
-            if (message is OrderExecuted orderExecuted)
+            if (message is OrderEvent orderExecuted && orderExecuted.Status == "Filled")
             {
-                var position = await GetPositionAsync(orderExecuted.Symbol) ?? new Position
+                var existingPosition = await GetPositionAsync(orderExecuted.Symbol);
+                Position updatedPosition;
+                
+                if (existingPosition == null)
                 {
-                    Symbol = orderExecuted.Symbol,
-                    Quantity = 0,
-                    EntryPrice = 0,
-                    CurrentPrice = orderExecuted.Price,
-                    EntryTime = orderExecuted.ExecutionTime
-                };
-
-                // Update position based on order
-                if (orderExecuted.Side == OrderSide.Buy)
-                {
-                    // Calculate weighted average entry price
-                    var totalCost = (position.Quantity * position.EntryPrice) + (orderExecuted.Quantity * orderExecuted.Price);
-                    var newQuantity = position.Quantity + orderExecuted.Quantity;
-                    
-                    position.EntryPrice = newQuantity > 0 ? totalCost / newQuantity : orderExecuted.Price;
-                    position.Quantity = newQuantity;
+                    // Create new position
+                    updatedPosition = new Position(
+                        Symbol: orderExecuted.Symbol,
+                        Quantity: orderExecuted.Quantity,
+                        AveragePrice: orderExecuted.Price ?? 0m,
+                        CurrentPrice: orderExecuted.Price ?? 0m,
+                        UnrealizedPnL: 0m,
+                        RealizedPnL: 0m,
+                        MarketValue: orderExecuted.Quantity * (orderExecuted.Price ?? 0m),
+                        RiskExposure: Math.Abs(orderExecuted.Quantity * (orderExecuted.Price ?? 0m)),
+                        OpenTime: orderExecuted.ExecutionTime.DateTime,
+                        LastUpdated: orderExecuted.ExecutionTime.DateTime
+                    );
                 }
-                else // Sell
+                else
                 {
-                    position.Quantity -= orderExecuted.Quantity;
-                    
-                    // If position is closed
-                    if (Math.Abs(position.Quantity) < 0.0001m)
+                    // Update existing position
+                    if (orderExecuted.Side == "Buy")
                     {
-                        _positions.TryRemove(position.Symbol, out _);
+                        // Calculate weighted average entry price
+                        var totalCost = (existingPosition.Quantity * existingPosition.AveragePrice) + 
+                                       (orderExecuted.Quantity * (orderExecuted.Price ?? 0m));
+                        var newQuantity = existingPosition.Quantity + orderExecuted.Quantity;
                         
-                        LogInfo($"Position closed for {position.Symbol}",
-                            new { Symbol = position.Symbol, RealizedPnL = orderExecuted.RealizedPnL });
+                        updatedPosition = existingPosition with
+                        {
+                            Quantity = newQuantity,
+                            AveragePrice = newQuantity > 0 ? totalCost / newQuantity : (orderExecuted.Price ?? 0m),
+                            CurrentPrice = orderExecuted.Price ?? existingPosition.CurrentPrice,
+                            MarketValue = newQuantity * (orderExecuted.Price ?? existingPosition.CurrentPrice),
+                            RiskExposure = Math.Abs(newQuantity * (orderExecuted.Price ?? existingPosition.CurrentPrice)),
+                            LastUpdated = orderExecuted.ExecutionTime.DateTime
+                        };
+                    }
+                    else // Sell
+                    {
+                        var newQuantity = existingPosition.Quantity - orderExecuted.Quantity;
                         
-                        return;
+                        // If position is closed
+                        if (Math.Abs(newQuantity) < 0.0001m)
+                        {
+                            _positions.TryRemove(existingPosition.Symbol, out _);
+                            
+                            LogInfo($"Position closed for {existingPosition.Symbol}",
+                                new { Symbol = existingPosition.Symbol, RealizedPnL = existingPosition.RealizedPnL });
+                            
+                            return;
+                        }
+                        
+                        updatedPosition = existingPosition with
+                        {
+                            Quantity = newQuantity,
+                            CurrentPrice = orderExecuted.Price ?? existingPosition.CurrentPrice,
+                            MarketValue = newQuantity * (orderExecuted.Price ?? existingPosition.CurrentPrice),
+                            RiskExposure = Math.Abs(newQuantity * (orderExecuted.Price ?? existingPosition.CurrentPrice)),
+                            LastUpdated = orderExecuted.ExecutionTime.DateTime
+                        };
                     }
                 }
 
-                position.CurrentPrice = orderExecuted.Price;
-                position.LastUpdated = orderExecuted.ExecutionTime;
+                // Update unrealized P&L
+                updatedPosition = updatedPosition with 
+                { 
+                    UnrealizedPnL = updatedPosition.Quantity * (updatedPosition.CurrentPrice - updatedPosition.AveragePrice)
+                };
 
-                await UpdatePositionAsync(position);
+                await UpdatePositionAsync(updatedPosition);
             }
         }
 
@@ -351,10 +392,10 @@ namespace TradingPlatform.RiskManagement.Services
                 _totalUnrealizedPnL = _positions.Values.Sum(p => p.UnrealizedPnL);
 
                 // Record metrics
-                RecordMetric("TotalExposure", _totalExposure);
-                RecordMetric("TotalUnrealizedPnL", _totalUnrealizedPnL);
-                RecordMetric("PositionCount", _positions.Count);
-                RecordMetric($"Exposure.{newPosition.Symbol}", newExposure);
+                UpdateMetric("TotalExposure", _totalExposure);
+                UpdateMetric("TotalUnrealizedPnL", _totalUnrealizedPnL);
+                UpdateMetric("PositionCount", _positions.Count);
+                UpdateMetric($"Exposure.{newPosition.Symbol}", newExposure);
             }
             finally
             {
@@ -370,20 +411,23 @@ namespace TradingPlatform.RiskManagement.Services
 
             if (exposureRatio > MAX_SINGLE_POSITION_EXPOSURE)
             {
-                await _messageBus.PublishAsync(new RiskLimitBreached
+                await _messageBus.PublishAsync("risk.limit.breached", new RiskEvent
                 {
-                    LimitType = "PositionExposure",
+                    Source = "PositionMonitor",
+                    RiskType = "Position",
                     Symbol = position.Symbol,
-                    CurrentValue = exposureRatio,
-                    LimitValue = MAX_SINGLE_POSITION_EXPOSURE,
-                    Message = $"Position {position.Symbol} exceeds maximum exposure limit",
-                    Timestamp = DateTime.UtcNow
+                    CurrentExposure = exposureRatio,
+                    RiskLimit = MAX_SINGLE_POSITION_EXPOSURE,
+                    UtilizationPercent = (exposureRatio / MAX_SINGLE_POSITION_EXPOSURE) * 100,
+                    LimitBreached = true,
+                    Action = "Block",
+                    Timestamp = DateTimeOffset.UtcNow
                 });
             }
             else if (exposureRatio > POSITION_WARNING_THRESHOLD)
             {
-                _logger.LogWarning($"Position approaching exposure limit: {position.Symbol}",
-                    new
+                LogWarning($"Position approaching exposure limit: {position.Symbol}",
+                    additionalData: new
                     {
                         Symbol = position.Symbol,
                         ExposureRatio = exposureRatio,
@@ -395,14 +439,17 @@ namespace TradingPlatform.RiskManagement.Services
             // Check unrealized loss limits
             if (position.UnrealizedPnL < -totalExposure * 0.02m) // 2% loss of total exposure
             {
-                await _messageBus.PublishAsync(new RiskLimitBreached
+                await _messageBus.PublishAsync("risk.unrealized.loss", new RiskEvent
                 {
-                    LimitType = "UnrealizedLoss",
+                    Source = "PositionMonitor",
+                    RiskType = "Position",
                     Symbol = position.Symbol,
-                    CurrentValue = position.UnrealizedPnL,
-                    LimitValue = -totalExposure * 0.02m,
-                    Message = $"Position {position.Symbol} has significant unrealized loss",
-                    Timestamp = DateTime.UtcNow
+                    CurrentExposure = Math.Abs(position.UnrealizedPnL),
+                    RiskLimit = totalExposure * 0.02m,
+                    UtilizationPercent = Math.Abs(position.UnrealizedPnL / (totalExposure * 0.02m)) * 100,
+                    LimitBreached = true,
+                    Action = "Warn",
+                    Timestamp = DateTimeOffset.UtcNow
                 });
             }
         }
@@ -416,10 +463,10 @@ namespace TradingPlatform.RiskManagement.Services
             baseMetrics["TotalUnrealizedPnL"] = _totalUnrealizedPnL;
             baseMetrics["PositionUpdates"] = _positionUpdates;
             baseMetrics["PriceUpdates"] = _priceUpdates;
-            baseMetrics["LargestPosition"] = _positions.Values.Any() 
+            baseMetrics["LargestPosition"] = !_positions.IsEmpty 
                 ? _positions.Values.Max(p => Math.Abs(p.Quantity * p.CurrentPrice)) 
                 : 0m;
-            baseMetrics["AverageUnrealizedPnL"] = _positions.Values.Any() 
+            baseMetrics["AverageUnrealizedPnL"] = !_positions.IsEmpty 
                 ? _positions.Values.Average(p => p.UnrealizedPnL) 
                 : 0m;
 
@@ -438,43 +485,6 @@ namespace TradingPlatform.RiskManagement.Services
             return Task.CompletedTask;
         }
 
-        private async Task HandlePriceUpdateAsync(MarketDataUpdate priceUpdate)
-        {
-            try
-            {
-                if (_positions.TryGetValue(priceUpdate.Symbol, out var position))
-                {
-                    var previousPrice = position.CurrentPrice;
-                    position.CurrentPrice = priceUpdate.Price;
-                    position.LastUpdated = priceUpdate.Timestamp;
-                    
-                    await UpdatePositionAsync(position);
-                    
-                    Interlocked.Increment(ref _priceUpdates);
-                    
-                    LogDebug($"Price updated for {priceUpdate.Symbol}: {previousPrice:C} -> {priceUpdate.Price:C}");
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError($"Error handling price update for {priceUpdate.Symbol}", ex);
-            }
-        }
-
-        private async Task HandleOrderExecutionAsync(OrderExecutionEvent orderEvent)
-        {
-            try
-            {
-                // This is handled in UpdatePositionFromOrderAsync
-                await Task.CompletedTask;
-                LogDebug($"Order execution event received for {orderEvent.Symbol}");
-            }
-            catch (Exception ex)
-            {
-                LogError($"Error handling order execution for {orderEvent.Symbol}", ex);
-            }
-        }
-
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -484,8 +494,14 @@ namespace TradingPlatform.RiskManagement.Services
             base.Dispose(disposing);
         }
 
-        // Internal event types for message handling
-        private record MarketDataUpdate(string Symbol, decimal Price, DateTime Timestamp);
-        private record OrderExecutionEvent(string Symbol, decimal Price, decimal Quantity, string Side);
+        // Custom event type for position updates
+        private sealed record PositionUpdatedEvent : TradingEvent
+        {
+            public override string EventType => "PositionUpdated";
+            public string Symbol { get; init; } = string.Empty;
+            public decimal Quantity { get; init; }
+            public decimal CurrentPrice { get; init; }
+            public decimal UnrealizedPnL { get; init; }
+        }
     }
 }

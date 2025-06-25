@@ -1,12 +1,13 @@
 // File: TradingPlatform.Screening.Criteria\GapCriteriaCanonical.cs
 
 using Microsoft.Extensions.DependencyInjection;
-using TradingPlatform.Core.Canonical;
+using TradingPlatform.Screening.Canonical;
 using TradingPlatform.Foundation.Models;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Models;
+using ScreeningCriteriaResult = TradingPlatform.Screening.Models.CriteriaResult;
 
 namespace TradingPlatform.Screening.Criteria
 {
@@ -14,7 +15,7 @@ namespace TradingPlatform.Screening.Criteria
     /// Canonical implementation of gap-based trading criteria evaluation.
     /// Evaluates stocks based on opening gap percentage, gap direction, and gap fill potential.
     /// </summary>
-    public class GapCriteriaCanonical : CanonicalCriteriaEvaluator<TradingCriteria>
+    public class GapCriteriaCanonical : CanonicalScreeningCriteriaEvaluator
     {
         private const decimal MINIMUM_PASSING_SCORE = 70m;
         private const decimal OPTIMAL_GAP_MIN = 2.0m;  // 2% gap
@@ -29,15 +30,23 @@ namespace TradingPlatform.Screening.Criteria
         {
         }
 
-        protected override async Task<TradingResult<CriteriaResult>> EvaluateCriteriaAsync(
+        protected override async Task<TradingResult<ScreeningCriteriaResult>> EvaluateCriteriaAsync(
             MarketData marketData,
-            TradingCriteria criteria,
-            CriteriaResult result)
+            TradingCriteria criteria)
         {
             return await Task.Run(() =>
             {
                 try
                 {
+                    // Create result object
+                    var result = new ScreeningCriteriaResult
+                    {
+                        CriteriaName = CriteriaName,
+                        EvaluatedAt = DateTime.UtcNow,
+                        Symbol = marketData.Symbol,
+                        Confidence = 85m // Base confidence for gap criteria
+                    };
+
                     // Calculate gap percentage
                     decimal gapPercent = CalculateGapPercentage(marketData.Open, marketData.PreviousClose);
                     decimal absGapPercent = Math.Abs(gapPercent);
@@ -68,7 +77,7 @@ namespace TradingPlatform.Screening.Criteria
                         result.Score = CalculateSubThresholdScore(absGapPercent, criteria.MinimumGapPercent);
                         result.Reason = $"Gap of {gapPercent:F2}% below minimum threshold of {criteria.MinimumGapPercent:F2}%";
                         RecordMetric("BelowThresholdGaps", 1);
-                        return TradingResult<CriteriaResult>.Success(result);
+                        return TradingResult<ScreeningCriteriaResult>.Success(result);
                     }
 
                     // Calculate component scores
@@ -100,6 +109,9 @@ namespace TradingPlatform.Screening.Criteria
                         gapFillPercentage,
                         result.Passed);
 
+                    // Set alert level based on score and confidence
+                    result.AlertLevel = DetermineAlertLevel(result.Score, result.Confidence);
+
                     // Record performance metrics
                     RecordMetric($"GapDirection.{(isGapUp ? "Up" : "Down")}", 1);
                     RecordMetric($"GapType.{ClassifyGapType(absGapPercent)}", 1);
@@ -109,7 +121,7 @@ namespace TradingPlatform.Screening.Criteria
                         RecordMetric("ExtremeGaps", 1);
                     }
 
-                    _logger.LogDebug(
+                    Logger.LogDebug(
                         $"Gap evaluation completed for {marketData.Symbol}",
                         new
                         {
@@ -120,12 +132,12 @@ namespace TradingPlatform.Screening.Criteria
                             Passed = result.Passed
                         });
 
-                    return TradingResult<CriteriaResult>.Success(result);
+                    return TradingResult<ScreeningCriteriaResult>.Success(result);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Error evaluating gap criteria for {marketData.Symbol}", ex);
-                    return TradingResult<CriteriaResult>.Failure($"Gap evaluation error: {ex.Message}", ex);
+                    Logger.LogError($"Error evaluating gap criteria for {marketData.Symbol}", ex);
+                    return TradingResult<ScreeningCriteriaResult>.Failure(new TradingError("EVALUATION_ERROR", $"Gap evaluation error: {ex.Message}", ex));
                 }
             });
         }
@@ -284,13 +296,13 @@ namespace TradingPlatform.Screening.Criteria
                 return baseValidation;
 
             if (marketData.PreviousClose <= 0)
-                return TradingResult.Failure($"Previous close must be positive: {marketData.PreviousClose}");
+                return TradingResult.Failure(new TradingError("INVALID_INPUT", $"Previous close must be positive: {marketData.PreviousClose}"));
 
             if (marketData.Open <= 0)
-                return TradingResult.Failure($"Open price must be positive: {marketData.Open}");
+                return TradingResult.Failure(new TradingError("INVALID_INPUT", $"Open price must be positive: {marketData.Open}"));
 
             if (criteria.MinimumGapPercent < 0)
-                return TradingResult.Failure($"Minimum gap percent cannot be negative: {criteria.MinimumGapPercent}");
+                return TradingResult.Failure(new TradingError("INVALID_INPUT", $"Minimum gap percent cannot be negative: {criteria.MinimumGapPercent}"));
 
             return TradingResult.Success();
         }

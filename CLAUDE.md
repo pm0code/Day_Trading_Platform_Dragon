@@ -152,6 +152,7 @@ Key documentation files in the MainDocs directory:
 • Every time you want to run a PS script on DRAGON, open a PS window with admin rights so I can see the execution of those commands. Do not close that window. I'll do it after my review.
 • Remember that Windows does not have rsync. use scp instead
 • All work has to be done on DRAGON at IP address 192.168.1.35, as this is a Windows project and the current machine is Ubuntu Linux.
+• When working on the Holistic Architecture Instruction Set document in MainDocs/V2.x/, follow the comprehensive systems analysis protocol with meticulous attention to architectural integrity and multi-dimensional analysis
 
 ## Project Directory Structure (CRITICAL - DO NOT CONFUSE)
 • PROJECT ROOT: `/home/nader/my_projects/C#/DayTradingPlatform/DayTradinPlatform` (note the typo in folder name)
@@ -227,3 +228,72 @@ Key documentation files in the MainDocs directory:
 
 ### Audit Requirements
 Once current todo list is complete, a comprehensive top-to-bottom code audit must be conducted to ensure full adherence to this workflow across the entire codebase.
+
+## System-Wide Architectural Analysis Protocol
+
+### Primary Directive
+
+Adopt a **Comprehensive Architectural Perspective** for all code analysis and development tasks. Your role extends beyond code generation to encompass full-stack architectural understanding and system-wide impact assessment.
+
+### Core Architectural Principles
+
+**1. Contextual Awareness Over Isolated Solutions**
+- Never treat code changes as isolated incidents. Always consider the broader project ecosystem and architectural implications
+- Resist the urge to provide quick fixes without understanding the complete system context
+- Actively seek to understand the project's architectural patterns, design principles, and established conventions
+
+**2. Multi-Dimensional Analysis Framework**
+When analyzing any code issue, bug, or enhancement request, systematically examine:
+
+**A. Local Context Analysis:**
+- Identify the immediate problem within its specific file, function, or module context
+- Document the current implementation approach and its limitations
+- Assess adherence to local coding standards and best practices
+
+**B. System-Wide Impact Investigation:**
+
+**Data Flow Architecture:**
+- Trace data origins: Where does the data enter the system (user input, APIs, databases, external services)?
+- Map data transformations: How is data processed, validated, and transformed throughout the system?
+- Identify data consumers: Which components, modules, or services depend on this data?
+- Assess data persistence: How and where is data stored, cached, or transmitted?
+
+**Control Flow Dependencies:**
+- Identify upstream callers: What components invoke this functionality?
+- Map downstream dependencies: What services or modules does this code interact with?
+- Analyze interaction patterns: Are there circular dependencies or problematic coupling?
+- Evaluate error propagation: How do failures cascade through the system?
+
+**Shared Resource Analysis:**
+- Identify shared state: What global variables, singletons, or shared objects are involved?
+- Assess configuration dependencies: How do environment variables, config files, or feature flags impact behavior?
+- Evaluate resource contention: Are there potential conflicts over databases, caches, or external services?
+- Consider concurrency implications: How might threading or async operations affect system behavior?
+
+**C. Architectural Integrity Assessment:**
+- Evaluate alignment with established architectural patterns (MVC, microservices, event-driven, etc.)
+- Assess adherence to design principles (SOLID, DRY, KISS, separation of concerns)
+- Identify potential violations of architectural boundaries or layering principles
+- Consider long-term maintainability and scalability implications
+
+### Holistic Recommendation Framework
+
+**1. Multi-Level Solution Strategy:**
+- **Immediate Fix:** Address the local issue with minimal disruption
+- **Tactical Improvements:** Suggest related improvements in connected modules
+- **Strategic Recommendations:** Propose architectural changes for systemic improvements
+- **Preventive Measures:** Recommend practices to prevent similar issues
+
+**2. Cross-Cutting Concern Integration:**
+- Identify opportunities to implement or improve cross-cutting concerns (logging, security, error handling)
+- Suggest standardization of common patterns across the codebase
+- Recommend architectural refactoring when patterns indicate systemic issues
+
+**3. Canonical Pattern Enforcement:**
+- All new implementations MUST follow canonical patterns established in TradingPlatform.Core.Canonical
+- Ensure proper lifecycle management (Initialize, Start, Stop)
+- Implement comprehensive health checks and metrics collection
+- Use TradingResult<T> for all operation results
+- Follow established logging patterns using canonical base class methods
+- Every service MUST extend appropriate canonical base class (CanonicalServiceBase, CanonicalStrategyBase, etc.)
+```

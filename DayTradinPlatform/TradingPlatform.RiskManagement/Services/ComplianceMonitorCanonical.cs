@@ -39,253 +39,267 @@ namespace TradingPlatform.RiskManagement.Services
 
         public async Task<ComplianceStatus> GetComplianceStatusAsync()
         {
-            return await ExecuteServiceOperationAsync(
-                nameof(GetComplianceStatusAsync),
-                async () =>
+            try
+            {
+                var allViolations = new List<ComplianceViolation>();
+                
+                // Aggregate violations from all accounts
+                foreach (var kvp in _activeViolations)
                 {
-                    var allViolations = new List<ComplianceViolation>();
-                    
-                    // Aggregate violations from all accounts
-                    foreach (var kvp in _activeViolations)
-                    {
-                        allViolations.AddRange(kvp.Value);
-                    }
+                    allViolations.AddRange(kvp.Value);
+                }
 
-                    // Get default account statuses
-                    var pdtStatus = await GetPatternDayTradingStatusAsync("DEFAULT_ACCOUNT");
-                    var marginStatus = await GetMarginStatusAsync("DEFAULT_ACCOUNT");
+                // Get default account statuses
+                var pdtStatus = await GetPatternDayTradingStatusAsync("DEFAULT_ACCOUNT");
+                var marginStatus = await GetMarginStatusAsync("DEFAULT_ACCOUNT");
 
-                    var isCompliant = !allViolations.Any(v => v.Severity >= ViolationSeverity.Major);
+                var isCompliant = !allViolations.Any(v => v.Severity >= ViolationSeverity.Major);
 
-                    var status = new ComplianceStatus(
-                        IsCompliant: isCompliant,
-                        Violations: allViolations,
-                        PDTStatus: pdtStatus,
-                        MarginStatus: marginStatus,
-                        LastChecked: DateTime.UtcNow
-                    );
+                var status = new ComplianceStatus(
+                    IsCompliant: isCompliant,
+                    Violations: allViolations,
+                    PDTStatus: pdtStatus,
+                    MarginStatus: marginStatus,
+                    LastChecked: DateTime.UtcNow
+                );
 
-                    // Record metrics
-                    RecordRiskMetric("Compliance.TotalViolations", allViolations.Count);
-                    RecordRiskMetric("Compliance.MajorViolations", allViolations.Count(v => v.Severity == ViolationSeverity.Major));
-                    RecordRiskMetric("Compliance.IsCompliant", isCompliant ? 1m : 0m);
+                // Record metrics
+                RecordRiskMetric("Compliance.TotalViolations", allViolations.Count);
+                RecordRiskMetric("Compliance.MajorViolations", allViolations.Count(v => v.Severity == ViolationSeverity.Major));
+                RecordRiskMetric("Compliance.IsCompliant", isCompliant ? 1m : 0m);
 
-                    _logger.LogInformation($"Compliance status: {(isCompliant ? "Compliant" : "Non-Compliant")} with {allViolations.Count} violations",
-                        new { IsCompliant = isCompliant, ViolationCount = allViolations.Count });
+                LogInfo($"Compliance status: {(isCompliant ? "Compliant" : "Non-Compliant")} with {allViolations.Count} violations",
+                    new { IsCompliant = isCompliant, ViolationCount = allViolations.Count });
 
-                    return TradingResult<ComplianceStatus>.Success(status);
-                },
-                createDefaultResult: () => new ComplianceStatus(
+                return status;
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to get compliance status", ex);
+                return new ComplianceStatus(
                     IsCompliant: false,
                     Violations: new List<ComplianceViolation>(),
-                    PDTStatus: new PatternDayTradingStatus("DEFAULT_ACCOUNT", false, 0, 0),
-                    MarginStatus: new MarginStatus("DEFAULT_ACCOUNT", 0, 0, 0, false),
+                    PDTStatus: new PatternDayTradingStatus(false, 0, 0, 0, DateTime.UtcNow),
+                    MarginStatus: new MarginStatus(0, 0, 0, 0, false),
                     LastChecked: DateTime.UtcNow
-                ));
+                );
+            }
         }
 
         public async Task<bool> ValidatePatternDayTradingAsync(string accountId)
         {
-            var result = await ExecuteServiceOperationAsync(
-                nameof(ValidatePatternDayTradingAsync),
-                async () =>
+            try
+            {
+                var pdtStatus = await GetPatternDayTradingStatusAsync(accountId);
+
+                if (pdtStatus.IsPatternDayTrader && pdtStatus.DayTradesRemaining <= 0)
                 {
-                    var pdtStatus = await GetPatternDayTradingStatusAsync(accountId);
+                    var violation = new ComplianceViolation(
+                        "PDT001",
+                        "Day trading limit exceeded for PDT account",
+                        "",
+                        0m,
+                        ViolationSeverity.Major,
+                        DateTime.UtcNow
+                    );
 
-                    if (pdtStatus.IsPatternDayTrader && pdtStatus.DayTradesRemaining <= 0)
-                    {
-                        var violation = new ComplianceViolation(
-                            Type: "PatternDayTrading",
-                            Description: "Day trading limit exceeded for PDT account",
-                            Severity: ViolationSeverity.Major,
-                            Timestamp: DateTime.UtcNow,
-                            AccountId: accountId
-                        );
+                    await RecordViolationAsync(accountId, violation);
+                    
+                    LogWarning($"PDT limit exceeded for account {accountId}",
+                        additionalData: new { AccountId = accountId, DayTradesUsed = pdtStatus.DayTradesUsed });
 
-                        await RecordViolationAsync(accountId, violation);
-                        
-                        _logger.LogWarning($"PDT limit exceeded for account {accountId}",
-                            new { AccountId = accountId, DayTradesUsed = pdtStatus.DayTradesUsed });
+                    return false;
+                }
 
-                        return TradingResult<bool>.Success(false);
-                    }
+                if (!pdtStatus.IsPatternDayTrader && pdtStatus.DayTradesUsed >= MAX_DAY_TRADES_NON_PDT)
+                {
+                    var violation = new ComplianceViolation(
+                        "PDT002",
+                        $"Non-PDT account approaching day trade limit ({pdtStatus.DayTradesUsed}/{MAX_DAY_TRADES_NON_PDT})",
+                        "",
+                        0m,
+                        ViolationSeverity.Warning,
+                        DateTime.UtcNow
+                    );
 
-                    if (!pdtStatus.IsPatternDayTrader && pdtStatus.DayTradesUsed >= MAX_DAY_TRADES_NON_PDT)
-                    {
-                        var violation = new ComplianceViolation(
-                            Type: "NonPDTLimit",
-                            Description: $"Non-PDT account approaching day trade limit ({pdtStatus.DayTradesUsed}/{MAX_DAY_TRADES_NON_PDT})",
-                            Severity: ViolationSeverity.Warning,
-                            Timestamp: DateTime.UtcNow,
-                            AccountId: accountId
-                        );
+                    await RecordViolationAsync(accountId, violation);
 
-                        await RecordViolationAsync(accountId, violation);
+                    return false;
+                }
 
-                        return TradingResult<bool>.Success(false);
-                    }
-
-                    return TradingResult<bool>.Success(true);
-                },
-                createDefaultResult: () => false);
-
-            return result;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Failed to validate PDT for account {accountId}", ex);
+                return false;
+            }
         }
 
         public async Task<bool> ValidateMarginRequirementsAsync(string accountId, decimal orderValue)
         {
-            var result = await ExecuteServiceOperationAsync(
-                nameof(ValidateMarginRequirementsAsync),
-                async () =>
+            try
+            {
+                var marginStatus = await GetMarginStatusAsync(accountId);
+                var requiredMargin = orderValue * DEFAULT_MARGIN_REQUIREMENT;
+                var availableMargin = marginStatus.ExcessLiquidity;
+
+                if (availableMargin < requiredMargin)
                 {
-                    var marginStatus = await GetMarginStatusAsync(accountId);
-                    var requiredMargin = orderValue * DEFAULT_MARGIN_REQUIREMENT;
+                    var violation = new ComplianceViolation(
+                        "MARGIN001",
+                        $"Insufficient margin. Required: ${requiredMargin:N2}, Available: ${availableMargin:N2}",
+                        "",
+                        orderValue,
+                        ViolationSeverity.Major,
+                        DateTime.UtcNow
+                    );
 
-                    if (marginStatus.AvailableMargin < requiredMargin)
-                    {
-                        var violation = new ComplianceViolation(
-                            Type: "MarginRequirement",
-                            Description: $"Insufficient margin. Required: ${requiredMargin:N2}, Available: ${marginStatus.AvailableMargin:N2}",
-                            Severity: ViolationSeverity.Major,
-                            Timestamp: DateTime.UtcNow,
-                            AccountId: accountId
-                        );
+                    await RecordViolationAsync(accountId, violation);
 
-                        await RecordViolationAsync(accountId, violation);
+                    LogWarning($"Margin requirement not met for account {accountId}",
+                        additionalData: new 
+                        { 
+                            AccountId = accountId, 
+                            Required = requiredMargin, 
+                            Available = availableMargin,
+                            OrderValue = orderValue
+                        });
 
-                        _logger.LogWarning($"Margin requirement not met for account {accountId}",
-                            new 
-                            { 
-                                AccountId = accountId, 
-                                Required = requiredMargin, 
-                                Available = marginStatus.AvailableMargin,
-                                OrderValue = orderValue
-                            });
+                    return false;
+                }
 
-                        return TradingResult<bool>.Success(false);
-                    }
+                // Check maintenance margin
+                var accountBalance = marginStatus.BuyingPower / 4m; // Approximate account balance from buying power
+                var maintenanceLevel = accountBalance * MAINTENANCE_MARGIN;
 
-                    // Check maintenance margin
-                    var newMarginUsed = marginStatus.MarginUsed + requiredMargin;
-                    var maintenanceLevel = marginStatus.AccountBalance * MAINTENANCE_MARGIN;
+                if (marginStatus.MaintenanceMargin + requiredMargin > maintenanceLevel)
+                {
+                    var violation = new ComplianceViolation(
+                        "MARGIN002",
+                        "Order would exceed maintenance margin level",
+                        "",
+                        orderValue,
+                        ViolationSeverity.Warning,
+                        DateTime.UtcNow
+                    );
 
-                    if (newMarginUsed > maintenanceLevel)
-                    {
-                        var violation = new ComplianceViolation(
-                            Type: "MaintenanceMargin",
-                            Description: "Order would exceed maintenance margin level",
-                            Severity: ViolationSeverity.Warning,
-                            Timestamp: DateTime.UtcNow,
-                            AccountId: accountId
-                        );
+                    await RecordViolationAsync(accountId, violation);
+                }
 
-                        await RecordViolationAsync(accountId, violation);
-                    }
+                RecordRiskMetric($"Margin.{accountId}.Available", availableMargin);
+                RecordRiskMetric($"Margin.{accountId}.Maintenance", marginStatus.MaintenanceMargin);
+                RecordRiskMetric($"Margin.{accountId}.Required", requiredMargin);
 
-                    RecordRiskMetric($"Margin.{accountId}.Available", marginStatus.AvailableMargin);
-                    RecordRiskMetric($"Margin.{accountId}.Used", marginStatus.MarginUsed);
-                    RecordRiskMetric($"Margin.{accountId}.Required", requiredMargin);
-
-                    return TradingResult<bool>.Success(true);
-                },
-                createDefaultResult: () => false);
-
-            return result;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Failed to validate margin requirements for account {accountId}", ex);
+                return false;
+            }
         }
 
         public async Task<bool> ValidateRegulatoryLimitsAsync(OrderRiskRequest request)
         {
-            var result = await ExecuteServiceOperationAsync(
-                nameof(ValidateRegulatoryLimitsAsync),
-                async () =>
+            try
+            {
+                var violations = new List<ComplianceViolation>();
+
+                // Check position limits
+                if (request.Quantity > 100000) // Example regulatory limit
                 {
-                    var violations = new List<ComplianceViolation>();
+                    violations.Add(new ComplianceViolation(
+                        "REG001",
+                        $"Order quantity {request.Quantity} exceeds regulatory limit",
+                        request.Symbol,
+                        request.Quantity * request.Price,
+                        ViolationSeverity.Major,
+                        DateTime.UtcNow
+                    ));
+                }
 
-                    // Check position limits
-                    if (request.Quantity > 100000) // Example regulatory limit
-                    {
-                        violations.Add(new ComplianceViolation(
-                            Type: "PositionLimit",
-                            Description: $"Order quantity {request.Quantity} exceeds regulatory limit",
-                            Severity: ViolationSeverity.Major,
-                            Timestamp: DateTime.UtcNow,
-                            AccountId: request.AccountId
-                        ));
-                    }
+                // Check price manipulation rules
+                if (request.OrderType == OrderType.Market && request.Quantity > 10000)
+                {
+                    violations.Add(new ComplianceViolation(
+                        "REG002",
+                        "Large market order may impact market price",
+                        request.Symbol,
+                        request.Quantity * request.Price,
+                        ViolationSeverity.Warning,
+                        DateTime.UtcNow
+                    ));
+                }
 
-                    // Check price manipulation rules
-                    if (request.OrderType == OrderType.Market && request.Quantity > 10000)
-                    {
-                        violations.Add(new ComplianceViolation(
-                            Type: "MarketManipulation",
-                            Description: "Large market order may impact market price",
-                            Severity: ViolationSeverity.Warning,
-                            Timestamp: DateTime.UtcNow,
-                            AccountId: request.AccountId
-                        ));
-                    }
+                // Check wash trading
+                if (await CheckWashTradingRiskAsync(request))
+                {
+                    violations.Add(new ComplianceViolation(
+                        "REG003",
+                        "Potential wash trading detected",
+                        request.Symbol,
+                        request.Quantity * request.Price,
+                        ViolationSeverity.Major,
+                        DateTime.UtcNow
+                    ));
+                }
 
-                    // Check wash trading
-                    if (await CheckWashTradingRiskAsync(request))
-                    {
-                        violations.Add(new ComplianceViolation(
-                            Type: "WashTrading",
-                            Description: "Potential wash trading detected",
-                            Severity: ViolationSeverity.Major,
-                            Timestamp: DateTime.UtcNow,
-                            AccountId: request.AccountId
-                        ));
-                    }
+                foreach (var violation in violations)
+                {
+                    await RecordViolationAsync(request.AccountId, violation);
+                }
 
-                    foreach (var violation in violations)
-                    {
-                        await RecordViolationAsync(request.AccountId, violation);
-                    }
+                var isValid = !violations.Any(v => v.Severity == ViolationSeverity.Major);
 
-                    var isValid = !violations.Any(v => v.Severity == ViolationSeverity.Major);
+                RecordRiskMetric("RegulatoryChecks.Total", 1);
+                RecordRiskMetric("RegulatoryChecks.Violations", violations.Count);
 
-                    RecordRiskMetric("RegulatoryChecks.Total", 1);
-                    RecordRiskMetric("RegulatoryChecks.Violations", violations.Count);
-
-                    return TradingResult<bool>.Success(isValid);
-                },
-                createDefaultResult: () => false);
-
-            return result;
+                return isValid;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Failed to validate regulatory limits for {request.Symbol}", ex);
+                return false;
+            }
         }
 
         public async Task LogComplianceEventAsync(ComplianceEvent complianceEvent)
         {
-            await ExecuteServiceOperationAsync(
-                nameof(LogComplianceEventAsync),
-                async () =>
-                {
-                    _complianceEvents.TryAdd(complianceEvent.EventId, complianceEvent);
+            try
+            {
+                _complianceEvents.TryAdd(complianceEvent.EventId, complianceEvent);
 
-                    // Publish event
-                    await _messageBus.PublishAsync(new ComplianceEventOccurred
-                    {
+                // Publish event as RiskEvent
+                await _messageBus.PublishAsync("compliance-events", new RiskEvent
+                {
+                    EventId = complianceEvent.EventId,
+                    Source = "ComplianceMonitor",
+                    CorrelationId = CorrelationId,
+                    RiskType = "Compliance",
+                    Symbol = complianceEvent.Symbol ?? "",
+                    CurrentExposure = complianceEvent.Amount ?? 0m,
+                    RiskLimit = 0m,
+                    UtilizationPercent = 0m,
+                    LimitBreached = complianceEvent.Metadata.ContainsKey("Severity") && 
+                                   complianceEvent.Metadata["Severity"].ToString() == "Major",
+                    Action = complianceEvent.Description
+                });
+
+                LogInfo($"Compliance event logged: {complianceEvent.EventType}",
+                    new 
+                    { 
                         EventId = complianceEvent.EventId,
                         EventType = complianceEvent.EventType,
-                        AccountId = complianceEvent.AccountId,
-                        Description = complianceEvent.Description,
-                        Severity = complianceEvent.Severity.ToString(),
-                        Timestamp = complianceEvent.Timestamp
+                        AccountId = complianceEvent.AccountId
                     });
 
-                    _logger.LogInformation($"Compliance event logged: {complianceEvent.EventType}",
-                        new 
-                        { 
-                            EventId = complianceEvent.EventId,
-                            EventType = complianceEvent.EventType,
-                            Severity = complianceEvent.Severity
-                        });
-
-                    RecordRiskMetric($"ComplianceEvents.{complianceEvent.EventType}", 1);
-
-                    return TradingResult<object>.Success(null!);
-                },
-                createDefaultResult: () => new object());
+                RecordRiskMetric($"ComplianceEvents.{complianceEvent.EventType}", 1);
+            }
+            catch (Exception ex)
+            {
+                LogError($"Failed to log compliance event {complianceEvent.EventId}", ex);
+            }
         }
 
         protected override async Task<TradingResult<RiskAssessment>> EvaluateRiskCoreAsync(
@@ -301,11 +315,12 @@ namespace TradingPlatform.RiskManagement.Services
                 if (!await ValidatePatternDayTradingAsync(context.AccountId))
                 {
                     violations.Add(new ComplianceViolation(
-                        Type: "PDTViolation",
-                        Description: "Pattern day trading rule violation",
-                        Severity: ViolationSeverity.Major,
-                        Timestamp: DateTime.UtcNow,
-                        AccountId: context.AccountId
+                        "PDT003",
+                        "Pattern day trading rule violation",
+                        context.Symbol,
+                        context.OrderValue,
+                        ViolationSeverity.Major,
+                        DateTime.UtcNow
                     ));
                 }
 
@@ -313,11 +328,12 @@ namespace TradingPlatform.RiskManagement.Services
                 if (context.OrderValue > 0 && !await ValidateMarginRequirementsAsync(context.AccountId, context.OrderValue))
                 {
                     violations.Add(new ComplianceViolation(
-                        Type: "MarginViolation",
-                        Description: "Margin requirement not met",
-                        Severity: ViolationSeverity.Major,
-                        Timestamp: DateTime.UtcNow,
-                        AccountId: context.AccountId
+                        "MARGIN003",
+                        "Margin requirement not met",
+                        context.Symbol,
+                        context.OrderValue,
+                        ViolationSeverity.Major,
+                        DateTime.UtcNow
                     ));
                 }
 
@@ -337,7 +353,7 @@ namespace TradingPlatform.RiskManagement.Services
                 assessment.IsAcceptable = riskScore < 0.5m;
                 assessment.ComplianceIssues = violations.Select(v => v.Description).ToList();
                 assessment.Reason = violations.Any() 
-                    ? $"Compliance violations: {string.Join(", ", violations.Select(v => v.Type))}"
+                    ? $"Compliance violations: {string.Join(", ", violations.Select(v => v.RuleId))}"
                     : "All compliance checks passed";
 
                 assessment.Metrics["ViolationCount"] = violations.Count;
@@ -347,8 +363,8 @@ namespace TradingPlatform.RiskManagement.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("Compliance evaluation failed", ex);
-                return TradingResult<RiskAssessment>.Failure($"Compliance evaluation error: {ex.Message}", ex);
+                LogError("Compliance evaluation failed", ex);
+                return TradingResult<RiskAssessment>.Failure(new TradingError("COMPLIANCE_ERROR", $"Compliance evaluation error: {ex.Message}", ex));
             }
         }
 
@@ -375,10 +391,11 @@ namespace TradingPlatform.RiskManagement.Services
             return await Task.Run(() =>
             {
                 return _pdtStatus.GetOrAdd(accountId, id => new PatternDayTradingStatus(
-                    AccountId: id,
-                    IsPatternDayTrader: false,
-                    DayTradesUsed: 0,
-                    DayTradesRemaining: MAX_DAY_TRADES_NON_PDT
+                    false,
+                    0,
+                    MAX_DAY_TRADES_NON_PDT,
+                    MIN_ACCOUNT_BALANCE_PDT,
+                    DateTime.UtcNow.Date
                 ));
             });
         }
@@ -388,11 +405,11 @@ namespace TradingPlatform.RiskManagement.Services
             return await Task.Run(() =>
             {
                 return _marginStatus.GetOrAdd(accountId, id => new MarginStatus(
-                    AccountId: id,
-                    AccountBalance: 100000m, // Mock value
-                    MarginUsed: 20000m,
-                    AvailableMargin: 80000m,
-                    IsMarginCall: false
+                    20000m,  // MaintenanceMargin
+                    25000m,  // InitialMargin
+                    80000m,  // ExcessLiquidity
+                    320000m, // BuyingPower (4x excess liquidity for day trading)
+                    false    // HasMarginCall
                 ));
             });
         }
@@ -410,15 +427,17 @@ namespace TradingPlatform.RiskManagement.Services
 
             // Keep only recent violations (last 24 hours)
             var cutoff = DateTime.UtcNow.AddDays(-1);
-            violations.RemoveAll(v => v.Timestamp < cutoff);
+            violations.RemoveAll(v => v.OccurredAt < cutoff);
 
             await LogComplianceEventAsync(new ComplianceEvent(
-                EventId: Guid.NewGuid().ToString(),
-                EventType: violation.Type,
-                AccountId: accountId,
-                Description: violation.Description,
-                Severity: violation.Severity,
-                Timestamp: violation.Timestamp
+                Guid.NewGuid().ToString(),
+                violation.RuleId,
+                violation.Description,
+                accountId,
+                violation.Symbol,
+                violation.Amount,
+                violation.OccurredAt,
+                new Dictionary<string, object> { ["Severity"] = violation.Severity }
             ));
         }
 
@@ -429,7 +448,7 @@ namespace TradingPlatform.RiskManagement.Services
                 return baseValidation;
 
             if (string.IsNullOrWhiteSpace(context.AccountId))
-                return TradingResult.Failure("Account ID is required");
+                return TradingResult.Failure(new TradingError("INVALID_INPUT", "Account ID is required"));
 
             return TradingResult.Success();
         }

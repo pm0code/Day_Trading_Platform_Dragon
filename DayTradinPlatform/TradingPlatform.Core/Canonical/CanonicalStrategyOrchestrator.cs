@@ -174,10 +174,11 @@ namespace TradingPlatform.Core.Canonical
                     // Collect signals from all running strategies
                     var signals = new List<TradingSignal>();
                     var activeStrategies = _strategies.Values
-                        .Where(s => s.ServiceState == ServiceState.Running)
+                        .Where(s => s.IsRunning)
                         .ToList();
 
-                    LogDebug($"Processing market data for {symbol} through {activeStrategies.Count} strategies");
+                    LogDebug($"Processing market data for {symbol} through {activeStrategies.Count} strategies",
+                        additionalData: new { Symbol = symbol, StrategyCount = activeStrategies.Count });
 
                     foreach (var strategy in activeStrategies)
                     {
@@ -324,7 +325,7 @@ namespace TradingPlatform.Core.Canonical
             
             // Stop all running strategies
             var stopTasks = _strategies.Values
-                .Where(s => s.ServiceState == ServiceState.Running)
+                .Where(s => s.IsRunning)
                 .Select(s => s.StopAsync(cancellationToken));
             
             await Task.WhenAll(stopTasks);
@@ -347,7 +348,7 @@ namespace TradingPlatform.Core.Canonical
             var baseMetrics = base.GetMetrics().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
             baseMetrics["TotalStrategies"] = _strategies.Count;
-            baseMetrics["ActiveStrategies"] = _strategies.Count(s => s.Value.ServiceState == ServiceState.Running);
+            baseMetrics["ActiveStrategies"] = _strategies.Count(s => s.Value.IsRunning);
             baseMetrics["TotalSignalsProcessed"] = _totalSignalsProcessed;
             baseMetrics["TotalOrdersGenerated"] = _totalOrdersGenerated;
             
@@ -399,16 +400,6 @@ namespace TradingPlatform.Core.Canonical
         string[] ContributingStrategies,
         Dictionary<string, object> Metadata);
 
-    /// <summary>
-    /// Risk assessment result
-    /// </summary>
-    public record RiskAssessment(
-        bool IsAcceptable,
-        decimal RiskScore,
-        decimal MaxPositionSize,
-        decimal StopLoss,
-        decimal TakeProfit,
-        string[] RiskFactors);
 
     /// <summary>
     /// Order request generated from signal

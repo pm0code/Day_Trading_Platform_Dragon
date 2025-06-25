@@ -2,19 +2,20 @@
 
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Models;
+using ScreeningCriteriaResult = TradingPlatform.Screening.Models.CriteriaResult;
 
 namespace TradingPlatform.Screening.Interfaces
 {
     /// <summary>
     /// Defines the contract for all criteria evaluators.
-    /// All implementations must return mathematically correct, standards-compliant CriteriaResult objects.
+    /// All implementations must return mathematically correct, standards-compliant ScreeningCriteriaResult objects.
     /// </summary>
     public interface ICriteriaEvaluator
     {
         /// <summary>
-        /// Evaluates the given market data and trading criteria, returning a unified CriteriaResult.
+        /// Evaluates the given market data and trading criteria, returning a unified ScreeningCriteriaResult.
         /// </summary>
-        Task<TradingPlatform.Screening.Models.CriteriaResult> EvaluateAsync(MarketData marketData, TradingCriteria criteria);
+        Task<ScreeningCriteriaResult> EvaluateAsync(MarketData marketData, TradingCriteria criteria);
     }
 }
 

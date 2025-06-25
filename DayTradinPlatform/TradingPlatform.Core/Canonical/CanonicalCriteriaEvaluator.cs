@@ -15,7 +15,7 @@ namespace TradingPlatform.Core.Canonical
     /// Canonical base class for all criteria evaluators, providing standardized evaluation logic
     /// with comprehensive logging, error handling, and performance tracking.
     /// </summary>
-    public abstract class CanonicalCriteriaEvaluator<TCriteria> : CanonicalServiceBase, ICriteriaEvaluator
+    public abstract class CanonicalCriteriaEvaluator<TCriteria> : CanonicalServiceBase
         where TCriteria : class
     {
         private readonly Dictionary<string, object> _evaluationMetrics = new();

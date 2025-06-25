@@ -1197,3 +1197,12 @@ grep -r "Task\.FromResult\|Task\.CompletedTask" .
 **⚡ EFFICIENCY**: Use `grep -n "#keyword"` instead of manual file searches - 10-20x faster!  
 **🕐 TRACEABILITY**: Use `grep -n "Timestamp.*2024-12-28"` to find decisions by date/time  
 **🔒 MANDATORY**: Indexing is REQUIRED for ALL changes - no exceptions!
+
+### Session 006 - 12 Golden Rules Trading Engine Implementation  
+- **File**: `/Journals/2025-01/25/006_12_golden_rules_complete.md`
+- **Summary**: Implemented all 12 Golden Rules evaluators for comprehensive trading discipline enforcement
+- **Key Changes**: 
+  - Created 8 additional rule evaluators (Rules 4-7, 9-12)
+  - Updated CanonicalGoldenRulesEngine with all 12 rules
+  - Added corrective actions for each rule
+- **Status**: Complete

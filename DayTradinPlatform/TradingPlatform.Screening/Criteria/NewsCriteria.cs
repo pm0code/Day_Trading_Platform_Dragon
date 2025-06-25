@@ -3,6 +3,7 @@
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Models;
+using ScreeningCriteriaResult = TradingPlatform.Screening.Models.CriteriaResult;
 using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.Screening.Criteria
@@ -19,9 +20,9 @@ namespace TradingPlatform.Screening.Criteria
             _logger = logger;
         }
 
-        public Task<CriteriaResult> EvaluateNewsAsync(string symbol, TradingCriteria criteria)
+        public Task<ScreeningCriteriaResult> EvaluateNewsAsync(string symbol, TradingCriteria criteria)
         {
-            var result = new CriteriaResult
+            var result = new ScreeningCriteriaResult
             {
                 CriteriaName = "News",
                 EvaluatedAt = DateTime.UtcNow

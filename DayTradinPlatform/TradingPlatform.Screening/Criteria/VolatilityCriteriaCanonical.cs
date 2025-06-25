@@ -1,12 +1,13 @@
 // File: TradingPlatform.Screening.Criteria\VolatilityCriteriaCanonical.cs
 
 using Microsoft.Extensions.DependencyInjection;
-using TradingPlatform.Core.Canonical;
+using TradingPlatform.Screening.Canonical;
 using TradingPlatform.Foundation.Models;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Models;
+using ScreeningCriteriaResult = TradingPlatform.Screening.Models.CriteriaResult;
 
 namespace TradingPlatform.Screening.Criteria
 {
@@ -14,7 +15,7 @@ namespace TradingPlatform.Screening.Criteria
     /// Canonical implementation of volatility-based trading criteria evaluation.
     /// Evaluates stocks based on Average True Range (ATR), price swings, and intraday movement potential.
     /// </summary>
-    public class VolatilityCriteriaCanonical : CanonicalCriteriaEvaluator<TradingCriteria>
+    public class VolatilityCriteriaCanonical : CanonicalScreeningCriteriaEvaluator
     {
         private const decimal MINIMUM_PASSING_SCORE = 70m;
         private const decimal OPTIMAL_ATR_MULTIPLIER = 2.0m;
@@ -28,15 +29,23 @@ namespace TradingPlatform.Screening.Criteria
         {
         }
 
-        protected override async Task<TradingResult<CriteriaResult>> EvaluateCriteriaAsync(
+        protected override async Task<TradingResult<ScreeningCriteriaResult>> EvaluateCriteriaAsync(
             MarketData marketData,
-            TradingCriteria criteria,
-            CriteriaResult result)
+            TradingCriteria criteria)
         {
             return await Task.Run(() =>
             {
                 try
                 {
+                    // Create result object
+                    var result = new ScreeningCriteriaResult
+                    {
+                        CriteriaName = CriteriaName,
+                        EvaluatedAt = DateTime.UtcNow,
+                        Symbol = marketData.Symbol,
+                        Confidence = 80m // Base confidence for volatility criteria
+                    };
+
                     // Extract ATR from market data
                     decimal atr = ExtractATR(marketData);
                     decimal atrPercentage = marketData.Price > 0 ? (atr / marketData.Price) * 100 : 0;
@@ -97,6 +106,9 @@ namespace TradingPlatform.Screening.Criteria
                         result.Passed,
                         criteria);
 
+                    // Set alert level based on score and confidence
+                    result.AlertLevel = DetermineAlertLevel(result.Score, result.Confidence);
+
                     // Record performance metrics
                     RecordMetric($"VolatilityLevel.{GetVolatilityLevel(atrPercentage)}", 1);
                     if (atrPercentage >= HIGH_VOLATILITY_MULTIPLIER * PRICE_BASED_ATR_PERCENTAGE * 100)
@@ -104,7 +116,7 @@ namespace TradingPlatform.Screening.Criteria
                         RecordMetric("HighVolatilityStocks", 1);
                     }
 
-                    _logger.LogDebug(
+                    Logger.LogDebug(
                         $"Volatility evaluation completed for {marketData.Symbol}",
                         new
                         {
@@ -115,12 +127,12 @@ namespace TradingPlatform.Screening.Criteria
                             Passed = result.Passed
                         });
 
-                    return TradingResult<CriteriaResult>.Success(result);
+                    return TradingResult<ScreeningCriteriaResult>.Success(result);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Error evaluating volatility criteria for {marketData.Symbol}", ex);
-                    return TradingResult<CriteriaResult>.Failure($"Volatility evaluation error: {ex.Message}", ex);
+                    Logger.LogError($"Error evaluating volatility criteria for {marketData.Symbol}", ex);
+                    return TradingResult<ScreeningCriteriaResult>.Failure(new TradingError("EVALUATION_ERROR", $"Volatility evaluation error: {ex.Message}", ex));
                 }
             });
         }
@@ -277,7 +289,7 @@ namespace TradingPlatform.Screening.Criteria
                 return baseValidation;
 
             if (criteria.MinimumATR < 0)
-                return TradingResult.Failure($"Minimum ATR cannot be negative: {criteria.MinimumATR}");
+                return TradingResult.Failure(new TradingError("INVALID_INPUT", $"Minimum ATR cannot be negative: {criteria.MinimumATR}"));
 
             return TradingResult.Success();
         }

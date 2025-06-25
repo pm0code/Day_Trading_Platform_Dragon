@@ -88,6 +88,9 @@ public static class ServiceCollectionExtensions
 
         // Register message bus as singleton for connection reuse
         services.AddSingleton<IMessageBus, RedisMessageBus>();
+        
+        // Register canonical message queue wrapper
+        services.AddSingleton<ICanonicalMessageQueue, CanonicalMessageQueue>();
 
         return services;
     }

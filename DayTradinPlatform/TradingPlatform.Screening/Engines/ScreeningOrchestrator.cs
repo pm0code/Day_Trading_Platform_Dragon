@@ -5,6 +5,7 @@ using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Interfaces;
 using TradingPlatform.Screening.Models;
 using TradingPlatform.Core.Logging;
+using ScreeningCriteriaResult = TradingPlatform.Screening.Models.CriteriaResult;
 
 namespace TradingPlatform.Screening.Engines
 {
@@ -13,10 +14,10 @@ namespace TradingPlatform.Screening.Engines
     /// </summary>
     public class ScreeningOrchestrator
     {
-        private readonly IEnumerable<ICriteriaEvaluator> _criteriaEvaluators;
+        private readonly IEnumerable<Interfaces.ICriteriaEvaluator> _criteriaEvaluators;
         private readonly ITradingLogger _logger;
 
-        public ScreeningOrchestrator(IEnumerable<ICriteriaEvaluator> criteriaEvaluators, ITradingLogger logger)
+        public ScreeningOrchestrator(IEnumerable<Interfaces.ICriteriaEvaluator> criteriaEvaluators, ITradingLogger logger)
         {
             _criteriaEvaluators = criteriaEvaluators;
             _logger = logger;
@@ -36,7 +37,7 @@ namespace TradingPlatform.Screening.Engines
 
             try
             {
-                var criteriaResults = new List<CriteriaResult>();
+                var criteriaResults = new List<ScreeningCriteriaResult>();
 
                 foreach (var evaluator in _criteriaEvaluators)
                 {
@@ -66,9 +67,9 @@ namespace TradingPlatform.Screening.Engines
                 TradingLogOrchestrator.Instance.LogError($"Error orchestrating criteria evaluation for {marketData.Symbol}", ex);
                 result.MeetsCriteria = false;
                 result.OverallScore = 0m;
-                result.CriteriaResults = new List<CriteriaResult>
+                result.CriteriaResults = new List<ScreeningCriteriaResult>
                 {
-                    new CriteriaResult
+                    new ScreeningCriteriaResult
                     {
                         CriteriaName = "Error",
                         Passed = false,
@@ -80,14 +81,14 @@ namespace TradingPlatform.Screening.Engines
             }
         }
 
-        private decimal CalculateOverallScore(List<CriteriaResult> criteriaResults)
+        private decimal CalculateOverallScore(List<ScreeningCriteriaResult> criteriaResults)
         {
             if (!criteriaResults.Any()) return 0m;
             // Simple average, can be replaced with weighted logic as needed
             return criteriaResults.Average(r => r.Score);
         }
 
-        private bool DetermineIfCriteriaMet(List<CriteriaResult> criteriaResults, TradingCriteria criteria)
+        private bool DetermineIfCriteriaMet(List<ScreeningCriteriaResult> criteriaResults, TradingCriteria criteria)
         {
             // Example: at least 2 core criteria must pass and overall score >= 0.7
             var corePassed = criteriaResults.Count(r => r.Passed);
@@ -95,7 +96,7 @@ namespace TradingPlatform.Screening.Engines
             return corePassed >= 2 && overallScore >= 0.7m;
         }
 
-        private AlertLevel DetermineAlertLevel(decimal overallScore, List<CriteriaResult> criteriaResults)
+        private AlertLevel DetermineAlertLevel(decimal overallScore, List<ScreeningCriteriaResult> criteriaResults)
         {
             var passedCount = criteriaResults.Count(r => r.Passed);
             if (overallScore >= 0.90m && passedCount >= 4) return AlertLevel.Critical;
@@ -105,7 +106,7 @@ namespace TradingPlatform.Screening.Engines
             return AlertLevel.None;
         }
 
-        private decimal CalculateConfidenceLevel(List<CriteriaResult> criteriaResults)
+        private decimal CalculateConfidenceLevel(List<ScreeningCriteriaResult> criteriaResults)
         {
             var passedCount = criteriaResults.Count(r => r.Passed);
             var totalCount = criteriaResults.Count;

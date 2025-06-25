@@ -82,6 +82,15 @@ namespace TradingPlatform.Core.Canonical
 
         #endregion
 
+        #region Public Properties
+
+        /// <summary>
+        /// Gets whether the strategy is currently running
+        /// </summary>
+        public bool IsRunning => ServiceState == ServiceState.Running;
+
+        #endregion
+
         #region Strategy Execution
 
         /// <summary>

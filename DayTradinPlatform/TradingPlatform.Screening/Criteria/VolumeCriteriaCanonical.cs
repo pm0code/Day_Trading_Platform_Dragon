@@ -1,12 +1,13 @@
 // File: TradingPlatform.Screening.Criteria\VolumeCriteriaCanonical.cs
 
 using Microsoft.Extensions.DependencyInjection;
-using TradingPlatform.Core.Canonical;
+using TradingPlatform.Screening.Canonical;
 using TradingPlatform.Foundation.Models;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Models;
+using ScreeningCriteriaResult = TradingPlatform.Screening.Models.CriteriaResult;
 
 namespace TradingPlatform.Screening.Criteria
 {
@@ -14,7 +15,7 @@ namespace TradingPlatform.Screening.Criteria
     /// Canonical implementation of volume-based trading criteria evaluation.
     /// Evaluates stocks based on absolute volume, relative volume, and liquidity metrics.
     /// </summary>
-    public class VolumeCriteriaCanonical : CanonicalCriteriaEvaluator<TradingCriteria>
+    public class VolumeCriteriaCanonical : CanonicalScreeningCriteriaEvaluator
     {
         private const decimal VOLUME_SCORE_WEIGHT = 0.6m;
         private const decimal RELATIVE_VOLUME_SCORE_WEIGHT = 0.4m;
@@ -29,15 +30,23 @@ namespace TradingPlatform.Screening.Criteria
         {
         }
 
-        protected override async Task<TradingResult<CriteriaResult>> EvaluateCriteriaAsync(
+        protected override async Task<TradingResult<ScreeningCriteriaResult>> EvaluateCriteriaAsync(
             MarketData marketData,
-            TradingCriteria criteria,
-            CriteriaResult result)
+            TradingCriteria criteria)
         {
             return await Task.Run(() =>
             {
                 try
                 {
+                    // Create result object
+                    var result = new ScreeningCriteriaResult
+                    {
+                        CriteriaName = CriteriaName,
+                        EvaluatedAt = DateTime.UtcNow,
+                        Symbol = marketData.Symbol,
+                        Confidence = 90m // Base confidence for volume criteria
+                    };
+
                     // Calculate relative volume
                     decimal relativeVolume = marketData.AverageDailyVolume > 0
                         ? (decimal)marketData.Volume / marketData.AverageDailyVolume
@@ -92,6 +101,9 @@ namespace TradingPlatform.Screening.Criteria
                         result.Passed,
                         criteria);
 
+                    // Set alert level based on score and confidence
+                    result.AlertLevel = DetermineAlertLevel(result.Score, result.Confidence);
+
                     // Record performance metrics
                     if (relativeVolume >= EXTREME_VOLUME_MULTIPLIER)
                     {
@@ -104,7 +116,7 @@ namespace TradingPlatform.Screening.Criteria
 
                     RecordMetric($"VolumeRange.{GetVolumeRange(marketData.Volume)}", 1);
 
-                    _logger.LogDebug(
+                    Logger.LogDebug(
                         $"Volume evaluation completed for {marketData.Symbol}",
                         new
                         {
@@ -115,12 +127,12 @@ namespace TradingPlatform.Screening.Criteria
                             Passed = result.Passed
                         });
 
-                    return TradingResult<CriteriaResult>.Success(result);
+                    return TradingResult<ScreeningCriteriaResult>.Success(result);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Error evaluating volume criteria for {marketData.Symbol}", ex);
-                    return TradingResult<CriteriaResult>.Failure($"Volume evaluation error: {ex.Message}", ex);
+                    Logger.LogError($"Error evaluating volume criteria for {marketData.Symbol}", ex);
+                    return TradingResult<ScreeningCriteriaResult>.Failure(new TradingError("EVALUATION_ERROR", $"Volume evaluation error: {ex.Message}", ex));
                 }
             });
         }
@@ -212,16 +224,16 @@ namespace TradingPlatform.Screening.Criteria
                 return baseValidation;
 
             if (marketData.Volume < 0)
-                return TradingResult.Failure($"Volume cannot be negative: {marketData.Volume}");
+                return TradingResult.Failure(new TradingError("INVALID_INPUT", $"Volume cannot be negative: {marketData.Volume}"));
 
             if (marketData.AverageDailyVolume < 0)
-                return TradingResult.Failure($"Average daily volume cannot be negative: {marketData.AverageDailyVolume}");
+                return TradingResult.Failure(new TradingError("INVALID_INPUT", $"Average daily volume cannot be negative: {marketData.AverageDailyVolume}"));
 
             if (criteria.MinimumVolume < 0)
-                return TradingResult.Failure($"Minimum volume cannot be negative: {criteria.MinimumVolume}");
+                return TradingResult.Failure(new TradingError("INVALID_INPUT", $"Minimum volume cannot be negative: {criteria.MinimumVolume}"));
 
             if (criteria.MinimumRelativeVolume < 0)
-                return TradingResult.Failure($"Minimum relative volume cannot be negative: {criteria.MinimumRelativeVolume}");
+                return TradingResult.Failure(new TradingError("INVALID_INPUT", $"Minimum relative volume cannot be negative: {criteria.MinimumRelativeVolume}"));
 
             return TradingResult.Success();
         }

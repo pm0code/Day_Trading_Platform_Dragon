@@ -1,12 +1,13 @@
 // File: TradingPlatform.Screening.Criteria\NewsCriteriaCanonical.cs
 
 using Microsoft.Extensions.DependencyInjection;
-using TradingPlatform.Core.Canonical;
+using TradingPlatform.Screening.Canonical;
 using TradingPlatform.Foundation.Models;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Screening.Models;
+using ScreeningCriteriaResult = TradingPlatform.Screening.Models.CriteriaResult;
 
 namespace TradingPlatform.Screening.Criteria
 {
@@ -14,7 +15,7 @@ namespace TradingPlatform.Screening.Criteria
     /// Canonical implementation of news-based trading criteria evaluation.
     /// Evaluates stocks based on news sentiment, catalyst events, and news velocity.
     /// </summary>
-    public class NewsCriteriaCanonical : CanonicalCriteriaEvaluator<TradingCriteria>
+    public class NewsCriteriaCanonical : CanonicalScreeningCriteriaEvaluator
     {
         private const decimal MINIMUM_PASSING_SCORE = 70m;
         private const decimal POSITIVE_SENTIMENT_THRESHOLD = 0.7m;
@@ -33,13 +34,21 @@ namespace TradingPlatform.Screening.Criteria
             _newsProvider = serviceProvider.GetService<INewsDataProvider>() ?? new MockNewsProvider();
         }
 
-        protected override async Task<TradingResult<CriteriaResult>> EvaluateCriteriaAsync(
+        protected override async Task<TradingResult<ScreeningCriteriaResult>> EvaluateCriteriaAsync(
             MarketData marketData,
-            TradingCriteria criteria,
-            CriteriaResult result)
+            TradingCriteria criteria)
         {
             try
             {
+                // Create result object
+                var result = new ScreeningCriteriaResult
+                {
+                    CriteriaName = CriteriaName,
+                    EvaluatedAt = DateTime.UtcNow,
+                    Symbol = marketData.Symbol,
+                    Confidence = 75m // Base confidence for news criteria
+                };
+
                 // Fetch news data
                 var newsData = await _newsProvider.GetNewsDataAsync(marketData.Symbol);
                 
@@ -70,7 +79,7 @@ namespace TradingPlatform.Screening.Criteria
                     result.Score = 0m;
                     result.Reason = "No news events detected (required by criteria)";
                     RecordMetric("NoNewsRejections", 1);
-                    return TradingResult<CriteriaResult>.Success(result);
+                    return TradingResult<ScreeningCriteriaResult>.Success(result);
                 }
 
                 // Calculate component scores
@@ -111,6 +120,9 @@ namespace TradingPlatform.Screening.Criteria
                     newsCount24h,
                     result.Passed);
 
+                // Set alert level based on score and confidence
+                result.AlertLevel = DetermineAlertLevel(result.Score, result.Confidence);
+
                 // Record performance metrics
                 RecordMetric($"Sentiment.{ClassifySentiment(sentimentScore)}", 1);
                 if (hasCatalyst)
@@ -122,7 +134,7 @@ namespace TradingPlatform.Screening.Criteria
                     RecordMetric("HighVelocityNews", 1);
                 }
 
-                _logger.LogDebug(
+                Logger.LogDebug(
                     $"News evaluation completed for {marketData.Symbol}",
                     new
                     {
@@ -134,12 +146,12 @@ namespace TradingPlatform.Screening.Criteria
                         Passed = result.Passed
                     });
 
-                return TradingResult<CriteriaResult>.Success(result);
+                return TradingResult<ScreeningCriteriaResult>.Success(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error evaluating news criteria for {marketData.Symbol}", ex);
-                return TradingResult<CriteriaResult>.Failure($"News evaluation error: {ex.Message}", ex);
+                Logger.LogError($"Error evaluating news criteria for {marketData.Symbol}", ex);
+                return TradingResult<ScreeningCriteriaResult>.Failure(new TradingError("EVALUATION_ERROR", $"News evaluation error: {ex.Message}", ex));
             }
         }
 

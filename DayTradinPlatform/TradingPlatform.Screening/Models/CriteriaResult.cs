@@ -8,6 +8,7 @@ namespace TradingPlatform.Screening.Models
     public class CriteriaResult
     {
         public string CriteriaName { get; set; } = string.Empty;
+        public string Symbol { get; set; } = string.Empty;
         public bool Passed { get; set; }
         public decimal Score { get; set; }
         public string Reason { get; set; } = string.Empty;

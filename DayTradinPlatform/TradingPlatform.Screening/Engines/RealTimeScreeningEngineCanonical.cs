@@ -13,6 +13,7 @@ using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Foundation.Models;
 using TradingPlatform.Screening.Models;
+using ScreeningCriteriaResult = TradingPlatform.Screening.Models.CriteriaResult;
 
 namespace TradingPlatform.Screening.Engines
 {
@@ -243,7 +244,7 @@ namespace TradingPlatform.Screening.Engines
                     new ScreeningResult 
                     { 
                         Symbol = request.RequestId, // Use as end marker
-                        Timestamp = DateTime.UtcNow 
+                        ScreenedAt = DateTime.UtcNow 
                     }));
             }
             
@@ -364,20 +365,21 @@ namespace TradingPlatform.Screening.Engines
             }
 
             // Check if any individual criterion score changed significantly
-            foreach (var kvp in newResult.CriteriaResults)
+            foreach (var newCriterion in newResult.CriteriaResults)
             {
-                if (!lastResult.CriteriaResults.TryGetValue(kvp.Key, out var lastCriterion))
+                var lastCriterion = lastResult.CriteriaResults.FirstOrDefault(c => c.CriteriaName == newCriterion.CriteriaName);
+                if (lastCriterion == null)
+                {
+                    return true; // New criterion added
+                }
+
+                if (newCriterion.Passed != lastCriterion.Passed)
                 {
                     return true;
                 }
 
-                if (kvp.Value.IsMet != lastCriterion.IsMet)
-                {
-                    return true;
-                }
-
-                var criteriaDiff = Math.Abs(kvp.Value.Score - lastCriterion.Score);
-                if (criteriaDiff > 0.1m) // 10% change in individual criterion
+                var criteriaDiff = Math.Abs(newCriterion.Score - lastCriterion.Score);
+                if (criteriaDiff > 10m) // 10 point change in individual criterion score
                 {
                     return true;
                 }

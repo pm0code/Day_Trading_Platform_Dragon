@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Platforms>x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TradingPlatform.Core\TradingPlatform.Core.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Foundation\TradingPlatform.Foundation.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Common\TradingPlatform.Common.csproj" />
+    <ProjectReference Include="..\TradingPlatform.StrategyEngine\TradingPlatform.StrategyEngine.csproj" />
+    <ProjectReference Include="..\TradingPlatform.RiskManagement\TradingPlatform.RiskManagement.csproj" />
+    <ProjectReference Include="..\TradingPlatform.PaperTrading\TradingPlatform.PaperTrading.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Messaging\TradingPlatform.Messaging.csproj" />
+    <ProjectReference Include="..\TradingPlatform.TimeSeries\TradingPlatform.TimeSeries.csproj" />
+  </ItemGroup>
+
+</Project>
