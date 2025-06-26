@@ -57,6 +57,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.ContractTes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.ChaosTests", "TradingPlatform.ChaosTests\TradingPlatform.ChaosTests.csproj", "{F11E78C7-4E7D-4355-B043-C057371150B8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.ML", "TradingPlatform.ML\TradingPlatform.ML.csproj", "{7B6D7C6D-F6F4-4D3E-0B8C-9C0E1F3B4C7C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -171,6 +173,10 @@ Global
 		{F11E78C7-4E7D-4355-B043-C057371150B8}.Debug|x64.Build.0 = Debug|Any CPU
 		{F11E78C7-4E7D-4355-B043-C057371150B8}.Release|x64.ActiveCfg = Release|Any CPU
 		{F11E78C7-4E7D-4355-B043-C057371150B8}.Release|x64.Build.0 = Release|Any CPU
+		{7B6D7C6D-F6F4-4D3E-0B8C-9C0E1F3B4C7C}.Debug|x64.ActiveCfg = Debug|x64
+		{7B6D7C6D-F6F4-4D3E-0B8C-9C0E1F3B4C7C}.Debug|x64.Build.0 = Debug|x64
+		{7B6D7C6D-F6F4-4D3E-0B8C-9C0E1F3B4C7C}.Release|x64.ActiveCfg = Release|x64
+		{7B6D7C6D-F6F4-4D3E-0B8C-9C0E1F3B4C7C}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
