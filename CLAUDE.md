@@ -91,7 +91,9 @@ Current Testing Status:
 To expand testing:
 1. Add tests for DataIngestion providers (AlphaVantage, Finnhub)
 2. Add tests for Screening engines and criteria evaluators
-3. Add performance tests for ultra-low latency requirements (< 100μs targets)
+3. Add performance tests for ultra-low latency requirements (< 50ms targets for Enterprise configuration)
+4. Add GPU acceleration tests for CUDA-enabled components
+5. Add multi-monitor UI responsiveness tests (6+ displays)
 
 ## Dependencies
 
@@ -111,6 +113,20 @@ Key documentation files in the MainDocs directory:
 - **FinancialCalculationStandards.md**: Detailed standards for financial calculations and decimal precision requirements
 - **High_Performance_ Stock_ Day_ Trading_ Platform.md.txt**: Comprehensive framework for ultra-low latency trading platform (< 100μs targets)
 - **Professional Multi-Screen Trading Systems_ Architecture.md**: Multi-screen trading system architecture and design patterns
+
+## Target Hardware Configuration
+
+**PRIMARY TARGET: Professional Configuration (4 Monitors)**
+- CPU: Intel i7-13700K or AMD Ryzen 7 7700X
+- RAM: 32GB DDR4-3600 or DDR5-5600
+- GPU: NVIDIA RTX 4060 or AMD RX 7600
+- Storage: 1TB NVMe SSD + 2TB backup drive
+- Monitors: 4 × 27-32" displays (4K primary, 1440p secondary)
+- Network: Wired Ethernet (1Gbps minimum) + backup connection
+- UPS: Professional-grade power protection
+- Target Use Case: Advanced day trading with scalability
+- Performance Targets: <50ms latency, 10,000+ messages/second
+- **Expandable**: Architecture supports scaling to 6+ monitors (Enterprise configuration)
 
 ## Project Architecture
 

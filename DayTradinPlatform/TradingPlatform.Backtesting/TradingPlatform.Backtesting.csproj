@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TradingPlatform.Core\TradingPlatform.Core.csproj" />
+    <ProjectReference Include="..\TradingPlatform.DataIngestion\TradingPlatform.DataIngestion.csproj" />
+    <ProjectReference Include="..\TradingPlatform.ML\TradingPlatform.ML.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Screening\TradingPlatform.Screening.csproj" />
+    <ProjectReference Include="..\TradingPlatform.RiskManagement\TradingPlatform.RiskManagement.csproj" />
+    <ProjectReference Include="..\TradingPlatform.TimeSeries\TradingPlatform.TimeSeries.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
+    <PackageReference Include="System.Threading.Channels" Version="8.0.0" />
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+  </ItemGroup>
+
+</Project>
