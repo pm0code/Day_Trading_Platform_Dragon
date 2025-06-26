@@ -124,6 +124,8 @@ namespace TradingPlatform.RiskManagement.Services
 
         public async Task UpdatePositionAsync(Position position)
         {
+            if (position == null) throw new ArgumentNullException(nameof(position));
+
             await ExecuteServiceOperationAsync(
                 async () =>
                 {

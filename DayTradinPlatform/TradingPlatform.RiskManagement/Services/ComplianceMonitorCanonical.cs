@@ -202,6 +202,8 @@ namespace TradingPlatform.RiskManagement.Services
 
         public async Task<bool> ValidateRegulatoryLimitsAsync(OrderRiskRequest request)
         {
+            if (request == null) throw new ArgumentNullException(nameof(request));
+
             try
             {
                 var violations = new List<ComplianceViolation>();
@@ -266,6 +268,8 @@ namespace TradingPlatform.RiskManagement.Services
 
         public async Task LogComplianceEventAsync(ComplianceEvent complianceEvent)
         {
+            if (complianceEvent == null) throw new ArgumentNullException(nameof(complianceEvent));
+
             try
             {
                 _complianceEvents.TryAdd(complianceEvent.EventId, complianceEvent);
@@ -352,7 +356,7 @@ namespace TradingPlatform.RiskManagement.Services
                 assessment.RiskScore = riskScore;
                 assessment.IsAcceptable = riskScore < 0.5m;
                 assessment.ComplianceIssues = violations.Select(v => v.Description).ToList();
-                assessment.Reason = violations.Any() 
+                assessment.Reason = violations.Count > 0 
                     ? $"Compliance violations: {string.Join(", ", violations.Select(v => v.RuleId))}"
                     : "All compliance checks passed";
 

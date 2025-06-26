@@ -31,11 +31,13 @@ namespace TradingPlatform.RiskManagement.Services
         /// </summary>
         public async Task<decimal> CalculateVaRAsync(IEnumerable<decimal> returns, decimal confidenceLevel = DEFAULT_CONFIDENCE_LEVEL)
         {
+            if (returns == null) throw new ArgumentNullException(nameof(returns));
+            
             var result = await ExecuteServiceOperationAsync(
                 async () =>
                 {
                     var returnsList = returns.ToList();
-                    if (!returnsList.Any())
+                    if (returnsList.Count == 0)
                     {
                         return TradingResult<decimal>.Success(0m);
                     }
@@ -71,11 +73,13 @@ namespace TradingPlatform.RiskManagement.Services
         /// </summary>
         public async Task<decimal> CalculateExpectedShortfallAsync(IEnumerable<decimal> returns, decimal confidenceLevel = DEFAULT_CONFIDENCE_LEVEL)
         {
+            if (returns == null) throw new ArgumentNullException(nameof(returns));
+            
             var result = await ExecuteServiceOperationAsync(
                 async () =>
                 {
                     var returnsList = returns.ToList();
-                    if (!returnsList.Any())
+                    if (returnsList.Count == 0)
                     {
                         return TradingResult<decimal>.Success(0m);
                     }
@@ -106,6 +110,8 @@ namespace TradingPlatform.RiskManagement.Services
         /// </summary>
         public async Task<decimal> CalculateMaxDrawdownAsync(IEnumerable<decimal> portfolioValues)
         {
+            if (portfolioValues == null) throw new ArgumentNullException(nameof(portfolioValues));
+
             var result = await ExecuteServiceOperationAsync(
                 async () =>
                 {
@@ -167,11 +173,13 @@ namespace TradingPlatform.RiskManagement.Services
         /// </summary>
         public async Task<decimal> CalculateSharpeRatioAsync(IEnumerable<decimal> returns, decimal riskFreeRate)
         {
+            if (returns == null) throw new ArgumentNullException(nameof(returns));
+
             var result = await ExecuteServiceOperationAsync(
                 async () =>
                 {
                     var returnsList = returns.ToList();
-                    if (!returnsList.Any())
+                    if (returnsList.Count == 0)
                     {
                         return TradingResult<decimal>.Success(0m);
                     }
@@ -212,6 +220,8 @@ namespace TradingPlatform.RiskManagement.Services
         /// </summary>
         public async Task<decimal> CalculateBetaAsync(IEnumerable<decimal> assetReturns, IEnumerable<decimal> marketReturns)
         {
+            if (assetReturns == null) throw new ArgumentNullException(nameof(assetReturns));
+
             var result = await ExecuteServiceOperationAsync(
                 async () =>
                 {
@@ -337,7 +347,7 @@ namespace TradingPlatform.RiskManagement.Services
                 reasons.Add($"Low Sharpe ratio: {sharpeValue:F2}");
             }
 
-            if (reasons.Any())
+            if (reasons.Count > 0)
             {
                 return $"Risk factors: {string.Join(", ", reasons)}";
             }
@@ -454,7 +464,7 @@ namespace TradingPlatform.RiskManagement.Services
                         CalculatedAt: DateTime.UtcNow
                     );
 
-                    if (!positionsList.Any())
+                    if (positionsList.Count == 0)
                     {
                         return TradingResult<RiskMetrics>.Success(metrics);
                     }
@@ -473,7 +483,7 @@ namespace TradingPlatform.RiskManagement.Services
 
                     // Calculate portfolio returns for risk metrics
                     var returns = CalculatePositionReturns(positionsList);
-                    if (returns.Any())
+                    if (returns.Count > 0)
                     {
                         metrics = metrics with
                         {
