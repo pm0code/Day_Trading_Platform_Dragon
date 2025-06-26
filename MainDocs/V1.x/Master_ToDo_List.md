@@ -20,11 +20,11 @@ This master todo list serves as the plan of record for completing the Day Tradin
 
 #### **ID: 11** - Implement XGBoost model for price prediction
 - [x] 11.1 - Set up ML.NET project structure and dependencies (2025-06-26)
-- [ ] 11.2 - Design feature engineering pipeline
-  - [ ] 11.2.1 - Technical indicators (RSI, MACD, Bollinger Bands)
-  - [ ] 11.2.2 - Volume-based features
-  - [ ] 11.2.3 - Market microstructure features
-- [ ] 11.3 - Implement data preprocessing and normalization
+- [x] 11.2 - Design feature engineering pipeline (2025-06-26)
+  - [x] 11.2.1 - Technical indicators (RSI, MACD, Bollinger Bands)
+  - [x] 11.2.2 - Volume-based features
+  - [x] 11.2.3 - Market microstructure features
+- [x] 11.3 - Implement data preprocessing and normalization (2025-06-26)
 - [ ] 11.4 - Create XGBoost model training pipeline
 - [ ] 11.5 - Implement model validation and backtesting
 - [ ] 11.6 - Create model serving infrastructure
