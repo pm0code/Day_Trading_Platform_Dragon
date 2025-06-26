@@ -1,0 +1,40 @@
+<Project>
+  <!-- Auto-reference the analyzer for all projects in the solution -->
+  <Target Name="AddTradingPlatformAnalyzers" 
+          BeforeTargets="CoreCompile"
+          Condition="'$(EnableTradingPlatformAnalyzers)' == 'true' AND '$(MSBuildProjectName)' != 'TradingPlatform.CodeAnalysis'">
+    
+    <ItemGroup>
+      <!-- Add analyzer reference if not already present -->
+      <Analyzer Include="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\TradingPlatform.CodeAnalysis.dll" 
+                Condition="!Exists('@(Analyzer)')"/>
+    </ItemGroup>
+    
+    <Message Text="TradingPlatform Code Analyzers enabled for $(MSBuildProjectName)" Importance="low" />
+  </Target>
+
+  <!-- Generate diagnostic report after build -->
+  <Target Name="GenerateDiagnosticReport" 
+          AfterTargets="Build"
+          Condition="'$(GenerateDiagnosticReport)' == 'true'">
+    
+    <PropertyGroup>
+      <DiagnosticReportPath>$(OutputPath)CodeAnalysis\diagnostics.json</DiagnosticReportPath>
+    </PropertyGroup>
+    
+    <Message Text="Generating diagnostic report at $(DiagnosticReportPath)" Importance="high" />
+    
+    <!-- This would normally call our diagnostic runner -->
+    <Exec Command="dotnet &quot;$(MSBuildThisFileDirectory)..\tools\TradingPlatform.CodeAnalysis.dll&quot; analyze --project &quot;$(MSBuildProjectFullPath)&quot; --output &quot;$(DiagnosticReportPath)&quot;"
+          ContinueOnError="true" />
+  </Target>
+
+  <!-- Fail build on critical violations -->
+  <Target Name="EnforceCriticalRules" 
+          AfterTargets="CoreCompile"
+          Condition="'$(EnforceTradingPlatformRules)' == 'true'">
+    
+    <Error Text="Build failed due to critical code analysis violations. Check the Error List for details."
+           Condition="'$(AnalyzerErrorCount)' != '0'" />
+  </Target>
+</Project>

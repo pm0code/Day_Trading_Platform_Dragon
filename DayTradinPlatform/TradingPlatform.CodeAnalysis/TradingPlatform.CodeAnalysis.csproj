@@ -1,16 +1,37 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    
+    <!-- Analyzer packaging configuration -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeBuildOutput>true</IncludeBuildOutput>
+    <PackageId>TradingPlatform.CodeAnalysis</PackageId>
+    <PackageVersion>1.0.0</PackageVersion>
+    <Authors>TradingPlatform Team</Authors>
+    <Description>Comprehensive code analysis for TradingPlatform with real-time AI feedback</Description>
+    <PackageTags>analyzers;csharp;trading;financial</PackageTags>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <NoPackageAnalysis>true</NoPackageAnalysis>
+    
+    <!-- Copy analyzer files to output -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Core Roslyn packages -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.8.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.8.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Build.Locator" Version="1.6.10" />
+    
+    <!-- Additional dependencies -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     
     <!-- FOSS Code Analyzers as recommended in Comprehensive_Code_Analyzers.md -->
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.507" PrivateAssets="all" />
@@ -18,10 +39,25 @@
     <PackageReference Include="Roslynator.Analyzers" Version="4.12.0" PrivateAssets="all" />
     <PackageReference Include="Meziantou.Analyzer" Version="2.0.168" PrivateAssets="all" />
     <PackageReference Include="SecurityCodeScan.VS2019" Version="5.6.7" PrivateAssets="all" />
-    <!-- Temporarily removed due to version conflict
-    <PackageReference Include="Puma.Security.Rules" Version="2.4.6" PrivateAssets="all" />
-    -->
     <PackageReference Include="codecracker.CSharp" Version="1.1.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Project references -->
+    <ProjectReference Include="..\TradingPlatform.Core\TradingPlatform.Core.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Foundation\TradingPlatform.Foundation.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include analyzer build props -->
+    <None Include="build\**" Pack="true" PackagePath="build\" />
+    <None Include="config\**" Pack="true" PackagePath="config\" />
+  </ItemGroup>
+
+  <!-- Package the analyzers properly -->
+  <ItemGroup>
+    <None Include="$(OutputPath)\TradingPlatform.CodeAnalysis.dll" Pack="true" PackagePath="analyzers\dotnet\cs\" Visible="false" />
+    <None Include="$(OutputPath)\TradingPlatform.CodeAnalysis.pdb" Pack="true" PackagePath="analyzers\dotnet\cs\" Visible="false" />
   </ItemGroup>
 
 </Project>

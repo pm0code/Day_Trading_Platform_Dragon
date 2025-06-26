@@ -1,0 +1,42 @@
+<Project>
+  <PropertyGroup>
+    <!-- Enable TradingPlatform Code Analysis -->
+    <EnableTradingPlatformAnalyzers>true</EnableTradingPlatformAnalyzers>
+    
+    <!-- Configure real-time feedback -->
+    <TradingPlatformAnalyzersRealTimeFeedback>true</TradingPlatformAnalyzersRealTimeFeedback>
+    
+    <!-- Set default severity levels -->
+    <TradingPlatformAnalyzersSeverity>Warning</TradingPlatformAnalyzersSeverity>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(EnableTradingPlatformAnalyzers)' == 'true'">
+    <!-- Include the analyzer assembly -->
+    <Analyzer Include="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\TradingPlatform.CodeAnalysis.dll" />
+    
+    <!-- Include additional files for configuration -->
+    <AdditionalFiles Include="**\*.editorconfig" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\config\globalconfig.json" />
+  </ItemGroup>
+
+  <!-- Configure individual rule severities -->
+  <PropertyGroup Condition="'$(EnableTradingPlatformAnalyzers)' == 'true'">
+    <!-- Financial Precision Rules - These are ERRORS -->
+    <WarningsAsErrors>$(WarningsAsErrors);TP0001;TP0002</WarningsAsErrors>
+    
+    <!-- Canonical Pattern Rules - These are WARNINGS by default -->
+    <NoWarn Condition="'$(DisableCanonicalPatternWarnings)' == 'true'">$(NoWarn);TP0101;TP0102;TP0103;TP0104</NoWarn>
+    
+    <!-- Performance Rules - These are INFO by default -->
+    <CodeAnalysisTreatWarningsAsErrors Condition="'$(TreatPerformanceWarningsAsErrors)' == 'true'">true</CodeAnalysisTreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Environment variables for real-time feedback -->
+  <PropertyGroup Condition="'$(TradingPlatformAnalyzersRealTimeFeedback)' == 'true'">
+    <EnvironmentVariables>
+      CODEANALYSIS_REALTIME_FEEDBACK=true;
+      CODEANALYSIS_OUTPUT_PATH=$(OutputPath)\CodeAnalysis;
+      $(EnvironmentVariables)
+    </EnvironmentVariables>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json.schemastore.org/globalconfig.json",
+  "version": "1.0.0",
+  "analysis": {
+    "enabled": true,
+    "outputFormats": ["json", "sarif"],
+    "realTimeFeedback": {
+      "enabled": true,
+      "endpoints": {
+        "claude": {
+          "url": "https://api.anthropic.com/v1/messages",
+          "enabled": true,
+          "authentication": {
+            "type": "bearer",
+            "tokenEnvironmentVariable": "CLAUDE_API_TOKEN"
+          }
+        },
+        "augment": {
+          "url": "https://api.augmentcode.com/feedback",
+          "enabled": true,
+          "authentication": {
+            "type": "apikey",
+            "keyEnvironmentVariable": "AUGMENT_API_KEY"
+          }
+        }
+      }
+    },
+    "rules": {
+      "TP0001": {
+        "enabled": true,
+        "severity": "error",
+        "description": "Use decimal for monetary values"
+      },
+      "TP0002": {
+        "enabled": true,
+        "severity": "warning",
+        "description": "Avoid precision loss in financial calculations"
+      },
+      "TP0101": {
+        "enabled": true,
+        "severity": "warning",
+        "description": "Extend canonical base class"
+      },
+      "TP0102": {
+        "enabled": true,
+        "severity": "warning",
+        "description": "Use TradingResult for operation returns"
+      },
+      "TP0103": {
+        "enabled": true,
+        "severity": "error",
+        "description": "Implement lifecycle methods"
+      },
+      "TP0501": {
+        "enabled": true,
+        "severity": "error",
+        "description": "No silent failures allowed"
+      }
+    },
+    "excludes": {
+      "files": [
+        "**/bin/**",
+        "**/obj/**",
+        "**/packages/**",
+        "**/*.Designer.cs",
+        "**/*.generated.cs",
+        "**/Migrations/**"
+      ],
+      "projects": [
+        "*.Tests",
+        "*.Test",
+        "*.Benchmarks"
+      ]
+    }
+  },
+  "modularity": {
+    "enforceLayerBoundaries": true,
+    "layers": {
+      "Core": {
+        "allowedDependencies": ["Foundation"],
+        "prohibitedDependencies": ["DataIngestion", "Screening", "ML", "Backtesting"]
+      },
+      "DataIngestion": {
+        "allowedDependencies": ["Core", "Foundation"],
+        "prohibitedDependencies": ["Screening", "ML"]
+      },
+      "Screening": {
+        "allowedDependencies": ["Core", "Foundation", "DataIngestion"],
+        "prohibitedDependencies": ["ML"]
+      },
+      "ML": {
+        "allowedDependencies": ["Core", "Foundation", "DataIngestion"],
+        "prohibitedDependencies": []
+      }
+    }
+  },
+  "performance": {
+    "latencyTargets": {
+      "criticalPath": 100,
+      "normalPath": 1000,
+      "backgroundPath": 5000
+    },
+    "allocationLimits": {
+      "hotPath": 1024,
+      "warmPath": 10240,
+      "coldPath": 102400
+    }
+  },
+  "security": {
+    "scanForSecrets": true,
+    "secretPatterns": [
+      "password\\s*=\\s*[\"'](?!\\{)[^\"']+[\"']",
+      "apikey\\s*=\\s*[\"'](?!\\{)[^\"']+[\"']",
+      "connectionstring\\s*=\\s*[\"'](?!\\{)[^\"']+[\"']"
+    ],
+    "requiredHeaders": [
+      "Content-Security-Policy",
+      "X-Frame-Options",
+      "X-Content-Type-Options",
+      "Strict-Transport-Security"
+    ]
+  }
+}

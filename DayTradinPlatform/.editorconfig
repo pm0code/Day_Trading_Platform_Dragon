@@ -91,6 +91,40 @@ dotnet_analyzer_diagnostic.category-Performance.severity = warning
 dotnet_analyzer_diagnostic.category-Security.severity = error
 dotnet_analyzer_diagnostic.category-Usage.severity = warning
 
+# TradingPlatform Custom Analyzer Rules
+
+## Financial Precision Rules (ERRORS)
+dotnet_diagnostic.TP0001.severity = error  # Use decimal for monetary values
+dotnet_diagnostic.TP0002.severity = warning # Avoid precision loss
+dotnet_diagnostic.TP0003.severity = warning # Validate financial calculations
+
+## Canonical Pattern Rules (WARNINGS)
+dotnet_diagnostic.TP0101.severity = warning # Extend canonical base class
+dotnet_diagnostic.TP0102.severity = warning # Use TradingResult for returns
+dotnet_diagnostic.TP0103.severity = error   # Implement lifecycle methods
+dotnet_diagnostic.TP0104.severity = warning # Implement health checks
+
+## Performance Rules (INFO/WARNING)
+dotnet_diagnostic.TP0201.severity = warning # Avoid boxing
+dotnet_diagnostic.TP0202.severity = suggestion # Use object pooling
+dotnet_diagnostic.TP0203.severity = warning # Avoid allocations in hot path
+dotnet_diagnostic.TP0204.severity = suggestion # Use Span<T>
+
+## Security Rules (ERRORS)
+dotnet_diagnostic.TP0301.severity = error   # No hardcoded secrets
+dotnet_diagnostic.TP0302.severity = error   # Use parameterized SQL
+dotnet_diagnostic.TP0303.severity = warning # Protect PII
+
+## Architecture Rules (ERRORS)
+dotnet_diagnostic.TP0401.severity = error   # Layer violation
+dotnet_diagnostic.TP0402.severity = error   # Circular dependency
+dotnet_diagnostic.TP0403.severity = warning # Module isolation
+
+## Error Handling Rules (ERRORS)
+dotnet_diagnostic.TP0501.severity = error   # No silent failures
+dotnet_diagnostic.TP0502.severity = warning # Use canonical logging
+dotnet_diagnostic.TP0503.severity = suggestion # Implement retry logic
+
 # StyleCop rules
 dotnet_diagnostic.SA1101.severity = none # Prefix local calls with this
 dotnet_diagnostic.SA1200.severity = none # Using directives placement
@@ -100,6 +134,22 @@ dotnet_diagnostic.SA1652.severity = none # Enable XML documentation
 # SonarAnalyzer rules
 dotnet_diagnostic.S1135.severity = warning # TODO comments
 dotnet_diagnostic.S125.severity = none # Commented out code
+dotnet_diagnostic.S2259.severity = error    # Null pointer dereference
+
+# Roslynator Rules
+dotnet_diagnostic.RCS1001.severity = suggestion   # Add braces
+dotnet_diagnostic.RCS1018.severity = warning # Inline variable
+dotnet_diagnostic.RCS1036.severity = warning # Remove redundant empty line
+
+# Meziantou.Analyzer Rules
+dotnet_diagnostic.MA0004.severity = warning # Use ConfigureAwait
+dotnet_diagnostic.MA0012.severity = error   # Do not raise in finally
+dotnet_diagnostic.MA0063.severity = warning # Optimize Enumerable.Count
+
+# Security Code Scan Rules
+dotnet_diagnostic.SCS0001.severity = error  # SQL Injection
+dotnet_diagnostic.SCS0015.severity = error  # Hardcoded password
+dotnet_diagnostic.SCS0029.severity = error  # XSS vulnerability
 
 # Canonical requirements
 dotnet_diagnostic.CA1062.severity = warning # Validate arguments of public methods
