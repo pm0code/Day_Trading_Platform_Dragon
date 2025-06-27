@@ -24,11 +24,11 @@ namespace TradingPlatform.ML.Features
             var features = new TechnicalFeatures();
             
             // Price features
-            features.Open = (float)current.Open;
-            features.High = (float)current.High;
-            features.Low = (float)current.Low;
-            features.Close = (float)current.Close;
-            features.Volume = (float)current.Volume;
+            features.Open = current.Open;
+            features.High = current.High;
+            features.Low = current.Low;
+            features.Close = current.Close;
+            features.Volume = current.Volume;
             
             // Calculate RSI (14-period)
             features.RSI = CalculateRSI(data, currentIndex, 14);
@@ -57,7 +57,7 @@ namespace TradingPlatform.ML.Features
             
             // Price change features
             features.PriceChangePercent = CalculatePriceChange(data[currentIndex-1].Close, current.Close);
-            features.DailyRange = (float)((current.High - current.Low) / current.Close);
+            features.DailyRange = (current.High - current.Low) / current.Close;
             
             // Pattern features
             features.IsGapUp = current.Open > data[currentIndex-1].High;
@@ -76,12 +76,12 @@ namespace TradingPlatform.ML.Features
             var features = new MicrostructureFeatures();
             
             // Spread features
-            features.BidAskSpread = (float)(snapshot.Ask - snapshot.Bid);
-            features.RelativeSpread = features.BidAskSpread / (float)snapshot.Close;
+            features.BidAskSpread = snapshot.Ask - snapshot.Bid;
+            features.RelativeSpread = features.BidAskSpread / snapshot.Close;
             
             // Liquidity features
-            features.BidSize = (float)(snapshot.BidSize ?? 0);
-            features.AskSize = (float)(snapshot.AskSize ?? 0);
+            features.BidSize = snapshot.BidSize ?? 0;
+            features.AskSize = snapshot.AskSize ?? 0;
             features.LiquidityImbalance = (features.BidSize - features.AskSize) / (features.BidSize + features.AskSize + 1);
             
             // Volatility features
@@ -90,7 +90,7 @@ namespace TradingPlatform.ML.Features
             
             // Order flow features
             features.TradeImbalance = CalculateTradeImbalance(snapshot);
-            features.VolumeWeightedPrice = (float)CalculateVWAP(recentData, recentData.Count - 1);
+            features.VolumeWeightedPrice = CalculateVWAP(recentData, recentData.Count - 1);
             
             return features;
         }
@@ -115,15 +115,15 @@ namespace TradingPlatform.ML.Features
         }
         
         // Technical indicator calculations
-        private static float CalculateRSI(IList<MarketDataSnapshot> data, int index, int period)
+        private static decimal CalculateRSI(IList<MarketDataSnapshot> data, int index, int period)
         {
-            if (index < period) return 50f; // Default neutral RSI
+            if (index < period) return 50m; // Default neutral RSI
             
-            float avgGain = 0, avgLoss = 0;
+            decimal avgGain = 0, avgLoss = 0;
             
             for (int i = index - period + 1; i <= index; i++)
             {
-                var change = (float)(data[i].Close - data[i-1].Close);
+                var change = data[i].Close - data[i-1].Close;
                 if (change > 0)
                     avgGain += change;
                 else
@@ -133,13 +133,13 @@ namespace TradingPlatform.ML.Features
             avgGain /= period;
             avgLoss /= period;
             
-            if (avgLoss == 0) return 100f;
+            if (avgLoss == 0) return 100m;
             
             var rs = avgGain / avgLoss;
-            return 100f - (100f / (1f + rs));
+            return 100m - (100m / (1m + rs));
         }
         
-        private static (float MACD, float Signal, float Histogram) CalculateMACD(
+        private static (decimal MACD, decimal Signal, decimal Histogram) CalculateMACD(
             IList<MarketDataSnapshot> data, int index)
         {
             var ema12 = CalculateEMA(data, index, 12);
@@ -147,13 +147,13 @@ namespace TradingPlatform.ML.Features
             var macd = ema12 - ema26;
             
             // Simplified signal line (9-period EMA of MACD)
-            var signal = macd * 0.2f + ema12 * 0.8f; // Approximation
+            var signal = macd * 0.2m + ema12 * 0.8m; // Approximation
             var histogram = macd - signal;
             
             return (macd, signal, histogram);
         }
         
-        private static (float Upper, float Middle, float Lower) CalculateBollingerBands(
+        private static (decimal Upper, decimal Middle, decimal Lower) CalculateBollingerBands(
             IList<MarketDataSnapshot> data, int index, int period)
         {
             var sma = CalculateSMA(data, index, period);
@@ -162,64 +162,64 @@ namespace TradingPlatform.ML.Features
             return (sma + 2 * stdDev, sma, sma - 2 * stdDev);
         }
         
-        private static float CalculateSMA(IList<MarketDataSnapshot> data, int index, int period)
+        private static decimal CalculateSMA(IList<MarketDataSnapshot> data, int index, int period)
         {
-            if (index < period - 1) return (float)data[index].Close;
+            if (index < period - 1) return data[index].Close;
             
             var sum = 0m;
             for (int i = index - period + 1; i <= index; i++)
             {
                 sum += data[i].Close;
             }
-            return (float)(sum / period);
+            return sum / period;
         }
         
-        private static float CalculateEMA(IList<MarketDataSnapshot> data, int index, int period)
+        private static decimal CalculateEMA(IList<MarketDataSnapshot> data, int index, int period)
         {
-            if (index < period - 1) return (float)data[index].Close;
+            if (index < period - 1) return data[index].Close;
             
-            var multiplier = 2f / (period + 1);
-            var ema = (float)data[index - period + 1].Close;
+            var multiplier = 2m / (period + 1);
+            var ema = data[index - period + 1].Close;
             
             for (int i = index - period + 2; i <= index; i++)
             {
-                ema = ((float)data[i].Close - ema) * multiplier + ema;
+                ema = (data[i].Close - ema) * multiplier + ema;
             }
             
             return ema;
         }
         
-        private static float CalculateStandardDeviation(IList<MarketDataSnapshot> data, int index, int period)
+        private static decimal CalculateStandardDeviation(IList<MarketDataSnapshot> data, int index, int period)
         {
             var mean = CalculateSMA(data, index, period);
-            var sumSquares = 0f;
+            var sumSquares = 0m;
             
             for (int i = index - period + 1; i <= index; i++)
             {
-                var diff = (float)data[i].Close - mean;
+                var diff = data[i].Close - mean;
                 sumSquares += diff * diff;
             }
             
-            return (float)Math.Sqrt(sumSquares / period);
+            return DecimalMath.Sqrt(sumSquares / period);
         }
         
-        private static float CalculateVolumeRatio(IList<MarketDataSnapshot> data, int index)
+        private static decimal CalculateVolumeRatio(IList<MarketDataSnapshot> data, int index)
         {
-            if (index < 20) return 1f;
+            if (index < 20) return 1m;
             
-            var currentVolume = (float)data[index].Volume;
-            var avgVolume = 0f;
+            var currentVolume = data[index].Volume;
+            var avgVolume = 0m;
             
             for (int i = index - 20; i < index; i++)
             {
-                avgVolume += (float)data[i].Volume;
+                avgVolume += data[i].Volume;
             }
             avgVolume /= 20;
             
-            return avgVolume > 0 ? currentVolume / avgVolume : 1f;
+            return avgVolume > 0 ? currentVolume / avgVolume : 1m;
         }
         
-        private static float CalculateVWAP(IList<MarketDataSnapshot> data, int index)
+        private static decimal CalculateVWAP(IList<MarketDataSnapshot> data, int index)
         {
             decimal totalValue = 0;
             decimal totalVolume = 0;
@@ -234,49 +234,49 @@ namespace TradingPlatform.ML.Features
                 totalVolume += data[i].Volume;
             }
             
-            return totalVolume > 0 ? (float)(totalValue / totalVolume) : (float)data[index].Close;
+            return totalVolume > 0 ? totalValue / totalVolume : data[index].Close;
         }
         
-        private static float CalculatePriceChange(decimal previousClose, decimal currentClose)
+        private static decimal CalculatePriceChange(decimal previousClose, decimal currentClose)
         {
-            return previousClose > 0 ? (float)((currentClose - previousClose) / previousClose * 100) : 0f;
+            return previousClose > 0 ? (currentClose - previousClose) / previousClose * 100 : 0m;
         }
         
-        private static float CalculateRealizedVolatility(IList<MarketDataSnapshot> data, int period)
+        private static decimal CalculateRealizedVolatility(IList<MarketDataSnapshot> data, int period)
         {
-            if (data.Count < period + 1) return 0f;
+            if (data.Count < period + 1) return 0m;
             
-            var returns = new List<float>();
+            var returns = new List<decimal>();
             for (int i = data.Count - period; i < data.Count; i++)
             {
-                var ret = CalculatePriceChange(data[i-1].Close, data[i].Close) / 100f;
+                var ret = CalculatePriceChange(data[i-1].Close, data[i].Close) / 100m;
                 returns.Add(ret);
             }
             
             var mean = returns.Average();
             var sumSquares = returns.Sum(r => (r - mean) * (r - mean));
             
-            return (float)Math.Sqrt(sumSquares / (period - 1)) * (float)Math.Sqrt(252); // Annualized
+            return DecimalMath.Sqrt(sumSquares / (period - 1)) * DecimalMath.Sqrt(252m); // Annualized
         }
         
-        private static float CalculateParkinsonVolatility(IList<MarketDataSnapshot> data, int period)
+        private static decimal CalculateParkinsonVolatility(IList<MarketDataSnapshot> data, int period)
         {
-            if (data.Count < period) return 0f;
+            if (data.Count < period) return 0m;
             
-            var sum = 0.0;
+            var sum = 0m;
             for (int i = data.Count - period; i < data.Count; i++)
             {
-                var ratio = Math.Log((double)data[i].High / (double)data[i].Low);
+                var ratio = DecimalMath.Log(data[i].High / data[i].Low);
                 sum += ratio * ratio;
             }
             
-            return (float)Math.Sqrt(sum / (4 * period * Math.Log(2))) * (float)Math.Sqrt(252);
+            return DecimalMath.Sqrt(sum / (4 * period * DecimalMath.Log(2m))) * DecimalMath.Sqrt(252m);
         }
         
-        private static float CalculateTradeImbalance(MarketDataSnapshot snapshot)
+        private static decimal CalculateTradeImbalance(MarketDataSnapshot snapshot)
         {
             // Placeholder - would use actual trade data in production
-            return 0f;
+            return 0m;
         }
         
         private static bool IsMarketOpen(DateTime timestamp)
@@ -327,26 +327,26 @@ namespace TradingPlatform.ML.Features
     /// </summary>
     public class TechnicalFeatures
     {
-        public float Open { get; set; }
-        public float High { get; set; }
-        public float Low { get; set; }
-        public float Close { get; set; }
-        public float Volume { get; set; }
-        public float RSI { get; set; }
-        public float MACD { get; set; }
-        public float MACDSignal { get; set; }
-        public float MACDHistogram { get; set; }
-        public float BollingerUpper { get; set; }
-        public float BollingerMiddle { get; set; }
-        public float BollingerLower { get; set; }
-        public float SMA20 { get; set; }
-        public float SMA50 { get; set; }
-        public float EMA12 { get; set; }
-        public float EMA26 { get; set; }
-        public float VolumeRatio { get; set; }
-        public float VWAP { get; set; }
-        public float PriceChangePercent { get; set; }
-        public float DailyRange { get; set; }
+        public decimal Open { get; set; }
+        public decimal High { get; set; }
+        public decimal Low { get; set; }
+        public decimal Close { get; set; }
+        public decimal Volume { get; set; }
+        public decimal RSI { get; set; }
+        public decimal MACD { get; set; }
+        public decimal MACDSignal { get; set; }
+        public decimal MACDHistogram { get; set; }
+        public decimal BollingerUpper { get; set; }
+        public decimal BollingerMiddle { get; set; }
+        public decimal BollingerLower { get; set; }
+        public decimal SMA20 { get; set; }
+        public decimal SMA50 { get; set; }
+        public decimal EMA12 { get; set; }
+        public decimal EMA26 { get; set; }
+        public decimal VolumeRatio { get; set; }
+        public decimal VWAP { get; set; }
+        public decimal PriceChangePercent { get; set; }
+        public decimal DailyRange { get; set; }
         public bool IsGapUp { get; set; }
         public bool IsGapDown { get; set; }
     }
@@ -356,15 +356,15 @@ namespace TradingPlatform.ML.Features
     /// </summary>
     public class MicrostructureFeatures
     {
-        public float BidAskSpread { get; set; }
-        public float RelativeSpread { get; set; }
-        public float BidSize { get; set; }
-        public float AskSize { get; set; }
-        public float LiquidityImbalance { get; set; }
-        public float RealizedVolatility { get; set; }
-        public float ParkinsonVolatility { get; set; }
-        public float TradeImbalance { get; set; }
-        public float VolumeWeightedPrice { get; set; }
+        public decimal BidAskSpread { get; set; }
+        public decimal RelativeSpread { get; set; }
+        public decimal BidSize { get; set; }
+        public decimal AskSize { get; set; }
+        public decimal LiquidityImbalance { get; set; }
+        public decimal RealizedVolatility { get; set; }
+        public decimal ParkinsonVolatility { get; set; }
+        public decimal TradeImbalance { get; set; }
+        public decimal VolumeWeightedPrice { get; set; }
     }
     
     /// <summary>

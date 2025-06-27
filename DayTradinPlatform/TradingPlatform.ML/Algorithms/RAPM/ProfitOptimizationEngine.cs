@@ -69,8 +69,8 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                 var returns = new ExpectedReturns
                 {
                     Symbols = symbols,
-                    Returns = new Dictionary<string, float>(),
-                    Confidence = new Dictionary<string, float>(),
+                    Returns = new Dictionary<string, decimal>(),
+                    Confidence = new Dictionary<string, decimal>(),
                     Method = method,
                     Timestamp = DateTime.UtcNow
                 };
@@ -189,8 +189,8 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             }
         }
 
-        public TradingResult<float[,]> EstimateCovarianceMatrix(
-            Dictionary<string, float[]> historicalReturns,
+        public TradingResult<decimal[,]> EstimateCovarianceMatrix(
+            Dictionary<string, decimal[]> historicalReturns,
             CovarianceMethod method = CovarianceMethod.SampleCovariance)
         {
             LogMethodEntry();
@@ -206,7 +206,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                     method = CovarianceMethod.LedoitWolf;
                 }
 
-                float[,] covariance = method switch
+                decimal[,] covariance = method switch
                 {
                     CovarianceMethod.SampleCovariance => CalculateSampleCovariance(historicalReturns),
                     CovarianceMethod.LedoitWolf => CalculateLedoitWolfCovariance(historicalReturns),
@@ -219,12 +219,12 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                 EnsurePositiveSemiDefinite(covariance);
 
                 LogMethodExit();
-                return TradingResult<float[,]>.Success(covariance);
+                return TradingResult<decimal[,]>.Success(covariance);
             }
             catch (Exception ex)
             {
                 LogError("Error estimating covariance matrix", ex);
-                return TradingResult<float[,]>.Failure($"Failed to estimate covariance: {ex.Message}");
+                return TradingResult<decimal[,]>.Failure($"Failed to estimate covariance: {ex.Message}");
             }
         }
 
@@ -236,22 +236,22 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             _returnPredictors["Momentum"] = new MomentumPredictor(_marketDataService);
         }
 
-        private void ApplyBayesianShrinkage(ExpectedReturns returns, float shrinkageIntensity = 0.3f)
+        private void ApplyBayesianShrinkage(ExpectedReturns returns, decimal shrinkageIntensity = 0.3m)
         {
             LogDebug($"Applying Bayesian shrinkage with intensity {shrinkageIntensity:F4}");
             
             // Calculate prior (market average)
-            float marketReturn = returns.Returns.Values.Average();
+            decimal marketReturn = returns.Returns.Values.Average();
             LogDebug($"Market average return (prior): {marketReturn:F4}");
             
             // Apply shrinkage
             foreach (var symbol in returns.Symbols)
             {
-                float sampleReturn = returns.Returns[symbol];
-                float confidence = returns.Confidence[symbol];
+                decimal sampleReturn = returns.Returns[symbol];
+                decimal confidence = returns.Confidence[symbol];
                 
                 // More confident predictions get less shrinkage
-                float adjustedShrinkage = shrinkageIntensity * (1 - confidence);
+                decimal adjustedShrinkage = shrinkageIntensity * (1 - confidence);
                 
                 returns.Returns[symbol] = (1 - adjustedShrinkage) * sampleReturn + 
                                          adjustedShrinkage * marketReturn;
@@ -260,13 +260,13 @@ namespace TradingPlatform.ML.Algorithms.RAPM
 
         private void AdjustForMarketRegime(ExpectedReturns returns, MarketContext marketContext)
         {
-            float regimeMultiplier = marketContext.MarketRegime switch
+            decimal regimeMultiplier = marketContext.MarketRegime switch
             {
-                MarketRegime.Bullish => 1.1f,
-                MarketRegime.Bearish => 0.8f,
-                MarketRegime.Volatile => 0.9f,
-                MarketRegime.Crisis => 0.5f,
-                _ => 1.0f
+                MarketRegime.Bullish => 1.1m,
+                MarketRegime.Bearish => 0.8m,
+                MarketRegime.Volatile => 0.9m,
+                MarketRegime.Crisis => 0.5m,
+                _ => 1.0m
             };
 
             foreach (var symbol in returns.Symbols)
@@ -277,7 +277,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                 if (marketContext.MarketRegime == MarketRegime.Volatile || 
                     marketContext.MarketRegime == MarketRegime.Crisis)
                 {
-                    returns.Confidence[symbol] *= 0.7f;
+                    returns.Confidence[symbol] *= 0.7m;
                 }
             }
         }
@@ -291,12 +291,12 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             return await Task.Run(() =>
             {
                 int n = expectedReturns.Symbols.Count;
-                var weights = new float[n];
+                var weights = new decimal[n];
                 
                 // Initialize with equal weights
                 for (int i = 0; i < n; i++)
                 {
-                    weights[i] = 1.0f / n;
+                    weights[i] = 1.0m / n;
                 }
 
                 // SQP iterations
@@ -312,7 +312,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                     var direction = SolveQPSubproblem(gradient, hessian, weights, constraints);
 
                     // Line search
-                    float stepSize = LineSearch(weights, direction, expectedReturns, covariance, constraints);
+                    decimal stepSize = LineSearch(weights, direction, expectedReturns, covariance, constraints);
 
                     // Update weights
                     for (int i = 0; i < n; i++)
@@ -324,7 +324,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                     ProjectOntoConstraints(weights, constraints);
 
                     // Check convergence
-                    if (stepSize < 1e-6) break;
+                    if (stepSize < 0.000001m) break;
                 }
 
                 return CreateOptimizationResult(weights, expectedReturns, covariance, constraints);
@@ -347,9 +347,9 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                 swarm.Initialize(constraints);
 
                 // PSO parameters
-                float omega = 0.7f;  // Inertia weight
-                float c1 = 2.0f;     // Cognitive coefficient
-                float c2 = 2.0f;     // Social coefficient
+                decimal omega = 0.7m;  // Inertia weight
+                decimal c1 = 2.0m;     // Cognitive coefficient
+                decimal c2 = 2.0m;     // Social coefficient
 
                 // Run PSO
                 for (int iter = 0; iter < constraints.MaxIterations; iter++)
@@ -364,7 +364,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                     swarm.UpdatePositions(constraints);
 
                     // Adaptive parameters
-                    omega *= 0.99f; // Decrease inertia over time
+                    omega *= 0.99m; // Decrease inertia over time
                 }
 
                 return CreateOptimizationResult(swarm.GlobalBest, expectedReturns, covariance, constraints);
@@ -387,8 +387,8 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                 population.Initialize(constraints);
 
                 // GA parameters
-                float mutationRate = 0.01f;
-                float crossoverRate = 0.8f;
+                decimal mutationRate = 0.01m;
+                decimal crossoverRate = 0.8m;
                 int eliteCount = 5;
 
                 // Run GA
@@ -426,14 +426,14 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             return await OptimizeCVaRLinearProgramAsync(expectedReturns, covariance, constraints, cancellationToken);
         }
 
-        private float[] CalculateGradient(
-            float[] weights,
+        private decimal[] CalculateGradient(
+            decimal[] weights,
             ExpectedReturns expectedReturns,
             CovarianceMatrix covariance,
             OptimizationConstraints constraints)
         {
             int n = weights.Length;
-            var gradient = new float[n];
+            var gradient = new decimal[n];
             
             // Gradient of expected return
             for (int i = 0; i < n; i++)
@@ -444,7 +444,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             // Gradient of risk term
             for (int i = 0; i < n; i++)
             {
-                float riskGrad = 0;
+                decimal riskGrad = 0m;
                 for (int j = 0; j < n; j++)
                 {
                     riskGrad += 2 * constraints.RiskAversion * covariance.Values[i, j] * weights[j];
@@ -455,13 +455,13 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             return gradient;
         }
 
-        private float[,] CalculateHessian(
-            float[] weights,
+        private decimal[,] CalculateHessian(
+            decimal[] weights,
             CovarianceMatrix covariance,
             OptimizationConstraints constraints)
         {
             int n = weights.Length;
-            var hessian = new float[n, n];
+            var hessian = new decimal[n, n];
             
             // Hessian is 2 * lambda * Covariance for quadratic risk
             for (int i = 0; i < n; i++)
@@ -475,7 +475,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             return hessian;
         }
 
-        private void ProjectOntoConstraints(float[] weights, OptimizationConstraints constraints)
+        private void ProjectOntoConstraints(decimal[] weights, OptimizationConstraints constraints)
         {
             // Ensure non-negative weights if long-only
             if (constraints.LongOnly)
@@ -487,7 +487,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             }
 
             // Ensure sum to 1
-            float sum = weights.Sum();
+            decimal sum = weights.Sum();
             if (sum > 0)
             {
                 for (int i = 0; i < weights.Length; i++)
@@ -514,14 +514,14 @@ namespace TradingPlatform.ML.Algorithms.RAPM
         }
 
         private OptimizationResult CreateOptimizationResult(
-            float[] weights,
+            decimal[] weights,
             ExpectedReturns expectedReturns,
             CovarianceMatrix covariance,
             OptimizationConstraints constraints)
         {
             var result = new OptimizationResult
             {
-                Weights = new Dictionary<string, float>(),
+                Weights = new Dictionary<string, decimal>(),
                 ExpectedReturn = 0,
                 ExpectedRisk = 0,
                 SharpeRatio = 0,
@@ -544,7 +544,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                     result.ExpectedRisk += weights[i] * weights[j] * covariance.Values[i, j];
                 }
             }
-            result.ExpectedRisk = (float)Math.Sqrt(result.ExpectedRisk);
+            result.ExpectedRisk = DecimalMath.Sqrt(result.ExpectedRisk);
 
             // Calculate Sharpe ratio
             result.SharpeRatio = (result.ExpectedReturn - constraints.RiskFreeRate) / result.ExpectedRisk;
@@ -562,7 +562,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                 return TradingResult.Failure("Dimension mismatch between returns and covariance");
             }
 
-            if (constraints.MaxPositionSize < 1.0f / expectedReturns.Symbols.Count)
+            if (constraints.MaxPositionSize < 1.0m / expectedReturns.Symbols.Count)
             {
                 return TradingResult.Failure("Max position size too small for equal weighting");
             }
@@ -573,8 +573,8 @@ namespace TradingPlatform.ML.Algorithms.RAPM
         private bool ValidateOptimizationResult(OptimizationResult result, OptimizationConstraints constraints)
         {
             // Check weight constraints
-            float totalWeight = result.Weights.Values.Sum();
-            if (Math.Abs(totalWeight - 1.0f) > 0.001f)
+            decimal totalWeight = result.Weights.Values.Sum();
+            if (Math.Abs(totalWeight - 1.0m) > 0.001m)
             {
                 return false;
             }
@@ -595,15 +595,15 @@ namespace TradingPlatform.ML.Algorithms.RAPM
         }
 
         // Supporting methods for covariance estimation
-        private float[,] CalculateSampleCovariance(Dictionary<string, float[]> returns)
+        private decimal[,] CalculateSampleCovariance(Dictionary<string, decimal[]> returns)
         {
             int n = returns.Count;
             int t = returns.First().Value.Length;
             var symbols = returns.Keys.ToList();
-            var covariance = new float[n, n];
+            var covariance = new decimal[n, n];
 
             // Calculate means
-            var means = new float[n];
+            var means = new decimal[n];
             for (int i = 0; i < n; i++)
             {
                 means[i] = returns[symbols[i]].Average();
@@ -614,7 +614,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             {
                 for (int j = i; j < n; j++)
                 {
-                    float cov = 0;
+                    decimal cov = 0;
                     var returnsI = returns[symbols[i]];
                     var returnsJ = returns[symbols[j]];
 
@@ -632,15 +632,15 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             return covariance;
         }
 
-        private float[,] CalculateLedoitWolfCovariance(Dictionary<string, float[]> returns)
+        private decimal[,] CalculateLedoitWolfCovariance(Dictionary<string, decimal[]> returns)
         {
             // Ledoit-Wolf shrinkage estimator
             var sampleCov = CalculateSampleCovariance(returns);
             int n = returns.Count;
             
             // Shrinkage target (diagonal matrix with average variance)
-            var target = new float[n, n];
-            float avgVar = 0;
+            var target = new decimal[n, n];
+            decimal avgVar = 0;
             for (int i = 0; i < n; i++)
             {
                 avgVar += sampleCov[i, i];
@@ -653,10 +653,10 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             }
 
             // Calculate optimal shrinkage intensity
-            float shrinkage = CalculateOptimalShrinkage(returns, sampleCov, target);
+            decimal shrinkage = CalculateOptimalShrinkage(returns, sampleCov, target);
 
             // Apply shrinkage
-            var shrunkCov = new float[n, n];
+            var shrunkCov = new decimal[n, n];
             for (int i = 0; i < n; i++)
             {
                 for (int j = 0; j < n; j++)
@@ -668,10 +668,10 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             return shrunkCov;
         }
 
-        private float CalculateOptimalShrinkage(
-            Dictionary<string, float[]> returns,
-            float[,] sampleCov,
-            float[,] target)
+        private decimal CalculateOptimalShrinkage(
+            Dictionary<string, decimal[]> returns,
+            decimal[,] sampleCov,
+            decimal[,] target)
         {
             // Simplified Ledoit-Wolf shrinkage calculation
             // In practice, this would involve more complex calculations
@@ -679,17 +679,17 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             int t = returns.First().Value.Length;
 
             // Rule of thumb: more shrinkage when t < n
-            float shrinkage = Math.Max(0, Math.Min(1, (float)n / (float)t));
+            decimal shrinkage = Math.Max(0m, Math.Min(1m, (decimal)n / (decimal)t));
             
-            return shrinkage * 0.5f; // Conservative shrinkage
+            return shrinkage * 0.5m; // Conservative shrinkage
         }
 
-        private void EnsurePositiveSemiDefinite(float[,] matrix)
+        private void EnsurePositiveSemiDefinite(decimal[,] matrix)
         {
             int n = matrix.GetLength(0);
             
             // Simple approach: add small value to diagonal
-            float epsilon = 1e-6f;
+            decimal epsilon = 0.000001m;
             for (int i = 0; i < n; i++)
             {
                 matrix[i, i] += epsilon;
@@ -699,13 +699,13 @@ namespace TradingPlatform.ML.Algorithms.RAPM
         }
 
         // Placeholder methods for other covariance estimators
-        private float[,] CalculateFactorModelCovariance(Dictionary<string, float[]> returns)
+        private decimal[,] CalculateFactorModelCovariance(Dictionary<string, decimal[]> returns)
         {
             // Would implement factor model (e.g., Fama-French)
             return CalculateSampleCovariance(returns);
         }
 
-        private float[,] CalculateEWMACovariance(Dictionary<string, float[]> returns)
+        private decimal[,] CalculateEWMACovariance(Dictionary<string, decimal[]> returns)
         {
             // Would implement exponentially weighted moving average
             return CalculateSampleCovariance(returns);
@@ -724,40 +724,40 @@ namespace TradingPlatform.ML.Algorithms.RAPM
         }
 
         // Placeholder for QP solver
-        private float[] SolveQPSubproblem(
-            float[] gradient,
-            float[,] hessian,
-            float[] currentWeights,
+        private decimal[] SolveQPSubproblem(
+            decimal[] gradient,
+            decimal[,] hessian,
+            decimal[] currentWeights,
             OptimizationConstraints constraints)
         {
             // Simplified - just return negative gradient direction
-            var direction = new float[gradient.Length];
+            var direction = new decimal[gradient.Length];
             for (int i = 0; i < gradient.Length; i++)
             {
-                direction[i] = -gradient[i] * 0.01f; // Small step
+                direction[i] = -gradient[i] * 0.01m; // Small step
             }
             return direction;
         }
 
         // Simple line search
-        private float LineSearch(
-            float[] weights,
-            float[] direction,
+        private decimal LineSearch(
+            decimal[] weights,
+            decimal[] direction,
             ExpectedReturns expectedReturns,
             CovarianceMatrix covariance,
             OptimizationConstraints constraints)
         {
             // Backtracking line search
-            float alpha = 1.0f;
-            float beta = 0.5f;
+            decimal alpha = 1.0m;
+            decimal beta = 0.5m;
             
-            while (alpha > 1e-6)
+            while (alpha > 0.000001m)
             {
                 // Check if step is feasible
                 bool feasible = true;
                 for (int i = 0; i < weights.Length; i++)
                 {
-                    float newWeight = weights[i] + alpha * direction[i];
+                    decimal newWeight = weights[i] + alpha * direction[i];
                     if (constraints.LongOnly && newWeight < 0)
                     {
                         feasible = false;
@@ -781,15 +781,15 @@ namespace TradingPlatform.ML.Algorithms.RAPM
     public class ExpectedReturns
     {
         public List<string> Symbols { get; set; }
-        public Dictionary<string, float> Returns { get; set; }
-        public Dictionary<string, float> Confidence { get; set; }
+        public Dictionary<string, decimal> Returns { get; set; }
+        public Dictionary<string, decimal> Confidence { get; set; }
         public ReturnEstimationMethod Method { get; set; }
         public DateTime Timestamp { get; set; }
     }
 
     public class CovarianceMatrix
     {
-        public float[,] Values { get; set; }
+        public decimal[,] Values { get; set; }
         public int Size => Values.GetLength(0);
         public CovarianceMethod Method { get; set; }
         public DateTime Timestamp { get; set; }
@@ -798,11 +798,11 @@ namespace TradingPlatform.ML.Algorithms.RAPM
     public class OptimizationConstraints
     {
         public bool LongOnly { get; set; } = true;
-        public float MaxPositionSize { get; set; } = 0.2f;
-        public float MinPositionSize { get; set; } = 0.01f;
-        public float RiskBudget { get; set; } = 0.15f;
-        public float RiskAversion { get; set; } = 1.0f;
-        public float RiskFreeRate { get; set; } = 0.02f;
+        public decimal MaxPositionSize { get; set; } = 0.2m;
+        public decimal MinPositionSize { get; set; } = 0.01m;
+        public decimal RiskBudget { get; set; } = 0.15m;
+        public decimal RiskAversion { get; set; } = 1.0m;
+        public decimal RiskFreeRate { get; set; } = 0.02m;
         public int MaxIterations { get; set; } = 1000;
         public ObjectiveFunction ObjectiveFunction { get; set; } = ObjectiveFunction.RiskAdjustedReturn;
         public List<string> RequiredSymbols { get; set; }
@@ -811,10 +811,10 @@ namespace TradingPlatform.ML.Algorithms.RAPM
 
     public class OptimizationResult
     {
-        public Dictionary<string, float> Weights { get; set; }
-        public float ExpectedReturn { get; set; }
-        public float ExpectedRisk { get; set; }
-        public float SharpeRatio { get; set; }
+        public Dictionary<string, decimal> Weights { get; set; }
+        public decimal ExpectedReturn { get; set; }
+        public decimal ExpectedRisk { get; set; }
+        public decimal SharpeRatio { get; set; }
         public ObjectiveFunction Method { get; set; }
         public Dictionary<string, object> Metadata { get; set; }
     }
@@ -864,9 +864,9 @@ namespace TradingPlatform.ML.Algorithms.RAPM
 
     public class ReturnPrediction
     {
-        public float ExpectedReturn { get; set; }
-        public float Confidence { get; set; }
-        public Dictionary<string, float> FactorContributions { get; set; }
+        public decimal ExpectedReturn { get; set; }
+        public decimal Confidence { get; set; }
+        public Dictionary<string, decimal> FactorContributions { get; set; }
     }
 
     // Placeholder implementations
@@ -891,8 +891,8 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             // Simplified implementation
             return TradingResult<ReturnPrediction>.Success(new ReturnPrediction
             {
-                ExpectedReturn = 0.08f,
-                Confidence = 0.7f
+                ExpectedReturn = 0.08m,
+                Confidence = 0.7m
             });
         }
     }
@@ -918,8 +918,8 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             // Simplified implementation
             return TradingResult<ReturnPrediction>.Success(new ReturnPrediction
             {
-                ExpectedReturn = 0.10f,
-                Confidence = 0.8f
+                ExpectedReturn = 0.10m,
+                Confidence = 0.8m
             });
         }
     }
@@ -941,8 +941,8 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             // Simplified implementation
             return TradingResult<ReturnPrediction>.Success(new ReturnPrediction
             {
-                ExpectedReturn = 0.06f,
-                Confidence = 0.6f
+                ExpectedReturn = 0.06m,
+                Confidence = 0.6m
             });
         }
     }
@@ -964,8 +964,8 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             // Simplified implementation
             return TradingResult<ReturnPrediction>.Success(new ReturnPrediction
             {
-                ExpectedReturn = 0.12f,
-                Confidence = 0.65f
+                ExpectedReturn = 0.12m,
+                Confidence = 0.65m
             });
         }
     }
@@ -975,14 +975,14 @@ namespace TradingPlatform.ML.Algorithms.RAPM
     {
         private readonly Particle[] _particles;
         private readonly int _dimensions;
-        public float[] GlobalBest { get; private set; }
-        private float _globalBestFitness = float.MinValue;
+        public decimal[] GlobalBest { get; private set; }
+        private decimal _globalBestFitness = decimal.MinValue;
 
         public ParticleSwarm(int particleCount, int dimensions)
         {
             _particles = new Particle[particleCount];
             _dimensions = dimensions;
-            GlobalBest = new float[dimensions];
+            GlobalBest = new decimal[dimensions];
             
             for (int i = 0; i < particleCount; i++)
             {
@@ -1006,7 +1006,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
         {
             foreach (var particle in _particles)
             {
-                float fitness = CalculateFitness(particle.Position, returns, covariance, constraints);
+                decimal fitness = CalculateFitness(particle.Position, returns, covariance, constraints);
                 particle.UpdatePersonalBest(fitness);
                 
                 if (fitness > _globalBestFitness)
@@ -1017,7 +1017,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             }
         }
 
-        public void UpdateVelocities(float omega, float c1, float c2)
+        public void UpdateVelocities(decimal omega, decimal c1, decimal c2)
         {
             var random = new Random();
             foreach (var particle in _particles)
@@ -1034,21 +1034,21 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             }
         }
 
-        private float CalculateFitness(
-            float[] weights,
+        private decimal CalculateFitness(
+            decimal[] weights,
             ExpectedReturns returns,
             CovarianceMatrix covariance,
             OptimizationConstraints constraints)
         {
             // Calculate expected return
-            float expectedReturn = 0;
+            decimal expectedReturn = 0;
             for (int i = 0; i < weights.Length; i++)
             {
                 expectedReturn += weights[i] * returns.Returns[returns.Symbols[i]];
             }
 
             // Calculate risk
-            float risk = 0;
+            decimal risk = 0;
             for (int i = 0; i < weights.Length; i++)
             {
                 for (int j = 0; j < weights.Length; j++)
@@ -1056,7 +1056,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                     risk += weights[i] * weights[j] * covariance.Values[i, j];
                 }
             }
-            risk = (float)Math.Sqrt(risk);
+            risk = DecimalMath.Sqrt(risk);
 
             // Risk-adjusted return
             return expectedReturn - constraints.RiskAversion * risk;
@@ -1065,26 +1065,26 @@ namespace TradingPlatform.ML.Algorithms.RAPM
 
     internal class Particle
     {
-        public float[] Position { get; private set; }
-        public float[] Velocity { get; private set; }
-        public float[] PersonalBest { get; private set; }
-        public float PersonalBestFitness { get; private set; } = float.MinValue;
+        public decimal[] Position { get; private set; }
+        public decimal[] Velocity { get; private set; }
+        public decimal[] PersonalBest { get; private set; }
+        public decimal PersonalBestFitness { get; private set; } = decimal.MinValue;
 
         public Particle(int dimensions)
         {
-            Position = new float[dimensions];
-            Velocity = new float[dimensions];
-            PersonalBest = new float[dimensions];
+            Position = new decimal[dimensions];
+            Velocity = new decimal[dimensions];
+            PersonalBest = new decimal[dimensions];
         }
 
         public void Initialize(Random random, OptimizationConstraints constraints)
         {
-            float sum = 0;
+            decimal sum = 0;
             for (int i = 0; i < Position.Length; i++)
             {
-                Position[i] = (float)random.NextDouble();
+                Position[i] = (decimal)random.NextDouble();
                 sum += Position[i];
-                Velocity[i] = (float)(random.NextDouble() - 0.5) * 0.1f;
+                Velocity[i] = (decimal)(random.NextDouble() - 0.5) * 0.1m;
             }
 
             // Normalize to sum to 1
@@ -1096,7 +1096,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             Array.Copy(Position, PersonalBest, Position.Length);
         }
 
-        public void UpdatePersonalBest(float fitness)
+        public void UpdatePersonalBest(decimal fitness)
         {
             if (fitness > PersonalBestFitness)
             {
@@ -1105,12 +1105,12 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             }
         }
 
-        public void UpdateVelocity(float[] globalBest, float omega, float c1, float c2, Random random)
+        public void UpdateVelocity(decimal[] globalBest, decimal omega, decimal c1, decimal c2, Random random)
         {
             for (int i = 0; i < Velocity.Length; i++)
             {
-                float r1 = (float)random.NextDouble();
-                float r2 = (float)random.NextDouble();
+                decimal r1 = (decimal)random.NextDouble();
+                decimal r2 = (decimal)random.NextDouble();
                 
                 Velocity[i] = omega * Velocity[i] +
                              c1 * r1 * (PersonalBest[i] - Position[i]) +
@@ -1133,7 +1133,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             }
 
             // Normalize to sum to 1
-            float sum = Position.Sum();
+            decimal sum = Position.Sum();
             if (sum > 0)
             {
                 for (int i = 0; i < Position.Length; i++)
@@ -1148,7 +1148,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
     {
         private readonly Individual[] _population;
         private readonly int _dimensions;
-        public float[] BestIndividual => _population[0].Genes;
+        public decimal[] BestIndividual => _population[0].Genes;
 
         public GeneticPopulation(int size, int dimensions)
         {
@@ -1177,7 +1177,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
         {
             foreach (var individual in _population)
             {
-                float fitness = CalculateFitness(individual.Genes, returns, covariance, constraints);
+                decimal fitness = CalculateFitness(individual.Genes, returns, covariance, constraints);
                 individual.Fitness = fitness;
             }
 
@@ -1207,19 +1207,19 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             return parents;
         }
 
-        public Individual[] Crossover(Individual[] parents, float crossoverRate)
+        public Individual[] Crossover(Individual[] parents, decimal crossoverRate)
         {
             var random = new Random();
             var offspring = new Individual[parents.Length];
             
             for (int i = 0; i < parents.Length; i += 2)
             {
-                if (i + 1 < parents.Length && random.NextDouble() < crossoverRate)
+                if (i + 1 < parents.Length && (decimal)random.NextDouble() < crossoverRate)
                 {
                     // Arithmetic crossover
                     var child1 = new Individual(_dimensions);
                     var child2 = new Individual(_dimensions);
-                    float alpha = (float)random.NextDouble();
+                    decimal alpha = (decimal)random.NextDouble();
                     
                     for (int j = 0; j < _dimensions; j++)
                     {
@@ -1246,12 +1246,12 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             return offspring;
         }
 
-        public void Mutate(Individual[] individuals, float mutationRate)
+        public void Mutate(Individual[] individuals, decimal mutationRate)
         {
             var random = new Random();
             foreach (var individual in individuals)
             {
-                if (random.NextDouble() < mutationRate)
+                if ((decimal)random.NextDouble() < mutationRate)
                 {
                     individual.Mutate(random);
                 }
@@ -1267,20 +1267,20 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             }
         }
 
-        private float CalculateFitness(
-            float[] weights,
+        private decimal CalculateFitness(
+            decimal[] weights,
             ExpectedReturns returns,
             CovarianceMatrix covariance,
             OptimizationConstraints constraints)
         {
             // Same as particle swarm fitness
-            float expectedReturn = 0;
+            decimal expectedReturn = 0;
             for (int i = 0; i < weights.Length; i++)
             {
                 expectedReturn += weights[i] * returns.Returns[returns.Symbols[i]];
             }
 
-            float risk = 0;
+            decimal risk = 0;
             for (int i = 0; i < weights.Length; i++)
             {
                 for (int j = 0; j < weights.Length; j++)
@@ -1288,7 +1288,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                     risk += weights[i] * weights[j] * covariance.Values[i, j];
                 }
             }
-            risk = (float)Math.Sqrt(risk);
+            risk = DecimalMath.Sqrt(risk);
 
             return expectedReturn - constraints.RiskAversion * risk;
         }
@@ -1296,20 +1296,20 @@ namespace TradingPlatform.ML.Algorithms.RAPM
 
     internal class Individual
     {
-        public float[] Genes { get; private set; }
-        public float Fitness { get; set; }
+        public decimal[] Genes { get; private set; }
+        public decimal Fitness { get; set; }
 
         public Individual(int dimensions)
         {
-            Genes = new float[dimensions];
+            Genes = new decimal[dimensions];
         }
 
         public void Initialize(Random random, OptimizationConstraints constraints)
         {
-            float sum = 0;
+            decimal sum = 0;
             for (int i = 0; i < Genes.Length; i++)
             {
-                Genes[i] = (float)random.NextDouble();
+                Genes[i] = (decimal)random.NextDouble();
                 sum += Genes[i];
             }
             Normalize();
@@ -1317,7 +1317,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
 
         public void Normalize()
         {
-            float sum = Genes.Sum();
+            decimal sum = Genes.Sum();
             if (sum > 0)
             {
                 for (int i = 0; i < Genes.Length; i++)
@@ -1334,11 +1334,11 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             {
                 if (random.NextDouble() < 0.1) // 10% chance per gene
                 {
-                    double u1 = 1.0 - random.NextDouble();
-                    double u2 = 1.0 - random.NextDouble();
-                    double normal = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Sin(2.0 * Math.PI * u2);
+                    decimal u1 = 1.0m - (decimal)random.NextDouble();
+                    decimal u2 = 1.0m - (decimal)random.NextDouble();
+                    decimal normal = DecimalMath.Sqrt(-2.0m * DecimalMath.Log(u1)) * DecimalMath.Sin(2.0m * (decimal)Math.PI * u2);
                     
-                    Genes[i] += (float)(normal * 0.1);
+                    Genes[i] += (decimal)(normal * 0.1);
                     Genes[i] = Math.Max(0, Genes[i]);
                 }
             }

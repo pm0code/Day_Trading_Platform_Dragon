@@ -58,7 +58,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
         /// </summary>
         public async Task<TradingResult<RebalanceDecision>> ShouldRebalanceAsync(
             Portfolio currentPortfolio,
-            Dictionary<string, float> targetWeights,
+            Dictionary<string, decimal> targetWeights,
             MarketContext marketContext,
             RebalanceConfiguration config = null,
             CancellationToken cancellationToken = default)
@@ -146,7 +146,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
         /// </summary>
         public async Task<TradingResult<RebalancePlan>> CalculateRebalancePlanAsync(
             Portfolio currentPortfolio,
-            Dictionary<string, float> targetWeights,
+            Dictionary<string, decimal> targetWeights,
             RebalanceConfiguration config = null,
             CancellationToken cancellationToken = default)
         {
@@ -373,12 +373,12 @@ namespace TradingPlatform.ML.Algorithms.RAPM
 
         private async Task<TradingResult<DriftAnalysis>> CalculatePortfolioDriftAsync(
             Portfolio portfolio,
-            Dictionary<string, float> targetWeights,
+            Dictionary<string, decimal> targetWeights,
             CancellationToken cancellationToken)
         {
             var drift = new DriftAnalysis
             {
-                AssetDrifts = new Dictionary<string, float>()
+                AssetDrifts = new Dictionary<string, decimal>()
             };
 
             // Get current prices
@@ -393,8 +393,8 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             // Calculate drift for each asset
             foreach (var target in targetWeights)
             {
-                float currentWeight = currentWeights.GetValueOrDefault(target.Key, 0);
-                float driftAmount = Math.Abs(currentWeight - target.Value);
+                decimal currentWeight = currentWeights.GetValueOrDefault(target.Key, 0m);
+                decimal driftAmount = Math.Abs(currentWeight - target.Value);
                 drift.AssetDrifts[target.Key] = driftAmount;
             }
 
@@ -420,7 +420,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             }
 
             // Check VaR limit
-            var varResult = _riskMeasures.CalculateVaR(returns.Data, 0.95f);
+            var varResult = _riskMeasures.CalculateVaR(returns.Data, 0.95m);
             if (varResult.IsSuccess && varResult.Data > config.MaxVaR)
             {
                 check.RiskLimitBreached = true;
@@ -430,7 +430,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             }
 
             // Check volatility limit
-            float volatility = CalculateVolatility(returns.Data);
+            decimal volatility = CalculateVolatility(returns.Data);
             if (volatility > config.MaxVolatility)
             {
                 check.RiskLimitBreached = true;
@@ -442,11 +442,11 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             return TradingResult<RiskLimitCheck>.Success(check);
         }
 
-        private Dictionary<string, float> CalculateCurrentWeights(
+        private Dictionary<string, decimal> CalculateCurrentWeights(
             Portfolio portfolio,
             Dictionary<string, decimal> prices)
         {
-            var weights = new Dictionary<string, float>();
+            var weights = new Dictionary<string, decimal>();
             decimal totalValue = 0;
 
             // Calculate total portfolio value
@@ -464,7 +464,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                 if (prices.TryGetValue(holding.Key, out var price))
                 {
                     decimal value = holding.Value.Shares * price;
-                    weights[holding.Key] = (float)(value / totalValue);
+                    weights[holding.Key] = value / totalValue;
                 }
             }
 
@@ -472,8 +472,8 @@ namespace TradingPlatform.ML.Algorithms.RAPM
         }
 
         private List<RebalanceTrade> OptimizeRebalancingTrades(
-            Dictionary<string, float> currentWeights,
-            Dictionary<string, float> targetWeights,
+            Dictionary<string, decimal> currentWeights,
+            Dictionary<string, decimal> targetWeights,
             Dictionary<string, decimal> prices,
             decimal portfolioValue,
             RebalanceConfiguration config)
@@ -485,9 +485,9 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             
             foreach (var symbol in allSymbols)
             {
-                float currentWeight = currentWeights.GetValueOrDefault(symbol, 0);
-                float targetWeight = targetWeights.GetValueOrDefault(symbol, 0);
-                float weightChange = targetWeight - currentWeight;
+                decimal currentWeight = currentWeights.GetValueOrDefault(symbol, 0m);
+                decimal targetWeight = targetWeights.GetValueOrDefault(symbol, 0m);
+                decimal weightChange = targetWeight - currentWeight;
 
                 // Apply minimum trade threshold to reduce small trades
                 if (Math.Abs(weightChange) < config.MinTradeThreshold)
@@ -496,7 +496,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                 }
 
                 // Calculate trade value
-                decimal tradeValue = (decimal)weightChange * portfolioValue;
+                decimal tradeValue = weightChange * portfolioValue;
                 int shares = (int)(tradeValue / prices[symbol]);
 
                 if (shares != 0)
@@ -534,7 +534,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                 // Market impact (square-root model)
                 decimal turnover = (decimal)Math.Abs(trade.WeightChange);
                 decimal marketImpact = tradeValue * config.MarketImpactCoefficient * 
-                                     (decimal)Math.Sqrt((double)turnover);
+                                     DecimalMath.Sqrt(turnover);
                 estimate.MarketImpact += marketImpact;
 
                 // Fixed costs
@@ -545,27 +545,27 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             return estimate;
         }
 
-        private float CalculateExpectedImprovement(
-            Dictionary<string, float> currentWeights,
-            Dictionary<string, float> targetWeights,
+        private decimal CalculateExpectedImprovement(
+            Dictionary<string, decimal> currentWeights,
+            Dictionary<string, decimal> targetWeights,
             decimal transactionCost,
             decimal portfolioValue)
         {
             // Simplified calculation - would use more sophisticated model in practice
-            float trackingError = 0;
+            decimal trackingError = 0m;
             
             foreach (var symbol in targetWeights.Keys)
             {
-                float current = currentWeights.GetValueOrDefault(symbol, 0);
-                float diff = targetWeights[symbol] - current;
+                decimal current = currentWeights.GetValueOrDefault(symbol, 0m);
+                decimal diff = targetWeights[symbol] - current;
                 trackingError += diff * diff;
             }
             
-            trackingError = (float)Math.Sqrt(trackingError);
+            trackingError = DecimalMath.Sqrt(trackingError);
             
             // Expected improvement from reducing tracking error minus costs
-            float costDrag = (float)(transactionCost / portfolioValue);
-            return trackingError * 0.5f - costDrag; // Assume 50% of tracking error translates to return
+            decimal costDrag = transactionCost / portfolioValue;
+            return trackingError * 0.5m - costDrag; // Assume 50% of tracking error translates to return
         }
 
         private async Task<TradingResult<Dictionary<string, decimal>>> GetCurrentPricesAsync(
@@ -584,27 +584,27 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             return await Task.FromResult(TradingResult<Dictionary<string, decimal>>.Success(prices));
         }
 
-        private async Task<TradingResult<float[]>> GetPortfolioReturnsAsync(
+        private async Task<TradingResult<decimal[]>> GetPortfolioReturnsAsync(
             Portfolio portfolio,
             CancellationToken cancellationToken)
         {
             // Simplified - would calculate actual portfolio returns
-            var returns = new float[252];
+            var returns = new decimal[252];
             var random = new Random();
             
             for (int i = 0; i < returns.Length; i++)
             {
-                returns[i] = (float)(random.NextDouble() * 0.04 - 0.02);
+                returns[i] = (decimal)(random.NextDouble() * 0.04 - 0.02);
             }
 
-            return await Task.FromResult(TradingResult<float[]>.Success(returns));
+            return await Task.FromResult(TradingResult<decimal[]>.Success(returns));
         }
 
-        private float CalculateVolatility(float[] returns)
+        private decimal CalculateVolatility(decimal[] returns)
         {
-            float mean = returns.Average();
-            float variance = returns.Select(r => (r - mean) * (r - mean)).Average();
-            return (float)Math.Sqrt(variance) * (float)Math.Sqrt(252); // Annualized
+            decimal mean = returns.Average();
+            decimal variance = returns.Select(r => (r - mean) * (r - mean)).Average();
+            return DecimalMath.Sqrt(variance) * DecimalMath.Sqrt(252m); // Annualized
         }
 
         private async Task<TradingResult<ExecutedTrade>> ExecuteSingleTradeAsync(
@@ -658,14 +658,14 @@ namespace TradingPlatform.ML.Algorithms.RAPM
     {
         Task<TradingResult<RebalanceDecision>> ShouldRebalanceAsync(
             Portfolio currentPortfolio,
-            Dictionary<string, float> targetWeights,
+            Dictionary<string, decimal> targetWeights,
             MarketContext marketContext,
             RebalanceConfiguration config = null,
             CancellationToken cancellationToken = default);
 
         Task<TradingResult<RebalancePlan>> CalculateRebalancePlanAsync(
             Portfolio currentPortfolio,
-            Dictionary<string, float> targetWeights,
+            Dictionary<string, decimal> targetWeights,
             RebalanceConfiguration config = null,
             CancellationToken cancellationToken = default);
 
@@ -713,12 +713,12 @@ namespace TradingPlatform.ML.Algorithms.RAPM
         public int MinRebalanceDays { get; set; } = 30;
         
         // Drift thresholds
-        public float DriftThreshold { get; set; } = 0.05f; // 5%
-        public float PartialRebalanceThreshold { get; set; } = 0.03f; // 3%
+        public decimal DriftThreshold { get; set; } = 0.05m; // 5%
+        public decimal PartialRebalanceThreshold { get; set; } = 0.03m; // 3%
         
         // Risk limits
-        public float MaxVaR { get; set; } = 0.05f; // 5% VaR
-        public float MaxVolatility { get; set; } = 0.20f; // 20% annual
+        public decimal MaxVaR { get; set; } = 0.05m; // 5% VaR
+        public decimal MaxVolatility { get; set; } = 0.20m; // 20% annual
         
         // Transaction costs
         public decimal SpreadCostBps { get; set; } = 5; // 5 basis points
@@ -726,8 +726,8 @@ namespace TradingPlatform.ML.Algorithms.RAPM
         public decimal CommissionPerTrade { get; set; } = 1m;
         
         // Optimization
-        public float MinTradeThreshold { get; set; } = 0.005f; // 0.5% minimum trade
-        public float MinImprovementThreshold { get; set; } = 0.001f; // 0.1% minimum improvement
+        public decimal MinTradeThreshold { get; set; } = 0.005m; // 0.5% minimum trade
+        public decimal MinImprovementThreshold { get; set; } = 0.001m; // 0.1% minimum improvement
     }
 
     public class RebalancePlan
@@ -735,7 +735,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
         public DateTime Timestamp { get; set; }
         public List<RebalanceTrade> Trades { get; set; }
         public TransactionCostEstimate EstimatedCosts { get; set; }
-        public float ExpectedImprovement { get; set; }
+        public decimal ExpectedImprovement { get; set; }
         public RebalanceAction RecommendedAction { get; set; }
     }
 
@@ -745,9 +745,9 @@ namespace TradingPlatform.ML.Algorithms.RAPM
         public TradeType TradeType { get; set; }
         public int Shares { get; set; }
         public decimal EstimatedPrice { get; set; }
-        public float CurrentWeight { get; set; }
-        public float TargetWeight { get; set; }
-        public float WeightChange { get; set; }
+        public decimal CurrentWeight { get; set; }
+        public decimal TargetWeight { get; set; }
+        public decimal WeightChange { get; set; }
     }
 
     public enum TradeType
@@ -825,10 +825,10 @@ namespace TradingPlatform.ML.Algorithms.RAPM
     {
         public DateTime Timestamp { get; set; }
         public RebalanceFrequency RebalanceFrequency { get; set; }
-        public float DriftThreshold { get; set; }
-        public float TransactionCostSensitivity { get; set; }
+        public decimal DriftThreshold { get; set; }
+        public decimal TransactionCostSensitivity { get; set; }
         public bool UseVolatilityTargeting { get; set; }
-        public float TargetVolatility { get; set; }
+        public decimal TargetVolatility { get; set; }
         public MarketRegime MarketRegime { get; set; }
     }
 
@@ -843,23 +843,23 @@ namespace TradingPlatform.ML.Algorithms.RAPM
 
     public class DriftAnalysis
     {
-        public Dictionary<string, float> AssetDrifts { get; set; }
-        public float MaxDrift { get; set; }
-        public float TotalDrift { get; set; }
+        public Dictionary<string, decimal> AssetDrifts { get; set; }
+        public decimal MaxDrift { get; set; }
+        public decimal TotalDrift { get; set; }
     }
 
     public class RiskLimitCheck
     {
         public bool RiskLimitBreached { get; set; }
         public string BreachedMetric { get; set; }
-        public float CurrentValue { get; set; }
-        public float Limit { get; set; }
+        public decimal CurrentValue { get; set; }
+        public decimal Limit { get; set; }
     }
 
     public class HistoricalPerformance
     {
-        public float RecentSharpeRatio { get; set; }
-        public float RecentVolatility { get; set; }
+        public decimal RecentSharpeRatio { get; set; }
+        public decimal RecentVolatility { get; set; }
         public decimal RecentMaxDrawdown { get; set; }
         public int DaysSinceLastRebalance { get; set; }
     }

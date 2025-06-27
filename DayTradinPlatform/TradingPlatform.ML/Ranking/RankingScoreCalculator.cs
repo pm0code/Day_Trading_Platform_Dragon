@@ -261,7 +261,7 @@ namespace TradingPlatform.ML.Ranking
             }
         }
 
-        private float CalculateCompositeScore(
+        private decimal CalculateCompositeScore(
             RankingPrediction prediction,
             RankingFactors factors,
             RankingOptions options)
@@ -269,12 +269,12 @@ namespace TradingPlatform.ML.Ranking
             // Weight different components
             var weights = options.ScoreWeights ?? new ScoreWeights
             {
-                ModelPrediction = 0.4f,
-                TechnicalFactors = 0.2f,
-                FundamentalFactors = 0.15f,
-                SentimentFactors = 0.1f,
-                MicrostructureFactors = 0.1f,
-                QualityFactors = 0.05f
+                ModelPrediction = 0.4m,
+                TechnicalFactors = 0.2m,
+                FundamentalFactors = 0.15m,
+                SentimentFactors = 0.1m,
+                MicrostructureFactors = 0.1m,
+                QualityFactors = 0.05m
             };
 
             var composite = 
@@ -288,48 +288,48 @@ namespace TradingPlatform.ML.Ranking
             return Math.Max(0, Math.Min(1, composite));
         }
 
-        private float ApplyMarketRegimeAdjustments(
-            float score,
+        private decimal ApplyMarketRegimeAdjustments(
+            decimal score,
             MarketContext marketContext,
             RankingOptions options)
         {
             var adjustedScore = score;
 
             // Volatility adjustment
-            if (marketContext.MarketVolatility > 0.3f)
+            if (marketContext.MarketVolatility > 0.3m)
             {
-                adjustedScore *= (1 - (marketContext.MarketVolatility - 0.3f) * 0.5f);
+                adjustedScore *= (1 - (marketContext.MarketVolatility - 0.3m) * 0.5m);
             }
 
             // Trend adjustment
             switch (marketContext.MarketRegime)
             {
                 case MarketRegime.Bullish:
-                    adjustedScore *= 1.1f;
+                    adjustedScore *= 1.1m;
                     break;
                 case MarketRegime.Bearish:
-                    adjustedScore *= 0.9f;
+                    adjustedScore *= 0.9m;
                     break;
                 case MarketRegime.Volatile:
-                    adjustedScore *= 0.85f;
+                    adjustedScore *= 0.85m;
                     break;
             }
 
             // Liquidity adjustment
-            if (marketContext.MarketLiquidity < 0.3f)
+            if (marketContext.MarketLiquidity < 0.3m)
             {
-                adjustedScore *= 0.8f;
+                adjustedScore *= 0.8m;
             }
 
             return Math.Max(0, Math.Min(1, adjustedScore));
         }
 
-        private float CalculateConfidenceMetrics(
+        private decimal CalculateConfidenceMetrics(
             RankingFactors factors,
             RankingPrediction prediction,
             MarketContext marketContext)
         {
-            var confidence = 1.0f;
+            var confidence = 1.0m;
 
             // Factor completeness
             var factorCompleteness = CalculateFactorCompleteness(factors);
@@ -345,18 +345,18 @@ namespace TradingPlatform.ML.Ranking
             switch (marketContext.MarketRegime)
             {
                 case MarketRegime.Stable:
-                    confidence *= 1.0f;
+                    confidence *= 1.0m;
                     break;
                 case MarketRegime.Volatile:
-                    confidence *= 0.7f;
+                    confidence *= 0.7m;
                     break;
                 case MarketRegime.Crisis:
-                    confidence *= 0.5f;
+                    confidence *= 0.5m;
                     break;
             }
 
             // Data quality adjustment
-            if (factors.DataQuality < 0.8f)
+            if (factors.DataQuality < 0.8m)
             {
                 confidence *= factors.DataQuality;
             }
@@ -364,9 +364,9 @@ namespace TradingPlatform.ML.Ranking
             return Math.Max(0, Math.Min(1, confidence));
         }
 
-        private float CalculateFactorCompleteness(RankingFactors factors)
+        private decimal CalculateFactorCompleteness(RankingFactors factors)
         {
-            var completenessScores = new List<float>();
+            var completenessScores = new List<decimal>();
 
             // Check each factor category
             if (factors.TechnicalFactors != null)
@@ -384,14 +384,14 @@ namespace TradingPlatform.ML.Ranking
             if (factors.QualityFactors != null)
                 completenessScores.Add(factors.QualityFactors.DataCompleteness);
 
-            return completenessScores.Any() ? completenessScores.Average() : 0.5f;
+            return completenessScores.Any() ? completenessScores.Average() : 0.5m;
         }
 
-        private Dictionary<string, float> CalculateFactorContributions(
+        private Dictionary<string, decimal> CalculateFactorContributions(
             RankingFactors factors,
             RankingPrediction prediction)
         {
-            var contributions = new Dictionary<string, float>();
+            var contributions = new Dictionary<string, decimal>();
 
             // Get feature importances if available
             if (prediction.FeatureImportances != null && prediction.FeatureImportances.Any())
@@ -404,11 +404,11 @@ namespace TradingPlatform.ML.Ranking
             else
             {
                 // Use default contributions based on factor scores
-                contributions["Technical"] = factors.TechnicalFactors.CompositeScore * 0.25f;
-                contributions["Fundamental"] = factors.FundamentalFactors.CompositeScore * 0.20f;
-                contributions["Sentiment"] = factors.SentimentFactors.CompositeScore * 0.20f;
-                contributions["Microstructure"] = factors.MicrostructureFactors.CompositeScore * 0.20f;
-                contributions["Quality"] = factors.QualityFactors.CompositeQuality * 0.15f;
+                contributions["Technical"] = factors.TechnicalFactors.CompositeScore * 0.25m;
+                contributions["Fundamental"] = factors.FundamentalFactors.CompositeScore * 0.20m;
+                contributions["Sentiment"] = factors.SentimentFactors.CompositeScore * 0.20m;
+                contributions["Microstructure"] = factors.MicrostructureFactors.CompositeScore * 0.20m;
+                contributions["Quality"] = factors.QualityFactors.CompositeQuality * 0.15m;
             }
 
             return contributions;
@@ -427,7 +427,7 @@ namespace TradingPlatform.ML.Ranking
                 for (int i = 0; i < stocks.Count; i++)
                 {
                     stocks[i].Rank = i + 1;
-                    stocks[i].PercentileRank = (float)(stocks.Count - i) / stocks.Count;
+                    stocks[i].PercentileRank = (decimal)(stocks.Count - i) / stocks.Count;
                     stocks[i].NormalizedScore = (stocks[i].Score.CompositeScore - minScore) / range;
                 }
             }
@@ -437,8 +437,8 @@ namespace TradingPlatform.ML.Ranking
                 for (int i = 0; i < stocks.Count; i++)
                 {
                     stocks[i].Rank = 1;
-                    stocks[i].PercentileRank = 0.5f;
-                    stocks[i].NormalizedScore = 0.5f;
+                    stocks[i].PercentileRank = 0.5m;
+                    stocks[i].NormalizedScore = 0.5m;
                 }
             }
         }
@@ -535,11 +535,11 @@ namespace TradingPlatform.ML.Ranking
     {
         public string Symbol { get; set; }
         public DateTime Timestamp { get; set; }
-        public float RawScore { get; set; }
-        public float AdjustedScore { get; set; }
-        public float CompositeScore { get; set; }
-        public float Confidence { get; set; }
-        public Dictionary<string, float> FactorContributions { get; set; }
+        public decimal RawScore { get; set; }
+        public decimal AdjustedScore { get; set; }
+        public decimal CompositeScore { get; set; }
+        public decimal Confidence { get; set; }
+        public Dictionary<string, decimal> FactorContributions { get; set; }
         public MarketRegime MarketRegime { get; set; }
         public Dictionary<string, object> Metadata { get; set; }
     }
@@ -550,8 +550,8 @@ namespace TradingPlatform.ML.Ranking
         public RankingScore Score { get; set; }
         public StockRankingData StockData { get; set; }
         public int Rank { get; set; }
-        public float PercentileRank { get; set; }
-        public float NormalizedScore { get; set; }
+        public decimal PercentileRank { get; set; }
+        public decimal NormalizedScore { get; set; }
     }
 
     public class RankingOptions
@@ -564,18 +564,18 @@ namespace TradingPlatform.ML.Ranking
 
     public class ScoreWeights
     {
-        public float ModelPrediction { get; set; } = 0.4f;
-        public float TechnicalFactors { get; set; } = 0.2f;
-        public float FundamentalFactors { get; set; } = 0.15f;
-        public float SentimentFactors { get; set; } = 0.1f;
-        public float MicrostructureFactors { get; set; } = 0.1f;
-        public float QualityFactors { get; set; } = 0.05f;
+        public decimal ModelPrediction { get; set; } = 0.4m;
+        public decimal TechnicalFactors { get; set; } = 0.2m;
+        public decimal FundamentalFactors { get; set; } = 0.15m;
+        public decimal SentimentFactors { get; set; } = 0.1m;
+        public decimal MicrostructureFactors { get; set; } = 0.1m;
+        public decimal QualityFactors { get; set; } = 0.05m;
     }
 
     public class RankingFilters
     {
-        public float? MinScore { get; set; }
-        public float? MinConfidence { get; set; }
+        public decimal? MinScore { get; set; }
+        public decimal? MinConfidence { get; set; }
         public List<string> RequiredSectors { get; set; }
         public List<string> ExcludedSectors { get; set; }
         public decimal? MinMarketCap { get; set; }

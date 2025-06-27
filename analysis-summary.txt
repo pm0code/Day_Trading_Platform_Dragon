@@ -1,0 +1,61 @@
+📊 MCP Code Analysis Summary
+===========================
+
+🔍 Issue Counts:
+  ✗ Errors: 82
+  ⚠ Warnings: 28
+  ℹ Info: 6536
+
+📁 Files Analyzed:
+  📄 AlphaVantageProviderCanonical.cs
+  📄 AlphaVantageProvider.cs
+  📄 CanonicalCriteriaEvaluator.cs
+  📄 CanonicalOrchestrator.cs
+  📄 CanonicalProvider.cs
+  📄 CanonicalSettingsService.cs
+  📄 CanonicalStrategyBase.cs
+  📄 Class1.cs
+  📄 FinancialMath.cs
+  📄 FinancialPrecisionTests.cs
+  📄 FinnhubProviderCanonical.cs
+  📄 FinnhubProvider.cs
+  📄 FixEngine.cs
+  📄 FixSession.cs
+  📄 GapCriteriaCanonical.cs
+  📄 GapCriteria.cs
+  📄 LSTMPatternModel.cs
+  📄 MarketDataAggregator.cs
+  📄 MarketDataManager.cs
+  📄 MockMessageBus.cs
+  📄 ModelDefinitions.cs
+  📄 ModelServingInfrastructure.cs
+  📄 NewsCriteria.cs
+  📄 OrderManager.cs
+  📄 PositionMonitorCanonical.cs
+  📄 PositionMonitor.cs
+  📄 PriceCriteriaCanonical.cs
+  📄 Program.cs
+  📄 RandomForestRankingModel.cs
+  📄 VolatilityCriteria.cs
+  📄 XGBoostPriceModel.cs
+
+🔥 Most Common Issues:
+    177 Potential null reference: TradingPlatform might be null [null-check]"
+    177 Potential null reference: TradingPlatform might be null [null-check]
+    172 Potential null reference: TradingLogOrchestrator might be null [null-check]"
+    172 Potential null reference: TradingLogOrchestrator might be null [null-check]
+    141 Potential null reference: result might be null [null-check]"
+    141 Potential null reference: result might be null [null-check]
+     91 Potential null reference: Task might be null [null-check]"
+     91 Potential null reference: Task might be null [null-check]
+     89 Potential null reference: Math might be null [null-check]"
+     89 Potential null reference: Math might be null [null-check]
+
+💰 Financial/Decimal Issues:
+70
+
+⚡ Performance Issues:
+20
+
+Full analysis saved to: /home/nader/my_projects/C#/DayTradingPlatform/key-areas-analysis.txt
+Summary saved to: /home/nader/my_projects/C#/DayTradingPlatform/analysis-summary.txt

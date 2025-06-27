@@ -180,7 +180,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
         /// Calculate position sizes using Equal Risk Contribution (ERC)
         /// </summary>
         public async Task<TradingResult<Dictionary<string, decimal>>> CalculateERCPositionsAsync(
-            float[,] correlationMatrix,
+            decimal[,] correlationMatrix,
             Dictionary<string, decimal> volatilities,
             decimal totalCapital,
             CancellationToken cancellationToken = default)
@@ -333,12 +333,12 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                 }
             }
             
-            return (decimal)Math.Sqrt((double)portfolioVariance);
+            return DecimalMath.Sqrt(portfolioVariance);
         }
 
         private decimal[] CalculateMarginalRiskContributions(
             decimal[] weights,
-            float[,] correlation,
+            decimal[,] correlation,
             decimal[] volatilities)
         {
             int n = weights.Length;
@@ -375,7 +375,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             CancellationToken cancellationToken = default);
 
         Task<TradingResult<Dictionary<string, decimal>>> CalculateERCPositionsAsync(
-            float[,] correlationMatrix,
+            decimal[,] correlationMatrix,
             Dictionary<string, decimal> volatilities,
             decimal totalCapital,
             CancellationToken cancellationToken = default);

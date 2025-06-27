@@ -49,6 +49,20 @@
   - `/scripts/mcp-*.sh` - Integration scripts
 - **Journal**: 2025-01-26/008_mcp_project_initialization.md
 
+### **Financial Precision Fixes Session 2 - ML Files Systematic Conversion** #financial-precision #ML #float-to-decimal #Day1-mandate
+- **Timestamp**: 2025-06-27 (Session 2)
+- **Problem**: 141 files still contain float/double violations of Day 1 mandate
+- **Solution**: Systematic file-by-file conversion in ML project
+- **Files Fixed**:
+  - `TradingPlatform.ML/Algorithms/RAPM/PortfolioRebalancer.cs` - 54 occurrences → 0
+  - `TradingPlatform.ML/Algorithms/RAPM/PositionSizingService.cs` - 4 occurrences → 0  
+  - `TradingPlatform.ML/Algorithms/RAPM/ProfitOptimizationEngine.cs` - 122 occurrences → 0
+  - `TradingPlatform.ML/Ranking/RankingScoreCalculator.cs` - 24 occurrences → 0
+  - `TradingPlatform.ML/Features/FeatureEngineering.cs` - 69 occurrences → 0
+- **Progress**: 11/141 ML files fixed (8% complete)
+- **Key Pattern**: Used DecimalMath utility for Sqrt, Log, Sin operations
+- **Journal**: 2025-06-27_financial_precision_fixes_continued.md
+
 ---
 
 ## Navigation

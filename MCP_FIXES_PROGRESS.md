@@ -16,7 +16,7 @@
 - Identified patterns causing ~90% false positive rate
 - MCP team has updated their analyzer to fix these issues
 
-#### 3. Financial Precision Fixes
+#### 3. Financial Precision Fixes (11/141 files = 8% complete)
 - **File Fixed**: `TradingPlatform.ML/Interfaces/IRankingInterfaces.cs`
   - Replaced ALL float types with decimal (0 floats remaining)
   - Fixed: Score, Confidence, FeatureImportances, all Factor classes
@@ -37,11 +37,44 @@
   - Fixed: Stress testing methods
   - Fixed: All supporting calculation methods
 
+- **File Fixed**: `TradingPlatform.ML/Algorithms/RAPM/PortfolioRebalancer.cs`
+  - Replaced ALL 54 float occurrences with decimal (0 remaining)
+  - Fixed: Portfolio drift calculations
+  - Fixed: Transaction cost estimates
+  - Fixed: Rebalancing algorithms
+  - Fixed: All supporting data classes
+
+- **File Fixed**: `TradingPlatform.ML/Algorithms/RAPM/PositionSizingService.cs`
+  - Replaced ALL 4 float occurrences with decimal (0 remaining)
+  - Fixed: Correlation matrix parameters
+  - Fixed: Portfolio variance calculations
+
 - **File Created**: `TradingPlatform.Core/Utilities/DecimalMath.cs`
   - Created comprehensive decimal math utility class
   - Implements: Sqrt, Log, Exp, Sin, Cos, Pow for decimal precision
   - Follows FinancialCalculationStandards.md requirements
   - Enables proper financial calculations without precision loss
+
+- **File Fixed**: `TradingPlatform.ML/Algorithms/RAPM/ProfitOptimizationEngine.cs`
+  - Replaced ALL 122 float/double occurrences with decimal (0 remaining)
+  - Fixed: All optimization algorithms (SQP, PSO, GA)
+  - Fixed: All helper classes (ParticleSwarm, Particle, Individual)
+  - Fixed: Bayesian shrinkage and market regime adjustments
+  - Fixed: All fitness calculations and covariance estimators
+
+- **File Fixed**: `TradingPlatform.ML/Ranking/RankingScoreCalculator.cs`
+  - Replaced ALL 24 float occurrences with decimal (0 remaining)
+  - Fixed: All score calculation methods
+  - Fixed: Market regime adjustments and confidence metrics
+  - Fixed: Factor completeness and contributions
+  - Fixed: ScoreWeights and RankingFilters classes
+
+- **File Fixed**: `TradingPlatform.ML/Features/FeatureEngineering.cs`
+  - Replaced ALL 69 float/double occurrences with decimal (0 remaining)
+  - Fixed: All technical indicator calculations (RSI, MACD, Bollinger, SMA, EMA)
+  - Fixed: All volatility calculations (Realized, Parkinson)
+  - Fixed: TechnicalFeatures and MicrostructureFeatures classes
+  - Added DecimalMath usage for Sqrt and Log operations
 
 #### 4. Performance Optimizations
 - **File Fixed**: `TradingPlatform.FixEngine/Core/OrderManager.cs`
