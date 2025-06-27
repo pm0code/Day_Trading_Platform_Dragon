@@ -32,7 +32,7 @@ namespace TradingPlatform.ML.Interfaces
         /// <summary>
         /// Model performance metrics
         /// </summary>
-        Dictionary<string, double> Metrics { get; }
+        Dictionary<string, decimal> Metrics { get; }
         
         /// <summary>
         /// Train the model with the provided data
@@ -102,7 +102,7 @@ namespace TradingPlatform.ML.Interfaces
         /// <summary>
         /// Get feature importance scores
         /// </summary>
-        Task<TradingResult<Dictionary<string, double>>> GetFeatureImportanceAsync(
+        Task<TradingResult<Dictionary<string, decimal>>> GetFeatureImportanceAsync(
             CancellationToken cancellationToken = default);
         
         /// <summary>

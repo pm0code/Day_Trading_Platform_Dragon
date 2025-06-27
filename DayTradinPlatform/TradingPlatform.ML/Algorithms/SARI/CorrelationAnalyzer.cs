@@ -28,8 +28,8 @@ namespace TradingPlatform.ML.Algorithms.SARI
         // Configuration parameters
         private readonly int _defaultLookbackPeriod = 252; // 1 year of trading days
         private readonly int _shortTermLookback = 20; // 1 month
-        private readonly double _correlationBreakdownThreshold = 0.3; // 30% change
-        private readonly double _regimeChangeThreshold = 0.25;
+        private readonly decimal _correlationBreakdownThreshold = 0.3m; // 30% change
+        private readonly decimal _regimeChangeThreshold = 0.25m;
         private readonly int _minSamplesForCalculation = 20;
 
         public CorrelationAnalyzer(
@@ -183,7 +183,7 @@ namespace TradingPlatform.ML.Algorithms.SARI
                 var stressedMatrix = CloneCorrelationMatrix(baseCorrelation);
 
                 // Apply stress multiplier based on severity
-                double stressMultiplier = GetStressMultiplier(scenario.Severity);
+                decimal stressMultiplier = GetStressMultiplier(scenario.Severity);
                 LogDebug($"Applying stress multiplier: {stressMultiplier:F2}");
 
                 // Model correlation convergence during stress
@@ -191,13 +191,13 @@ namespace TradingPlatform.ML.Algorithms.SARI
                 {
                     for (int j = i + 1; j < stressedMatrix.Size; j++)
                     {
-                        double baseCorr = stressedMatrix.Values[i, j];
+                        decimal baseCorr = stressedMatrix.Values[i, j];
                         
                         // Check for specific correlation overrides in scenario
                         var assetI = stressedMatrix.Assets[i];
                         var assetJ = stressedMatrix.Assets[j];
                         
-                        double? overrideCorr = GetCorrelationOverride(scenario, assetI, assetJ);
+                        decimal? overrideCorr = GetCorrelationOverride(scenario, assetI, assetJ);
                         if (overrideCorr.HasValue)
                         {
                             stressedMatrix.Values[i, j] = overrideCorr.Value;
@@ -207,7 +207,7 @@ namespace TradingPlatform.ML.Algorithms.SARI
                         else
                         {
                             // Apply stress transformation
-                            double stressedCorr = TransformCorrelationUnderStress(
+                            decimal stressedCorr = TransformCorrelationUnderStress(
                                 baseCorr, 
                                 stressMultiplier,
                                 scenario.CorrelationConvergenceLevel);
@@ -215,7 +215,7 @@ namespace TradingPlatform.ML.Algorithms.SARI
                             stressedMatrix.Values[i, j] = stressedCorr;
                             stressedMatrix.Values[j, i] = stressedCorr;
                             
-                            if (Math.Abs(stressedCorr - baseCorr) > 0.1)
+                            if (Math.Abs(stressedCorr - baseCorr) > 0.1m)
                             {
                                 LogDebug($"Correlation {assetI}-{assetJ}: {baseCorr:F4} -> {stressedCorr:F4}");
                             }

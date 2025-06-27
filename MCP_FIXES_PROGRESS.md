@@ -16,7 +16,7 @@
 - Identified patterns causing ~90% false positive rate
 - MCP team has updated their analyzer to fix these issues
 
-#### 3. Financial Precision Fixes (11/141 files = 8% complete)
+#### 3. Financial Precision Fixes (15/141 files = 11% complete)
 - **File Fixed**: `TradingPlatform.ML/Interfaces/IRankingInterfaces.cs`
   - Replaced ALL float types with decimal (0 floats remaining)
   - Fixed: Score, Confidence, FeatureImportances, all Factor classes
@@ -75,6 +75,22 @@
   - Fixed: All volatility calculations (Realized, Parkinson)
   - Fixed: TechnicalFeatures and MicrostructureFeatures classes
   - Added DecimalMath usage for Sqrt and Log operations
+
+- **File Fixed**: `TradingPlatform.ML/Algorithms/RAPM/RiskMeasures.cs` (Again)
+  - Fixed 1 remaining double cast in Math.Floor
+  - Now truly 0 float/double remaining
+
+- **File Fixed**: `TradingPlatform.ML/Algorithms/SARI/SARIPortfolioOptimizer.cs`
+  - Fixed 1 double cast in Math.Exp → DecimalMath.Exp
+  - Now 0 float/double remaining
+
+- **File Fixed**: `TradingPlatform.ML/Interfaces/IMLModel.cs`
+  - Fixed 2 Dictionary<string, double> → Dictionary<string, decimal>
+  - Interface changes will require implementation updates
+
+- **File Fixed**: `TradingPlatform.ML/Data/MarketDataLoader.cs`
+  - Fixed 2 method parameters from double to decimal
+  - trainRatio and validationRatio now use decimal
 
 #### 4. Performance Optimizations
 - **File Fixed**: `TradingPlatform.FixEngine/Core/OrderManager.cs`

@@ -315,7 +315,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             LogDebug($"Calculating Historical VaR with {returns.Length} returns");
             
             var sortedReturns = returns.OrderBy(r => r).ToArray();
-            int index = (int)Math.Floor((double)((1 - confidenceLevel) * returns.Length));
+            int index = (int)Math.Floor((1 - confidenceLevel) * returns.Length);
             
             LogDebug($"VaR index: {index}, sorted returns range: [{sortedReturns.First():F4}, {sortedReturns.Last():F4}]");
             

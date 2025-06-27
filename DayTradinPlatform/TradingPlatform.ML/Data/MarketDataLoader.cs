@@ -148,8 +148,8 @@ namespace TradingPlatform.ML.Data
         /// </summary>
         public (MarketDataset train, MarketDataset validation, MarketDataset test) SplitDataset(
             MarketDataset dataset,
-            double trainRatio = 0.7,
-            double validationRatio = 0.15)
+            decimal trainRatio = 0.7m,
+            decimal validationRatio = 0.15m)
         {
             var totalSamples = dataset.Data.Count;
             var trainSize = (int)(totalSamples * trainRatio);

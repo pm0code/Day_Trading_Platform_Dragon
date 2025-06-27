@@ -600,7 +600,7 @@ namespace TradingPlatform.ML.Algorithms.SARI
                 var deltaEnergy = neighborEnergy - currentEnergy;
                 
                 // Accept or reject
-                if (deltaEnergy < 0 || RandomGenerator.NextDecimal() < (decimal)Math.Exp(-(double)(deltaEnergy / temperature)))
+                if (deltaEnergy < 0 || RandomGenerator.NextDecimal() < DecimalMath.Exp(-(deltaEnergy / temperature)))
                 {
                     currentSolution = neighbor;
                     currentEnergy = neighborEnergy;
