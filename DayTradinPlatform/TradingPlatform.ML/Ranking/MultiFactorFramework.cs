@@ -11,7 +11,7 @@ namespace TradingPlatform.ML.Ranking
     public class MultiFactorFramework
     {
         private readonly Dictionary<string, FactorDefinition> _factorDefinitions;
-        private readonly Dictionary<string, double> _factorWeights;
+        private readonly Dictionary<string, decimal> _factorWeights;
         
         public MultiFactorFramework()
         {
@@ -104,7 +104,7 @@ namespace TradingPlatform.ML.Ranking
             for (int i = 0; i < rankings.Count; i++)
             {
                 rankings[i].Rank = i + 1;
-                rankings[i].Percentile = (double)(rankings.Count - i) / rankings.Count * 100;
+                rankings[i].Percentile = (decimal)(rankings.Count - i) / rankings.Count * 100;
             }
             
             return rankings;
@@ -361,7 +361,7 @@ namespace TradingPlatform.ML.Ranking
             factors.MomentumPercentile = CalculatePercentileRank(
                 stock, peers, s => CalculateReturn(s.PriceHistory, 63));
             factors.ValuePercentile = CalculatePercentileRank(
-                stock, peers, s => 1.0 / (s.Fundamentals?.PriceToEarnings ?? double.MaxValue));
+                stock, peers, s => 1.0m / (s.Fundamentals?.PriceToEarnings ?? decimal.MaxValue));
             factors.QualityPercentile = CalculatePercentileRank(
                 stock, peers, s => s.Fundamentals?.ReturnOnEquity ?? 0);
             
@@ -370,24 +370,24 @@ namespace TradingPlatform.ML.Ranking
         
         // Calculation helper methods
         
-        private double CalculateReturn(List<MarketDataSnapshot> prices, int days)
+        private decimal CalculateReturn(List<MarketDataSnapshot> prices, int days)
         {
             if (prices.Count < days + 1) return 0;
             
             var currentPrice = prices.Last().Close;
             var pastPrice = prices[prices.Count - days - 1].Close;
             
-            return (double)((currentPrice - pastPrice) / pastPrice * 100);
+            return (currentPrice - pastPrice) / pastPrice * 100;
         }
         
-        private double CalculateVolatility(List<MarketDataSnapshot> prices, int days)
+        private decimal CalculateVolatility(List<MarketDataSnapshot> prices, int days)
         {
             if (prices.Count < days + 1) return 0;
             
-            var returns = new List<double>();
+            var returns = new List<decimal>();
             for (int i = prices.Count - days; i < prices.Count; i++)
             {
-                var ret = (double)((prices[i].Close - prices[i - 1].Close) / prices[i - 1].Close);
+                var ret = (prices[i].Close - prices[i - 1].Close) / prices[i - 1].Close;
                 returns.Add(ret);
             }
             
@@ -397,7 +397,7 @@ namespace TradingPlatform.ML.Ranking
             return Math.Sqrt(sumSquares / (returns.Count - 1)) * Math.Sqrt(252); // Annualized
         }
         
-        private double CalculateRSI(List<MarketDataSnapshot> prices, int period)
+        private decimal CalculateRSI(List<MarketDataSnapshot> prices, int period)
         {
             if (prices.Count < period + 1) return 50;
             
@@ -419,7 +419,7 @@ namespace TradingPlatform.ML.Ranking
             if (avgLoss == 0) return 100;
             
             var rs = avgGain / avgLoss;
-            return 100 - (100 / (1 + (double)rs));
+            return 100 - (100 / (1 + rs));
         }
         
         private decimal CalculateMA(List<MarketDataSnapshot> prices, int period)
@@ -429,17 +429,17 @@ namespace TradingPlatform.ML.Ranking
             return prices.Skip(prices.Count - period).Average(p => p.Close);
         }
         
-        private double CalculatePercentileRank<T>(
+        private decimal CalculatePercentileRank<T>(
             StockRankingData stock,
             List<StockRankingData> peers,
-            Func<StockRankingData, double> metricFunc)
+            Func<StockRankingData, decimal> metricFunc)
         {
             var allStocks = new List<StockRankingData>(peers) { stock };
             var values = allStocks.Select(metricFunc).OrderBy(v => v).ToList();
             var stockValue = metricFunc(stock);
             
             var rank = values.IndexOf(stockValue) + 1;
-            return (double)rank / values.Count * 100;
+            return (decimal)rank / values.Count * 100;
         }
         
         // Additional calculation methods would go here...
@@ -493,7 +493,7 @@ namespace TradingPlatform.ML.Ranking
             };
         }
         
-        private Dictionary<string, double> InitializeDefaultWeights()
+        private Dictionary<string, decimal> InitializeDefaultWeights()
         {
             return _factorDefinitions.ToDictionary(
                 kvp => kvp.Key,
@@ -502,9 +502,9 @@ namespace TradingPlatform.ML.Ranking
         
         // Scoring methods
         
-        private double CalculateEqualWeightScore(RankingFactors factors)
+        private decimal CalculateEqualWeightScore(RankingFactors factors)
         {
-            var scores = new List<double>();
+            var scores = new List<decimal>();
             
             // Add normalized scores from each category
             if (factors.TechnicalFactors != null)
@@ -519,7 +519,7 @@ namespace TradingPlatform.ML.Ranking
             return scores.Any() ? scores.Average() : 0;
         }
         
-        private double CalculateMomentumScore(RankingFactors factors)
+        private decimal CalculateMomentumScore(RankingFactors factors)
         {
             if (factors.TechnicalFactors == null) return 0;
             
@@ -533,13 +533,13 @@ namespace TradingPlatform.ML.Ranking
                    0.1 * NormalizeValue(tech.RSI, 30, 70);
         }
         
-        private double NormalizeValue(double value, double min, double max)
+        private decimal NormalizeValue(decimal value, decimal min, decimal max)
         {
             if (max - min == 0) return 0.5;
             return Math.Max(0, Math.Min(1, (value - min) / (max - min)));
         }
         
-        private string CategorizeStock(RankingFactors factors, double score)
+        private string CategorizeStock(RankingFactors factors, decimal score)
         {
             if (score > 0.8) return "Strong Buy";
             if (score > 0.6) return "Buy";
@@ -549,36 +549,36 @@ namespace TradingPlatform.ML.Ranking
         }
         
         // Stub methods for complex calculations
-        private double CalculateAdjustedMomentum(List<MarketDataSnapshot> prices) => 0;
-        private double CalculateDownsideVolatility(List<MarketDataSnapshot> prices, int days) => 0;
-        private double CalculateMACDSignal(List<MarketDataSnapshot> prices) => 0;
-        private double CalculateBollingerPosition(List<MarketDataSnapshot> prices, int period) => 0;
-        private double CalculateTrendStrength(List<MarketDataSnapshot> prices, int period) => 0;
-        private double CalculateVolumeRatio(List<MarketDataSnapshot> prices, int period) => 0;
-        private double CalculateVolumeVolatility(List<MarketDataSnapshot> prices, int period) => 0;
-        private double CalculatePEGRatio(FundamentalData fundamentals) => 0;
-        private double CalculateGrowthAcceleration(List<double> growthHistory) => 0;
-        private double CalculateEarningsQuality(FundamentalData fundamentals) => 0;
-        private double CalculateGrowthStability(List<double> history) => 0;
-        private double CalculateAssetQuality(FundamentalData fundamentals) => 0;
-        private double CalculateDebtQuality(FundamentalData fundamentals) => 0;
-        private double CalculateCapitalAllocationScore(FundamentalData fundamentals) => 0;
-        private double CalculateShareBuybackScore(FundamentalData fundamentals) => 0;
-        private double CalculateDownsideBeta(List<MarketDataSnapshot> prices, List<double> marketReturns) => 0;
-        private double CalculateEarningsVolatility(FundamentalData fundamentals) => 0;
-        private double CalculateRevenueVolatility(FundamentalData fundamentals) => 0;
-        private double CalculateMaxDrawdown(List<MarketDataSnapshot> prices) => 0;
-        private double CalculateSkewness(List<MarketDataSnapshot> prices) => 0;
-        private double CalculateKurtosis(List<MarketDataSnapshot> prices) => 0;
-        private double CalculateAltmanZScore(FundamentalData fundamentals) => 0;
-        private double CalculateDistressRisk(FundamentalData fundamentals) => 0;
-        private double CalculateLiquidityRisk(StockRankingData stock) => 0;
-        private double CalculateValueScore(RankingFactors factors) => 0;
-        private double CalculateQualityScore(RankingFactors factors) => 0;
-        private double CalculateLowRiskScore(RankingFactors factors) => 0;
-        private double CalculateCustomScore(RankingFactors factors, Dictionary<string, double> weights) => 0;
-        private Dictionary<string, double> GetIndividualFactorScores(RankingFactors factors) => new();
-        private Dictionary<string, double> CalculateCompositeScores(RankingFactors factors) => new();
+        private decimal CalculateAdjustedMomentum(List<MarketDataSnapshot> prices) => 0;
+        private decimal CalculateDownsideVolatility(List<MarketDataSnapshot> prices, int days) => 0m;
+        private decimal CalculateMACDSignal(List<MarketDataSnapshot> prices) => 0m;
+        private decimal CalculateBollingerPosition(List<MarketDataSnapshot> prices, int period) => 0m;
+        private decimal CalculateTrendStrength(List<MarketDataSnapshot> prices, int period) => 0m;
+        private decimal CalculateVolumeRatio(List<MarketDataSnapshot> prices, int period) => 0m;
+        private decimal CalculateVolumeVolatility(List<MarketDataSnapshot> prices, int period) => 0m;
+        private decimal CalculatePEGRatio(FundamentalData fundamentals) => 0m;
+        private decimal CalculateGrowthAcceleration(List<decimal> growthHistory) => 0m;
+        private decimal CalculateEarningsQuality(FundamentalData fundamentals) => 0m;
+        private decimal CalculateGrowthStability(List<decimal> history) => 0m;
+        private decimal CalculateAssetQuality(FundamentalData fundamentals) => 0m;
+        private decimal CalculateDebtQuality(FundamentalData fundamentals) => 0m;
+        private decimal CalculateCapitalAllocationScore(FundamentalData fundamentals) => 0m;
+        private decimal CalculateShareBuybackScore(FundamentalData fundamentals) => 0m;
+        private decimal CalculateDownsideBeta(List<MarketDataSnapshot> prices, List<decimal> marketReturns) => 0m;
+        private decimal CalculateEarningsVolatility(FundamentalData fundamentals) => 0m;
+        private decimal CalculateRevenueVolatility(FundamentalData fundamentals) => 0m;
+        private decimal CalculateMaxDrawdown(List<MarketDataSnapshot> prices) => 0m;
+        private decimal CalculateSkewness(List<MarketDataSnapshot> prices) => 0m;
+        private decimal CalculateKurtosis(List<MarketDataSnapshot> prices) => 0m;
+        private decimal CalculateAltmanZScore(FundamentalData fundamentals) => 0m;
+        private decimal CalculateDistressRisk(FundamentalData fundamentals) => 0m;
+        private decimal CalculateLiquidityRisk(StockRankingData stock) => 0m;
+        private decimal CalculateValueScore(RankingFactors factors) => 0m;
+        private decimal CalculateQualityScore(RankingFactors factors) => 0m;
+        private decimal CalculateLowRiskScore(RankingFactors factors) => 0m;
+        private decimal CalculateCustomScore(RankingFactors factors, Dictionary<string, decimal> weights) => 0m;
+        private Dictionary<string, decimal> GetIndividualFactorScores(RankingFactors factors) => new();
+        private Dictionary<string, decimal> CalculateCompositeScores(RankingFactors factors) => new();
         private void NormalizeFactors(List<RankingFactors> factors) { }
     }
     
@@ -595,194 +595,194 @@ namespace TradingPlatform.ML.Ranking
         public QualityFactors? QualityFactors { get; set; }
         public RiskFactors? RiskFactors { get; set; }
         public CrossSectionalFactors? CrossSectionalFactors { get; set; }
-        public Dictionary<string, double> CompositeScores { get; set; } = new();
+        public Dictionary<string, decimal> CompositeScores { get; set; } = new();
     }
     
     public class TechnicalFactors
     {
         // Momentum
-        public double Momentum1M { get; set; }
-        public double Momentum3M { get; set; }
-        public double Momentum6M { get; set; }
-        public double Momentum12M { get; set; }
-        public double AdjustedMomentum { get; set; }
+        public decimal Momentum1M { get; set; }
+        public decimal Momentum3M { get; set; }
+        public decimal Momentum6M { get; set; }
+        public decimal Momentum12M { get; set; }
+        public decimal AdjustedMomentum { get; set; }
         
         // Volatility
-        public double Volatility20D { get; set; }
-        public double Volatility60D { get; set; }
-        public double DownsideVolatility { get; set; }
+        public decimal Volatility20D { get; set; }
+        public decimal Volatility60D { get; set; }
+        public decimal DownsideVolatility { get; set; }
         
         // Technical indicators
-        public double RSI { get; set; }
-        public double MACD { get; set; }
-        public double BollingerPosition { get; set; }
+        public decimal RSI { get; set; }
+        public decimal MACD { get; set; }
+        public decimal BollingerPosition { get; set; }
         
         // Trend
-        public double TrendStrength { get; set; }
-        public double PriceToMA50 { get; set; }
-        public double PriceToMA200 { get; set; }
+        public decimal TrendStrength { get; set; }
+        public decimal PriceToMA50 { get; set; }
+        public decimal PriceToMA200 { get; set; }
         
         // Volume
-        public double VolumeRatio { get; set; }
-        public double VolumeVolatility { get; set; }
+        public decimal VolumeRatio { get; set; }
+        public decimal VolumeVolatility { get; set; }
     }
     
     public class FundamentalFactors
     {
         // Valuation
-        public double PriceToEarnings { get; set; }
-        public double PriceToBook { get; set; }
-        public double PriceToSales { get; set; }
-        public double EVToEBITDA { get; set; }
-        public double PEGRatio { get; set; }
+        public decimal PriceToEarnings { get; set; }
+        public decimal PriceToBook { get; set; }
+        public decimal PriceToSales { get; set; }
+        public decimal EVToEBITDA { get; set; }
+        public decimal PEGRatio { get; set; }
         
         // Growth
-        public double RevenueGrowth { get; set; }
-        public double EarningsGrowth { get; set; }
-        public double RevenueGrowthAcceleration { get; set; }
+        public decimal RevenueGrowth { get; set; }
+        public decimal EarningsGrowth { get; set; }
+        public decimal RevenueGrowthAcceleration { get; set; }
         
         // Profitability
-        public double ROE { get; set; }
-        public double ROA { get; set; }
-        public double ROIC { get; set; }
-        public double GrossMargin { get; set; }
-        public double OperatingMargin { get; set; }
-        public double NetMargin { get; set; }
+        public decimal ROE { get; set; }
+        public decimal ROA { get; set; }
+        public decimal ROIC { get; set; }
+        public decimal GrossMargin { get; set; }
+        public decimal OperatingMargin { get; set; }
+        public decimal NetMargin { get; set; }
         
         // Financial health
-        public double CurrentRatio { get; set; }
-        public double DebtToEquity { get; set; }
-        public double InterestCoverage { get; set; }
-        public double FreeCashFlowYield { get; set; }
+        public decimal CurrentRatio { get; set; }
+        public decimal DebtToEquity { get; set; }
+        public decimal InterestCoverage { get; set; }
+        public decimal FreeCashFlowYield { get; set; }
         
         // Efficiency
-        public double AssetTurnover { get; set; }
-        public double InventoryTurnover { get; set; }
+        public decimal AssetTurnover { get; set; }
+        public decimal InventoryTurnover { get; set; }
         
         // Relative
-        public double RelativePE { get; set; }
-        public double RelativeGrowth { get; set; }
+        public decimal RelativePE { get; set; }
+        public decimal RelativeGrowth { get; set; }
     }
     
     public class SentimentFactors
     {
         // News
-        public double NewsScore { get; set; }
+        public decimal NewsScore { get; set; }
         public int NewsVolume { get; set; }
-        public double NewsVelocity { get; set; }
+        public decimal NewsVelocity { get; set; }
         
         // Social
-        public double SocialScore { get; set; }
+        public decimal SocialScore { get; set; }
         public int SocialVolume { get; set; }
-        public double SocialEngagement { get; set; }
+        public decimal SocialEngagement { get; set; }
         
         // Analyst
-        public double AnalystRating { get; set; }
-        public double AnalystDispersion { get; set; }
+        public decimal AnalystRating { get; set; }
+        public decimal AnalystDispersion { get; set; }
         public int RecentUpgrades { get; set; }
         public int RecentDowngrades { get; set; }
         
         // Options
-        public double PutCallRatio { get; set; }
-        public double ImpliedVolatility { get; set; }
-        public double SkewIndex { get; set; }
+        public decimal PutCallRatio { get; set; }
+        public decimal ImpliedVolatility { get; set; }
+        public decimal SkewIndex { get; set; }
         
         // Insider
-        public double InsiderBuyRatio { get; set; }
-        public double InsiderNetActivity { get; set; }
+        public decimal InsiderBuyRatio { get; set; }
+        public decimal InsiderNetActivity { get; set; }
     }
     
     public class MicrostructureFactors
     {
         // Liquidity
-        public double BidAskSpread { get; set; }
-        public double EffectiveSpread { get; set; }
-        public double MarketDepth { get; set; }
-        public double TurnoverRatio { get; set; }
+        public decimal BidAskSpread { get; set; }
+        public decimal EffectiveSpread { get; set; }
+        public decimal MarketDepth { get; set; }
+        public decimal TurnoverRatio { get; set; }
         
         // Price impact
-        public double KyleLambda { get; set; }
-        public double AmihudIlliquidity { get; set; }
+        public decimal KyleLambda { get; set; }
+        public decimal AmihudIlliquidity { get; set; }
         
         // Trading patterns
-        public double IntraVolatility { get; set; }
-        public double CloseToCloseVol { get; set; }
-        public double VolumeClockRatio { get; set; }
+        public decimal IntraVolatility { get; set; }
+        public decimal CloseToCloseVol { get; set; }
+        public decimal VolumeClockRatio { get; set; }
         
         // Order flow
-        public double OrderImbalance { get; set; }
-        public double TradeSize { get; set; }
-        public double BlockVolume { get; set; }
+        public decimal OrderImbalance { get; set; }
+        public decimal TradeSize { get; set; }
+        public decimal BlockVolume { get; set; }
     }
     
     public class QualityFactors
     {
         // Earnings quality
-        public double EarningsQuality { get; set; }
-        public double AccrualRatio { get; set; }
-        public double CashConversion { get; set; }
+        public decimal EarningsQuality { get; set; }
+        public decimal AccrualRatio { get; set; }
+        public decimal CashConversion { get; set; }
         
         // Growth quality
-        public double GrowthStability { get; set; }
-        public double SalesGrowthStability { get; set; }
+        public decimal GrowthStability { get; set; }
+        public decimal SalesGrowthStability { get; set; }
         
         // Balance sheet
-        public double AssetQuality { get; set; }
-        public double DebtQuality { get; set; }
-        public double WorkingCapitalEfficiency { get; set; }
+        public decimal AssetQuality { get; set; }
+        public decimal DebtQuality { get; set; }
+        public decimal WorkingCapitalEfficiency { get; set; }
         
         // Management
-        public double CapitalAllocationScore { get; set; }
-        public double DividendConsistency { get; set; }
-        public double ShareBuybackScore { get; set; }
+        public decimal CapitalAllocationScore { get; set; }
+        public decimal DividendConsistency { get; set; }
+        public decimal ShareBuybackScore { get; set; }
         
         // Competitive position
-        public double MarketShareTrend { get; set; }
-        public double CompetitiveAdvantageScore { get; set; }
+        public decimal MarketShareTrend { get; set; }
+        public decimal CompetitiveAdvantageScore { get; set; }
     }
     
     public class RiskFactors
     {
         // Market risk
-        public double Beta { get; set; }
-        public double DownsideBeta { get; set; }
-        public double CorrelationToMarket { get; set; }
+        public decimal Beta { get; set; }
+        public decimal DownsideBeta { get; set; }
+        public decimal CorrelationToMarket { get; set; }
         
         // Specific risk
-        public double IdiosyncraticVolatility { get; set; }
-        public double EarningsVolatility { get; set; }
-        public double RevenueVolatility { get; set; }
+        public decimal IdiosyncraticVolatility { get; set; }
+        public decimal EarningsVolatility { get; set; }
+        public decimal RevenueVolatility { get; set; }
         
         // Tail risk
-        public double ValueAtRisk { get; set; }
-        public double ConditionalVaR { get; set; }
-        public double MaxDrawdown { get; set; }
-        public double Skewness { get; set; }
-        public double Kurtosis { get; set; }
+        public decimal ValueAtRisk { get; set; }
+        public decimal ConditionalVaR { get; set; }
+        public decimal MaxDrawdown { get; set; }
+        public decimal Skewness { get; set; }
+        public decimal Kurtosis { get; set; }
         
         // Financial risk
-        public double BankruptcyScore { get; set; }
-        public double DistressRisk { get; set; }
-        public double LiquidityRisk { get; set; }
+        public decimal BankruptcyScore { get; set; }
+        public decimal DistressRisk { get; set; }
+        public decimal LiquidityRisk { get; set; }
     }
     
     public class CrossSectionalFactors
     {
-        public double RelativeMomentum { get; set; }
-        public double RelativeValuation { get; set; }
-        public double RelativeProfitability { get; set; }
-        public double MomentumPercentile { get; set; }
-        public double ValuePercentile { get; set; }
-        public double QualityPercentile { get; set; }
+        public decimal RelativeMomentum { get; set; }
+        public decimal RelativeValuation { get; set; }
+        public decimal RelativeProfitability { get; set; }
+        public decimal MomentumPercentile { get; set; }
+        public decimal ValuePercentile { get; set; }
+        public decimal QualityPercentile { get; set; }
     }
     
     public class StockRanking
     {
         public string Symbol { get; set; } = string.Empty;
-        public double OverallScore { get; set; }
-        public Dictionary<string, double> FactorScores { get; set; } = new();
+        public decimal OverallScore { get; set; }
+        public Dictionary<string, decimal> FactorScores { get; set; } = new();
         public int Rank { get; set; }
-        public double Percentile { get; set; }
+        public decimal Percentile { get; set; }
         public string Category { get; set; } = string.Empty;
     }
     
@@ -798,7 +798,7 @@ namespace TradingPlatform.ML.Ranking
     
     public class MarketContext
     {
-        public List<double> MarketReturns { get; set; } = new();
+        public List<decimal> MarketReturns { get; set; } = new();
         public List<StockRankingData>? PeerData { get; set; }
         public SectorAverages? SectorAverages { get; set; }
         public MarketRegime CurrentRegime { get; set; }
@@ -808,7 +808,7 @@ namespace TradingPlatform.ML.Ranking
     {
         public string Name { get; set; } = string.Empty;
         public FactorCategory Category { get; set; }
-        public double DefaultWeight { get; set; }
+        public decimal DefaultWeight { get; set; }
         public int Direction { get; set; } // 1 = higher is better, -1 = lower is better
     }
     
@@ -850,86 +850,86 @@ namespace TradingPlatform.ML.Ranking
     // Placeholder classes for data structures
     public class FundamentalData
     {
-        public double PriceToEarnings { get; set; }
-        public double PriceToBook { get; set; }
-        public double PriceToSales { get; set; }
-        public double EVToEBITDA { get; set; }
-        public double RevenueGrowthYoY { get; set; }
-        public double EarningsGrowthYoY { get; set; }
-        public double ReturnOnEquity { get; set; }
-        public double ReturnOnAssets { get; set; }
-        public double ReturnOnInvestedCapital { get; set; }
-        public double GrossMargin { get; set; }
-        public double OperatingMargin { get; set; }
-        public double NetMargin { get; set; }
-        public double CurrentRatio { get; set; }
-        public double DebtToEquity { get; set; }
-        public double InterestCoverage { get; set; }
-        public double FreeCashFlow { get; set; }
-        public double MarketCap { get; set; }
-        public double AssetTurnover { get; set; }
-        public double InventoryTurnover { get; set; }
-        public double AccrualRatio { get; set; }
-        public double OperatingCashFlow { get; set; }
-        public double NetIncome { get; set; }
-        public double WorkingCapital { get; set; }
-        public double Revenue { get; set; }
-        public double SharesOutstanding { get; set; }
-        public double DividendConsistencyScore { get; set; }
-        public double MoatScore { get; set; }
-        public double MarketShareTrend { get; set; }
-        public List<double> EarningsHistory { get; set; } = new();
-        public List<double> RevenueHistory { get; set; } = new();
-        public List<double> RevenueGrowthHistory { get; set; } = new();
+        public decimal PriceToEarnings { get; set; }
+        public decimal PriceToBook { get; set; }
+        public decimal PriceToSales { get; set; }
+        public decimal EVToEBITDA { get; set; }
+        public decimal RevenueGrowthYoY { get; set; }
+        public decimal EarningsGrowthYoY { get; set; }
+        public decimal ReturnOnEquity { get; set; }
+        public decimal ReturnOnAssets { get; set; }
+        public decimal ReturnOnInvestedCapital { get; set; }
+        public decimal GrossMargin { get; set; }
+        public decimal OperatingMargin { get; set; }
+        public decimal NetMargin { get; set; }
+        public decimal CurrentRatio { get; set; }
+        public decimal DebtToEquity { get; set; }
+        public decimal InterestCoverage { get; set; }
+        public decimal FreeCashFlow { get; set; }
+        public decimal MarketCap { get; set; }
+        public decimal AssetTurnover { get; set; }
+        public decimal InventoryTurnover { get; set; }
+        public decimal AccrualRatio { get; set; }
+        public decimal OperatingCashFlow { get; set; }
+        public decimal NetIncome { get; set; }
+        public decimal WorkingCapital { get; set; }
+        public decimal Revenue { get; set; }
+        public decimal SharesOutstanding { get; set; }
+        public decimal DividendConsistencyScore { get; set; }
+        public decimal MoatScore { get; set; }
+        public decimal MarketShareTrend { get; set; }
+        public List<decimal> EarningsHistory { get; set; } = new();
+        public List<decimal> RevenueHistory { get; set; } = new();
+        public List<decimal> RevenueGrowthHistory { get; set; } = new();
     }
     
     public class SentimentData
     {
-        public double AverageNewsScore { get; set; }
+        public decimal AverageNewsScore { get; set; }
         public int NewsArticleCount { get; set; }
-        public double NewsVelocity { get; set; }
-        public double SocialMediaScore { get; set; }
+        public decimal NewsVelocity { get; set; }
+        public decimal SocialMediaScore { get; set; }
         public int SocialMentions { get; set; }
-        public double EngagementRate { get; set; }
-        public double AverageAnalystRating { get; set; }
-        public double RatingDispersion { get; set; }
+        public decimal EngagementRate { get; set; }
+        public decimal AverageAnalystRating { get; set; }
+        public decimal RatingDispersion { get; set; }
         public int RecentUpgrades { get; set; }
         public int RecentDowngrades { get; set; }
-        public double PutCallRatio { get; set; }
-        public double ImpliedVolatility { get; set; }
-        public double OptionSkew { get; set; }
-        public double InsiderBuyingRatio { get; set; }
-        public double InsiderNetPurchases { get; set; }
+        public decimal PutCallRatio { get; set; }
+        public decimal ImpliedVolatility { get; set; }
+        public decimal OptionSkew { get; set; }
+        public decimal InsiderBuyingRatio { get; set; }
+        public decimal InsiderNetPurchases { get; set; }
     }
     
     public class MicrostructureData
     {
-        public double AverageBidAskSpread { get; set; }
-        public double EffectiveSpread { get; set; }
-        public double MarketDepth { get; set; }
-        public double DailyVolume { get; set; }
-        public double KyleLambda { get; set; }
-        public double AmihudRatio { get; set; }
-        public double IntradayVolatility { get; set; }
-        public double CloseToCloseVolatility { get; set; }
-        public double VolumeClockRatio { get; set; }
-        public double OrderImbalance { get; set; }
-        public double AverageTradeSize { get; set; }
-        public double BlockTradeVolume { get; set; }
+        public decimal AverageBidAskSpread { get; set; }
+        public decimal EffectiveSpread { get; set; }
+        public decimal MarketDepth { get; set; }
+        public decimal DailyVolume { get; set; }
+        public decimal KyleLambda { get; set; }
+        public decimal AmihudRatio { get; set; }
+        public decimal IntradayVolatility { get; set; }
+        public decimal CloseToCloseVolatility { get; set; }
+        public decimal VolumeClockRatio { get; set; }
+        public decimal OrderImbalance { get; set; }
+        public decimal AverageTradeSize { get; set; }
+        public decimal BlockTradeVolume { get; set; }
     }
     
     public class RiskMetrics
     {
-        public double Beta { get; set; }
-        public double MarketCorrelation { get; set; }
-        public double IdiosyncraticVol { get; set; }
-        public double VaR95 { get; set; }
-        public double CVaR95 { get; set; }
+        public decimal Beta { get; set; }
+        public decimal MarketCorrelation { get; set; }
+        public decimal IdiosyncraticVol { get; set; }
+        public decimal VaR95 { get; set; }
+        public decimal CVaR95 { get; set; }
     }
     
     public class SectorAverages
     {
-        public double AveragePE { get; set; }
-        public double AverageGrowth { get; set; }
+        public decimal AveragePE { get; set; }
+        public decimal AverageGrowth { get; set; }
     }
 }

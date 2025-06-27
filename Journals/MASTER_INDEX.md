@@ -7,6 +7,10 @@
 
 ## 🔍 **SEARCHABLE DECISION INDEX**
 
+### ➡️ **CONTINUED IN MASTER_INDEX_3.md**
+- **Latest entries starting 2025-06-27 have been moved to [MASTER_INDEX_3.md](./MASTER_INDEX_3.md)**
+- This file contains entries up to 2025-06-26
+
 ### **ExecutionAnalytics Service vs Model Collision** #naming-collision #service-model-separation #ExecutionAnalytics
 - **Timestamp**: 2025-06-18 11:00
 - **Problem**: Name collision between Services.ExecutionAnalytics class and Models.ExecutionAnalytics record

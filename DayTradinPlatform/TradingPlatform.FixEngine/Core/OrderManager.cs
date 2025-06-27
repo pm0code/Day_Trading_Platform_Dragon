@@ -287,7 +287,16 @@ public sealed class OrderManager : IDisposable
     /// </summary>
     public IReadOnlyCollection<Order> GetActiveOrders()
     {
-        return _activeOrders.Values.Where(o => IsActiveStatus(o.Status)).ToList();
+        // Optimized: Avoid LINQ in hot path - use direct iteration
+        var activeOrders = new List<Order>(_activeOrders.Count);
+        foreach (var kvp in _activeOrders)
+        {
+            if (IsActiveStatus(kvp.Value.Status))
+            {
+                activeOrders.Add(kvp.Value);
+            }
+        }
+        return activeOrders;
     }
 
     /// <summary>
@@ -493,11 +502,18 @@ public sealed class OrderManager : IDisposable
 
     private decimal CalculateAveragePrice(string clOrdId)
     {
-        if (!_orderExecutions.TryGetValue(clOrdId, out var executions) || !executions.Any())
+        if (!_orderExecutions.TryGetValue(clOrdId, out var executions) || executions.Count == 0)
             return 0m;
 
-        var totalValue = executions.Sum(e => e.Quantity * e.Price);
-        var totalQuantity = executions.Sum(e => e.Quantity);
+        // Optimized: Avoid LINQ Sum() in hot path - use direct iteration
+        decimal totalValue = 0m;
+        decimal totalQuantity = 0m;
+        
+        foreach (var execution in executions)
+        {
+            totalValue += execution.Quantity * execution.Price;
+            totalQuantity += execution.Quantity;
+        }
 
         return totalQuantity > 0 ? totalValue / totalQuantity : 0m;
     }

@@ -23,7 +23,7 @@ namespace TradingPlatform.ML.Interfaces
             List<RankingFactors> factorsList,
             CancellationToken cancellationToken = default);
 
-        Task<TradingResult<Dictionary<string, float>>> GetFeatureImportancesAsync(
+        Task<TradingResult<Dictionary<string, decimal>>> GetFeatureImportancesAsync(
             CancellationToken cancellationToken = default);
 
         Task<TradingResult<CrossValidationResult>> CrossValidateAsync(
@@ -54,7 +54,7 @@ namespace TradingPlatform.ML.Interfaces
             FactorExtractionOptions options,
             CancellationToken cancellationToken = default);
 
-        Dictionary<string, float> CalculateFactorScores(RankingFactors factors);
+        Dictionary<string, decimal> CalculateFactorScores(RankingFactors factors);
         
         void RegisterCustomFactor(string name, ICustomFactor customFactor);
     }
@@ -92,15 +92,15 @@ namespace TradingPlatform.ML.Interfaces
     {
         string Name { get; }
         string Category { get; }
-        float Calculate(StockRankingData stockData, MarketContext marketContext);
+        decimal Calculate(StockRankingData stockData, MarketContext marketContext);
     }
 
     // Additional data classes for the interfaces
     public class RankingPrediction
     {
-        public float Score { get; set; }
-        public float? Confidence { get; set; }
-        public Dictionary<string, float> FeatureImportances { get; set; }
+        public decimal Score { get; set; }
+        public decimal? Confidence { get; set; }
+        public Dictionary<string, decimal> FeatureImportances { get; set; }
         public DateTime Timestamp { get; set; }
     }
 
@@ -118,7 +118,7 @@ namespace TradingPlatform.ML.Interfaces
         public string Symbol { get; set; }
         public DateTime Timestamp { get; set; }
         public RankingFactors Factors { get; set; }
-        public float Label { get; set; } // Future performance or rank
+        public decimal Label { get; set; } // Future performance or rank
         public Dictionary<string, object> Metadata { get; set; }
     }
 
@@ -126,8 +126,8 @@ namespace TradingPlatform.ML.Interfaces
     {
         public int NumberOfTrees { get; set; } = 100;
         public int MaxDepth { get; set; } = 10;
-        public float LearningRate { get; set; } = 0.1f;
-        public float SubsampleFraction { get; set; } = 0.8f;
+        public decimal LearningRate { get; set; } = 0.1m;
+        public decimal SubsampleFraction { get; set; } = 0.8m;
         public int MinSamplesPerLeaf { get; set; } = 20;
         public string LossFunction { get; set; } = "RankingLoss";
         public bool UseEarlyStopping { get; set; } = true;
@@ -138,17 +138,17 @@ namespace TradingPlatform.ML.Interfaces
     public class CrossValidationResult
     {
         public List<FoldResult> FoldResults { get; set; }
-        public float AverageScore { get; set; }
-        public float ScoreStandardDeviation { get; set; }
-        public Dictionary<string, float> AverageMetrics { get; set; }
+        public decimal AverageScore { get; set; }
+        public decimal ScoreStandardDeviation { get; set; }
+        public Dictionary<string, decimal> AverageMetrics { get; set; }
         public TimeSpan TotalTrainingTime { get; set; }
     }
 
     public class FoldResult
     {
         public int FoldNumber { get; set; }
-        public float Score { get; set; }
-        public Dictionary<string, float> Metrics { get; set; }
+        public decimal Score { get; set; }
+        public Dictionary<string, decimal> Metrics { get; set; }
         public TimeSpan TrainingTime { get; set; }
     }
 
@@ -220,12 +220,12 @@ namespace TradingPlatform.ML.Interfaces
 
     public class SentimentData
     {
-        public float OverallSentiment { get; set; }
-        public float NewsSentiment { get; set; }
-        public float SocialSentiment { get; set; }
+        public decimal OverallSentiment { get; set; }
+        public decimal NewsSentiment { get; set; }
+        public decimal SocialSentiment { get; set; }
         public int MentionCount { get; set; }
-        public float SentimentMomentum { get; set; }
-        public Dictionary<string, float> SourceSentiments { get; set; }
+        public decimal SentimentMomentum { get; set; }
+        public Dictionary<string, decimal> SourceSentiments { get; set; }
     }
 
     public class OptionFlowData
@@ -253,9 +253,9 @@ namespace TradingPlatform.ML.Interfaces
         public DateTime Timestamp { get; set; }
         public MarketRegime MarketRegime { get; set; }
         public MarketTrend MarketTrend { get; set; }
-        public float MarketVolatility { get; set; }
-        public float MarketLiquidity { get; set; }
-        public Dictionary<string, float> EconomicIndicators { get; set; }
+        public decimal MarketVolatility { get; set; }
+        public decimal MarketLiquidity { get; set; }
+        public Dictionary<string, decimal> EconomicIndicators { get; set; }
         public Dictionary<string, object> AdditionalContext { get; set; }
     }
 
@@ -287,75 +287,75 @@ namespace TradingPlatform.ML.Interfaces
         public MicrostructureFactors MicrostructureFactors { get; set; }
         public QualityFactors QualityFactors { get; set; }
         public RiskFactors RiskFactors { get; set; }
-        public Dictionary<string, float> CustomFactors { get; set; }
-        public float DataQuality { get; set; }
-        public float[] FeatureVector { get; set; }
+        public Dictionary<string, decimal> CustomFactors { get; set; }
+        public decimal DataQuality { get; set; }
+        public decimal[] FeatureVector { get; set; }
     }
 
     public class TechnicalFactors
     {
-        public float MomentumScore { get; set; }
-        public float TrendStrength { get; set; }
-        public float RelativeStrength { get; set; }
-        public float VolumeProfile { get; set; }
-        public float Volatility { get; set; }
-        public float PriceEfficiency { get; set; }
-        public float CompositeScore { get; set; }
-        public float DataCompleteness { get; set; }
+        public decimal MomentumScore { get; set; }
+        public decimal TrendStrength { get; set; }
+        public decimal RelativeStrength { get; set; }
+        public decimal VolumeProfile { get; set; }
+        public decimal Volatility { get; set; }
+        public decimal PriceEfficiency { get; set; }
+        public decimal CompositeScore { get; set; }
+        public decimal DataCompleteness { get; set; }
     }
 
     public class FundamentalFactors
     {
-        public float ValueScore { get; set; }
-        public float GrowthScore { get; set; }
-        public float ProfitabilityScore { get; set; }
-        public float FinancialHealth { get; set; }
-        public float EarningsQuality { get; set; }
-        public float CompositeScore { get; set; }
-        public float DataCompleteness { get; set; }
+        public decimal ValueScore { get; set; }
+        public decimal GrowthScore { get; set; }
+        public decimal ProfitabilityScore { get; set; }
+        public decimal FinancialHealth { get; set; }
+        public decimal EarningsQuality { get; set; }
+        public decimal CompositeScore { get; set; }
+        public decimal DataCompleteness { get; set; }
     }
 
     public class SentimentFactors
     {
-        public float OverallSentiment { get; set; }
-        public float SentimentMomentum { get; set; }
-        public float NewsImpact { get; set; }
-        public float SocialBuzz { get; set; }
-        public float AnalystConsensus { get; set; }
-        public float CompositeScore { get; set; }
-        public float DataCompleteness { get; set; }
+        public decimal OverallSentiment { get; set; }
+        public decimal SentimentMomentum { get; set; }
+        public decimal NewsImpact { get; set; }
+        public decimal SocialBuzz { get; set; }
+        public decimal AnalystConsensus { get; set; }
+        public decimal CompositeScore { get; set; }
+        public decimal DataCompleteness { get; set; }
     }
 
     public class MicrostructureFactors
     {
-        public float LiquidityScore { get; set; }
-        public float SpreadEfficiency { get; set; }
-        public float OrderFlowImbalance { get; set; }
-        public float PriceImpact { get; set; }
-        public float MarketDepth { get; set; }
-        public float CompositeScore { get; set; }
-        public float DataCompleteness { get; set; }
+        public decimal LiquidityScore { get; set; }
+        public decimal SpreadEfficiency { get; set; }
+        public decimal OrderFlowImbalance { get; set; }
+        public decimal PriceImpact { get; set; }
+        public decimal MarketDepth { get; set; }
+        public decimal CompositeScore { get; set; }
+        public decimal DataCompleteness { get; set; }
     }
 
     public class QualityFactors
     {
-        public float EarningsStability { get; set; }
-        public float BalanceSheetStrength { get; set; }
-        public float ManagementQuality { get; set; }
-        public float CompetitiveAdvantage { get; set; }
-        public float BusinessModelQuality { get; set; }
-        public float CompositeQuality { get; set; }
-        public float DataCompleteness { get; set; }
+        public decimal EarningsStability { get; set; }
+        public decimal BalanceSheetStrength { get; set; }
+        public decimal ManagementQuality { get; set; }
+        public decimal CompetitiveAdvantage { get; set; }
+        public decimal BusinessModelQuality { get; set; }
+        public decimal CompositeQuality { get; set; }
+        public decimal DataCompleteness { get; set; }
     }
 
     public class RiskFactors
     {
-        public float SystematicRisk { get; set; }
-        public float IdiosyncraticRisk { get; set; }
-        public float LiquidityRisk { get; set; }
-        public float ConcentrationRisk { get; set; }
-        public float TailRisk { get; set; }
-        public float CompositeRisk { get; set; }
-        public float DataCompleteness { get; set; }
+        public decimal SystematicRisk { get; set; }
+        public decimal IdiosyncraticRisk { get; set; }
+        public decimal LiquidityRisk { get; set; }
+        public decimal ConcentrationRisk { get; set; }
+        public decimal TailRisk { get; set; }
+        public decimal CompositeRisk { get; set; }
+        public decimal DataCompleteness { get; set; }
     }
 }

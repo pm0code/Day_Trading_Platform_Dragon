@@ -192,6 +192,28 @@ Key documentation files in the MainDocs directory:
 
 • /model opus: Always use Opus for complex code generation, architectural design, and detailed technical tasks requiring high precision and advanced reasoning
 
+## 🔴 CRITICAL MANDATE: MCP Real-Time Monitoring
+
+**ABSOLUTE REQUIREMENT**: The MCP Code Analyzer MUST be running at ALL times during development. This is non-negotiable.
+
+### MCP Monitoring Checklist:
+1. **Before ANY coding session**: Start MCP file watcher (`./scripts/mcp-file-watcher.sh`)
+2. **During development**: Verify MCP is catching issues in real-time
+3. **Before EVERY commit**: Ensure pre-commit hook runs MCP analysis
+4. **In VS Code**: Use MCP tasks for current file analysis
+5. **CI/CD**: MCP analysis must pass before any merge
+
+### To Start MCP Monitoring:
+```bash
+# Terminal 1: Start file watcher
+./scripts/mcp-file-watcher.sh
+
+# Terminal 2: Start MCP server (if using VS Code integration)
+cd /home/nader/my_projects/C#/mcp-code-analyzer && npm run start
+```
+
+**FAILURE TO RUN MCP = TECHNICAL DEBT ACCUMULATION = PROJECT FAILURE**
+
 ## MANDATORY Standard Development Workflow
 
 **CRITICAL**: The following workflow from `MainDocs/Coding Standard Development Workflow - Clean.md` is MANDATORY for ALL code work:

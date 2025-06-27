@@ -37,9 +37,9 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             return Task.FromResult(TradingResult.Success());
         }
 
-        public TradingResult<float> CalculateVaR(
-            float[] returns,
-            float confidenceLevel = 0.95f,
+        public TradingResult<decimal> CalculateVaR(
+            decimal[] returns,
+            decimal confidenceLevel = 0.95m,
             VaRMethod method = VaRMethod.Historical)
         {
             LogMethodEntry();
@@ -50,18 +50,18 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                 if (returns == null || returns.Length == 0)
                 {
                     LogWarning("Returns array is null or empty");
-                    return TradingResult<float>.Failure("Returns array is null or empty");
+                    return TradingResult<decimal>.Failure("Returns array is null or empty");
                 }
 
                 if (confidenceLevel <= 0 || confidenceLevel >= 1)
                 {
                     LogWarning($"Invalid confidence level: {confidenceLevel}");
-                    return TradingResult<float>.Failure("Confidence level must be between 0 and 1");
+                    return TradingResult<decimal>.Failure("Confidence level must be between 0 and 1");
                 }
 
                 LogDebug($"Starting VaR calculation with {returns.Length} data points");
                 
-                float var = method switch
+                decimal var = method switch
                 {
                     VaRMethod.Historical => CalculateHistoricalVaR(returns, confidenceLevel),
                     VaRMethod.Parametric => CalculateParametricVaR(returns, confidenceLevel),
@@ -71,18 +71,18 @@ namespace TradingPlatform.ML.Algorithms.RAPM
 
                 LogInfo($"VaR calculated successfully: {var:F4} at {confidenceLevel:P0} confidence using {method} method");
                 LogMethodExit();
-                return TradingResult<float>.Success(var);
+                return TradingResult<decimal>.Success(var);
             }
             catch (Exception ex)
             {
                 LogError("Error calculating VaR", ex);
-                return TradingResult<float>.Failure($"Failed to calculate VaR: {ex.Message}");
+                return TradingResult<decimal>.Failure($"Failed to calculate VaR: {ex.Message}");
             }
         }
 
-        public TradingResult<float> CalculateCVaR(
-            float[] returns,
-            float confidenceLevel = 0.95f,
+        public TradingResult<decimal> CalculateCVaR(
+            decimal[] returns,
+            decimal confidenceLevel = 0.95m,
             VaRMethod method = VaRMethod.Historical)
         {
             LogMethodEntry();
@@ -92,29 +92,29 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                 var varResult = CalculateVaR(returns, confidenceLevel, method);
                 if (!varResult.IsSuccess)
                 {
-                    return TradingResult<float>.Failure(varResult.ErrorMessage);
+                    return TradingResult<decimal>.Failure(varResult.ErrorMessage);
                 }
 
-                float var = varResult.Data;
-                float cvar = method switch
+                decimal var = varResult.Data;
+                decimal cvar = method switch
                 {
                     VaRMethod.Historical => CalculateHistoricalCVaR(returns, var),
                     VaRMethod.Parametric => CalculateParametricCVaR(returns, var, confidenceLevel),
-                    VaRMethod.MonteCarlo => CalculateMonteCarloVaR(returns, confidenceLevel) * 1.2f, // Approximation
+                    VaRMethod.MonteCarlo => CalculateMonteCarloVaR(returns, confidenceLevel) * 1.2m, // Approximation
                     _ => throw new ArgumentException($"Unknown CVaR method: {method}")
                 };
 
                 LogMethodExit();
-                return TradingResult<float>.Success(cvar);
+                return TradingResult<decimal>.Success(cvar);
             }
             catch (Exception ex)
             {
                 LogError("Error calculating CVaR", ex);
-                return TradingResult<float>.Failure($"Failed to calculate CVaR: {ex.Message}");
+                return TradingResult<decimal>.Failure($"Failed to calculate CVaR: {ex.Message}");
             }
         }
 
-        public TradingResult<float> CalculateMaxDrawdown(float[] prices)
+        public TradingResult<decimal> CalculateMaxDrawdown(decimal[] prices)
         {
             LogMethodEntry();
             
@@ -122,11 +122,11 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             {
                 if (prices == null || prices.Length < 2)
                 {
-                    return TradingResult<float>.Failure("Insufficient price data");
+                    return TradingResult<decimal>.Failure("Insufficient price data");
                 }
 
-                float maxDrawdown = 0;
-                float peak = prices[0];
+                decimal maxDrawdown = 0m;
+                decimal peak = prices[0];
 
                 for (int i = 1; i < prices.Length; i++)
                 {
@@ -136,7 +136,7 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                     }
                     else
                     {
-                        float drawdown = (peak - prices[i]) / peak;
+                        decimal drawdown = (peak - prices[i]) / peak;
                         if (drawdown > maxDrawdown)
                         {
                             maxDrawdown = drawdown;
@@ -145,19 +145,19 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                 }
 
                 LogMethodExit();
-                return TradingResult<float>.Success(maxDrawdown);
+                return TradingResult<decimal>.Success(maxDrawdown);
             }
             catch (Exception ex)
             {
                 LogError("Error calculating max drawdown", ex);
-                return TradingResult<float>.Failure($"Failed to calculate max drawdown: {ex.Message}");
+                return TradingResult<decimal>.Failure($"Failed to calculate max drawdown: {ex.Message}");
             }
         }
 
-        public TradingResult<float> CalculateVolatilityAdjustedRisk(
-            float[] returns,
-            float skewPenalty = 0.5f,
-            float kurtosisPenalty = 0.25f)
+        public TradingResult<decimal> CalculateVolatilityAdjustedRisk(
+            decimal[] returns,
+            decimal skewPenalty = 0.5m,
+            decimal kurtosisPenalty = 0.25m)
         {
             LogMethodEntry();
             
@@ -165,35 +165,35 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             {
                 if (returns == null || returns.Length < 4)
                 {
-                    return TradingResult<float>.Failure("Insufficient return data");
+                    return TradingResult<decimal>.Failure("Insufficient return data");
                 }
 
                 // Calculate moments
-                float mean = returns.Average();
-                float variance = returns.Select(r => (r - mean) * (r - mean)).Average();
-                float stdDev = (float)Math.Sqrt(variance);
+                decimal mean = returns.Average();
+                decimal variance = returns.Select(r => (r - mean) * (r - mean)).Average();
+                decimal stdDev = DecimalMath.Sqrt(variance);
 
                 // Standardized moments
-                float[] standardized = returns.Select(r => (r - mean) / stdDev).ToArray();
-                float skewness = standardized.Select(z => z * z * z).Average();
-                float kurtosis = standardized.Select(z => z * z * z * z).Average();
+                decimal[] standardized = returns.Select(r => (r - mean) / stdDev).ToArray();
+                decimal skewness = standardized.Select(z => z * z * z).Average();
+                decimal kurtosis = standardized.Select(z => z * z * z * z).Average();
 
                 // Adjusted volatility
-                float adjustment = 1 + skewPenalty * skewness * skewness + 
-                                  kurtosisPenalty * Math.Max(0, kurtosis - 3);
-                float adjustedVol = stdDev * (float)Math.Sqrt(adjustment);
+                decimal adjustment = 1m + skewPenalty * skewness * skewness + 
+                                  kurtosisPenalty * Math.Max(0m, kurtosis - 3m);
+                decimal adjustedVol = stdDev * DecimalMath.Sqrt(adjustment);
 
                 LogMethodExit();
-                return TradingResult<float>.Success(adjustedVol);
+                return TradingResult<decimal>.Success(adjustedVol);
             }
             catch (Exception ex)
             {
                 LogError("Error calculating volatility-adjusted risk", ex);
-                return TradingResult<float>.Failure($"Failed to calculate adjusted risk: {ex.Message}");
+                return TradingResult<decimal>.Failure($"Failed to calculate adjusted risk: {ex.Message}");
             }
         }
 
-        public TradingResult<float> CalculateCompositeRisk(
+        public TradingResult<decimal> CalculateCompositeRisk(
             RiskComponents components,
             RiskWeights weights)
         {
@@ -202,31 +202,31 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             try
             {
                 // Validate weights sum to 1
-                float weightSum = weights.CVaRWeight + weights.VolatilityWeight + 
+                decimal weightSum = weights.CVaRWeight + weights.VolatilityWeight + 
                                  weights.DrawdownWeight + weights.ConcentrationWeight;
                 
-                if (Math.Abs(weightSum - 1.0f) > 0.001f)
+                if (Math.Abs(weightSum - 1.0m) > 0.001m)
                 {
-                    return TradingResult<float>.Failure($"Risk weights must sum to 1, got {weightSum}");
+                    return TradingResult<decimal>.Failure($"Risk weights must sum to 1, got {weightSum}");
                 }
 
-                float compositeRisk = 
+                decimal compositeRisk = 
                     weights.CVaRWeight * components.CVaR +
                     weights.VolatilityWeight * components.Volatility +
                     weights.DrawdownWeight * components.MaxDrawdown +
                     weights.ConcentrationWeight * components.ConcentrationRisk;
 
                 LogMethodExit();
-                return TradingResult<float>.Success(compositeRisk);
+                return TradingResult<decimal>.Success(compositeRisk);
             }
             catch (Exception ex)
             {
                 LogError("Error calculating composite risk", ex);
-                return TradingResult<float>.Failure($"Failed to calculate composite risk: {ex.Message}");
+                return TradingResult<decimal>.Failure($"Failed to calculate composite risk: {ex.Message}");
             }
         }
 
-        public TradingResult<float> CalculateConcentrationRisk(float[] weights)
+        public TradingResult<decimal> CalculateConcentrationRisk(decimal[] weights)
         {
             LogMethodEntry();
             
@@ -234,30 +234,30 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             {
                 if (weights == null || weights.Length == 0)
                 {
-                    return TradingResult<float>.Failure("Weights array is null or empty");
+                    return TradingResult<decimal>.Failure("Weights array is null or empty");
                 }
 
                 // Herfindahl-Hirschman Index
-                float hhi = weights.Sum(w => w * w);
+                decimal hhi = weights.Sum(w => w * w);
                 
                 // Normalize to [0, 1] range
-                float minHHI = 1.0f / weights.Length;
-                float maxHHI = 1.0f;
-                float normalizedHHI = (hhi - minHHI) / (maxHHI - minHHI);
+                decimal minHHI = 1.0m / weights.Length;
+                decimal maxHHI = 1.0m;
+                decimal normalizedHHI = (hhi - minHHI) / (maxHHI - minHHI);
 
                 LogMethodExit();
-                return TradingResult<float>.Success(normalizedHHI);
+                return TradingResult<decimal>.Success(normalizedHHI);
             }
             catch (Exception ex)
             {
                 LogError("Error calculating concentration risk", ex);
-                return TradingResult<float>.Failure($"Failed to calculate concentration risk: {ex.Message}");
+                return TradingResult<decimal>.Failure($"Failed to calculate concentration risk: {ex.Message}");
             }
         }
 
         public async Task<TradingResult<StressTestResult>> RunStressTestAsync(
-            float[] portfolioWeights,
-            float[,] assetReturns,
+            decimal[] portfolioWeights,
+            decimal[,] assetReturns,
             List<StressScenario> scenarios,
             CancellationToken cancellationToken = default)
         {
@@ -269,8 +269,8 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                 var results = new StressTestResult
                 {
                     ScenarioResults = new List<ScenarioResult>(),
-                    WorstCaseLoss = float.MinValue,
-                    AverageStressLoss = 0
+                    WorstCaseLoss = decimal.MinValue,
+                    AverageStressLoss = 0m
                 };
                 
                 LogDebug($"Portfolio weights: [{string.Join(", ", portfolioWeights.Select(w => w.ToString("F4")))}]");
@@ -310,122 +310,122 @@ namespace TradingPlatform.ML.Algorithms.RAPM
             }
         }
 
-        private float CalculateHistoricalVaR(float[] returns, float confidenceLevel)
+        private decimal CalculateHistoricalVaR(decimal[] returns, decimal confidenceLevel)
         {
             LogDebug($"Calculating Historical VaR with {returns.Length} returns");
             
             var sortedReturns = returns.OrderBy(r => r).ToArray();
-            int index = (int)Math.Floor((1 - confidenceLevel) * returns.Length);
+            int index = (int)Math.Floor((double)((1 - confidenceLevel) * returns.Length));
             
             LogDebug($"VaR index: {index}, sorted returns range: [{sortedReturns.First():F4}, {sortedReturns.Last():F4}]");
             
-            float var = -sortedReturns[index];
+            decimal var = -sortedReturns[index];
             LogDebug($"Historical VaR result: {var:F4}");
             
             return var;
         }
 
-        private float CalculateParametricVaR(float[] returns, float confidenceLevel)
+        private decimal CalculateParametricVaR(decimal[] returns, decimal confidenceLevel)
         {
-            float mean = returns.Average();
-            float stdDev = CalculateStandardDeviation(returns);
+            decimal mean = returns.Average();
+            decimal stdDev = CalculateStandardDeviation(returns);
             
             // Z-score for confidence level (assuming normal distribution)
-            float zScore = GetZScore(confidenceLevel);
+            decimal zScore = GetZScore(confidenceLevel);
             
             return -(mean - zScore * stdDev);
         }
 
-        private float CalculateMonteCarloVaR(float[] returns, float confidenceLevel, int simulations = 10000)
+        private decimal CalculateMonteCarloVaR(decimal[] returns, decimal confidenceLevel, int simulations = 10000)
         {
-            float mean = returns.Average();
-            float stdDev = CalculateStandardDeviation(returns);
+            decimal mean = returns.Average();
+            decimal stdDev = CalculateStandardDeviation(returns);
             
             var random = new Random();
-            var simulatedReturns = new float[simulations];
+            var simulatedReturns = new decimal[simulations];
             
             for (int i = 0; i < simulations; i++)
             {
                 // Box-Muller transform for normal distribution
-                double u1 = 1.0 - random.NextDouble();
-                double u2 = 1.0 - random.NextDouble();
-                double normal = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Sin(2.0 * Math.PI * u2);
+                decimal u1 = 1.0m - (decimal)random.NextDouble();
+                decimal u2 = 1.0m - (decimal)random.NextDouble();
+                decimal normal = DecimalMath.Sqrt(-2.0m * DecimalMath.Log(u1)) * DecimalMath.Sin(2.0m * DecimalMath.PI * u2);
                 
-                simulatedReturns[i] = mean + stdDev * (float)normal;
+                simulatedReturns[i] = mean + stdDev * (decimal)normal;
             }
             
             return CalculateHistoricalVaR(simulatedReturns, confidenceLevel);
         }
 
-        private float CalculateHistoricalCVaR(float[] returns, float var)
+        private decimal CalculateHistoricalCVaR(decimal[] returns, decimal var)
         {
             var lossesBeyo ndVaR = returns.Where(r => r < -var).ToArray();
             return lossesBeyo ndVaR.Length > 0 ? -lossesBeyo ndVaR.Average() : var;
         }
 
-        private float CalculateParametricCVaR(float[] returns, float var, float confidenceLevel)
+        private decimal CalculateParametricCVaR(decimal[] returns, decimal var, decimal confidenceLevel)
         {
-            float mean = returns.Average();
-            float stdDev = CalculateStandardDeviation(returns);
-            float zScore = GetZScore(confidenceLevel);
+            decimal mean = returns.Average();
+            decimal stdDev = CalculateStandardDeviation(returns);
+            decimal zScore = GetZScore(confidenceLevel);
             
             // For normal distribution, CVaR has closed-form solution
-            float phi = (float)(Math.Exp(-zScore * zScore / 2) / Math.Sqrt(2 * Math.PI));
-            float cvar = mean + stdDev * phi / (1 - confidenceLevel);
+            decimal phi = DecimalMath.Exp(-zScore * zScore / 2) / DecimalMath.Sqrt(2 * DecimalMath.PI);
+            decimal cvar = mean + stdDev * phi / (1 - confidenceLevel);
             
             return -cvar;
         }
 
-        private float CalculateStandardDeviation(float[] values)
+        private decimal CalculateStandardDeviation(decimal[] values)
         {
-            float mean = values.Average();
-            float variance = values.Select(v => (v - mean) * (v - mean)).Average();
-            return (float)Math.Sqrt(variance);
+            decimal mean = values.Average();
+            decimal variance = values.Select(v => (v - mean) * (v - mean)).Average();
+            return DecimalMath.Sqrt(variance);
         }
 
-        private float GetZScore(float confidenceLevel)
+        private decimal GetZScore(decimal confidenceLevel)
         {
             // Approximate inverse normal CDF using Beasley-Springer-Moro algorithm
-            float a0 = 2.50662823884f;
-            float a1 = -18.61500062529f;
-            float a2 = 41.39119773534f;
-            float a3 = -25.44106049637f;
+            decimal a0 = 2.50662823884m;
+            decimal a1 = -18.61500062529m;
+            decimal a2 = 41.39119773534m;
+            decimal a3 = -25.44106049637m;
             
-            float b0 = -8.47351093090f;
-            float b1 = 23.08336743743f;
-            float b2 = -21.06224101826f;
-            float b3 = 3.13082909833f;
+            decimal b0 = -8.47351093090m;
+            decimal b1 = 23.08336743743m;
+            decimal b2 = -21.06224101826m;
+            decimal b3 = 3.13082909833m;
             
-            float c0 = 0.3374754822726147f;
-            float c1 = 0.9761690190917186f;
-            float c2 = 0.1607979714918209f;
-            float c3 = 0.0276438810333863f;
-            float c4 = 0.0038405729373609f;
-            float c5 = 0.0003951896511919f;
-            float c6 = 0.0000321767881768f;
-            float c7 = 0.0000002888167364f;
-            float c8 = 0.0000003960315187f;
+            decimal c0 = 0.3374754822726147m;
+            decimal c1 = 0.9761690190917186m;
+            decimal c2 = 0.1607979714918209m;
+            decimal c3 = 0.0276438810333863m;
+            decimal c4 = 0.0038405729373609m;
+            decimal c5 = 0.0003951896511919m;
+            decimal c6 = 0.0000321767881768m;
+            decimal c7 = 0.0000002888167364m;
+            decimal c8 = 0.0000003960315187m;
             
-            float y = confidenceLevel - 0.5f;
+            decimal y = confidenceLevel - 0.5m;
             
-            if (Math.Abs(y) < 0.42f)
+            if (Math.Abs(y) < 0.42m)
             {
-                float r = y * y;
+                decimal r = y * y;
                 return y * (((a3 * r + a2) * r + a1) * r + a0) / ((((b3 * r + b2) * r + b1) * r + b0) * r + 1);
             }
             else
             {
-                float r = confidenceLevel > 0.5f ? 1 - confidenceLevel : confidenceLevel;
-                r = (float)Math.Log(-Math.Log(r));
-                float x = c0 + r * (c1 + r * (c2 + r * (c3 + r * (c4 + r * (c5 + r * (c6 + r * (c7 + r * c8)))))));
+                decimal r = confidenceLevel > 0.5m ? 1 - confidenceLevel : confidenceLevel;
+                r = DecimalMath.Log(-DecimalMath.Log(r));
+                decimal x = c0 + r * (c1 + r * (c2 + r * (c3 + r * (c4 + r * (c5 + r * (c6 + r * (c7 + r * c8)))))));
                 
-                return confidenceLevel > 0.5f ? x : -x;
+                return confidenceLevel > 0.5m ? x : -x;
             }
         }
 
         private async Task<ScenarioResult> EvaluateScenarioAsync(
-            float[] portfolioWeights,
-            float[,] assetReturns,
+            decimal[] portfolioWeights,
+            decimal[,] assetReturns,
             StressScenario scenario,
             CancellationToken cancellationToken)
         {
@@ -434,13 +434,13 @@ namespace TradingPlatform.ML.Algorithms.RAPM
                 var result = new ScenarioResult
                 {
                     ScenarioName = scenario.Name,
-                    AssetLosses = new float[portfolioWeights.Length]
+                    AssetLosses = new decimal[portfolioWeights.Length]
                 };
 
                 // Apply scenario shocks
                 for (int i = 0; i < portfolioWeights.Length; i++)
                 {
-                    float shock = scenario.AssetShocks?.Length > i ? scenario.AssetShocks[i] : scenario.MarketShock;
+                    decimal shock = scenario.AssetShocks?.Length > i ? scenario.AssetShocks[i] : scenario.MarketShock;
                     result.AssetLosses[i] = shock;
                 }
 
@@ -453,29 +453,29 @@ namespace TradingPlatform.ML.Algorithms.RAPM
 
                 // Calculate risk metrics under stress
                 var stressedReturns = ApplyStressToReturns(assetReturns, scenario);
-                var varResult = CalculateVaR(stressedReturns, 0.95f);
+                var varResult = CalculateVaR(stressedReturns, 0.95m);
                 result.StressedVaR = varResult.IsSuccess ? varResult.Data : 0;
 
-                var cvarResult = CalculateCVaR(stressedReturns, 0.95f);
+                var cvarResult = CalculateCVaR(stressedReturns, 0.95m);
                 result.StressedCVaR = cvarResult.IsSuccess ? cvarResult.Data : 0;
 
                 return result;
             }, cancellationToken);
         }
 
-        private float[] ApplyStressToReturns(float[,] assetReturns, StressScenario scenario)
+        private decimal[] ApplyStressToReturns(decimal[,] assetReturns, StressScenario scenario)
         {
             int periods = assetReturns.GetLength(0);
             int assets = assetReturns.GetLength(1);
-            var stressedReturns = new float[periods];
+            var stressedReturns = new decimal[periods];
 
             for (int t = 0; t < periods; t++)
             {
                 stressedReturns[t] = 0;
                 for (int i = 0; i < assets; i++)
                 {
-                    float shock = scenario.AssetShocks?.Length > i ? scenario.AssetShocks[i] : scenario.MarketShock;
-                    float stressMultiplier = 1 + shock;
+                    decimal shock = scenario.AssetShocks?.Length > i ? scenario.AssetShocks[i] : scenario.MarketShock;
+                    decimal stressMultiplier = 1 + shock;
                     stressedReturns[t] += assetReturns[t, i] * stressMultiplier;
                 }
                 stressedReturns[t] /= assets;
@@ -494,43 +494,43 @@ namespace TradingPlatform.ML.Algorithms.RAPM
 
     public class RiskComponents
     {
-        public float CVaR { get; set; }
-        public float Volatility { get; set; }
-        public float MaxDrawdown { get; set; }
-        public float ConcentrationRisk { get; set; }
+        public decimal CVaR { get; set; }
+        public decimal Volatility { get; set; }
+        public decimal MaxDrawdown { get; set; }
+        public decimal ConcentrationRisk { get; set; }
     }
 
     public class RiskWeights
     {
-        public float CVaRWeight { get; set; } = 0.4f;
-        public float VolatilityWeight { get; set; } = 0.3f;
-        public float DrawdownWeight { get; set; } = 0.2f;
-        public float ConcentrationWeight { get; set; } = 0.1f;
+        public decimal CVaRWeight { get; set; } = 0.4m;
+        public decimal VolatilityWeight { get; set; } = 0.3m;
+        public decimal DrawdownWeight { get; set; } = 0.2m;
+        public decimal ConcentrationWeight { get; set; } = 0.1m;
     }
 
     public class StressScenario
     {
         public string Name { get; set; }
-        public float MarketShock { get; set; }
-        public float[] AssetShocks { get; set; }
-        public float Probability { get; set; }
+        public decimal MarketShock { get; set; }
+        public decimal[] AssetShocks { get; set; }
+        public decimal Probability { get; set; }
         public string Description { get; set; }
     }
 
     public class StressTestResult
     {
         public List<ScenarioResult> ScenarioResults { get; set; }
-        public float WorstCaseLoss { get; set; }
+        public decimal WorstCaseLoss { get; set; }
         public string WorstScenario { get; set; }
-        public float AverageStressLoss { get; set; }
+        public decimal AverageStressLoss { get; set; }
     }
 
     public class ScenarioResult
     {
         public string ScenarioName { get; set; }
-        public float PortfolioLoss { get; set; }
-        public float[] AssetLosses { get; set; }
-        public float StressedVaR { get; set; }
-        public float StressedCVaR { get; set; }
+        public decimal PortfolioLoss { get; set; }
+        public decimal[] AssetLosses { get; set; }
+        public decimal StressedVaR { get; set; }
+        public decimal StressedCVaR { get; set; }
     }
 }
