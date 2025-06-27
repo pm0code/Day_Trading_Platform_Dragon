@@ -291,7 +291,7 @@ namespace TradingPlatform.ML.Models
                             LoadedAt = modelInstance.LoadedAt,
                             PredictionCount = metrics.PredictionCount,
                             SuccessRate = metrics.PredictionCount > 0 
-                                ? (double)metrics.SuccessCount / metrics.PredictionCount 
+                                ? (decimal)metrics.SuccessCount / metrics.PredictionCount 
                                 : 0,
                             AverageLatencyMs = metrics.PredictionCount > 0
                                 ? metrics.TotalLatency / metrics.PredictionCount
@@ -323,7 +323,7 @@ namespace TradingPlatform.ML.Models
             string testId,
             string modelA,
             string modelB,
-            double trafficSplitA = 0.5,
+            decimal trafficSplitA = 0.5m,
             CancellationToken cancellationToken = default)
         {
             return await ExecuteServiceOperationAsync(
@@ -428,7 +428,7 @@ namespace TradingPlatform.ML.Models
                     if (metrics.PredictionCount > 0)
                     {
                         var avgLatency = metrics.TotalLatency / metrics.PredictionCount;
-                        var successRate = (double)metrics.SuccessCount / metrics.PredictionCount;
+                        var successRate = (decimal)metrics.SuccessCount / metrics.PredictionCount;
                         
                         RecordServiceMetric($"Model.{modelId}.AvgLatency", avgLatency);
                         RecordServiceMetric($"Model.{modelId}.SuccessRate", successRate);
@@ -510,7 +510,7 @@ namespace TradingPlatform.ML.Models
         public long PredictionCount { get; set; }
         public long SuccessCount { get; set; }
         public long ErrorCount { get; set; }
-        public double TotalLatency { get; set; }
+        public decimal TotalLatency { get; set; }
         public DateTime? LastPredictionTime { get; set; }
     }
     
@@ -529,8 +529,8 @@ namespace TradingPlatform.ML.Models
         public string Version { get; set; } = string.Empty;
         public DateTime LoadedAt { get; set; }
         public long PredictionCount { get; set; }
-        public double SuccessRate { get; set; }
-        public double AverageLatencyMs { get; set; }
+        public decimal SuccessRate { get; set; }
+        public decimal AverageLatencyMs { get; set; }
         public DateTime? LastPredictionTime { get; set; }
         public long ErrorCount { get; set; }
     }
@@ -540,7 +540,7 @@ namespace TradingPlatform.ML.Models
         public string TestId { get; set; } = string.Empty;
         public string ModelA { get; set; } = string.Empty;
         public string ModelB { get; set; } = string.Empty;
-        public double TrafficSplitA { get; set; }
+        public decimal TrafficSplitA { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public bool IsActive { get; set; }

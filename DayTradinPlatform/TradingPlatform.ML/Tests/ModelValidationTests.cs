@@ -294,11 +294,11 @@ namespace TradingPlatform.ML.Tests
     
     public class MockPriceModel : IPredictiveModel<PricePredictionInput, PricePrediction>, IMLModel
     {
-        private readonly float _bias;
-        private readonly float _confidence;
+        private readonly decimal _bias;
+        private readonly decimal _confidence;
         private readonly Random _random = new Random(42);
         
-        public MockPriceModel(float bias = 0, float confidence = 0.65f)
+        public MockPriceModel(decimal bias = 0, decimal confidence = 0.65m)
         {
             _bias = bias;
             _confidence = confidence;
@@ -308,14 +308,14 @@ namespace TradingPlatform.ML.Tests
             PricePredictionInput input, 
             CancellationToken cancellationToken = default)
         {
-            var changePercent = (float)(_random.NextDouble() * 2 - 1) + _bias;
+            var changePercent = (decimal)(_random.NextDouble() * 2 - 1) + _bias;
             var predictedPrice = input.Close * (1 + changePercent / 100);
             
             var prediction = new PricePrediction
             {
                 PredictedPrice = predictedPrice,
                 PriceChangePercent = changePercent,
-                Confidence = _confidence + (float)(_random.NextDouble() * 0.2 - 0.1),
+                Confidence = _confidence + (decimal)(_random.NextDouble() * 0.2 - 0.1),
                 PredictionTime = DateTime.UtcNow
             };
             
@@ -347,7 +347,7 @@ namespace TradingPlatform.ML.Tests
                 ModelId = Guid.NewGuid().ToString(),
                 TrainingStartTime = DateTime.UtcNow.AddMinutes(-5),
                 TrainingEndTime = DateTime.UtcNow,
-                Metrics = new Dictionary<string, double>
+                Metrics = new Dictionary<string, decimal>
                 {
                     ["RMSE"] = 0.02,
                     ["MAE"] = 0.015,
@@ -368,7 +368,7 @@ namespace TradingPlatform.ML.Tests
                 RootMeanSquaredError = 0.025,
                 MeanAbsoluteError = 0.018,
                 R2Score = 0.82,
-                CustomMetrics = new Dictionary<string, double>
+                CustomMetrics = new Dictionary<string, decimal>
                 {
                     ["DirectionalAccuracy"] = 0.65
                 }

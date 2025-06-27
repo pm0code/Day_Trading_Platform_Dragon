@@ -154,20 +154,20 @@ namespace TradingPlatform.ML.Monitoring
         
         // Helper methods
         
-        private double CalculateHealthScore(ModelPerformanceReport performance)
+        private decimal CalculateHealthScore(ModelPerformanceReport performance)
         {
-            var score = 100.0;
+            var score = 100.0m;
             
             // Deduct for poor accuracy
-            if (performance.DirectionalAccuracy < 0.6)
-                score -= 20 * (0.6 - performance.DirectionalAccuracy);
+            if (performance.DirectionalAccuracy < 0.6m)
+                score -= 20 * (0.6m - performance.DirectionalAccuracy);
             
             // Deduct for high latency
             if (performance.AverageLatencyMs > 100)
                 score -= Math.Min(20, (performance.AverageLatencyMs - 100) / 10);
             
             // Deduct for drift
-            if (performance.CurrentDriftScore > 0.1)
+            if (performance.CurrentDriftScore > 0.1m)
                 score -= Math.Min(20, performance.CurrentDriftScore * 100);
             
             // Deduct for alerts
@@ -431,7 +431,7 @@ namespace TradingPlatform.ML.Monitoring
         public string ModelId { get; set; } = string.Empty;
         public ModelPerformanceReport Performance { get; set; } = null!;
         public ModelStatus? ServingStatus { get; set; }
-        public double HealthScore { get; set; }
+        public decimal HealthScore { get; set; }
         public List<string> RecommendedActions { get; set; } = new();
         
         // Chart data
@@ -466,13 +466,13 @@ namespace TradingPlatform.ML.Monitoring
     public class ChartSeries
     {
         public string Name { get; set; } = string.Empty;
-        public double[] Data { get; set; } = Array.Empty<double>();
+        public decimal[] Data { get; set; } = Array.Empty<decimal>();
     }
     
     public class ModelHealthStatus
     {
         public string ModelId { get; set; } = string.Empty;
-        public double Health { get; set; }
+        public decimal Health { get; set; }
         public string Status { get; set; } = string.Empty;
         public DateTime LastUpdate { get; set; }
     }
@@ -493,10 +493,10 @@ namespace TradingPlatform.ML.Monitoring
     
     public class ResourceUtilization
     {
-        public double CpuUsage { get; set; }
-        public double MemoryUsage { get; set; }
-        public double GpuUsage { get; set; }
-        public double NetworkBandwidth { get; set; }
+        public decimal CpuUsage { get; set; }
+        public decimal MemoryUsage { get; set; }
+        public decimal GpuUsage { get; set; }
+        public decimal NetworkBandwidth { get; set; }
     }
     
     public enum ChartType
