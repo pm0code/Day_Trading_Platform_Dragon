@@ -75,6 +75,34 @@
 - **Key Finding**: Files using MathNet.Numerics require special handling
 - **Journal**: 2025-06-27_financial_precision_fixes_session3.md
 
+### **Architecture Improvements and Inter-Agent Communication** #architecture #inter-agent #shared-config #tradingagent
+- **Timestamp**: 2025-01-30
+- **Problem**: Need for better inter-agent communication and standardized configurations
+- **Solution**: Implemented TradingAgent service and created shared configuration repository
+- **Files Created**:
+  - `/scripts/tradingagent-redis.js` - Redis pub/sub agent implementation
+  - `/home/nader/my_projects/CS/shared-config/*` - Shared configuration repository
+  - `/docs/architecture/system-overview.md` - Comprehensive architecture diagram
+  - `/MiscFiles/Architecture_Improvements_Proposal.md` - Improvement proposal
+- **Key Features**: System-wide monitoring, heartbeat mechanism, message type definitions
+- **Integration**: All agents now use standardized message formats and channels
+- **Journal**: 2025-01-30_architecture_improvements_and_standards.md
+
+### **Non-Standard Implementations Analysis** #standards #migration #research-first #technical-debt
+- **Timestamp**: 2025-01-30
+- **Problem**: Significant custom code instead of using standard libraries
+- **Analysis**: Found 10+ major non-standard implementations
+- **High Priority Fixes**:
+  - Custom Rate Limiting → System.Threading.RateLimiting
+  - Custom Object Pooling → Microsoft.Extensions.ObjectPool
+  - Custom Decimal Math → DecimalMath.DecimalEx
+  - Manual Validation → FluentValidation
+  - Custom HTTP Retry → Polly
+- **Report**: `/NON_STANDARD_IMPLEMENTATIONS_REPORT.md` - Comprehensive migration guide
+- **Impact**: 40% potential reduction in custom code maintenance
+- **Migration Plan**: 4 phases over 8 weeks with performance benchmarking
+- **Journal**: 2025-01-30_architecture_improvements_and_standards.md
+
 ---
 
 ## Navigation

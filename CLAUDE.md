@@ -334,4 +334,82 @@ When analyzing any code issue, bug, or enhancement request, systematically exami
 - Use TradingResult<T> for all operation results
 - Follow established logging patterns using canonical base class methods
 - Every service MUST extend appropriate canonical base class (CanonicalServiceBase, CanonicalStrategyBase, etc.)
+
+## Agent Identity and Communication
+
+### My Agent Identity
+**AGENT NAME**: `tradingagent`  
+**PRIMARY CHANNEL**: `tradingagent:*`  
+**IMPORTANT**: All Claude Code agents working on this project MUST adopt this exact agent name for consistency.
+
+### Inter-Agent Communication
+
+This agent participates in the AgentHub messaging system via Redis pub/sub.
+
+### Channels
+- **Receives on**: `tradingagent:*`
+- **Sends to**: Various agent channels as needed
+- **Monitors**: `agent:broadcast`, `alert:*`, `alerts:*`, all channels (`*:*`) for system-wide awareness
+
+### Message Handling
+- Processes requests for: Market data queries, trading status, risk assessments, portfolio analysis
+- Sends notifications for: System startup, trading events, risk alerts, market conditions
+- Responds to queries about: Trading platform capabilities, financial calculations, market data feeds
+
+### Integration Status
+- [x] Redis subscription implemented
+- [x] Message parsing and validation
+- [x] Error handling and logging
+- [x] Response generation
+- [x] System-wide monitoring
+- [x] Heartbeat mechanism (5-minute intervals)
+
+### CRITICAL: Message Format
+**ALWAYS include both 'agent' and 'from' fields with value `tradingagent` to ensure proper display in AgentHub:**
+
+```javascript
+{
+  agent: "tradingagent",  // CRITICAL: Prevents "unknown" in AgentHub
+  from: "tradingagent",   // For inter-agent standard
+  to: "target-agent",
+  type: "notification",
+  subject: "Subject line",
+  message: "Message content",
+  timestamp: "ISO 8601 timestamp",
+  metadata: { ... }
+}
+```
+
+### Publishing Messages (Three Ways)
+
+#### Option 1: Use the Utility (RECOMMENDED)
+```bash
+node /home/nader/my_projects/CS/linear-bug-tracker/src/utils/publish-to-agenthub.js "tradingagent:notification" "Your message" "tradingagent"
+```
+
+#### Option 2: Direct Redis
+```bash
+redis-cli PUBLISH "tradingagent:request" '{"agent": "tradingagent", "from": "tradingagent", "to": "target", "type": "notification", "message": "Your message", "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+```
+
+#### Option 3: In Code (see tradingagent-redis.js)
+```bash
+node /home/nader/my_projects/CS/DayTradingPlatform/scripts/tradingagent-redis.js
+```
+
+### Testing Your Integration
+```bash
+# Test message display
+node /home/nader/my_projects/CS/linear-bug-tracker/src/utils/publish-to-agenthub.js "tradingagent:test" "Test message" "tradingagent"
+
+# Monitor all traffic
+node /home/nader/my_projects/CS/linear-bug-tracker/src/agenthub/webhook-bridge/redis-monitor.js
+```
+
+### Important Documentation
+**Complete Inter-Agent Communication Standard**: `/home/nader/my_projects/CS/AA.LessonsLearned/INTER_AGENT_COMMUNICATION_STANDARD.md`
+- Version 2.0 with complete implementation guide
+- Message format specifications
+- Troubleshooting tips
+- Code examples in multiple languages
 ```

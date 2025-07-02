@@ -1,0 +1,12 @@
+graph TB
+    subgraph "Project Architecture"
+      API[API Layer]
+      Core[Core Services]
+      Tools[Analysis Tools]
+      Data[Data Layer]
+      
+      API --> Core
+      Core --> Tools
+      Core --> Data
+      Tools --> Data
+    end
