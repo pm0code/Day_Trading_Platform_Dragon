@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using TradingPlatform.Core.Canonical;
 using TradingPlatform.Core.Common;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
@@ -231,7 +232,8 @@ namespace TradingPlatform.ML.Ranking
                 foreach (var stock in toAdd)
                 {
                     var targetValue = positionSizes[stock.Symbol];
-                    var shares = (int)(targetValue / stock.Metadata.GetValueOrDefault("CurrentPrice", 0m));
+                    var currentPrice = (decimal)stock.Metadata.GetValueOrDefault("CurrentPrice", 0m);
+                    var shares = currentPrice > 0 ? (int)(targetValue / currentPrice) : 0;
                     
                     recommendation.Actions.Add(new RebalanceAction
                     {
@@ -250,7 +252,8 @@ namespace TradingPlatform.ML.Ranking
                 {
                     var currentHolding = currentPortfolio.Holdings[stock.Symbol];
                     var targetValue = positionSizes[stock.Symbol];
-                    var targetShares = (int)(targetValue / stock.Metadata.GetValueOrDefault("CurrentPrice", 0m));
+                    var currentPrice = (decimal)stock.Metadata.GetValueOrDefault("CurrentPrice", 0m);
+                    var targetShares = currentPrice > 0 ? (int)(targetValue / currentPrice) : 0;
                     
                     if (Math.Abs(targetShares - currentHolding.Shares) > 0)
                     {
@@ -397,14 +400,14 @@ namespace TradingPlatform.ML.Ranking
             await Task.WhenAll(vixTask, spxTask);
 
             var vix = vixTask.Result?.Price ?? 20m;
-            var marketVolatility = (float)(vix / 100);
+            var marketVolatility = vix / 100;
 
             // Determine market regime
             var marketRegime = marketVolatility switch
             {
-                < 0.15f => MarketRegime.Stable,
-                < 0.25f => MarketRegime.Normal,
-                < 0.35f => MarketRegime.Volatile,
+                < 0.15m => MarketRegime.Stable,
+                < 0.25m => MarketRegime.Normal,
+                < 0.35m => MarketRegime.Volatile,
                 _ => MarketRegime.Crisis
             };
 
@@ -414,8 +417,8 @@ namespace TradingPlatform.ML.Ranking
                 MarketRegime = marketRegime,
                 MarketVolatility = marketVolatility,
                 MarketTrend = DetermineMarketTrend(spxTask.Result),
-                MarketLiquidity = 0.8f, // Would calculate from market breadth
-                EconomicIndicators = new Dictionary<string, float>()
+                MarketLiquidity = 0.8m, // Would calculate from market breadth
+                EconomicIndicators = new Dictionary<string, decimal>()
             };
         }
 
@@ -499,7 +502,7 @@ namespace TradingPlatform.ML.Ranking
                     var totalScore = stocks.Sum(s => s.Score);
                     foreach (var stock in stocks)
                     {
-                        sizes[stock.Symbol] = portfolioValue * (decimal)(stock.Score / totalScore);
+                        sizes[stock.Symbol] = portfolioValue * (stock.Score / totalScore);
                     }
                     break;
                     
@@ -534,14 +537,14 @@ namespace TradingPlatform.ML.Ranking
             };
         }
 
-        private float CalculateStandardDeviation(IEnumerable<float> values)
+        private decimal CalculateStandardDeviation(IEnumerable<decimal> values)
         {
             var list = values.ToList();
             if (list.Count < 2) return 0;
 
             var avg = list.Average();
-            var sum = list.Sum(v => Math.Pow(v - avg, 2));
-            return (float)Math.Sqrt(sum / (list.Count - 1));
+            var sum = list.Sum(v => DecimalMathCanonical.Pow(v - avg, 2));
+            return DecimalMathCanonical.Sqrt(sum / (list.Count - 1));
         }
 
         private Dictionary<string, int> CalculateSectorDistribution(List<RankedStock> stocks)
@@ -558,7 +561,7 @@ namespace TradingPlatform.ML.Ranking
         {
             var totalTurnover = actions.Sum(a => 
                 Math.Abs(a.TargetShares - a.CurrentShares) * 
-                (decimal)a.Metadata.GetValueOrDefault("Price", 0m));
+                (decimal)(a.Metadata.GetValueOrDefault("Price", 0m) ?? 0m));
 
             var turnoverPercent = portfolio.TotalValue > 0 
                 ? totalTurnover / portfolio.TotalValue 
@@ -573,14 +576,14 @@ namespace TradingPlatform.ML.Ranking
             };
         }
 
-        private float CalculateExpectedScoreImprovement(Portfolio portfolio, List<RebalanceAction> actions)
+        private decimal CalculateExpectedScoreImprovement(Portfolio portfolio, List<RebalanceAction> actions)
         {
             // Simplified calculation - would be more sophisticated in practice
             var buyActions = actions.Where(a => a.ActionType == RebalanceActionType.Buy).ToList();
             if (!buyActions.Any()) return 0;
 
             var avgNewScore = buyActions.Average(a => a.Score);
-            return Math.Max(0, avgNewScore - 0.5f); // Assuming 0.5 as baseline
+            return Math.Max(0, avgNewScore - 0.5m); // Assuming 0.5 as baseline
         }
 
         private async Task TrackSelectionPerformanceAsync(
@@ -617,9 +620,9 @@ namespace TradingPlatform.ML.Ranking
     {
         public string Symbol { get; set; }
         public int Rank { get; set; }
-        public float Score { get; set; }
-        public float Confidence { get; set; }
-        public Dictionary<string, float> Factors { get; set; }
+        public decimal Score { get; set; }
+        public decimal Confidence { get; set; }
+        public Dictionary<string, decimal> Factors { get; set; }
         public Dictionary<string, object> Metadata { get; set; }
     }
 
@@ -654,11 +657,11 @@ namespace TradingPlatform.ML.Ranking
 
     public class SelectionStatistics
     {
-        public float AverageScore { get; set; }
-        public float MinScore { get; set; }
-        public float MaxScore { get; set; }
-        public float AverageConfidence { get; set; }
-        public float ScoreStandardDeviation { get; set; }
+        public decimal AverageScore { get; set; }
+        public decimal MinScore { get; set; }
+        public decimal MaxScore { get; set; }
+        public decimal AverageConfidence { get; set; }
+        public decimal ScoreStandardDeviation { get; set; }
         public Dictionary<string, int> SectorDistribution { get; set; }
     }
 
@@ -676,7 +679,7 @@ namespace TradingPlatform.ML.Ranking
         public int CurrentShares { get; set; }
         public int TargetShares { get; set; }
         public decimal TargetValue { get; set; }
-        public float Score { get; set; }
+        public decimal Score { get; set; }
         public string Reason { get; set; }
         public Dictionary<string, object> Metadata { get; set; } = new();
     }
@@ -694,7 +697,7 @@ namespace TradingPlatform.ML.Ranking
         public decimal TurnoverPercent { get; set; }
         public int NumberOfTrades { get; set; }
         public decimal EstimatedCost { get; set; }
-        public float ExpectedScoreImprovement { get; set; }
+        public decimal ExpectedScoreImprovement { get; set; }
     }
 
     public class Portfolio
@@ -751,7 +754,7 @@ namespace TradingPlatform.ML.Ranking
         {
             // Prioritize momentum factors
             var selected = rankedStocks
-                .Where(s => s.Score.FactorContributions.GetValueOrDefault("Momentum", 0) > 0.6f)
+                .Where(s => s.Score.FactorContributions.GetValueOrDefault("Momentum", 0) > 0.6m)
                 .OrderByDescending(s => s.Score.CompositeScore)
                 .Take(criteria.TopN)
                 .ToList();
@@ -770,7 +773,7 @@ namespace TradingPlatform.ML.Ranking
         {
             // Prioritize value factors
             var selected = rankedStocks
-                .Where(s => s.Score.FactorContributions.GetValueOrDefault("Value", 0) > 0.7f)
+                .Where(s => s.Score.FactorContributions.GetValueOrDefault("Value", 0) > 0.7m)
                 .OrderByDescending(s => s.Score.CompositeScore)
                 .Take(criteria.TopN)
                 .ToList();
@@ -789,7 +792,7 @@ namespace TradingPlatform.ML.Ranking
         {
             // Prioritize quality factors
             var selected = rankedStocks
-                .Where(s => s.Score.FactorContributions.GetValueOrDefault("Quality", 0) > 0.8f)
+                .Where(s => s.Score.FactorContributions.GetValueOrDefault("Quality", 0) > 0.8m)
                 .OrderByDescending(s => s.Score.CompositeScore)
                 .Take(criteria.TopN)
                 .ToList();
@@ -814,7 +817,7 @@ namespace TradingPlatform.ML.Ranking
             {
                 // In volatile markets, prefer low-risk stocks
                 selected = selected
-                    .Where(s => s.Score.FactorContributions.GetValueOrDefault("Risk", 0) < 0.3f)
+                    .Where(s => s.Score.FactorContributions.GetValueOrDefault("Risk", 0) < 0.3m)
                     .OrderByDescending(s => s.Score.CompositeScore)
                     .ToList();
             }

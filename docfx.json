@@ -1,0 +1,41 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "files": ["**/*.cs"],
+          "exclude": ["**/bin/**", "**/obj/**", "**/node_modules/**"],
+          "src": "DayTradinPlatform"
+        }
+      ],
+      "dest": "api",
+      "properties": {
+        "TargetFramework": "net8.0"
+      }
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": ["api/**.yml", "api/index.md"]
+      },
+      {
+        "files": ["articles/**.md", "articles/**/toc.yml", "toc.yml", "*.md"],
+        "exclude": ["**/bin/**", "**/obj/**", "_site/**"]
+      }
+    ],
+    "resource": [
+      {
+        "files": ["images/**"]
+      }
+    ],
+    "output": "docs",
+    "template": ["default", "modern"],
+    "globalMetadata": {
+      "_appTitle": "Day Trading Platform API Documentation",
+      "_appName": "Day Trading Platform",
+      "_appLogoPath": "images/logo.png",
+      "_enableSearch": true
+    }
+  }
+}

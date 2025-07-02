@@ -31,3 +31,4 @@ coverage*/
 Thumbs.db
 EOF
 
+node_modules/

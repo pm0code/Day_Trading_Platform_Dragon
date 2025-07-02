@@ -11,15 +11,18 @@ using TradingPlatform.Core.Logging;
 
 namespace TradingPlatform.DataIngestion.RateLimiting
 {
+    /// <summary>
+    /// Rate limiter with sliding window, proper async handling, and jitter to prevent thundering herd
+    /// </summary>
     public class ApiRateLimiter : IRateLimiter
     {
         private readonly IMemoryCache _cache;
         private readonly ITradingLogger _logger;
         private readonly ApiConfiguration _config;
-        private readonly ConcurrentDictionary<string, DateTime> _lastRequestTimes;
-        private readonly ConcurrentDictionary<string, int> _requestCounts;
+        private readonly ConcurrentDictionary<string, SlidingWindow> _slidingWindows;
         private readonly ConcurrentDictionary<string, RateLimitingStatistics> _statistics;
         private readonly SemaphoreSlim _semaphore;
+        private readonly Random _random = new Random();
 
         // Configuration
         private int _requestsPerMinute = 60;
@@ -36,79 +39,108 @@ namespace TradingPlatform.DataIngestion.RateLimiting
             _cache = cache;
             _logger = logger;
             _config = config;
-            _lastRequestTimes = new ConcurrentDictionary<string, DateTime>();
-            _requestCounts = new ConcurrentDictionary<string, int>();
+            _slidingWindows = new ConcurrentDictionary<string, SlidingWindow>();
+            _statistics = new ConcurrentDictionary<string, RateLimitingStatistics>();
+            _semaphore = new SemaphoreSlim(1, 1);
+        }
+
+        public ApiRateLimiter(IMemoryCache cache)
+        {
+            _cache = cache;
+            _logger = new ConsoleLogger(); // Fallback logger
+            _config = new ApiConfiguration();
+            _slidingWindows = new ConcurrentDictionary<string, SlidingWindow>();
             _statistics = new ConcurrentDictionary<string, RateLimitingStatistics>();
             _semaphore = new SemaphoreSlim(1, 1);
         }
 
         public Task<bool> CanMakeRequestAsync(string provider)
         {
-            var cacheKey = GetCacheKey(provider);
-            var requestCount = _cache.Get<int>(cacheKey);
+            var window = GetOrCreateWindow(provider);
+            var limit = GetRateLimitForProvider(provider);
+            
+            window.CleanOldEntries();
+            return Task.FromResult(window.GetRequestCount() < limit);
+        }
 
-            var limit = provider.ToLower() switch
-            {
-                "alphavantage" => 5, // Free tier: 5 requests per minute
-                "finnhub" => 60, // Free tier: 60 requests per minute
-                _ => 60
-            };
-
-            return Task.FromResult(requestCount < limit);
+        public async Task<bool> TryAcquireAsync(string provider, int requestsPerMinute)
+        {
+            return await CanMakeRequestAsync(provider);
         }
 
         public async Task RecordRequestAsync(string provider)
         {
-            var cacheKey = GetCacheKey(provider);
-            var currentCount = _cache.Get<int>(cacheKey);
-
-            _cache.Set(cacheKey, currentCount + 1, TimeSpan.FromMinutes(1));
-            _lastRequestTimes.AddOrUpdate(provider, DateTime.UtcNow, (k, v) => DateTime.UtcNow);
+            var window = GetOrCreateWindow(provider);
+            window.RecordRequest();
 
             // Update statistics
             var stats = GetOrCreateStatistics(provider);
             stats.TotalRequests++;
-            stats.CurrentRpm = currentCount + 1;
+            stats.CurrentRpm = window.GetRequestCount();
+
+            // Check if we've hit the limit
+            var limit = GetRateLimitForProvider(provider);
+            if (stats.CurrentRpm >= limit)
+            {
+                stats.RateLimitedRequests++;
+                RateLimitReached?.Invoke(this, new RateLimitReachedEventArgs 
+                { 
+                    Provider = provider, 
+                    CurrentCount = stats.CurrentRpm,
+                    Limit = limit 
+                });
+            }
 
             await Task.CompletedTask;
         }
 
-        public Task<TimeSpan> GetWaitTimeAsync(string provider)
+        public async Task<TimeSpan> GetWaitTimeAsync(string provider)
         {
-            if (_lastRequestTimes.TryGetValue(provider, out var lastRequest))
+            var window = GetOrCreateWindow(provider);
+            var limit = GetRateLimitForProvider(provider);
+            
+            window.CleanOldEntries();
+            var currentCount = window.GetRequestCount();
+            
+            if (currentCount < limit)
             {
-                var minInterval = provider.ToLower() switch
-                {
-                    _ => TimeSpan.FromSeconds(1)
-                };
-
-                var elapsed = DateTime.UtcNow - lastRequest;
-                return Task.FromResult(elapsed < minInterval ? minInterval - elapsed : TimeSpan.Zero);
+                return TimeSpan.Zero;
             }
 
-            return Task.FromResult(TimeSpan.Zero);
+            // Calculate time until the oldest request expires
+            var oldestRequest = window.GetOldestRequestTime();
+            if (oldestRequest.HasValue)
+            {
+                var timeSinceOldest = DateTime.UtcNow - oldestRequest.Value;
+                var remainingTime = TimeSpan.FromMinutes(1) - timeSinceOldest;
+                
+                // Add jitter to prevent thundering herd (±20% randomization)
+                var jitterPercent = (_random.NextDouble() * 0.4) - 0.2; // -0.2 to +0.2
+                var jitterMs = remainingTime.TotalMilliseconds * jitterPercent;
+                
+                return remainingTime.Add(TimeSpan.FromMilliseconds(jitterMs));
+            }
+
+            return TimeSpan.Zero;
         }
 
         public async Task<int> GetRemainingRequestsAsync(string provider, TimeSpan window)
         {
-            var cacheKey = GetCacheKey(provider);
-            var currentCount = _cache.Get<int>(cacheKey);
-
-            var limit = provider.ToLower() switch
-            {
-                "alphavantage" => 5,
-                "finnhub" => 60,
-                _ => 60
-            };
-
+            var slidingWindow = GetOrCreateWindow(provider);
+            var limit = GetRateLimitForProvider(provider);
+            
+            slidingWindow.CleanOldEntries();
+            var currentCount = slidingWindow.GetRequestCount();
+            
             return await Task.FromResult(Math.Max(0, limit - currentCount));
         }
 
         public async Task ResetLimitsAsync(string provider)
         {
-            var cacheKey = GetCacheKey(provider);
-            _cache.Remove(cacheKey);
-            _lastRequestTimes.TryRemove(provider, out _);
+            if (_slidingWindows.TryRemove(provider, out var window))
+            {
+                window.Clear();
+            }
 
             await Task.CompletedTask;
         }
@@ -131,10 +163,13 @@ namespace TradingPlatform.DataIngestion.RateLimiting
             var stats = GetOrCreateStatistics(provider);
             var startTime = DateTime.UtcNow;
 
-            while (!TryAcquirePermit())
+            while (!await TryAcquirePermitAsync(provider))
             {
                 stats.RateLimitedRequests++;
-                await Task.Delay(100);
+                var waitTime = await GetWaitTimeAsync(provider);
+                
+                // Wait with jitter
+                await Task.Delay(waitTime == TimeSpan.Zero ? TimeSpan.FromMilliseconds(100) : waitTime);
             }
 
             var delay = (DateTime.UtcNow - startTime).TotalMilliseconds;
@@ -144,17 +179,22 @@ namespace TradingPlatform.DataIngestion.RateLimiting
 
         public bool TryAcquirePermit()
         {
-            return TryAcquirePermit(_defaultProvider);
+            return TryAcquirePermitAsync(_defaultProvider).GetAwaiter().GetResult();
         }
 
         public bool TryAcquirePermit(string provider)
         {
-            return CanMakeRequestAsync(provider).Result;
+            return TryAcquirePermitAsync(provider).GetAwaiter().GetResult();
+        }
+
+        public async Task<bool> TryAcquirePermitAsync(string provider)
+        {
+            return await CanMakeRequestAsync(provider);
         }
 
         public void RecordRequest()
         {
-            RecordRequestAsync(_defaultProvider).Wait();
+            RecordRequestAsync(_defaultProvider).GetAwaiter().GetResult();
         }
 
         public void RecordFailure(Exception exception)
@@ -162,33 +202,44 @@ namespace TradingPlatform.DataIngestion.RateLimiting
             var stats = GetOrCreateStatistics(_defaultProvider);
             stats.FailedRequests++;
 
-            _logger.LogError($"Rate limiter recorded failure: {exception.Message}", exception);
+            _logger?.LogError($"Rate limiter recorded failure: {exception.Message}", exception);
         }
 
         public bool IsLimitReached()
         {
-            return IsLimitReached(_defaultProvider);
+            return IsLimitReachedAsync(_defaultProvider).GetAwaiter().GetResult();
         }
 
         public bool IsLimitReached(string provider)
         {
-            return !CanMakeRequestAsync(provider).Result;
+            return IsLimitReachedAsync(provider).GetAwaiter().GetResult();
+        }
+
+        public async Task<bool> IsLimitReachedAsync(string provider)
+        {
+            return !await CanMakeRequestAsync(provider);
         }
 
         public int GetRemainingCalls()
         {
-            return GetRemainingCalls(_defaultProvider);
+            return GetRemainingCallsAsync(_defaultProvider).GetAwaiter().GetResult();
         }
 
         public int GetRemainingCalls(string provider)
         {
-            return GetRemainingRequestsAsync(provider, TimeSpan.FromMinutes(1)).Result;
+            return GetRemainingCallsAsync(provider).GetAwaiter().GetResult();
+        }
+
+        public async Task<int> GetRemainingCallsAsync(string provider)
+        {
+            return await GetRemainingRequestsAsync(provider, TimeSpan.FromMinutes(1));
         }
 
         public int GetUsedCalls()
         {
-            var cacheKey = GetCacheKey(_defaultProvider);
-            return _cache.Get<int>(cacheKey);
+            var window = GetOrCreateWindow(_defaultProvider);
+            window.CleanOldEntries();
+            return window.GetRequestCount();
         }
 
         public int GetMaxCalls()
@@ -198,17 +249,22 @@ namespace TradingPlatform.DataIngestion.RateLimiting
 
         public DateTime GetResetTime()
         {
-            // Rate limits reset every minute
-            return DateTime.UtcNow.AddMinutes(1).AddSeconds(-DateTime.UtcNow.Second);
+            // With sliding window, there's no fixed reset time
+            // Return the time when the oldest request will expire
+            var window = GetOrCreateWindow(_defaultProvider);
+            var oldest = window.GetOldestRequestTime();
+            
+            if (oldest.HasValue)
+            {
+                return oldest.Value.AddMinutes(1);
+            }
+            
+            return DateTime.UtcNow.AddMinutes(1);
         }
 
         public TimeSpan GetRecommendedDelay()
         {
-            if (IsLimitReached())
-            {
-                return GetResetTime() - DateTime.UtcNow;
-            }
-            return TimeSpan.Zero;
+            return GetWaitTimeAsync(_defaultProvider).GetAwaiter().GetResult();
         }
 
         public void UpdateLimits(int requestsPerMinute, int requestsPerDay = -1)
@@ -219,17 +275,15 @@ namespace TradingPlatform.DataIngestion.RateLimiting
                 _requestsPerDay = requestsPerDay;
             }
 
-            _logger.LogInfo($"Rate limits updated: {requestsPerMinute}/min, {requestsPerDay}/day");
+            _logger?.LogInfo($"Rate limits updated: {requestsPerMinute}/min, {requestsPerDay}/day");
         }
 
         public void Reset()
         {
-            _cache.Remove(GetCacheKey(_defaultProvider));
-            _lastRequestTimes.Clear();
-            _requestCounts.Clear();
+            _slidingWindows.Clear();
             _statistics.Clear();
 
-            _logger.LogInfo("Rate limiter reset completed");
+            _logger?.LogInfo("Rate limiter reset completed");
         }
 
         public RateLimitingStatistics GetStatistics()
@@ -243,9 +297,9 @@ namespace TradingPlatform.DataIngestion.RateLimiting
         }
 
         // Helper methods
-        private string GetCacheKey(string provider)
+        private SlidingWindow GetOrCreateWindow(string provider)
         {
-            return $"rate_limit_{provider}_{DateTime.UtcNow:yyyyMMddHHmm}";
+            return _slidingWindows.GetOrAdd(provider, p => new SlidingWindow(TimeSpan.FromMinutes(1)));
         }
 
         private RateLimitingStatistics GetOrCreateStatistics(string provider)
@@ -255,5 +309,105 @@ namespace TradingPlatform.DataIngestion.RateLimiting
                 StatisticsStartTime = DateTime.UtcNow
             });
         }
+
+        private int GetRateLimitForProvider(string provider)
+        {
+            return provider.ToLower() switch
+            {
+                "alphavantage" => 5, // Free tier: 5 requests per minute
+                "finnhub" => 60, // Free tier: 60 requests per minute
+                _ => 60
+            };
+        }
+
+        /// <summary>
+        /// Sliding window implementation for rate limiting
+        /// </summary>
+        private class SlidingWindow
+        {
+            private readonly ConcurrentQueue<DateTime> _requests = new();
+            private readonly TimeSpan _windowSize;
+            private readonly object _lock = new();
+
+            public SlidingWindow(TimeSpan windowSize)
+            {
+                _windowSize = windowSize;
+            }
+
+            public void RecordRequest()
+            {
+                lock (_lock)
+                {
+                    _requests.Enqueue(DateTime.UtcNow);
+                    CleanOldEntries();
+                }
+            }
+
+            public int GetRequestCount()
+            {
+                lock (_lock)
+                {
+                    CleanOldEntries();
+                    return _requests.Count;
+                }
+            }
+
+            public DateTime? GetOldestRequestTime()
+            {
+                lock (_lock)
+                {
+                    CleanOldEntries();
+                    if (_requests.TryPeek(out var oldest))
+                    {
+                        return oldest;
+                    }
+                    return null;
+                }
+            }
+
+            public void CleanOldEntries()
+            {
+                var cutoff = DateTime.UtcNow - _windowSize;
+                while (_requests.TryPeek(out var oldest) && oldest < cutoff)
+                {
+                    _requests.TryDequeue(out _);
+                }
+            }
+
+            public void Clear()
+            {
+                while (_requests.TryDequeue(out _)) { }
+            }
+        }
+
+        // Simple console logger fallback
+        private class ConsoleLogger : ITradingLogger
+        {
+            public void LogInfo(string message) => Console.WriteLine($"[INFO] {message}");
+            public void LogWarning(string message) => Console.WriteLine($"[WARN] {message}");
+            public void LogError(string message, Exception? ex = null) => Console.WriteLine($"[ERROR] {message} {ex?.Message}");
+            public void LogDebug(string message) => Console.WriteLine($"[DEBUG] {message}");
+            public void LogCritical(string message, Exception? ex = null) => Console.WriteLine($"[CRITICAL] {message} {ex?.Message}");
+        }
+    }
+
+    // Event Args classes
+    public class RateLimitReachedEventArgs : EventArgs
+    {
+        public string Provider { get; set; } = string.Empty;
+        public int CurrentCount { get; set; }
+        public int Limit { get; set; }
+    }
+
+    public class RateLimitStatusChangedEventArgs : EventArgs
+    {
+        public string Provider { get; set; } = string.Empty;
+        public bool IsLimited { get; set; }
+    }
+
+    public class QuotaThresholdEventArgs : EventArgs
+    {
+        public string Provider { get; set; } = string.Empty;
+        public decimal PercentUsed { get; set; }
     }
 }

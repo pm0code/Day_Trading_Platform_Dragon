@@ -1,0 +1,28 @@
+{
+  "projectPath": "/home/nader/my_projects/CS/DayTradingPlatform",
+  "name": "Day Trading Platform",
+  "language": "csharp",
+  "tools": [
+    "analyzeCSharp",
+    "checkSecurity",
+    "analyzePerformance",
+    "analyzeTrading",
+    "semgrep"
+  ],
+  "enabled": true,
+  "watchMode": "active",
+  "includePatterns": [
+    "**/*.cs",
+    "**/*.csproj",
+    "**/*.sln"
+  ],
+  "excludePatterns": [
+    "**/bin/**",
+    "**/obj/**",
+    "**/packages/**",
+    "**/node_modules/**"
+  ],
+  "realTimeAnalysis": true,
+  "reportingInterval": "immediate",
+  "failOnCritical": true
+}

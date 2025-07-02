@@ -1,0 +1,35 @@
+{
+  "name": "Day Trading Platform",
+  "language": "csharp",
+  "tools": [
+    "analyze",
+    "validateFinancialLogic",
+    "validateCSharpFinancials",
+    "analyzeLatency",
+    "checkSecurity",
+    "analyzeScalability",
+    "analyzeCSharpAsync"
+  ],
+  "criticalRules": {
+    "decimal-for-money": "error",
+    "no-float-for-financial": "error",
+    "no-double-for-financial": "error",
+    "no-blocking-operations": "error",
+    "no-async-blocking": "error",
+    "order-validation-required": "error",
+    "risk-limits-enforced": "error"
+  },
+  "watchMode": "active",
+  "realTimeAnalysis": true,
+  "failOnCritical": true,
+  "ignorePatterns": [
+    "**/bin/**",
+    "**/obj/**",
+    "**/Generated/**",
+    "**/Migrations/**"
+  ],
+  "performance": {
+    "maxLatencyMicros": 100,
+    "targetTps": 10000
+  }
+}

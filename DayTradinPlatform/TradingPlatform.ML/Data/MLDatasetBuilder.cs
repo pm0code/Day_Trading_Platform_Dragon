@@ -2,6 +2,7 @@
 
 using Microsoft.ML;
 using Microsoft.ML.Data;
+using TradingPlatform.Core.Canonical;
 using TradingPlatform.Core.Models;
 using TradingPlatform.ML.Features;
 using TradingPlatform.ML.Models;
@@ -223,17 +224,16 @@ namespace TradingPlatform.ML.Data
         /// <summary>
         /// Add Gaussian noise for regularization
         /// </summary>
-        private IDataView AddGaussianNoise(IDataView data, float noiseLevel)
+        private IDataView AddGaussianNoise(IDataView data, decimal noiseLevel)
         {
             var pipeline = _mlContext.Transforms.CustomMapping<NoiseInput, NoiseOutput>(
                 (input, output) =>
                 {
-                    var random = new Random();
-                    output.Features = new float[input.Features.Length];
+                    output.Features = new decimal[input.Features.Length];
                     
                     for (int i = 0; i < input.Features.Length; i++)
                     {
-                        var noise = (float)(random.NextDouble() - 0.5) * noiseLevel;
+                        var noise = (DecimalRandomCanonical.Instance.NextDecimal() - 0.5m) * noiseLevel;
                         output.Features[i] = input.Features[i] + noise;
                     }
                 },
@@ -255,7 +255,7 @@ namespace TradingPlatform.ML.Data
         /// <summary>
         /// Generate synthetic samples using SMOTE-like technique
         /// </summary>
-        private IDataView GenerateSyntheticSamples(IDataView data, float syntheticRatio)
+        private IDataView GenerateSyntheticSamples(IDataView data, decimal syntheticRatio)
         {
             // Implementation would generate synthetic samples
             // between existing samples in feature space
@@ -358,15 +358,15 @@ namespace TradingPlatform.ML.Data
     /// </summary>
     public class DatasetOptions
     {
-        public double TrainRatio { get; set; } = 0.7;
-        public double ValidationRatio { get; set; } = 0.15;
-        public double TestRatio { get; set; } = 0.15;
+        public decimal TrainRatio { get; set; } = 0.7m;
+        public decimal ValidationRatio { get; set; } = 0.15m;
+        public decimal TestRatio { get; set; } = 0.15m;
         public int LookbackPeriod { get; set; } = 50;
         public int SequenceLength { get; set; } = 60;
         public int StepSize { get; set; } = 1;
         public bool Normalize { get; set; } = true;
         public bool RemoveOutliers { get; set; } = true;
-        public double OutlierThreshold { get; set; } = 3.0; // Standard deviations
+        public decimal OutlierThreshold { get; set; } = 3.0m; // Standard deviations
         
         public static DatasetOptions Default => new();
     }
@@ -377,11 +377,11 @@ namespace TradingPlatform.ML.Data
     public class AugmentationOptions
     {
         public bool AddNoise { get; set; } = true;
-        public float NoiseLevel { get; set; } = 0.01f;
+        public decimal NoiseLevel { get; set; } = 0.01m;
         public bool AddTimeShift { get; set; } = true;
         public int TimeShiftSteps { get; set; } = 5;
         public bool AddSyntheticSamples { get; set; } = false;
-        public float SyntheticRatio { get; set; } = 0.2f;
+        public decimal SyntheticRatio { get; set; } = 0.2m;
     }
     
     /// <summary>
@@ -399,11 +399,11 @@ namespace TradingPlatform.ML.Data
     // Custom mapping types
     public class NoiseInput
     {
-        public float[] Features { get; set; } = Array.Empty<float>();
+        public decimal[] Features { get; set; } = Array.Empty<decimal>();
     }
     
     public class NoiseOutput
     {
-        public float[] Features { get; set; } = Array.Empty<float>();
+        public decimal[] Features { get; set; } = Array.Empty<decimal>();
     }
 }

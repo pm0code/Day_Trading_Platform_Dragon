@@ -1,0 +1,38 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "src": "/home/nader/my_projects/C#/DayTradingPlatform",
+          "files": [
+            "**/*.cs"
+          ],
+          "exclude": [
+            "**/bin/**",
+            "**/obj/**",
+            "**/node_modules/**"
+          ]
+        }
+      ],
+      "dest": "/home/nader/my_projects/C#/DayTradingPlatform/docs/api/csharp/metadata",
+      "properties": {
+        "TargetFramework": "net8.0"
+      }
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": [
+          "metadata/**.yml",
+          "metadata/index.md"
+        ]
+      }
+    ],
+    "dest": "/home/nader/my_projects/C#/DayTradingPlatform/docs/api/csharp",
+    "template": [
+      "default",
+      "modern"
+    ]
+  }
+}

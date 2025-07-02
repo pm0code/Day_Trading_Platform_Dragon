@@ -287,12 +287,12 @@ namespace TradingPlatform.ML.Recognition
                             [PatternType.Consolidation] = 12,
                             [PatternType.Volatile] = 7
                         },
-                        SuccessRates = new Dictionary<PatternType, double>
+                        SuccessRates = new Dictionary<PatternType, decimal>
                         {
-                            [PatternType.Trending] = 0.73,
-                            [PatternType.Breakout] = 0.65,
-                            [PatternType.Consolidation] = 0.58,
-                            [PatternType.Volatile] = 0.45
+                            [PatternType.Trending] = 0.73m,
+                            [PatternType.Breakout] = 0.65m,
+                            [PatternType.Consolidation] = 0.58m,
+                            [PatternType.Volatile] = 0.45m
                         },
                         AverageDuration = new Dictionary<PatternType, TimeSpan>
                         {
@@ -417,7 +417,7 @@ namespace TradingPlatform.ML.Recognition
                     Confidence = prediction.Confidence,
                     Reasoning = $"{prediction.PredictedPattern} pattern with {prediction.PredictedPriceChange:F2}% upside",
                     RiskLevel = analysis?.RiskAssessment?.RiskLevel ?? "Medium",
-                    SuggestedStopLoss = analysis?.RiskAssessment?.RecommendedStopLoss ?? -2.0f,
+                    SuggestedStopLoss = analysis?.RiskAssessment?.RecommendedStopLoss ?? -2.0m,
                     TimeHorizon = $"{prediction.TimeHorizon} periods"
                 });
             }
@@ -430,7 +430,7 @@ namespace TradingPlatform.ML.Recognition
                     Confidence = prediction.Confidence,
                     Reasoning = $"{prediction.PredictedPattern} pattern with {Math.Abs(prediction.PredictedPriceChange):F2}% downside",
                     RiskLevel = analysis?.RiskAssessment?.RiskLevel ?? "Medium",
-                    SuggestedStopLoss = analysis?.RiskAssessment?.RecommendedStopLoss ?? 2.0f,
+                    SuggestedStopLoss = analysis?.RiskAssessment?.RecommendedStopLoss ?? 2.0m,
                     TimeHorizon = $"{prediction.TimeHorizon} periods"
                 });
             }
@@ -524,13 +524,12 @@ namespace TradingPlatform.ML.Recognition
         private List<MarketDataSnapshot> GenerateSimulatedData(string symbol)
         {
             // In production, this would be real market data
-            var random = new Random();
             var data = new List<MarketDataSnapshot>();
             var basePrice = 100m;
             
             for (int i = 0; i < 5; i++)
             {
-                var change = (decimal)(random.NextDouble() * 2 - 1);
+                var change = DecimalRandomCanonical.Instance.NextDecimal() * 2m - 1m;
                 basePrice *= (1 + change / 100);
                 
                 data.Add(new MarketDataSnapshot
@@ -541,7 +540,7 @@ namespace TradingPlatform.ML.Recognition
                     High = basePrice * 1.001m,
                     Low = basePrice * 0.999m,
                     Close = basePrice,
-                    Volume = random.Next(100000, 1000000)
+                    Volume = DecimalRandomCanonical.Instance.NextInt(100000, 1000000)
                 });
             }
             
@@ -575,10 +574,10 @@ namespace TradingPlatform.ML.Recognition
         public string Symbol { get; set; } = string.Empty;
         public DateTime Timestamp { get; set; }
         public PatternType Pattern { get; set; }
-        public float PatternStrength { get; set; }
-        public float PredictedPriceChange { get; set; }
+        public decimal PatternStrength { get; set; }
+        public decimal PredictedPriceChange { get; set; }
         public int PredictedDirection { get; set; }
-        public float Confidence { get; set; }
+        public decimal Confidence { get; set; }
         public int TimeHorizon { get; set; }
         public PatternAnalysis? Analysis { get; set; }
         public List<PatternAlert> Alerts { get; set; } = new();
@@ -593,9 +592,9 @@ namespace TradingPlatform.ML.Recognition
         public bool IncludeTechnicalIndicators { get; set; } = true;
         public bool IncludeAnalysis { get; set; } = true;
         public bool EnableAlerts { get; set; } = true;
-        public float HighConfidenceThreshold { get; set; } = 0.8f;
-        public float SignificantMoveThreshold { get; set; } = 2.0f;
-        public float TradingThreshold { get; set; } = 0.65f;
+        public decimal HighConfidenceThreshold { get; set; } = 0.8m;
+        public decimal SignificantMoveThreshold { get; set; } = 2.0m;
+        public decimal TradingThreshold { get; set; } = 0.65m;
     }
     
     public class PatternSubscriptionOptions
@@ -603,7 +602,7 @@ namespace TradingPlatform.ML.Recognition
         public TimeSpan CheckInterval { get; set; } = TimeSpan.FromMinutes(1);
         public int MinDataPoints { get; set; } = 60;
         public int BufferSize { get; set; } = 100;
-        public float MinConfidence { get; set; } = 0.6f;
+        public decimal MinConfidence { get; set; } = 0.6m;
         public List<PatternType>? PatternFilter { get; set; }
         public bool RequireAlerts { get; set; } = false;
         public PatternRecognitionOptions RecognitionOptions { get; set; } = new();
@@ -638,18 +637,18 @@ namespace TradingPlatform.ML.Recognition
         public AlertType Type { get; set; }
         public AlertSeverity Severity { get; set; }
         public string Message { get; set; } = string.Empty;
-        public float Confidence { get; set; }
-        public float PredictedChange { get; set; }
+        public decimal Confidence { get; set; }
+        public decimal PredictedChange { get; set; }
         public PatternType Pattern { get; set; }
     }
     
     public class TradingRecommendation
     {
         public string Action { get; set; } = string.Empty;
-        public float Confidence { get; set; }
+        public decimal Confidence { get; set; }
         public string Reasoning { get; set; } = string.Empty;
         public string RiskLevel { get; set; } = string.Empty;
-        public float SuggestedStopLoss { get; set; }
+        public decimal SuggestedStopLoss { get; set; }
         public string TimeHorizon { get; set; } = string.Empty;
     }
     
@@ -660,7 +659,7 @@ namespace TradingPlatform.ML.Recognition
         public DateTime EndDate { get; set; }
         public int TotalPatternsFound { get; set; }
         public Dictionary<PatternType, int> PatternDistribution { get; set; } = new();
-        public Dictionary<PatternType, double> SuccessRates { get; set; } = new();
+        public Dictionary<PatternType, decimal> SuccessRates { get; set; } = new();
         public Dictionary<PatternType, TimeSpan> AverageDuration { get; set; } = new();
     }
     
