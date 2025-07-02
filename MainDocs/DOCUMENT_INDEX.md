@@ -60,6 +60,8 @@ DayTradingPlatform/
 
 - Session logs with timestamp format: `YYYY-MM-DD_description.md`
 - `2025-01-30_comprehensive_analysis_and_planning.md` - Latest planning session
+- `2025-01-30_critical_fixes_and_file_organization.md` - ApiRateLimiter fixes and cleanup
+- `2025-01-30_comprehensive_testing_implementation.md` - Testing framework implementation
 
 ### 🔍 Audit Reports
 **Location**: `Journals/Audits/`
