@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using TradingPlatform.Core.Configuration;
 
 namespace TradingPlatform.Core.Extensions
@@ -10,15 +11,17 @@ namespace TradingPlatform.Core.Extensions
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// Adds API configuration services
+        /// Adds encrypted configuration services
         /// </summary>
-        public static IServiceCollection AddApiConfiguration(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddEncryptedConfiguration(this IServiceCollection services)
         {
-            // Register configuration as singleton
-            services.AddSingleton<ApiConfiguration>();
+            // Register encrypted configuration
+            services.AddSingleton<EncryptedConfiguration>();
             
-            // Bind configuration section if needed
-            services.Configure<ApiConfiguration>(configuration.GetSection("ApiConfiguration"));
+            // Register configuration service
+            services.AddSingleton<ConfigurationService>();
+            services.AddSingleton<IConfigurationService>(provider => 
+                provider.GetRequiredService<ConfigurationService>());
             
             return services;
         }
@@ -28,14 +31,17 @@ namespace TradingPlatform.Core.Extensions
         /// </summary>
         public static IServiceCollection AddTradingPlatformCore(this IServiceCollection services, IConfiguration configuration)
         {
-            // Add API configuration
-            services.AddApiConfiguration(configuration);
+            // Add encrypted configuration
+            services.AddEncryptedConfiguration();
             
             // Add memory cache for market data
             services.AddMemoryCache();
             
             // Add HTTP clients
             services.AddHttpClient();
+            
+            // Add logging
+            services.AddLogging();
             
             return services;
         }

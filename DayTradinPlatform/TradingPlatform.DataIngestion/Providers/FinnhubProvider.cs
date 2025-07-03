@@ -12,6 +12,7 @@ using TradingPlatform.DataIngestion.Interfaces;
 using TradingPlatform.DataIngestion.Models;
 using System.Text.Json;
 using TradingPlatform.Core.Logging;
+using TradingPlatform.Core.Configuration;
 
 namespace TradingPlatform.DataIngestion.Providers
 {
@@ -21,21 +22,19 @@ namespace TradingPlatform.DataIngestion.Providers
         private readonly ITradingLogger _logger;
         private readonly IMemoryCache _cache;
         private readonly IRateLimiter _rateLimiter;
-        private readonly string _apiKey;
-        private readonly string _baseUrl;
+        private readonly IConfigurationService _config;
         private const int CACHE_MINUTES = 5; // Default cache duration
 
         public string ProviderName => "Finnhub";
 
         public FinnhubProvider(ITradingLogger logger, IMemoryCache cache,
-            IRateLimiter rateLimiter, ApiConfiguration config)
+            IRateLimiter rateLimiter, IConfigurationService config)
         {
             _logger = logger;
             _cache = cache;
             _rateLimiter = rateLimiter;
-            _apiKey = config.FinnhubApiKey;
-            _baseUrl = config.FinnhubBaseUrl;
-            _client = new RestClient(_baseUrl);
+            _config = config;
+            _client = new RestClient(_config.FinnhubBaseUrl);
         }
 
         public async Task<MarketData?> GetQuoteAsync(string symbol)
@@ -59,7 +58,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 // 3. Construct API Request
                 var request = new RestRequest("/quote")
                     .AddParameter("symbol", symbol)
-                    .AddParameter("token", _apiKey);
+                    .AddParameter("token", _config.FinnhubApiKey);
 
                 // 4. Execute API Request
                 RestResponse response = await _client.ExecuteAsync(request);
@@ -138,7 +137,7 @@ namespace TradingPlatform.DataIngestion.Providers
                     .AddParameter("resolution", resolution)
                     .AddParameter("from", fromUnix)
                     .AddParameter("to", toUnix)
-                    .AddParameter("token", _apiKey);
+                    .AddParameter("token", _config.FinnhubApiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -221,7 +220,7 @@ namespace TradingPlatform.DataIngestion.Providers
             {
                 var request = new RestRequest("/stock/symbol")
                     .AddParameter("exchange", exchange)
-                    .AddParameter("token", _apiKey);
+                    .AddParameter("token", _config.FinnhubApiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -263,7 +262,7 @@ namespace TradingPlatform.DataIngestion.Providers
             {
                 var request = new RestRequest("/stock/market-status")
                     .AddParameter("exchange", "US")
-                    .AddParameter("token", _apiKey);
+                    .AddParameter("token", _config.FinnhubApiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -308,7 +307,7 @@ namespace TradingPlatform.DataIngestion.Providers
                     .AddParameter("symbol", symbol)
                     .AddParameter("from", DateTime.UtcNow.AddDays(-30).ToString("yyyy-MM-dd"))
                     .AddParameter("to", DateTime.UtcNow.ToString("yyyy-MM-dd"))
-                    .AddParameter("token", _apiKey);
+                    .AddParameter("token", _config.FinnhubApiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -349,7 +348,7 @@ namespace TradingPlatform.DataIngestion.Providers
             {
                 var request = new RestRequest("/news")
                     .AddParameter("category", category)
-                    .AddParameter("token", _apiKey);
+                    .AddParameter("token", _config.FinnhubApiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -466,7 +465,7 @@ namespace TradingPlatform.DataIngestion.Providers
             {
                 var request = new RestRequest("/stock/profile2")
                     .AddParameter("symbol", symbol)
-                    .AddParameter("token", _apiKey);
+                    .AddParameter("token", _config.FinnhubApiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -507,7 +506,7 @@ namespace TradingPlatform.DataIngestion.Providers
             {
                 var request = new RestRequest("/stock/financials-reported")
                     .AddParameter("symbol", symbol)
-                    .AddParameter("token", _apiKey);
+                    .AddParameter("token", _config.FinnhubApiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -550,7 +549,7 @@ namespace TradingPlatform.DataIngestion.Providers
                     .AddParameter("symbol", symbol)
                     .AddParameter("from", from.ToString("yyyy-MM-dd"))
                     .AddParameter("to", to.ToString("yyyy-MM-dd"))
-                    .AddParameter("token", _apiKey);
+                    .AddParameter("token", _config.FinnhubApiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -596,7 +595,7 @@ namespace TradingPlatform.DataIngestion.Providers
                     .AddParameter("resolution", "D")
                     .AddParameter("from", ((DateTimeOffset)DateTime.UtcNow.AddDays(-30)).ToUnixTimeSeconds())
                     .AddParameter("to", ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds())
-                    .AddParameter("token", _apiKey);
+                    .AddParameter("token", _config.FinnhubApiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -705,7 +704,7 @@ namespace TradingPlatform.DataIngestion.Providers
             {
                 var request = new RestRequest("/quote")
                     .AddParameter("symbol", symbol)
-                    .AddParameter("token", _apiKey);
+                    .AddParameter("token", _config.FinnhubApiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
