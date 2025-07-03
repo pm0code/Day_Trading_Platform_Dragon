@@ -25,6 +25,7 @@ DayTradingPlatform/
 ### 📋 Strategy & Planning Documents
 **Location**: `MainDocs/Strategies/`
 
+- `MASTER_TODO_LIST.md` - **Central TODO tracker with current task status** 🎯
 - `MASTER_ACTION_PLAN_2025.md` - 8-week roadmap to production deployment
 - `EXECUTION_PLAN.md` - Detailed implementation execution plan
 - `IMMEDIATE_ACTIONS.md` - Current priority action items
