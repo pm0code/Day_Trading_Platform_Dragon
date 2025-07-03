@@ -1,0 +1,46 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "System": "Warning"
+    }
+  },
+  "ApiKeys": {
+    "AlphaVantage": "YOUR_ALPHAVANTAGE_API_KEY_HERE",
+    "Finnhub": "YOUR_FINNHUB_API_KEY_HERE",
+    "IexCloud": "YOUR_IEXCLOUD_API_KEY_HERE_OPTIONAL"
+  },
+  "ApiEndpoints": {
+    "AlphaVantage": "https://www.alphavantage.co/query",
+    "Finnhub": "https://finnhub.io/api/v1",
+    "IexCloud": "https://cloud.iexapis.com/stable"
+  },
+  "RateLimits": {
+    "AlphaVantage": {
+      "PerMinute": 5,
+      "Daily": 500
+    },
+    "Finnhub": {
+      "PerMinute": 60,
+      "Daily": null
+    },
+    "IexCloud": {
+      "PerMinute": 100,
+      "Daily": 50000
+    }
+  },
+  "TradingConfiguration": {
+    "MaxDailyLossPercent": 0.06,
+    "MaxRiskPerTradePercent": 0.02,
+    "MaxPositionSizePercent": 0.25,
+    "DefaultStopLossPercent": 0.02,
+    "TrailingStopPercent": 0.10
+  },
+  "PaperTrading": {
+    "Enabled": true,
+    "StartingCapital": 100000,
+    "SlippageModel": "Linear",
+    "CommissionPerShare": 0.01
+  }
+}

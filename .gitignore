@@ -29,6 +29,13 @@ coverage*/
 # ───── OS / editor noise ─────
 .DS_Store
 Thumbs.db
-EOF
 
+# ───── Sensitive Configuration ─────
+appsettings.json
+appsettings.*.json
+!appsettings.json.template
+*.env
+.env.*
+
+# ───── Node modules (for MCP) ─────
 node_modules/

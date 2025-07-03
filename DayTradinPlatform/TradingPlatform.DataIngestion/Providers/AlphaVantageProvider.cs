@@ -23,7 +23,9 @@ namespace TradingPlatform.DataIngestion.Providers
         private readonly ITradingLogger _logger;
         private readonly IMemoryCache _cache;
         private readonly IRateLimiter _rateLimiter;
-        private readonly ApiConfiguration _config;
+        private readonly string _apiKey;
+        private readonly string _baseUrl;
+        private const int CACHE_MINUTES = 5; // Default cache duration
 
         public string ProviderName => "AlphaVantage";
 
@@ -35,8 +37,9 @@ namespace TradingPlatform.DataIngestion.Providers
             _logger = logger;
             _cache = cache;
             _rateLimiter = rateLimiter;
-            _config = config;
-            _client = new RestClient(_config.AlphaVantage.BaseUrl);
+            _apiKey = config.AlphaVantageApiKey;
+            _baseUrl = config.AlphaVantageBaseUrl;
+            _client = new RestClient(_baseUrl);
         }
 
         public async Task<MarketData?> GetRealTimeDataAsync(string symbol)
@@ -47,7 +50,7 @@ namespace TradingPlatform.DataIngestion.Providers
             string cacheKey = $"alphavantage_{symbol}_realtime";
             if (_cache.TryGetValue(cacheKey, out MarketData? cachedData) &&
                 cachedData != null &&
-                cachedData.Timestamp > DateTime.UtcNow.AddMinutes(-_config.Cache.QuoteCacheMinutes))
+                cachedData.Timestamp > DateTime.UtcNow.AddMinutes(-CACHE_MINUTES))
             {
                 TradingLogOrchestrator.Instance.LogInfo($"Real-time data for {symbol} retrieved from cache.");
                 return cachedData;
@@ -62,7 +65,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 var request = new RestRequest()
                     .AddParameter("function", "GLOBAL_QUOTE")
                     .AddParameter("symbol", symbol)
-                    .AddParameter("apikey", _config.AlphaVantage.ApiKey);
+                    .AddParameter("apikey", _apiKey);
 
                 // 4. Execute API Request
                 RestResponse response = await _client.ExecuteAsync(request);
@@ -86,7 +89,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 MarketData marketData = MapToMarketData(jsonResponse.GlobalQuote);
 
                 // 8. Cache the Result
-                _cache.Set(cacheKey, marketData, TimeSpan.FromMinutes(_config.Cache.QuoteCacheMinutes));
+                _cache.Set(cacheKey, marketData, TimeSpan.FromMinutes(CACHE_MINUTES));
                 TradingLogOrchestrator.Instance.LogInfo($"Successfully retrieved real-time data for {symbol} from AlphaVantage");
                 return marketData;
             }
@@ -116,7 +119,7 @@ namespace TradingPlatform.DataIngestion.Providers
                     .AddParameter("function", "TIME_SERIES_DAILY")
                     .AddParameter("symbol", symbol)
                     .AddParameter("outputsize", "full")
-                    .AddParameter("apikey", _config.AlphaVantage.ApiKey);
+                    .AddParameter("apikey", _apiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -322,7 +325,7 @@ namespace TradingPlatform.DataIngestion.Providers
                     .AddParameter("function", "TIME_SERIES_INTRADAY")
                     .AddParameter("symbol", symbol)
                     .AddParameter("interval", interval)
-                    .AddParameter("apikey", _config.AlphaVantage.ApiKey);
+                    .AddParameter("apikey", _apiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -372,7 +375,7 @@ namespace TradingPlatform.DataIngestion.Providers
                     .AddParameter("function", "TIME_SERIES_DAILY_ADJUSTED")
                     .AddParameter("symbol", symbol)
                     .AddParameter("outputsize", outputSize)
-                    .AddParameter("apikey", _config.AlphaVantage.ApiKey);
+                    .AddParameter("apikey", _apiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -405,7 +408,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 var request = new RestRequest()
                     .AddParameter("function", "TIME_SERIES_WEEKLY")
                     .AddParameter("symbol", symbol)
-                    .AddParameter("apikey", _config.AlphaVantage.ApiKey);
+                    .AddParameter("apikey", _apiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -435,7 +438,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 var request = new RestRequest()
                     .AddParameter("function", "TIME_SERIES_MONTHLY")
                     .AddParameter("symbol", symbol)
-                    .AddParameter("apikey", _config.AlphaVantage.ApiKey);
+                    .AddParameter("apikey", _apiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -471,7 +474,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 var request = new RestRequest()
                     .AddParameter("function", "OVERVIEW")
                     .AddParameter("symbol", symbol)
-                    .AddParameter("apikey", _config.AlphaVantage.ApiKey);
+                    .AddParameter("apikey", _apiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -506,7 +509,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 var request = new RestRequest()
                     .AddParameter("function", "EARNINGS")
                     .AddParameter("symbol", symbol)
-                    .AddParameter("apikey", _config.AlphaVantage.ApiKey);
+                    .AddParameter("apikey", _apiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -536,7 +539,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 var request = new RestRequest()
                     .AddParameter("function", "INCOME_STATEMENT")
                     .AddParameter("symbol", symbol)
-                    .AddParameter("apikey", _config.AlphaVantage.ApiKey);
+                    .AddParameter("apikey", _apiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
@@ -566,7 +569,7 @@ namespace TradingPlatform.DataIngestion.Providers
                 var request = new RestRequest()
                     .AddParameter("function", "SYMBOL_SEARCH")
                     .AddParameter("keywords", keywords)
-                    .AddParameter("apikey", _config.AlphaVantage.ApiKey);
+                    .AddParameter("apikey", _apiKey);
 
                 RestResponse response = await _client.ExecuteAsync(request);
 
