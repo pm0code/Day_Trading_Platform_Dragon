@@ -314,18 +314,32 @@ namespace TradingPlatform.SecureConfiguration.Core
                     Directory.CreateDirectory(exportDir);
                 }
 
-                // Copy encrypted files
-                var configData = await File.ReadAllBytesAsync(_configPath);
-                var keyData = await File.ReadAllTextAsync(_keyPath);
+                // Use new secure export with Windows user binding
+                var exportService = new SecureExportImport(_logger);
+                var result = await exportService.ExportWithUserBindingAsync(
+                    _configPath,
+                    _keyPath,
+                    exportPath,
+                    password: null, // Can be enhanced to accept password
+                    new ExportOptions
+                    {
+                        UseAdditionalDPAPI = true,
+                        SignExport = true,
+                        ExportReason = "Manual export via API"
+                    });
 
-                await File.WriteAllBytesAsync(exportPath, configData);
-                await File.WriteAllTextAsync(Path.ChangeExtension(exportPath, ".key"), keyData);
+                if (!result.IsSuccess)
+                {
+                    return SecureConfigResult.Failure(result.ErrorMessage ?? "Export failed", "EXPORT_ERROR");
+                }
 
-                _logger.LogInformation("Configuration exported to {Path}", exportPath);
+                _logger.LogInformation("Configuration exported to {Path} with user binding", exportPath);
                 return SecureConfigResult.Success(new Dictionary<string, object>
                 {
                     ["ExportPath"] = exportPath,
-                    ["Size"] = configData.Length
+                    ["Size"] = result.ExportInfo?.FileSizeBytes ?? 0,
+                    ["UserBound"] = true,
+                    ["RequiresPassword"] = result.ExportInfo?.RequiresPassword ?? false
                 });
             }
             catch (Exception ex)
@@ -339,41 +353,44 @@ namespace TradingPlatform.SecureConfiguration.Core
         {
             try
             {
-                var keyPath = Path.ChangeExtension(importPath, ".key");
-                
-                if (!File.Exists(importPath) || !File.Exists(keyPath))
-                {
-                    return SecureConfigResult.Failure("Import files not found", "FILES_NOT_FOUND");
-                }
+                // Use new secure import with Windows user verification
+                var importService = new SecureExportImport(_logger);
+                var result = await importService.ImportWithUserVerificationAsync(
+                    importPath,
+                    _configPath,
+                    _keyPath,
+                    password: null); // Can be enhanced to accept password
 
-                // Backup current configuration
-                if (File.Exists(_configPath))
+                if (!result.IsSuccess)
                 {
-                    await File.CopyAsync(_configPath, _configPath + ".backup", overwrite: true);
-                    await File.CopyAsync(_keyPath, _keyPath + ".backup", overwrite: true);
+                    return SecureConfigResult.Failure(result.ErrorMessage ?? "Import failed", "IMPORT_ERROR");
                 }
-
-                // Import new configuration
-                await File.CopyAsync(importPath, _configPath, overwrite: true);
-                await File.CopyAsync(keyPath, _keyPath, overwrite: true);
 
                 // Reload configuration
                 var loadResult = await LoadConfigurationAsync();
                 
                 if (!loadResult.IsSuccess)
                 {
-                    // Restore backup
-                    if (File.Exists(_configPath + ".backup"))
-                    {
-                        await File.CopyAsync(_configPath + ".backup", _configPath, overwrite: true);
-                        await File.CopyAsync(_keyPath + ".backup", _keyPath, overwrite: true);
-                    }
-                    
                     return loadResult;
                 }
 
-                _logger.LogInformation("Configuration imported from {Path}", importPath);
-                return SecureConfigResult.Success();
+                lock (_lock)
+                {
+                    _isInitialized = true;
+                }
+
+                _logger.LogInformation("Configuration imported from {Path} (originally exported by {User} on {Date})", 
+                    importPath, 
+                    result.ImportInfo?.OriginalUser,
+                    result.ImportInfo?.OriginalExportDate);
+                    
+                return SecureConfigResult.Success(new Dictionary<string, object>
+                {
+                    ["ImportedFrom"] = importPath,
+                    ["OriginalUser"] = result.ImportInfo?.OriginalUser ?? "Unknown",
+                    ["OriginalMachine"] = result.ImportInfo?.OriginalMachine ?? "Unknown",
+                    ["ExportDate"] = result.ImportInfo?.OriginalExportDate ?? DateTime.MinValue
+                });
             }
             catch (Exception ex)
             {

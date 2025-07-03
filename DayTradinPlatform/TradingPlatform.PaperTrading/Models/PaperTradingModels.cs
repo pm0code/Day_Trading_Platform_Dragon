@@ -141,7 +141,10 @@ public enum OrderType
     Limit,
     Stop,
     StopLimit,
-    TrailingStop
+    TrailingStop,
+    TWAP,     // Time-Weighted Average Price
+    VWAP,     // Volume-Weighted Average Price
+    Iceberg   // Hidden quantity order
 }
 
 public enum OrderSide
