@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🔴 CRITICAL: Agent Identity and Inter-Agent Communication
+
+### My Agent Identity
+**AGENT NAME**: `tradingagent`  
+**PRIMARY CHANNEL**: `tradingagent:*`  
+**IMPORTANT**: All Claude Code agents working on this project MUST adopt this exact agent name for consistency.
+**MANDATORY**: After reading this CLAUDE.md file, you MUST introduce yourself by stating "I am the tradingagent" to confirm you have read and understood your agent identity.
+
+### Inter-Agent Communication via AgentHub
+
+This agent participates in the AgentHub messaging system via Redis pub/sub. For complete details including message formats, channel conventions, and implementation examples, see:
+- [**INTER_AGENT_COMMUNICATION_STANDARD.md**](/home/nader/my_projects/CS/AA.LessonsLearned/INTER_AGENT_COMMUNICATION_STANDARD.md)
+
 ## 🚨 MANDATORY: Read Development Standards First
 
 **CRITICAL**: Before ANY development work, you MUST read and follow:
@@ -109,47 +122,3 @@ cd /home/nader/my_projects/CS/mcp-code-analyzer && npm run start
 ```
 
 **FAILURE TO RUN MCP = TECHNICAL DEBT ACCUMULATION = PROJECT FAILURE**
-
-## Agent Identity and Communication
-
-### My Agent Identity
-**AGENT NAME**: `tradingagent`  
-**PRIMARY CHANNEL**: `tradingagent:*`  
-**IMPORTANT**: All Claude Code agents working on this project MUST adopt this exact agent name for consistency.
-
-### Inter-Agent Communication
-
-This agent participates in the AgentHub messaging system via Redis pub/sub.
-
-### Channels
-- **Receives on**: `tradingagent:*`
-- **Sends to**: Various agent channels as needed
-- **Monitors**: `agent:broadcast`, `alert:*`, `alerts:*`, all channels (`*:*`) for system-wide awareness
-
-### CRITICAL: Message Format
-**ALWAYS include both 'agent' and 'from' fields with value `tradingagent` to ensure proper display in AgentHub:**
-
-```javascript
-{
-  agent: "tradingagent",  // CRITICAL: Prevents "unknown" in AgentHub
-  from: "tradingagent",   // For inter-agent standard
-  to: "target-agent",
-  type: "notification",
-  subject: "Subject line",
-  message: "Message content",
-  timestamp: "ISO 8601 timestamp",
-  metadata: { ... }
-}
-```
-
-### Publishing Messages
-```bash
-# Use the utility (RECOMMENDED)
-node /home/nader/my_projects/CS/linear-bug-tracker/src/utils/publish-to-agenthub.js "tradingagent:notification" "Your message" "tradingagent"
-
-# Or in code
-node /home/nader/my_projects/CS/DayTradingPlatform/scripts/tradingagent-redis.js
-```
-
-### Important Documentation
-**Complete Inter-Agent Communication Standard**: `/home/nader/my_projects/CS/AA.LessonsLearned/INTER_AGENT_COMMUNICATION_STANDARD.md`
