@@ -63,6 +63,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Backtesting
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.GPU", "TradingPlatform.GPU\TradingPlatform.GPU.csproj", "{B9CA8D9E-F6F7-8B2C-3D4E-5F6789ABCDEF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.FinancialCalculations", "TradingPlatform.FinancialCalculations\TradingPlatform.FinancialCalculations.csproj", "{C1A2B3C4-D5E6-7F89-01A2-B3C4D5E6F789}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.ML.Tests", "TradingPlatform.ML.Tests\TradingPlatform.ML.Tests.csproj", "{BE7C520C-3E71-416D-B083-EB1BC89F2CE1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Analytics", "TradingPlatform.Analytics\TradingPlatform.Analytics.csproj", "{F8A9B0C1-D2E3-4F56-7890-1A2B3C4D5E6F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Analytics.Tests", "TradingPlatform.Analytics.Tests\TradingPlatform.Analytics.Tests.csproj", "{A1B2C3D4-E5F6-7890-123A-B4C5D6E7F890}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -189,6 +197,22 @@ Global
 		{B9CA8D9E-F6F7-8B2C-3D4E-5F6789ABCDEF}.Debug|x64.Build.0 = Debug|x64
 		{B9CA8D9E-F6F7-8B2C-3D4E-5F6789ABCDEF}.Release|x64.ActiveCfg = Release|x64
 		{B9CA8D9E-F6F7-8B2C-3D4E-5F6789ABCDEF}.Release|x64.Build.0 = Release|x64
+		{C1A2B3C4-D5E6-7F89-01A2-B3C4D5E6F789}.Debug|x64.ActiveCfg = Debug|x64
+		{C1A2B3C4-D5E6-7F89-01A2-B3C4D5E6F789}.Debug|x64.Build.0 = Debug|x64
+		{C1A2B3C4-D5E6-7F89-01A2-B3C4D5E6F789}.Release|x64.ActiveCfg = Release|x64
+		{C1A2B3C4-D5E6-7F89-01A2-B3C4D5E6F789}.Release|x64.Build.0 = Release|x64
+		{BE7C520C-3E71-416D-B083-EB1BC89F2CE1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BE7C520C-3E71-416D-B083-EB1BC89F2CE1}.Debug|x64.Build.0 = Debug|Any CPU
+		{BE7C520C-3E71-416D-B083-EB1BC89F2CE1}.Release|x64.ActiveCfg = Release|Any CPU
+		{BE7C520C-3E71-416D-B083-EB1BC89F2CE1}.Release|x64.Build.0 = Release|Any CPU
+		{F8A9B0C1-D2E3-4F56-7890-1A2B3C4D5E6F}.Debug|x64.ActiveCfg = Debug|x64
+		{F8A9B0C1-D2E3-4F56-7890-1A2B3C4D5E6F}.Debug|x64.Build.0 = Debug|x64
+		{F8A9B0C1-D2E3-4F56-7890-1A2B3C4D5E6F}.Release|x64.ActiveCfg = Release|x64
+		{F8A9B0C1-D2E3-4F56-7890-1A2B3C4D5E6F}.Release|x64.Build.0 = Release|x64
+		{A1B2C3D4-E5F6-7890-123A-B4C5D6E7F890}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-123A-B4C5D6E7F890}.Debug|x64.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-123A-B4C5D6E7F890}.Release|x64.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-123A-B4C5D6E7F890}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
