@@ -61,6 +61,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.ML", "Tradi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Backtesting", "TradingPlatform.Backtesting\TradingPlatform.Backtesting.csproj", "{A8B9C7D8-E5F6-7A1B-2C3D-4E5F6789ABCD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.GPU", "TradingPlatform.GPU\TradingPlatform.GPU.csproj", "{B9CA8D9E-F6F7-8B2C-3D4E-5F6789ABCDEF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -183,6 +185,10 @@ Global
 		{A8B9C7D8-E5F6-7A1B-2C3D-4E5F6789ABCD}.Debug|x64.Build.0 = Debug|x64
 		{A8B9C7D8-E5F6-7A1B-2C3D-4E5F6789ABCD}.Release|x64.ActiveCfg = Release|x64
 		{A8B9C7D8-E5F6-7A1B-2C3D-4E5F6789ABCD}.Release|x64.Build.0 = Release|x64
+		{B9CA8D9E-F6F7-8B2C-3D4E-5F6789ABCDEF}.Debug|x64.ActiveCfg = Debug|x64
+		{B9CA8D9E-F6F7-8B2C-3D4E-5F6789ABCDEF}.Debug|x64.Build.0 = Debug|x64
+		{B9CA8D9E-F6F7-8B2C-3D4E-5F6789ABCDEF}.Release|x64.ActiveCfg = Release|x64
+		{B9CA8D9E-F6F7-8B2C-3D4E-5F6789ABCDEF}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
