@@ -13,12 +13,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Inter-Agent Communication via AgentHub
 
 This agent participates in the AgentHub messaging system via Redis pub/sub. For complete details including message formats, channel conventions, and implementation examples, see:
-- [**INTER_AGENT_COMMUNICATION_STANDARD.md**](/home/nader/my_projects/CS/AA.LessonsLearned/INTER_AGENT_COMMUNICATION_STANDARD.md)
+- [**INTER_AGENT_COMMUNICATION_STANDARD.md**]("D:\Projects\CSharp\Day_Trading_Platform_Dragon\AA.LessonsLearned\INTER_AGENT_COMMUNICATION_STANDARD.md")
 
 ## 🚨 MANDATORY: Read Development Standards First
 
 **CRITICAL**: Before ANY development work, you MUST read and follow:
-- [**MANDATORY_DEVELOPMENT_STANDARDS.md**](/home/nader/my_projects/CS/AA.LessonsLearned/MANDATORY_DEVELOPMENT_STANDARDS.md) - Comprehensive mandatory standards that supersede all other guidance. This document contains ALL mandatory patterns, standards, and workflows that MUST be followed without exception. Violations will result in code rejection.
+- [**MANDATORY_DEVELOPMENT_STANDARDS.md**]("D:\Projects\CSharp\Day_Trading_Platform_Dragon\AA.LessonsLearned\MANDATORY_DEVELOPMENT_STANDARDS-V3.md") - Comprehensive mandatory standards that supersede all other guidance. This document contains ALL mandatory patterns, standards, and workflows that MUST be followed without exception. Violations will result in code rejection.
+
+- [**CANONICAL_TOOL_DEVELOPMENT_REQUIREMENTS.md**](/home/nader/my_projects/CS/mcp-code-analyzer/src-v2/tools/CANONICAL_TOOL_DEVELOPMENT_REQUIREMENTS.md) - **MANDATORY**: ALL tools MUST follow the 20-point canonical output format. NO EXCEPTIONS. Read this BEFORE developing or migrating ANY tool.
+
+
+**CRITICAL SECTIONS TO FOLLOW**:
+- **Section 16: Observability & Distributed Tracing** - MANDATORY telemetry and metrics integration for ALL services
+- **Section 4: Method Logging Requirements** - MANDATORY canonical logging patterns
+- **Section 3: Canonical Service Implementation** - MANDATORY service base classes
+
+## 🔴 CRITICAL: Financial Calculation Standards
+
+**MANDATORY**: ALL financial calculations MUST use `System.Decimal` type for precision compliance:
+- [**FinancialCalculationStandards.md**]("D:\Projects\CSharp\Day_Trading_Platform_Dragon\AA.LessonsLearned\FinancialCalculationStandards.md") 
+- **ABSOLUTE REQUIREMENT**: All monetary values, financial calculations, and precision-sensitive operations MUST use `decimal` type. Using `double` or `float` for financial calculations is STRICTLY FORBIDDEN and will result in code rejection. This is non-negotiable for financial applications.
+
+## 🎯 CRITICAL: Holistic Architecture Requirements
+
+**MANDATORY READING**: Before ANY system design or implementation, you MUST read and follow:
+- [**Holistic Architecture Instruction Set**]("D:\Projects\CSharp\Day_Trading_Platform_Dragon\AA.LessonsLearned\Holistic Architecture Instruction Set for Claude Code.md") - Comprehensive guide for building self-healing, HA, fault-tolerant systems with holistic design principles
 
 **IMPORTANT**: Project journals are located at `/home/nader/my_projects/CS/DayTradingPlatform/Journals`. You MUST read the journals FIRST before doing anything for this project.
 

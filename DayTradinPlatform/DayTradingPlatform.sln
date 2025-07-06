@@ -73,6 +73,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Analytics.T
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.CostManagement", "TradingPlatform.CostManagement\TradingPlatform.CostManagement.csproj", "{C2D3E4F5-A6B7-8901-2345-6789ABCDEF01}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Storage", "TradingPlatform.Storage\TradingPlatform.Storage.csproj", "{9DF17A9C-641E-43E8-B47B-A6E00E46B8FD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -219,6 +221,10 @@ Global
 		{C2D3E4F5-A6B7-8901-2345-6789ABCDEF01}.Debug|x64.Build.0 = Debug|x64
 		{C2D3E4F5-A6B7-8901-2345-6789ABCDEF01}.Release|x64.ActiveCfg = Release|x64
 		{C2D3E4F5-A6B7-8901-2345-6789ABCDEF01}.Release|x64.Build.0 = Release|x64
+		{9DF17A9C-641E-43E8-B47B-A6E00E46B8FD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9DF17A9C-641E-43E8-B47B-A6E00E46B8FD}.Debug|x64.Build.0 = Debug|Any CPU
+		{9DF17A9C-641E-43E8-B47B-A6E00E46B8FD}.Release|x64.ActiveCfg = Release|Any CPU
+		{9DF17A9C-641E-43E8-B47B-A6E00E46B8FD}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

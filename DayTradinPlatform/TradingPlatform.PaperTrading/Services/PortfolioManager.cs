@@ -1,116 +1,201 @@
 using TradingPlatform.PaperTrading.Models;
 using System.Collections.Concurrent;
-
 using TradingPlatform.Core.Interfaces;
-using TradingPlatform.Core.Logging;
+using TradingPlatform.Foundation.Services;
+using TradingPlatform.Foundation.Models;
+
 namespace TradingPlatform.PaperTrading.Services;
 
-public class PortfolioManager : IPortfolioManager
+/// <summary>
+/// Comprehensive portfolio management service for paper trading operations
+/// Provides real-time position tracking, P&L calculation, and buying power management
+/// </summary>
+public class PortfolioManager : CanonicalServiceBase, IPortfolioManager
 {
     private readonly IOrderBookSimulator _orderBookSimulator;
-    private readonly ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, Position> _positions = new();
     private decimal _cashBalance = 100000m; // Starting with $100k for paper trading
     private decimal _totalRealizedPnL = 0m;
 
+    /// <summary>
+    /// Initializes a new instance of the PortfolioManager with required dependencies
+    /// </summary>
+    /// <param name="orderBookSimulator">Service for obtaining current market prices</param>
+    /// <param name="logger">Trading logger for comprehensive portfolio tracking</param>
     public PortfolioManager(
         IOrderBookSimulator orderBookSimulator,
-        ITradingLogger logger)
+        ITradingLogger logger) : base(logger, "PortfolioManager")
     {
-        _orderBookSimulator = orderBookSimulator;
-        _logger = logger;
+        _orderBookSimulator = orderBookSimulator ?? throw new ArgumentNullException(nameof(orderBookSimulator));
     }
 
-    public async Task<Portfolio> GetPortfolioAsync()
+    /// <summary>
+    /// Retrieves the complete portfolio with current market valuations and P&L calculations
+    /// </summary>
+    /// <returns>A TradingResult containing comprehensive portfolio information</returns>
+    public async Task<TradingResult<Portfolio>> GetPortfolioAsync()
     {
+        LogMethodEntry();
         try
         {
-            var positions = await GetPositionsAsync();
+            var positionsResult = await GetPositionsAsync();
+            if (!positionsResult.IsSuccess)
+            {
+                LogMethodExit();
+                return TradingResult<Portfolio>.Failure($"Failed to get positions: {positionsResult.ErrorMessage}", positionsResult.ErrorCode);
+            }
+
+            var positions = positionsResult.Value;
             var totalMarketValue = positions.Sum(p => p.MarketValue);
             var totalUnrealizedPnL = positions.Sum(p => p.UnrealizedPnL);
             var totalEquity = _cashBalance + totalMarketValue;
             var dayPnL = CalculateDayPnL(positions);
 
-            return new Portfolio(
+            var buyingPowerResult = await GetBuyingPowerAsync();
+            if (!buyingPowerResult.IsSuccess)
+            {
+                LogMethodExit();
+                return TradingResult<Portfolio>.Failure($"Failed to calculate buying power: {buyingPowerResult.ErrorMessage}", buyingPowerResult.ErrorCode);
+            }
+
+            var portfolio = new Portfolio(
                 TotalValue: totalEquity,
                 CashBalance: _cashBalance,
                 TotalEquity: totalEquity,
                 DayPnL: dayPnL,
                 TotalPnL: _totalRealizedPnL + totalUnrealizedPnL,
-                BuyingPower: await GetBuyingPowerAsync(),
+                BuyingPower: buyingPowerResult.Value,
                 Positions: positions,
                 LastUpdated: DateTime.UtcNow
             );
+
+            LogMethodExit();
+            return TradingResult<Portfolio>.Success(portfolio);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error getting portfolio", ex);
-            throw;
+            LogError("Error getting portfolio", ex);
+            LogMethodExit();
+            return TradingResult<Portfolio>.Failure($"Portfolio retrieval failed: {ex.Message}", "PORTFOLIO_ERROR");
         }
     }
 
-    public async Task<IEnumerable<Position>> GetPositionsAsync()
+    /// <summary>
+    /// Retrieves all current positions with updated market valuations
+    /// </summary>
+    /// <returns>A TradingResult containing the collection of current positions</returns>
+    public async Task<TradingResult<IEnumerable<Position>>> GetPositionsAsync()
     {
-        var positionsList = new List<Position>();
-
-        foreach (var kvp in _positions)
-        {
-            try
-            {
-                var position = kvp.Value;
-                var currentPrice = await _orderBookSimulator.GetCurrentPriceAsync(position.Symbol);
-
-                var updatedPosition = position with
-                {
-                    CurrentPrice = currentPrice,
-                    MarketValue = position.Quantity * currentPrice,
-                    UnrealizedPnL = (currentPrice - position.AveragePrice) * position.Quantity,
-                    LastUpdated = DateTime.UtcNow
-                };
-
-                positionsList.Add(updatedPosition);
-
-                // Update the stored position with current market data
-                _positions.TryUpdate(kvp.Key, updatedPosition, position);
-            }
-            catch (Exception ex)
-            {
-                TradingLogOrchestrator.Instance.LogError($"Error updating position for {kvp.Key}", ex);
-                positionsList.Add(kvp.Value); // Add stale position data
-            }
-        }
-
-        return positionsList.OrderByDescending(p => Math.Abs(p.MarketValue));
-    }
-
-    public async Task<Position?> GetPositionAsync(string symbol)
-    {
-        if (!_positions.TryGetValue(symbol, out var position))
-            return null;
-
+        LogMethodEntry();
         try
         {
+            var positionsList = new List<Position>();
+
+            foreach (var kvp in _positions)
+            {
+                try
+                {
+                    var position = kvp.Value;
+                    var currentPrice = await _orderBookSimulator.GetCurrentPriceAsync(position.Symbol);
+
+                    var updatedPosition = position with
+                    {
+                        CurrentPrice = currentPrice,
+                        MarketValue = position.Quantity * currentPrice,
+                        UnrealizedPnL = (currentPrice - position.AveragePrice) * position.Quantity,
+                        LastUpdated = DateTime.UtcNow
+                    };
+
+                    positionsList.Add(updatedPosition);
+
+                    // Update the stored position with current market data
+                    _positions.TryUpdate(kvp.Key, updatedPosition, position);
+                }
+                catch (Exception ex)
+                {
+                    LogError($"Error updating position for {kvp.Key}", ex);
+                    positionsList.Add(kvp.Value); // Add stale position data
+                }
+            }
+
+            var result = positionsList.OrderByDescending(p => Math.Abs(p.MarketValue));
+            LogMethodExit();
+            return TradingResult<IEnumerable<Position>>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            LogError("Error getting positions", ex);
+            LogMethodExit();
+            return TradingResult<IEnumerable<Position>>.Failure($"Position retrieval failed: {ex.Message}", "POSITIONS_ERROR");
+        }
+    }
+
+    /// <summary>
+    /// Retrieves a specific position by symbol with current market valuation
+    /// </summary>
+    /// <param name="symbol">The symbol to retrieve position for</param>
+    /// <returns>A TradingResult containing the position or null if not found</returns>
+    public async Task<TradingResult<Position?>> GetPositionAsync(string symbol)
+    {
+        LogMethodEntry();
+        try
+        {
+            if (string.IsNullOrEmpty(symbol))
+            {
+                LogMethodExit();
+                return TradingResult<Position?>.Failure("Symbol cannot be null or empty", "INVALID_SYMBOL");
+            }
+
+            if (!_positions.TryGetValue(symbol, out var position))
+            {
+                LogMethodExit();
+                return TradingResult<Position?>.Success(null);
+            }
+
             var currentPrice = await _orderBookSimulator.GetCurrentPriceAsync(symbol);
 
-            return position with
+            var updatedPosition = position with
             {
                 CurrentPrice = currentPrice,
                 MarketValue = position.Quantity * currentPrice,
                 UnrealizedPnL = (currentPrice - position.AveragePrice) * position.Quantity,
                 LastUpdated = DateTime.UtcNow
             };
+
+            LogMethodExit();
+            return TradingResult<Position?>.Success(updatedPosition);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError($"Error getting current position for {symbol}", ex);
-            return position;
+            LogError($"Error getting current position for {symbol}", ex);
+            LogMethodExit();
+            return TradingResult<Position?>.Failure($"Position retrieval failed: {ex.Message}", "POSITION_ERROR");
         }
     }
 
-    public Task UpdatePositionAsync(string symbol, Execution execution)
+    /// <summary>
+    /// Updates a position based on an execution with accurate P&L calculation
+    /// </summary>
+    /// <param name="symbol">The symbol of the position to update</param>
+    /// <param name="execution">The execution details to apply to the position</param>
+    /// <returns>A TradingResult indicating success or failure of the update</returns>
+    public async Task<TradingResult> UpdatePositionAsync(string symbol, Execution execution)
     {
+        LogMethodEntry();
         try
         {
+            if (string.IsNullOrEmpty(symbol))
+            {
+                LogMethodExit();
+                return TradingResult.Failure("Symbol cannot be null or empty", "INVALID_SYMBOL");
+            }
+
+            if (execution == null)
+            {
+                LogMethodExit();
+                return TradingResult.Failure("Execution cannot be null", "INVALID_EXECUTION");
+            }
+
             var existingPosition = _positions.GetValueOrDefault(symbol);
 
             if (existingPosition == null)
@@ -137,7 +222,7 @@ public class PortfolioManager : IPortfolioManager
 
                 _cashBalance += cashImpact;
 
-                TradingLogOrchestrator.Instance.LogInfo($"Created new position for {symbol}: {newPosition.Quantity}@{execution.Price}");
+                LogInfo($"Created new position for {symbol}: {newPosition.Quantity}@{execution.Price}");
             }
             else
             {
@@ -206,62 +291,127 @@ public class PortfolioManager : IPortfolioManager
 
                 _cashBalance += cashImpact;
 
-                TradingLogOrchestrator.Instance.LogInfo($"Updated position for {symbol}: {existingPosition.Quantity} -> {newTotalQuantity}@{newAveragePrice}");
+                LogInfo($"Updated position for {symbol}: {existingPosition.Quantity} -> {newTotalQuantity}@{newAveragePrice}");
             }
 
-            return Task.CompletedTask;
+            LogMethodExit();
+            return TradingResult.Success();
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError($"Error updating position for {symbol}", ex);
-            throw;
+            LogError($"Error updating position for {symbol}", ex);
+            LogMethodExit();
+            return TradingResult.Failure($"Position update failed: {ex.Message}", "UPDATE_ERROR");
         }
     }
 
-    public async Task<decimal> GetBuyingPowerAsync()
+    /// <summary>
+    /// Calculates current buying power based on cash balance and margin requirements
+    /// </summary>
+    /// <returns>A TradingResult containing the calculated buying power</returns>
+    public async Task<TradingResult<decimal>> GetBuyingPowerAsync()
     {
+        LogMethodEntry();
         try
         {
-            var positions = await GetPositionsAsync();
+            var positionsResult = await GetPositionsAsync();
+            if (!positionsResult.IsSuccess)
+            {
+                LogMethodExit();
+                return TradingResult<decimal>.Failure($"Failed to get positions for buying power calculation: {positionsResult.ErrorMessage}", positionsResult.ErrorCode);
+            }
+
+            var positions = positionsResult.Value;
             var longMarketValue = positions.Where(p => p.Quantity > 0).Sum(p => p.MarketValue);
             var shortMarketValue = Math.Abs(positions.Where(p => p.Quantity < 0).Sum(p => p.MarketValue));
 
             // Simplified buying power calculation (for paper trading)
             // Cash + (Long positions * 0.5) - (Short positions * 1.5) for margin
-            return _cashBalance + (longMarketValue * 0.5m) - (shortMarketValue * 1.5m);
+            var buyingPower = _cashBalance + (longMarketValue * 0.5m) - (shortMarketValue * 1.5m);
+
+            LogMethodExit();
+            return TradingResult<decimal>.Success(buyingPower);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error calculating buying power", ex);
-            return _cashBalance; // Conservative fallback
+            LogError("Error calculating buying power", ex);
+            LogMethodExit();
+            return TradingResult<decimal>.Failure($"Buying power calculation failed: {ex.Message}", "BUYING_POWER_ERROR");
         }
     }
 
-    public async Task<bool> HasSufficientBuyingPowerAsync(OrderRequest orderRequest, decimal estimatedPrice)
+    /// <summary>
+    /// Checks if there is sufficient buying power for a proposed order
+    /// </summary>
+    /// <param name="orderRequest">The order request to validate</param>
+    /// <param name="estimatedPrice">Estimated execution price for the order</param>
+    /// <returns>A TradingResult indicating whether sufficient buying power exists</returns>
+    public async Task<TradingResult<bool>> HasSufficientBuyingPowerAsync(OrderRequest orderRequest, decimal estimatedPrice)
     {
+        LogMethodEntry();
         try
         {
-            var buyingPower = await GetBuyingPowerAsync();
+            if (orderRequest == null)
+            {
+                LogMethodExit();
+                return TradingResult<bool>.Failure("Order request cannot be null", "INVALID_ORDER_REQUEST");
+            }
+
+            if (estimatedPrice <= 0)
+            {
+                LogMethodExit();
+                return TradingResult<bool>.Failure("Estimated price must be positive", "INVALID_PRICE");
+            }
+
+            var buyingPowerResult = await GetBuyingPowerAsync();
+            if (!buyingPowerResult.IsSuccess)
+            {
+                LogMethodExit();
+                return TradingResult<bool>.Failure($"Failed to get buying power: {buyingPowerResult.ErrorMessage}", buyingPowerResult.ErrorCode);
+            }
+
+            var buyingPower = buyingPowerResult.Value;
             var requiredCapital = orderRequest.Quantity * estimatedPrice;
 
             // Add buffer for commissions and slippage
             var requiredCapitalWithBuffer = requiredCapital * 1.01m; // 1% buffer
 
-            return orderRequest.Side == OrderSide.Buy
+            var hasSufficient = orderRequest.Side == OrderSide.Buy
                 ? buyingPower >= requiredCapitalWithBuffer
                 : true; // Selling doesn't require additional buying power in paper trading
+
+            LogMethodExit();
+            return TradingResult<bool>.Success(hasSufficient);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError($"Error checking buying power for {orderRequest.Symbol}", ex);
-            return false; // Conservative approach
+            LogError($"Error checking buying power for {orderRequest?.Symbol}", ex);
+            LogMethodExit();
+            return TradingResult<bool>.Failure($"Buying power check failed: {ex.Message}", "BUYING_POWER_CHECK_ERROR");
         }
     }
 
+    /// <summary>
+    /// Calculates the day's profit and loss from current positions
+    /// </summary>
+    /// <param name="positions">The positions to calculate day P&L for</param>
+    /// <returns>Day P&L amount in decimal precision</returns>
     private decimal CalculateDayPnL(IEnumerable<Position> positions)
     {
-        // Simplified day P&L calculation
-        // In a real system, this would track positions from market open
-        return positions.Sum(p => p.UnrealizedPnL * 0.1m); // Assume 10% of unrealized P&L is from today
+        LogMethodEntry();
+        try
+        {
+            // Simplified day P&L calculation
+            // In a real system, this would track positions from market open
+            var dayPnL = positions.Sum(p => p.UnrealizedPnL * 0.1m); // Assume 10% of unrealized P&L is from today
+            LogMethodExit();
+            return dayPnL;
+        }
+        catch (Exception ex)
+        {
+            LogError("Error calculating day P&L", ex);
+            LogMethodExit();
+            throw;
+        }
     }
 }
