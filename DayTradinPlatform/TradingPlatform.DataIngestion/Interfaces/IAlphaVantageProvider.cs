@@ -89,6 +89,28 @@ namespace TradingPlatform.DataIngestion.Interfaces
         /// AlphaVantage doesn't support WebSocket, so implements intelligent polling.
         /// </summary>
         IObservable<MarketData> SubscribeToQuoteUpdatesAsync(string symbol, TimeSpan interval);
+
+        // ========== PROVIDER MANAGEMENT ==========
+
+        /// <summary>
+        /// Tests API connection and authentication.
+        /// </summary>
+        Task<TradingResult<ApiResponse<bool>>> TestConnectionAsync();
+
+        /// <summary>
+        /// Gets comprehensive provider status and health metrics.
+        /// </summary>
+        Task<TradingResult<ApiResponse<ProviderStatus>>> GetProviderStatusAsync();
+
+        /// <summary>
+        /// Checks if API rate limit has been reached.
+        /// </summary>
+        Task<TradingResult<bool>> IsRateLimitReachedAsync();
+
+        /// <summary>
+        /// Gets remaining API calls in current quota period.
+        /// </summary>
+        Task<TradingResult<int>> GetRemainingCallsAsync();
     }
 }
 
