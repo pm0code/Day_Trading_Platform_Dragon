@@ -1,52 +1,54 @@
 using TradingPlatform.Core.Models;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.MarketData.Services;
 
 /// <summary>
 /// High-performance market data service interface for on-premise trading workstation
 /// Provides real-time and historical market data with sub-millisecond distribution
+/// All operations use TradingResult pattern for consistent error handling
 /// </summary>
 public interface IMarketDataService
 {
     /// <summary>
     /// Get real-time market data for a single symbol
     /// </summary>
-    Task<Core.Models.MarketData?> GetMarketDataAsync(string symbol);
+    Task<TradingResult<Core.Models.MarketData?>> GetMarketDataAsync(string symbol);
 
     /// <summary>
     /// Get market data for multiple symbols in a single request
     /// </summary>
-    Task<Dictionary<string, Core.Models.MarketData>> GetMarketDataBatchAsync(string[] symbols);
+    Task<TradingResult<Dictionary<string, Core.Models.MarketData>>> GetMarketDataBatchAsync(string[] symbols);
 
     /// <summary>
     /// Get historical market data for a symbol
     /// </summary>
-    Task<HistoricalData?> GetHistoricalDataAsync(string symbol, string interval);
+    Task<TradingResult<HistoricalData?>> GetHistoricalDataAsync(string symbol, string interval);
 
     /// <summary>
     /// Start background processing for Redis Streams and real-time data distribution
     /// </summary>
-    Task StartBackgroundProcessingAsync();
+    Task<TradingResult<bool>> StartBackgroundProcessingAsync();
 
     /// <summary>
     /// Get service health status
     /// </summary>
-    Task<MarketDataHealthStatus> GetHealthStatusAsync();
+    Task<TradingResult<MarketDataHealthStatus>> GetHealthStatusAsync();
 
     /// <summary>
     /// Get performance metrics
     /// </summary>
-    Task<MarketDataMetrics> GetPerformanceMetricsAsync();
+    Task<TradingResult<MarketDataMetrics>> GetPerformanceMetricsAsync();
 
     /// <summary>
     /// Force refresh market data from external providers
     /// </summary>
-    Task RefreshMarketDataAsync(string symbol);
+    Task<TradingResult<bool>> RefreshMarketDataAsync(string symbol);
 
     /// <summary>
     /// Get market data latency statistics
     /// </summary>
-    Task<LatencyStats> GetLatencyStatsAsync();
+    Task<TradingResult<LatencyStats>> GetLatencyStatsAsync();
 }
 
 /// <summary>
