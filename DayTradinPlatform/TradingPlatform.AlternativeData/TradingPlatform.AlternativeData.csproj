@@ -1,0 +1,103 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Platform>x64</Platform>
+    <LangVersion>latest</LangVersion>
+    <WarningsAsErrors />
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AssemblyTitle>TradingPlatform.AlternativeData</AssemblyTitle>
+    <AssemblyDescription>Alternative data sources integration for satellite imagery, social media sentiment, and economic indicators analysis with open-source AI models integration</AssemblyDescription>
+    <AssemblyProduct>Day Trading Platform - Alternative Data Engine</AssemblyProduct>
+    <AssemblyCompany>Day Trading Platform</AssemblyCompany>
+    <AssemblyCopyright>Copyright © 2025</AssemblyCopyright>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+    
+    <!-- AI/ML Libraries for Open-Source Model Integration -->
+    <PackageReference Include="Microsoft.ML" Version="3.0.1" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.19.2" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.19.2" />
+    <PackageReference Include="Microsoft.ML.TensorFlow" Version="3.0.1" />
+    
+    <!-- Python Integration for Open-Source Models -->
+    <PackageReference Include="Python.Runtime" Version="3.0.3" />
+    <PackageReference Include="Numpy" Version="3.11.0.68" />
+    
+    <!-- HTTP and API Integration -->
+    <PackageReference Include="RestSharp" Version="112.1.0" />
+    <PackageReference Include="Polly" Version="8.4.2" />
+    <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />
+    
+    <!-- Image Processing for Satellite Data -->
+    <PackageReference Include="ImageSharp" Version="3.1.5" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.8" />
+    
+    <!-- JSON and Data Processing -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="CsvHelper" Version="33.0.1" />
+    
+    <!-- Caching and Performance -->
+    <PackageReference Include="StackExchange.Redis" Version="2.8.16" />
+    <PackageReference Include="MessagePack" Version="2.5.192" />
+    
+    <!-- Text Processing and NLP -->
+    <PackageReference Include="Catalyst" Version="1.0.47468" />
+    <PackageReference Include="Stanford.NLP.CoreNLP" Version="4.5.4" />
+    
+    <!-- Time Series and Financial Analysis -->
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+    <PackageReference Include="Accord.Statistics" Version="3.8.0" />
+    
+    <!-- Monitoring and Health Checks -->
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="8.0.8" />
+    <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="8.0.1" />
+    
+    <!-- Testing -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="FluentAssertions" Version="6.12.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TradingPlatform.Core\TradingPlatform.Core.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Common\TradingPlatform.Common.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Foundation\TradingPlatform.Foundation.csproj" />
+    <ProjectReference Include="..\TradingPlatform.ML\TradingPlatform.ML.csproj" />
+    <ProjectReference Include="..\TradingPlatform.CostManagement\TradingPlatform.CostManagement.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Logging\TradingPlatform.Logging.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Providers\Satellite\" />
+    <Folder Include="Providers\Social\" />
+    <Folder Include="Providers\Economic\" />
+    <Folder Include="Models\" />
+    <Folder Include="Services\" />
+    <Folder Include="AI\" />
+    <Folder Include="Configuration\" />
+    <Folder Include="Interfaces\" />
+    <Folder Include="Utils\" />
+  </ItemGroup>
+
+</Project>
