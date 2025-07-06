@@ -1,44 +1,46 @@
 using System.Net.WebSockets;
 using TradingPlatform.Core.Models;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.Gateway.Services;
 
 /// <summary>
 /// Central orchestration service for on-premise trading workstation
 /// Coordinates communication between local microservices via Redis Streams
+/// All operations use TradingResult pattern for consistent error handling
 /// </summary>
 public interface IGatewayOrchestrator
 {
     // Market Data Operations
-    Task<MarketData?> GetMarketDataAsync(string symbol);
-    Task SubscribeToMarketDataAsync(string[] symbols);
-    Task UnsubscribeFromMarketDataAsync(string[] symbols);
+    Task<TradingResult<MarketData?>> GetMarketDataAsync(string symbol);
+    Task<TradingResult<bool>> SubscribeToMarketDataAsync(string[] symbols);
+    Task<TradingResult<bool>> UnsubscribeFromMarketDataAsync(string[] symbols);
 
     // Order Management Operations
-    Task<OrderResponse> SubmitOrderAsync(OrderRequest request);
-    Task<OrderStatus?> GetOrderStatusAsync(string orderId);
-    Task<OrderResponse> CancelOrderAsync(string orderId);
+    Task<TradingResult<OrderResponse>> SubmitOrderAsync(OrderRequest request);
+    Task<TradingResult<OrderStatus?>> GetOrderStatusAsync(string orderId);
+    Task<TradingResult<OrderResponse>> CancelOrderAsync(string orderId);
 
     // Strategy Management Operations
-    Task<StrategyInfo[]> GetActiveStrategiesAsync();
-    Task StartStrategyAsync(string strategyId);
-    Task StopStrategyAsync(string strategyId);
-    Task<StrategyPerformance> GetStrategyPerformanceAsync(string strategyId);
+    Task<TradingResult<StrategyInfo[]>> GetActiveStrategiesAsync();
+    Task<TradingResult<bool>> StartStrategyAsync(string strategyId);
+    Task<TradingResult<bool>> StopStrategyAsync(string strategyId);
+    Task<TradingResult<StrategyPerformance>> GetStrategyPerformanceAsync(string strategyId);
 
     // Risk Management Operations
-    Task<RiskStatus> GetRiskStatusAsync();
-    Task<RiskLimits> GetRiskLimitsAsync();
-    Task UpdateRiskLimitsAsync(RiskLimits limits);
+    Task<TradingResult<RiskStatus>> GetRiskStatusAsync();
+    Task<TradingResult<RiskLimits>> GetRiskLimitsAsync();
+    Task<TradingResult<bool>> UpdateRiskLimitsAsync(RiskLimits limits);
 
     // Performance Monitoring
-    Task<PerformanceMetrics> GetPerformanceMetricsAsync();
-    Task<LatencyMetrics> GetLatencyMetricsAsync();
+    Task<TradingResult<PerformanceMetrics>> GetPerformanceMetricsAsync();
+    Task<TradingResult<LatencyMetrics>> GetLatencyMetricsAsync();
 
     // Real-time WebSocket Communication
-    Task HandleWebSocketConnectionAsync(WebSocket webSocket);
+    Task<TradingResult<bool>> HandleWebSocketConnectionAsync(WebSocket webSocket);
 
     // Health and Diagnostics
-    Task<SystemHealth> GetSystemHealthAsync();
+    Task<TradingResult<SystemHealth>> GetSystemHealthAsync();
 }
 
 // Response DTOs
