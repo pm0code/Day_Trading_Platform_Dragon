@@ -1,76 +1,76 @@
-&lt;Project Sdk="Microsoft.NET.Sdk"&gt;
+<Project Sdk="Microsoft.NET.Sdk">
 
-  &lt;PropertyGroup&gt;
-    &lt;TargetFramework&gt;net8.0&lt;/TargetFramework&gt;
-    &lt;ImplicitUsings&gt;enable&lt;/ImplicitUsings&gt;
-    &lt;Nullable&gt;enable&lt;/Nullable&gt;
-    &lt;LangVersion&gt;latest&lt;/LangVersion&gt;
-    &lt;GenerateDocumentationFile&gt;true&lt;/GenerateDocumentationFile&gt;
-    &lt;TreatWarningsAsErrors&gt;true&lt;/TreatWarningsAsErrors&gt;
-    &lt;WarningsAsErrors /&gt;
-    &lt;WarningsNotAsErrors&gt;CS1591&lt;/WarningsNotAsErrors&gt;
-    &lt;AllowUnsafeBlocks&gt;true&lt;/AllowUnsafeBlocks&gt;
-    &lt;PlatformTarget&gt;x64&lt;/PlatformTarget&gt;
-    &lt;AssemblyVersion&gt;1.0.0.0&lt;/AssemblyVersion&gt;
-    &lt;FileVersion&gt;1.0.0.0&lt;/FileVersion&gt;
-    &lt;Version&gt;1.0.0&lt;/Version&gt;
-    &lt;Authors&gt;Trading Platform Team&lt;/Authors&gt;
-    &lt;Company&gt;Trading Platform&lt;/Company&gt;
-    &lt;Product&gt;Day Trading Platform&lt;/Product&gt;
-    &lt;Description&gt;GPU-accelerated financial calculations engine with canonical patterns and regulatory compliance&lt;/Description&gt;
-    &lt;Copyright&gt;Copyright © 2025 Trading Platform&lt;/Copyright&gt;
-  &lt;/PropertyGroup&gt;
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Version>1.0.0</Version>
+    <Authors>Trading Platform Team</Authors>
+    <Company>Trading Platform</Company>
+    <Product>Day Trading Platform</Product>
+    <Description>GPU-accelerated financial calculations engine with canonical patterns and regulatory compliance</Description>
+    <Copyright>Copyright © 2025 Trading Platform</Copyright>
+  </PropertyGroup>
 
-  &lt;ItemGroup&gt;
-    &lt;PackageReference Include="ILGPU" Version="1.5.1" /&gt;
-    &lt;PackageReference Include="ILGPU.Algorithms" Version="1.5.1" /&gt;
-    &lt;PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" /&gt;
-    &lt;PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" /&gt;
-    &lt;PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" /&gt;
-    &lt;PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" /&gt;
-    &lt;PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" /&gt;
-    &lt;PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.2" /&gt;
-    &lt;PackageReference Include="Newtonsoft.Json" Version="13.0.3" /&gt;
-    &lt;PackageReference Include="System.Numerics.Vectors" Version="4.5.0" /&gt;
-    &lt;PackageReference Include="System.Runtime.Intrinsics" Version="4.3.0" /&gt;
-    &lt;PackageReference Include="BenchmarkDotNet" Version="0.13.12" /&gt;
-    &lt;PackageReference Include="FluentValidation" Version="11.9.0" /&gt;
-    &lt;PackageReference Include="StackExchange.Redis" Version="2.7.33" /&gt;
-    &lt;PackageReference Include="System.Security.Cryptography.Algorithms" Version="4.3.1" /&gt;
-    &lt;PackageReference Include="System.Text.Json" Version="8.0.4" /&gt;
-    &lt;PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.0" /&gt;
-    &lt;PackageReference Include="Microsoft.Extensions.Caching.Redis" Version="8.0.0" /&gt;
-    &lt;PackageReference Include="System.Memory" Version="4.5.5" /&gt;
-    &lt;PackageReference Include="System.Buffers" Version="4.5.1" /&gt;
-    &lt;PackageReference Include="System.Threading.Channels" Version="8.0.0" /&gt;
-    &lt;PackageReference Include="System.IO.Pipelines" Version="8.0.0" /&gt;
-    &lt;PackageReference Include="OpenTelemetry" Version="1.7.0" /&gt;
-    &lt;PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.7.0" /&gt;
-    &lt;PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.7.1" /&gt;
-    &lt;PackageReference Include="Polly" Version="8.2.1" /&gt;
-    &lt;PackageReference Include="Polly.Extensions" Version="8.2.1" /&gt;
-    &lt;PackageReference Include="Polly.Contrib.WaitAndRetry" Version="1.1.1" /&gt;
-  &lt;/ItemGroup&gt;
+  <ItemGroup>
+    <PackageReference Include="ILGPU" Version="1.5.1" />
+    <PackageReference Include="ILGPU.Algorithms" Version="1.5.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+    <PackageReference Include="System.Runtime.Intrinsics" Version="4.3.0" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
+    <PackageReference Include="FluentValidation" Version="11.9.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.7.33" />
+    <PackageReference Include="System.Security.Cryptography.Algorithms" Version="4.3.1" />
+    <PackageReference Include="System.Text.Json" Version="8.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Redis" Version="8.0.0" />
+    <PackageReference Include="System.Memory" Version="4.5.5" />
+    <PackageReference Include="System.Buffers" Version="4.5.1" />
+    <PackageReference Include="System.Threading.Channels" Version="8.0.0" />
+    <PackageReference Include="System.IO.Pipelines" Version="8.0.0" />
+    <PackageReference Include="OpenTelemetry" Version="1.7.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.7.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.7.1" />
+    <PackageReference Include="Polly" Version="8.2.1" />
+    <PackageReference Include="Polly.Extensions" Version="8.2.1" />
+    <PackageReference Include="Polly.Contrib.WaitAndRetry" Version="1.1.1" />
+  </ItemGroup>
 
-  &lt;ItemGroup&gt;
-    &lt;ProjectReference Include="..\TradingPlatform.Core\TradingPlatform.Core.csproj" /&gt;
-    &lt;ProjectReference Include="..\TradingPlatform.Foundation\TradingPlatform.Foundation.csproj" /&gt;
-    &lt;ProjectReference Include="..\TradingPlatform.GPU\TradingPlatform.GPU.csproj" /&gt;
-    &lt;ProjectReference Include="..\TradingPlatform.Common\TradingPlatform.Common.csproj" /&gt;
-  &lt;/ItemGroup&gt;
+  <ItemGroup>
+    <ProjectReference Include="..\TradingPlatform.Core\TradingPlatform.Core.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Foundation\TradingPlatform.Foundation.csproj" />
+    <ProjectReference Include="..\TradingPlatform.GPU\TradingPlatform.GPU.csproj" />
+    <ProjectReference Include="..\TradingPlatform.Common\TradingPlatform.Common.csproj" />
+  </ItemGroup>
 
-  &lt;ItemGroup&gt;
-    &lt;Folder Include="Canonical\" /&gt;
-    &lt;Folder Include="Engines\" /&gt;
-    &lt;Folder Include="Services\" /&gt;
-    &lt;Folder Include="Models\" /&gt;
-    &lt;Folder Include="Interfaces\" /&gt;
-    &lt;Folder Include="Kernels\" /&gt;
-    &lt;Folder Include="Validators\" /&gt;
-    &lt;Folder Include="Configuration\" /&gt;
-    &lt;Folder Include="Compliance\" /&gt;
-    &lt;Folder Include="Performance\" /&gt;
-    &lt;Folder Include="Documentation\" /&gt;
-  &lt;/ItemGroup&gt;
+  <ItemGroup>
+    <Folder Include="Canonical\" />
+    <Folder Include="Engines\" />
+    <Folder Include="Services\" />
+    <Folder Include="Models\" />
+    <Folder Include="Interfaces\" />
+    <Folder Include="Kernels\" />
+    <Folder Include="Validators\" />
+    <Folder Include="Configuration\" />
+    <Folder Include="Compliance\" />
+    <Folder Include="Performance\" />
+    <Folder Include="Documentation\" />
+  </ItemGroup>
 
-&lt;/Project&gt;
+</Project>
