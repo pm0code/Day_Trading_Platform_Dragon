@@ -71,6 +71,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Analytics",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.Analytics.Tests", "TradingPlatform.Analytics.Tests\TradingPlatform.Analytics.Tests.csproj", "{A1B2C3D4-E5F6-7890-123A-B4C5D6E7F890}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingPlatform.CostManagement", "TradingPlatform.CostManagement\TradingPlatform.CostManagement.csproj", "{C2D3E4F5-A6B7-8901-2345-6789ABCDEF01}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -213,6 +215,10 @@ Global
 		{A1B2C3D4-E5F6-7890-123A-B4C5D6E7F890}.Debug|x64.Build.0 = Debug|Any CPU
 		{A1B2C3D4-E5F6-7890-123A-B4C5D6E7F890}.Release|x64.ActiveCfg = Release|Any CPU
 		{A1B2C3D4-E5F6-7890-123A-B4C5D6E7F890}.Release|x64.Build.0 = Release|Any CPU
+		{C2D3E4F5-A6B7-8901-2345-6789ABCDEF01}.Debug|x64.ActiveCfg = Debug|x64
+		{C2D3E4F5-A6B7-8901-2345-6789ABCDEF01}.Debug|x64.Build.0 = Debug|x64
+		{C2D3E4F5-A6B7-8901-2345-6789ABCDEF01}.Release|x64.ActiveCfg = Release|x64
+		{C2D3E4F5-A6B7-8901-2345-6789ABCDEF01}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
