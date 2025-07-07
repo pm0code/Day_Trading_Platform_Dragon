@@ -1,33 +1,49 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using TradingPlatform.FixEngine.Models;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
+using TradingPlatform.Foundation.Services;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.FixEngine.Core;
 
 /// <summary>
-/// Advanced order management system for FIX protocol trading
-/// Supports single orders, IOC, FOK, hidden orders, and smart order routing
+/// High-performance order management system for ultra-low latency FIX protocol trading
+/// Implements comprehensive order lifecycle management with sub-100μs execution targets
+/// Supports single orders, IOC, FOK, hidden orders, smart order routing, and mass cancel operations
+/// All operations use TradingResult pattern for consistent error handling and observability
+/// Maintains microsecond-precision hardware timestamping for regulatory compliance
 /// </summary>
-public sealed class OrderManager : IDisposable
+public sealed class OrderManager : CanonicalServiceBase, IDisposable
 {
     private readonly FixSession _fixSession;
-    private readonly ITradingLogger _logger;
     private readonly ConcurrentDictionary<string, Order> _activeOrders = new();
     private readonly ConcurrentDictionary<string, List<Execution>> _orderExecutions = new();
     private readonly Timer _orderTimeoutChecker;
     private readonly CancellationTokenSource _cancellationTokenSource = new();
 
     private int _orderIdCounter = 1;
+    
+    // Performance tracking
+    private long _totalOrdersSubmitted = 0;
+    private long _totalOrdersCancelled = 0;
+    private long _totalOrdersReplaced = 0;
+    private long _totalExecutionsReceived = 0;
+    private readonly object _metricsLock = new();
 
     public event EventHandler<Order>? OrderStatusChanged;
     public event EventHandler<Execution>? ExecutionReceived;
     public event EventHandler<OrderReject>? OrderRejected;
 
-    public OrderManager(FixSession fixSession, ITradingLogger logger)
+    /// <summary>
+    /// Initializes a new instance of the OrderManager with ultra-low latency configuration
+    /// </summary>
+    /// <param name="fixSession">FIX session for order communication</param>
+    /// <param name="logger">Trading logger for comprehensive order lifecycle tracking</param>
+    public OrderManager(FixSession fixSession, ITradingLogger logger) : base(logger, "OrderManager")
     {
         _fixSession = fixSession ?? throw new ArgumentNullException(nameof(fixSession));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         // Subscribe to execution reports
         _fixSession.MessageReceived += OnFixMessageReceived;
@@ -38,85 +54,131 @@ public sealed class OrderManager : IDisposable
     }
 
     /// <summary>
-    /// Submit a new single order
+    /// Submits a new single order with ultra-low latency FIX protocol execution
+    /// Performs comprehensive validation and hardware timestamping for regulatory compliance
     /// </summary>
-    public async Task<string> SubmitOrderAsync(OrderRequest orderRequest)
+    /// <param name="orderRequest">The order request containing symbol, side, quantity, and other parameters</param>
+    /// <returns>A TradingResult containing the client order ID or error information</returns>
+    public async Task<TradingResult<string>> SubmitOrderAsync(OrderRequest orderRequest)
     {
-        ValidateOrderRequest(orderRequest);
-
-        var orderId = GenerateOrderId();
-        var clOrdId = $"ORD_{orderId}_{DateTimeOffset.UtcNow.Ticks}";
-
-        var order = new Order
-        {
-            OrderId = orderId,
-            ClOrdId = clOrdId,
-            Symbol = orderRequest.Symbol,
-            Side = orderRequest.Side,
-            OrderType = orderRequest.OrderType,
-            Quantity = orderRequest.Quantity,
-            Price = orderRequest.Price,
-            StopPrice = orderRequest.StopPrice,
-            TimeInForce = orderRequest.TimeInForce,
-            MinQty = orderRequest.MinQty,
-            MaxFloor = orderRequest.MaxFloor,
-            ExpireTime = orderRequest.ExpireTime,
-            ExecutionInstructions = orderRequest.ExecutionInstructions,
-            Status = OrderStatus.PendingNew,
-            CreatedTime = DateTime.UtcNow,
-            HardwareTimestamp = GetHardwareTimestamp()
-        };
-
-        _activeOrders[clOrdId] = order;
-
+        LogMethodEntry();
+        var stopwatch = Stopwatch.StartNew();
+        
         try
         {
+            if (orderRequest == null)
+            {
+                LogMethodExit();
+                return TradingResult<string>.Failure("INVALID_REQUEST", "Order request cannot be null");
+            }
+            
+            var validationResult = await ValidateOrderRequestAsync(orderRequest);
+            if (!validationResult.IsSuccess)
+            {
+                LogMethodExit();
+                return TradingResult<string>.Failure(validationResult.ErrorCode!, validationResult.ErrorMessage!);
+            }
+
+            var orderId = GenerateOrderId();
+            var clOrdId = $"ORD_{orderId}_{DateTimeOffset.UtcNow.Ticks}";
+            
+            LogInfo($"Submitting order: {clOrdId} - {orderRequest.Symbol} {orderRequest.Side} {orderRequest.Quantity}@{orderRequest.Price}");
+
+            var order = new Order
+            {
+                OrderId = orderId,
+                ClOrdId = clOrdId,
+                Symbol = orderRequest.Symbol,
+                Side = orderRequest.Side,
+                OrderType = orderRequest.OrderType,
+                Quantity = orderRequest.Quantity,
+                Price = orderRequest.Price,
+                StopPrice = orderRequest.StopPrice,
+                TimeInForce = orderRequest.TimeInForce,
+                MinQty = orderRequest.MinQty,
+                MaxFloor = orderRequest.MaxFloor,
+                ExpireTime = orderRequest.ExpireTime,
+                ExecutionInstructions = orderRequest.ExecutionInstructions,
+                Status = OrderStatus.PendingNew,
+                CreatedTime = DateTime.UtcNow,
+                HardwareTimestamp = GetHardwareTimestamp()
+            };
+
+            _activeOrders[clOrdId] = order;
+
             var fixMessage = CreateNewOrderSingleMessage(order);
             var success = await _fixSession.SendMessageAsync(fixMessage);
 
             if (success)
             {
                 order.Status = OrderStatus.New;
-                _logger.LogInfo($"Order submitted: {clOrdId} - {order.Symbol} {order.Side} {order.Quantity}@{order.Price}");
+                
+                lock (_metricsLock)
+                {
+                    _totalOrdersSubmitted++;
+                }
+                
+                LogInfo($"Order submitted successfully in {stopwatch.ElapsedMicroseconds()}μs: {clOrdId} - {order.Symbol} {order.Side} {order.Quantity}@{order.Price}");
                 OrderStatusChanged?.Invoke(this, order);
+                
+                LogMethodExit();
+                return TradingResult<string>.Success(clOrdId);
             }
             else
             {
                 order.Status = OrderStatus.Rejected;
                 _activeOrders.TryRemove(clOrdId, out _);
-                TradingLogOrchestrator.Instance.LogError($"Failed to send order: {clOrdId}");
+                LogError($"Failed to send order to FIX session: {clOrdId}");
+                
+                LogMethodExit();
+                return TradingResult<string>.Failure("ORDER_SEND_FAILED", $"Failed to send order {clOrdId} to FIX session");
             }
-
-            return clOrdId;
         }
         catch (Exception ex)
         {
-            order.Status = OrderStatus.Rejected;
-            _activeOrders.TryRemove(clOrdId, out _);
-            TradingLogOrchestrator.Instance.LogError($"Error submitting order: {clOrdId}", ex);
-            throw;
+            LogError($"Error submitting order", ex);
+            LogMethodExit();
+            return TradingResult<string>.Failure("ORDER_SUBMISSION_ERROR", 
+                $"Failed to submit order: {ex.Message}", ex);
         }
     }
 
     /// <summary>
-    /// Cancel an existing order
+    /// Cancels an existing order with ultra-low latency FIX protocol execution
+    /// Validates order state and sends cancel request with proper sequencing
     /// </summary>
-    public async Task<bool> CancelOrderAsync(string clOrdId, string? origClOrdId = null)
+    /// <param name="clOrdId">The client order ID of the cancel request</param>
+    /// <param name="origClOrdId">The original client order ID to cancel (optional)</param>
+    /// <returns>A TradingResult indicating whether the cancel request was sent successfully</returns>
+    public async Task<TradingResult<bool>> CancelOrderAsync(string clOrdId, string? origClOrdId = null)
     {
-        if (!_activeOrders.TryGetValue(origClOrdId ?? clOrdId, out var order))
-        {
-            TradingLogOrchestrator.Instance.LogWarning($"Cannot cancel order - not found: {clOrdId}");
-            return false;
-        }
-
-        if (order.Status == OrderStatus.Filled || order.Status == OrderStatus.Cancelled)
-        {
-            TradingLogOrchestrator.Instance.LogWarning($"Cannot cancel order in status: {order.Status}");
-            return false;
-        }
-
+        LogMethodEntry();
+        var stopwatch = Stopwatch.StartNew();
+        
         try
         {
+            if (string.IsNullOrEmpty(clOrdId))
+            {
+                LogMethodExit();
+                return TradingResult<bool>.Failure("INVALID_CLORDID", "Client order ID cannot be null or empty");
+            }
+            
+            LogInfo($"Cancelling order: {clOrdId} (Original: {origClOrdId ?? "N/A"})");
+            
+            if (!_activeOrders.TryGetValue(origClOrdId ?? clOrdId, out var order))
+            {
+                LogWarning($"Cannot cancel order - not found: {clOrdId}");
+                LogMethodExit();
+                return TradingResult<bool>.Success(false);
+            }
+
+            if (order.Status == OrderStatus.Filled || order.Status == OrderStatus.Cancelled)
+            {
+                LogWarning($"Cannot cancel order in status: {order.Status}");
+                LogMethodExit();
+                return TradingResult<bool>.Success(false);
+            }
+
             var cancelRequest = new FixMessage
             {
                 MsgType = FixMessageTypes.OrderCancelRequest,
@@ -134,23 +196,42 @@ public sealed class OrderManager : IDisposable
             if (success)
             {
                 order.Status = OrderStatus.PendingCancel;
-                _logger.LogInfo($"Cancel request sent for order: {clOrdId}");
+                
+                lock (_metricsLock)
+                {
+                    _totalOrdersCancelled++;
+                }
+                
+                LogInfo($"Cancel request sent successfully in {stopwatch.ElapsedMicroseconds()}μs for order: {clOrdId}");
                 OrderStatusChanged?.Invoke(this, order);
+                
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
             }
-
-            return success;
+            else
+            {
+                LogError($"Failed to send cancel request for order: {clOrdId}");
+                LogMethodExit();
+                return TradingResult<bool>.Success(false);
+            }
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError($"Error cancelling order: {clOrdId}", ex);
-            return false;
+            LogError($"Error cancelling order: {clOrdId}", ex);
+            LogMethodExit();
+            return TradingResult<bool>.Failure("ORDER_CANCEL_ERROR", 
+                $"Failed to cancel order: {ex.Message}", ex);
         }
     }
 
     /// <summary>
-    /// Replace (modify) an existing order
+    /// Replaces (modifies) an existing order with new parameters using FIX cancel/replace
+    /// Maintains order continuity while updating price, quantity, or other execution parameters
     /// </summary>
-    public async Task<string> ReplaceOrderAsync(string origClOrdId, OrderReplaceRequest replaceRequest)
+    /// <param name="origClOrdId">The original client order ID to replace</param>
+    /// <param name="replaceRequest">The new order parameters for the replacement</param>
+    /// <returns>A TradingResult containing the new client order ID or error information</returns>
+    public async Task<TradingResult<string>> ReplaceOrderAsync(string origClOrdId, OrderReplaceRequest replaceRequest)
     {
         if (!_activeOrders.TryGetValue(origClOrdId, out var originalOrder))
         {

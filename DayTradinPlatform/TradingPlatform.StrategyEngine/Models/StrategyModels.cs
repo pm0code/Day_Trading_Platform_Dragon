@@ -191,3 +191,18 @@ public record RiskLimits(
     decimal MaxPortfolioRisk,
     int MaxOpenPositions,
     decimal StopLossPercentage);
+
+/// <summary>
+/// Strategy manager metrics for service monitoring
+/// </summary>
+public record StrategyMetrics
+{
+    public long TotalStrategiesStarted { get; init; }
+    public long TotalStrategiesStopped { get; init; }
+    public long TotalConfigUpdates { get; init; }
+    public int ActiveStrategies { get; init; }
+    public int RunningStrategies { get; init; }
+    public int PausedStrategies { get; init; }
+    public int ConfiguredStrategies { get; init; }
+    public DateTime Timestamp { get; init; }
+}

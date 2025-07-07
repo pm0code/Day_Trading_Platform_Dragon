@@ -1,4 +1,5 @@
 using TradingPlatform.StrategyEngine.Models;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.StrategyEngine.Services;
 
@@ -42,27 +43,27 @@ public interface IStrategyManager
     /// <summary>
     /// Get all active strategies
     /// </summary>
-    Task<StrategyInfo[]> GetActiveStrategiesAsync();
+    Task<TradingResult<StrategyInfo[]>> GetActiveStrategiesAsync();
 
     /// <summary>
     /// Start a trading strategy
     /// </summary>
-    Task<StrategyResult> StartStrategyAsync(string strategyId);
+    Task<TradingResult<StrategyResult>> StartStrategyAsync(string strategyId);
 
     /// <summary>
     /// Stop a trading strategy
     /// </summary>
-    Task<StrategyResult> StopStrategyAsync(string strategyId);
+    Task<TradingResult<StrategyResult>> StopStrategyAsync(string strategyId);
 
     /// <summary>
     /// Get strategy configuration
     /// </summary>
-    Task<StrategyConfig?> GetStrategyConfigAsync(string strategyId);
+    Task<TradingResult<StrategyConfig?>> GetStrategyConfigAsync(string strategyId);
 
     /// <summary>
     /// Update strategy configuration
     /// </summary>
-    Task<StrategyResult> UpdateStrategyConfigAsync(StrategyConfig config);
+    Task<TradingResult<StrategyResult>> UpdateStrategyConfigAsync(StrategyConfig config);
 }
 
 /// <summary>
