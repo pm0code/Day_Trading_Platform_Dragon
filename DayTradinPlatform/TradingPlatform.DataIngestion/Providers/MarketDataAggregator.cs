@@ -4,42 +4,64 @@ using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.DataIngestion.Configuration;
 using TradingPlatform.DataIngestion.Interfaces;
 using TradingPlatform.Core.Logging;
+using TradingPlatform.Foundation.Services;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.DataIngestion.Providers
 {
-    public class MarketDataAggregator : IMarketDataAggregator
+    /// <summary>
+    /// Intelligent market data aggregation service that provides unified access to multiple data providers
+    /// Implements provider failover, data quality validation, circuit breaker patterns, and performance optimization
+    /// Target: Sub-100ms aggregation latency with comprehensive provider health monitoring
+    /// </summary>
+    public class MarketDataAggregator : CanonicalServiceBase, IMarketDataAggregator
     {
         private readonly IAlphaVantageProvider _alphaVantageProvider;
         private readonly IFinnhubProvider _finnhubProvider;
-        private readonly ITradingLogger _logger;
         private readonly IMemoryCache _cache;
         private readonly DataIngestionConfig _config;
         private readonly Dictionary<string, DateTime> _providerFailures;
         private readonly Dictionary<string, int> _consecutiveFailures;
         private readonly AggregationStatistics _statistics;
 
+        // Performance metrics
+        private long _totalAggregations = 0;
+        private long _successfulAggregations = 0;
+        private long _failedAggregations = 0;
+        private long _cacheHits = 0;
+        private long _cacheMisses = 0;
+        private long _providerFailoverEvents = 0;
+
         // Events for interface compliance
         public event EventHandler<ProviderFailureEventArgs>? ProviderFailure;
         public event EventHandler<DataQualityEventArgs>? DataQualityIssue;
 
+        /// <summary>
+        /// Initializes a new instance of MarketDataAggregator with required dependencies
+        /// </summary>
+        /// <param name="alphaVantageProvider">AlphaVantage data provider service</param>
+        /// <param name="finnhubProvider">Finnhub data provider service</param>
+        /// <param name="logger">Trading logger for comprehensive aggregation tracking</param>
+        /// <param name="cache">Memory cache for data optimization</param>
+        /// <param name="config">Configuration settings for data ingestion</param>
         public MarketDataAggregator(
             IAlphaVantageProvider alphaVantageProvider,
             IFinnhubProvider finnhubProvider,
             ITradingLogger logger,
             IMemoryCache cache,
-            DataIngestionConfig config)
+            DataIngestionConfig config) : base(logger, "MarketDataAggregator")
         {
-            _alphaVantageProvider = alphaVantageProvider;
-            _finnhubProvider = finnhubProvider;
-            _logger = logger;
-            _cache = cache;
-            _config = config;
+            _alphaVantageProvider = alphaVantageProvider ?? throw new ArgumentNullException(nameof(alphaVantageProvider));
+            _finnhubProvider = finnhubProvider ?? throw new ArgumentNullException(nameof(finnhubProvider));
+            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+            _config = config ?? throw new ArgumentNullException(nameof(config));
             _providerFailures = new Dictionary<string, DateTime>();
             _consecutiveFailures = new Dictionary<string, int>();
             _statistics = new AggregationStatistics { StartTime = DateTime.UtcNow };
@@ -47,17 +69,27 @@ namespace TradingPlatform.DataIngestion.Providers
 
         // ========== TYPE-SAFE AGGREGATION METHODS ==========
 
+        /// <summary>
+        /// Aggregates market data from a specific provider with type safety and validation
+        /// </summary>
+        /// <typeparam name="T">Type of data to aggregate</typeparam>
+        /// <param name="data">Data to aggregate</param>
+        /// <param name="providerName">Name of the data provider</param>
+        /// <returns>Aggregated MarketData or null if aggregation fails</returns>
         public async Task<MarketData?> AggregateAsync<T>(T data, string providerName) where T : class
         {
-            TradingLogOrchestrator.Instance.LogInfo($"Aggregating data from {providerName}");
-            _statistics.TotalAggregations++;
-
+            LogMethodEntry();
             try
             {
+                Interlocked.Increment(ref _totalAggregations);
+                _statistics.TotalAggregations++;
+
                 if (data == null)
                 {
-                    TradingLogOrchestrator.Instance.LogWarning($"Null data received from {providerName}");
+                    LogWarning($"Null data received from {providerName}");
                     _statistics.FailedAggregations++;
+                    Interlocked.Increment(ref _failedAggregations);
+                    LogMethodExit();
                     return null;
                 }
 
@@ -72,13 +104,14 @@ namespace TradingPlatform.DataIngestion.Providers
                         result = MapAlphaVantageQuote(alphaQuote);
                         break;
                     case FinnhubQuoteResponse finnhubQuote:
-                        // FinnhubQuoteResponse doesn't include symbol, so we can't map it directly
-                        TradingLogOrchestrator.Instance.LogWarning($"FinnhubQuoteResponse aggregation requires symbol context");
+                        LogWarning($"FinnhubQuoteResponse aggregation requires symbol context");
                         result = null;
                         break;
                     default:
-                        TradingLogOrchestrator.Instance.LogError($"Unknown data type from {providerName}: {typeof(T).Name}");
+                        LogError($"Unknown data type from {providerName}: {typeof(T).Name}");
                         _statistics.FailedAggregations++;
+                        Interlocked.Increment(ref _failedAggregations);
+                        LogMethodExit();
                         return null;
                 }
 
@@ -86,90 +119,157 @@ namespace TradingPlatform.DataIngestion.Providers
                 {
                     await RecordProviderSuccessAsync(providerName);
                     _statistics.SuccessfulAggregations++;
+                    Interlocked.Increment(ref _successfulAggregations);
                     _statistics.ProviderUsageCount[providerName] = _statistics.ProviderUsageCount.GetValueOrDefault(providerName, 0) + 1;
+                    LogInfo($"Successfully aggregated data from {providerName} for {result.Symbol}");
+                    LogMethodExit();
                     return result;
                 }
 
-                TradingLogOrchestrator.Instance.LogWarning($"Invalid market data from {providerName}");
+                LogWarning($"Invalid market data from {providerName}");
                 _statistics.FailedAggregations++;
+                Interlocked.Increment(ref _failedAggregations);
+                LogMethodExit();
                 return null;
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError($"Error aggregating data from {providerName}", ex);
+                LogError($"Error aggregating data from {providerName}", ex);
                 await RecordProviderFailureAsync(providerName, ex);
                 _statistics.FailedAggregations++;
+                Interlocked.Increment(ref _failedAggregations);
+                LogMethodExit();
                 return null;
             }
         }
 
+        /// <summary>
+        /// Aggregates a batch of market data from a specific provider with optimized processing
+        /// </summary>
+        /// <typeparam name="T">Type of data to aggregate</typeparam>
+        /// <param name="dataList">List of data to aggregate</param>
+        /// <param name="providerName">Name of the data provider</param>
+        /// <returns>List of successfully aggregated MarketData</returns>
         public async Task<List<MarketData>> AggregateBatchAsync<T>(List<T> dataList, string providerName) where T : class
         {
-            TradingLogOrchestrator.Instance.LogInfo($"Aggregating batch of {dataList?.Count ?? 0} items from {providerName}");
-
-            if (dataList?.Any() != true)
+            LogMethodEntry();
+            try
             {
-                return new List<MarketData>();
-            }
+                LogInfo($"Aggregating batch of {dataList?.Count ?? 0} items from {providerName}");
 
-            var results = new List<MarketData>();
-
-            foreach (var data in dataList)
-            {
-                var aggregated = await AggregateAsync(data, providerName);
-                if (aggregated != null)
+                if (dataList?.Any() != true)
                 {
-                    results.Add(aggregated);
+                    LogMethodExit();
+                    return new List<MarketData>();
                 }
-            }
 
-            TradingLogOrchestrator.Instance.LogInfo($"Successfully aggregated {results.Count}/{dataList.Count} items from {providerName}");
-            return results;
-        }
+                var results = new List<MarketData>();
 
-        public Task<MarketData?> AggregateMultiProviderAsync(string symbol, MarketData? primaryData, MarketData? fallbackData = null)
-        {
-            TradingLogOrchestrator.Instance.LogInfo($"Aggregating multi-provider data for {symbol}");
-
-            if (primaryData != null && ValidateMarketData(primaryData))
-            {
-                if (fallbackData != null && ValidateMarketData(fallbackData))
+                foreach (var data in dataList)
                 {
-                    var qualityReport = CompareProviderData(primaryData, fallbackData);
-                    if (qualityReport.HasDiscrepancies)
+                    var aggregated = await AggregateAsync(data, providerName);
+                    if (aggregated != null)
                     {
-                        TradingLogOrchestrator.Instance.LogWarning($"Data discrepancies detected for {symbol}: {string.Join(", ", qualityReport.Issues)}");
-                        OnDataQualityIssue(new DataQualityEventArgs
-                        {
-                            Symbol = symbol,
-                            QualityReport = qualityReport,
-                            DetectedTime = DateTime.UtcNow,
-                            PrimaryProvider = "Primary",
-                            FallbackProvider = "Fallback"
-                        });
-
-                        return Task.FromResult<MarketData?>(qualityReport.RecommendedProvider == "Primary" ? primaryData : fallbackData);
+                        results.Add(aggregated);
                     }
                 }
 
-                return Task.FromResult<MarketData?>(primaryData);
+                LogInfo($"Successfully aggregated {results.Count}/{dataList.Count} items from {providerName}");
+                LogMethodExit();
+                return results;
             }
-
-            if (fallbackData != null && ValidateMarketData(fallbackData))
+            catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogInfo($"Using fallback data for {symbol}");
-                return Task.FromResult<MarketData?>(fallbackData);
+                LogError($"Error in batch aggregation from {providerName}", ex);
+                LogMethodExit();
+                return new List<MarketData>();
             }
+        }
 
-            TradingLogOrchestrator.Instance.LogError($"No valid data available for {symbol} from any provider");
-            return Task.FromResult<MarketData?>(null);
+        /// <summary>
+        /// Aggregates market data from multiple providers with intelligent provider selection
+        /// </summary>
+        /// <param name="symbol">Symbol to aggregate data for</param>
+        /// <param name="primaryData">Primary provider data</param>
+        /// <param name="fallbackData">Fallback provider data</param>
+        /// <returns>Best available MarketData or null if no valid data</returns>
+        public Task<MarketData?> AggregateMultiProviderAsync(string symbol, MarketData? primaryData, MarketData? fallbackData = null)
+        {
+            LogMethodEntry();
+            try
+            {
+                LogInfo($"Aggregating multi-provider data for {symbol}");
+
+                if (primaryData != null && ValidateMarketData(primaryData))
+                {
+                    if (fallbackData != null && ValidateMarketData(fallbackData))
+                    {
+                        var qualityReport = CompareProviderData(primaryData, fallbackData);
+                        if (qualityReport.HasDiscrepancies)
+                        {
+                            LogWarning($"Data discrepancies detected for {symbol}: {string.Join(", ", qualityReport.Issues)}");
+                            OnDataQualityIssue(new DataQualityEventArgs
+                            {
+                                Symbol = symbol,
+                                QualityReport = qualityReport,
+                                DetectedTime = DateTime.UtcNow,
+                                PrimaryProvider = "Primary",
+                                FallbackProvider = "Fallback"
+                            });
+
+                            var selectedData = qualityReport.RecommendedProvider == "Primary" ? primaryData : fallbackData;
+                            LogMethodExit();
+                            return Task.FromResult(selectedData);
+                        }
+                    }
+
+                    LogMethodExit();
+                    return Task.FromResult(primaryData);
+                }
+
+                if (fallbackData != null && ValidateMarketData(fallbackData))
+                {
+                    LogInfo($"Using fallback data for {symbol}");
+                    Interlocked.Increment(ref _providerFailoverEvents);
+                    LogMethodExit();
+                    return Task.FromResult(fallbackData);
+                }
+
+                LogError($"No valid data available for {symbol} from any provider");
+                LogMethodExit();
+                return Task.FromResult<MarketData?>(null);
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error in multi-provider aggregation for {symbol}", ex);
+                LogMethodExit();
+                return Task.FromResult<MarketData?>(null);
+            }
         }
 
         // ========== PROVIDER MANAGEMENT METHODS ==========
 
+        /// <summary>
+        /// Checks if a data provider is currently available for use
+        /// </summary>
+        /// <param name="providerName">Name of the provider to check</param>
+        /// <returns>True if provider is available, false if in circuit breaker state</returns>
         public bool IsProviderAvailable(string providerName)
         {
-            return !IsProviderInCircuitBreaker(providerName);
+            LogMethodEntry();
+            try
+            {
+                var isAvailable = !IsProviderInCircuitBreaker(providerName);
+                LogInfo($"Provider {providerName} availability: {isAvailable}");
+                LogMethodExit();
+                return isAvailable;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error checking provider availability for {providerName}", ex);
+                LogMethodExit();
+                return false;
+            }
         }
 
         public List<string> GetProviderPriority()
@@ -177,63 +277,115 @@ namespace TradingPlatform.DataIngestion.Providers
             return new List<string> { "AlphaVantage", "Finnhub" };
         }
 
+        /// <summary>
+        /// Records a provider failure for circuit breaker and health monitoring
+        /// </summary>
+        /// <param name="providerName">Name of the failed provider</param>
+        /// <param name="exception">Exception that caused the failure</param>
+        /// <returns>Task representing the async operation</returns>
         public async Task RecordProviderFailureAsync(string providerName, Exception exception)
         {
-            await Task.Run(() =>
+            LogMethodEntry();
+            try
             {
-                _providerFailures[providerName] = DateTime.UtcNow;
-                _consecutiveFailures[providerName] = _consecutiveFailures.GetValueOrDefault(providerName, 0) + 1;
-
-                TradingLogOrchestrator.Instance.LogWarning($"Recorded failure for provider {providerName}. Consecutive failures: {_consecutiveFailures[providerName]}");
-
-                OnProviderFailure(new ProviderFailureEventArgs
+                await Task.Run(() =>
                 {
-                    ProviderName = providerName,
-                    Exception = exception,
-                    FailureTime = DateTime.UtcNow,
-                    ConsecutiveFailures = _consecutiveFailures[providerName]
+                    _providerFailures[providerName] = DateTime.UtcNow;
+                    _consecutiveFailures[providerName] = _consecutiveFailures.GetValueOrDefault(providerName, 0) + 1;
+
+                    LogWarning($"Recorded failure for provider {providerName}. Consecutive failures: {_consecutiveFailures[providerName]}");
+
+                    OnProviderFailure(new ProviderFailureEventArgs
+                    {
+                        ProviderName = providerName,
+                        Exception = exception,
+                        FailureTime = DateTime.UtcNow,
+                        ConsecutiveFailures = _consecutiveFailures[providerName]
+                    });
                 });
-            });
+                LogMethodExit();
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error recording provider failure for {providerName}", ex);
+                LogMethodExit();
+                throw;
+            }
         }
 
+        /// <summary>
+        /// Records a provider success to reset circuit breaker state
+        /// </summary>
+        /// <param name="providerName">Name of the successful provider</param>
+        /// <returns>Task representing the async operation</returns>
         public async Task RecordProviderSuccessAsync(string providerName)
         {
-            await Task.Run(() =>
+            LogMethodEntry();
+            try
             {
-                if (_consecutiveFailures.ContainsKey(providerName))
+                await Task.Run(() =>
                 {
-                    TradingLogOrchestrator.Instance.LogInfo($"Provider {providerName} recovered from failure state");
-                    _consecutiveFailures.Remove(providerName);
-                }
+                    if (_consecutiveFailures.ContainsKey(providerName))
+                    {
+                        LogInfo($"Provider {providerName} recovered from failure state");
+                        _consecutiveFailures.Remove(providerName);
+                    }
 
-                if (_providerFailures.ContainsKey(providerName))
-                {
-                    _providerFailures.Remove(providerName);
-                }
-            });
+                    if (_providerFailures.ContainsKey(providerName))
+                    {
+                        _providerFailures.Remove(providerName);
+                    }
+                });
+                LogMethodExit();
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error recording provider success for {providerName}", ex);
+                LogMethodExit();
+                throw;
+            }
         }
 
         // ========== DATA VALIDATION AND QUALITY METHODS ==========
 
+        /// <summary>
+        /// Validates market data for financial accuracy and completeness
+        /// </summary>
+        /// <param name="marketData">Market data to validate</param>
+        /// <returns>True if data is valid, false otherwise</returns>
         public bool ValidateMarketData(MarketData marketData)
         {
-            if (marketData == null)
-                return false;
-
-            var isValid = !string.IsNullOrWhiteSpace(marketData.Symbol) &&
-                         marketData.Price > 0 &&
-                         marketData.Volume >= 0 &&
-                         marketData.High >= marketData.Low &&
-                         marketData.High >= marketData.Price &&
-                         marketData.Low <= marketData.Price &&
-                         marketData.Timestamp > DateTime.MinValue;
-
-            if (!isValid)
+            LogMethodEntry();
+            try
             {
-                TradingLogOrchestrator.Instance.LogWarning($"Invalid market data for {marketData?.Symbol}: Price={marketData?.Price}, Volume={marketData?.Volume}");
-            }
+                if (marketData == null)
+                {
+                    LogMethodExit();
+                    return false;
+                }
 
-            return isValid;
+                var isValid = !string.IsNullOrWhiteSpace(marketData.Symbol) &&
+                             marketData.Price > 0 &&
+                             marketData.Volume >= 0 &&
+                             marketData.High >= marketData.Low &&
+                             marketData.High >= marketData.Price &&
+                             marketData.Low <= marketData.Price &&
+                             marketData.Timestamp > DateTime.MinValue;
+
+                if (!isValid)
+                {
+                    LogWarning($"Invalid market data for {marketData?.Symbol}: Price={marketData?.Price}, Volume={marketData?.Volume}");
+                }
+
+                LogMethodExit();
+                return isValid;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error validating market data for {marketData?.Symbol}", ex);
+                LogMethodExit();
+                return false;
+            }
         }
 
         public DataQualityReport CompareProviderData(MarketData primaryData, MarketData fallbackData)
@@ -279,70 +431,147 @@ namespace TradingPlatform.DataIngestion.Providers
             return report;
         }
 
-        public MarketData NormalizeFinancialData(MarketData marketData)
+        /// <summary>
+        /// Normalizes financial data to standard precision and format
+        /// </summary>
+        /// <param name="marketData">Market data to normalize</param>
+        /// <returns>Normalized MarketData or null if input is null</returns>
+        public MarketData? NormalizeFinancialData(MarketData marketData)
         {
-            if (marketData == null)
-                return null;
-
-            return new MarketData(_logger)
+            LogMethodEntry();
+            try
             {
-                Symbol = marketData.Symbol,
-                Price = Math.Round(marketData.Price, 4),
-                Open = Math.Round(marketData.Open, 4),
-                High = Math.Round(marketData.High, 4),
-                Low = Math.Round(marketData.Low, 4),
-                PreviousClose = Math.Round(marketData.PreviousClose, 4),
-                Change = Math.Round(marketData.Change, 4),
-                ChangePercent = Math.Round(marketData.ChangePercent, 2),
-                Volume = marketData.Volume,
-                Timestamp = marketData.Timestamp
-            };
+                if (marketData == null)
+                {
+                    LogMethodExit();
+                    return null;
+                }
+
+                var normalizedData = new MarketData(Logger)
+                {
+                    Symbol = marketData.Symbol,
+                    Price = Math.Round(marketData.Price, 4),
+                    Open = Math.Round(marketData.Open, 4),
+                    High = Math.Round(marketData.High, 4),
+                    Low = Math.Round(marketData.Low, 4),
+                    PreviousClose = Math.Round(marketData.PreviousClose, 4),
+                    Change = Math.Round(marketData.Change, 4),
+                    ChangePercent = Math.Round(marketData.ChangePercent, 2),
+                    Volume = marketData.Volume,
+                    Timestamp = marketData.Timestamp
+                };
+                LogMethodExit();
+                return normalizedData;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error normalizing financial data for {marketData?.Symbol}", ex);
+                LogMethodExit();
+                return null;
+            }
         }
 
         // ========== CACHING AND PERFORMANCE METHODS ==========
 
+        /// <summary>
+        /// Retrieves cached market data if available and within maximum age
+        /// </summary>
+        /// <param name="symbol">Symbol to retrieve cached data for</param>
+        /// <param name="maxAge">Maximum age of cached data to accept</param>
+        /// <returns>Cached MarketData if available and fresh, null otherwise</returns>
         public async Task<MarketData?> GetCachedDataAsync(string symbol, TimeSpan maxAge)
         {
-            return await Task.Run(() =>
+            LogMethodEntry();
+            try
             {
-                var cacheKey = $"aggregated_{symbol}";
-                if (_cache.TryGetValue(cacheKey, out MarketData? cachedData))
+                return await Task.Run(() =>
                 {
-                    if (cachedData != null && cachedData.Timestamp > DateTime.UtcNow.Subtract(maxAge))
+                    var cacheKey = $"aggregated_{symbol}";
+                    if (_cache.TryGetValue(cacheKey, out MarketData? cachedData))
                     {
-                        TradingLogOrchestrator.Instance.LogInfo($"Cache hit for {symbol}");
-                        return cachedData;
+                        if (cachedData != null && cachedData.Timestamp > DateTime.UtcNow.Subtract(maxAge))
+                        {
+                            LogInfo($"Cache hit for {symbol}");
+                            Interlocked.Increment(ref _cacheHits);
+                            return cachedData;
+                        }
                     }
-                }
 
-                TradingLogOrchestrator.Instance.LogInfo($"Cache miss for {symbol}");
+                    LogInfo($"Cache miss for {symbol}");
+                    Interlocked.Increment(ref _cacheMisses);
+                    return null;
+                });
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error retrieving cached data for {symbol}", ex);
                 return null;
-            });
+            }
+            finally
+            {
+                LogMethodExit();
+            }
         }
 
+        /// <summary>
+        /// Caches market data with specified expiration time
+        /// </summary>
+        /// <param name="symbol">Symbol to cache data for</param>
+        /// <param name="marketData">Market data to cache</param>
+        /// <param name="expiration">Cache expiration time</param>
+        /// <returns>Task representing the async operation</returns>
         public async Task SetCachedDataAsync(string symbol, MarketData marketData, TimeSpan expiration)
         {
-            await Task.Run(() =>
+            LogMethodEntry();
+            try
             {
-                var cacheKey = $"aggregated_{symbol}";
-                _cache.Set(cacheKey, marketData, expiration);
-                TradingLogOrchestrator.Instance.LogInfo($"Cached data for {symbol} with expiration {expiration.TotalMinutes} minutes");
-            });
+                await Task.Run(() =>
+                {
+                    var cacheKey = $"aggregated_{symbol}";
+                    _cache.Set(cacheKey, marketData, expiration);
+                    LogInfo($"Cached data for {symbol} with expiration {expiration.TotalMinutes} minutes");
+                });
+                LogMethodExit();
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error caching data for {symbol}", ex);
+                LogMethodExit();
+                throw;
+            }
         }
 
         // ========== STATISTICS AND MONITORING METHODS ==========
 
+        /// <summary>
+        /// Retrieves comprehensive aggregation performance statistics
+        /// </summary>
+        /// <returns>AggregationStatistics containing performance metrics</returns>
         public AggregationStatistics GetAggregationStatistics()
         {
-            return new AggregationStatistics
+            LogMethodEntry();
+            try
             {
-                StartTime = _statistics.StartTime,
-                TotalAggregations = _statistics.TotalAggregations,
-                SuccessfulAggregations = _statistics.SuccessfulAggregations,
-                FailedAggregations = _statistics.FailedAggregations,
-                ProviderUsageCount = new Dictionary<string, long>(_statistics.ProviderUsageCount),
-                AverageResponseTime = CalculateAverageResponseTimes()
-            };
+                var stats = new AggregationStatistics
+                {
+                    StartTime = _statistics.StartTime,
+                    TotalAggregations = _statistics.TotalAggregations,
+                    SuccessfulAggregations = _statistics.SuccessfulAggregations,
+                    FailedAggregations = _statistics.FailedAggregations,
+                    ProviderUsageCount = new Dictionary<string, long>(_statistics.ProviderUsageCount),
+                    AverageResponseTime = CalculateAverageResponseTimes(),
+                    CacheHitRatio = _cacheHits + _cacheMisses > 0 ? (double)_cacheHits / (_cacheHits + _cacheMisses) : 0,
+                    ProviderFailoverEvents = _providerFailoverEvents
+                };
+                LogMethodExit();
+                return stats;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error getting aggregation statistics", ex);
+                LogMethodExit();
+                throw;
+            }
         }
 
         public Dictionary<string, ProviderHealthStatus> GetProviderHealthStatus()
@@ -371,54 +600,113 @@ namespace TradingPlatform.DataIngestion.Providers
 
         // ========== INTERFACE IMPLEMENTATION METHODS ==========
 
-        public async Task<MarketData> GetMarketDataAsync(string symbol)
+        /// <summary>
+        /// Retrieves market data for a single symbol with intelligent provider selection
+        /// </summary>
+        /// <param name="symbol">Symbol to retrieve data for</param>
+        /// <returns>MarketData if available, null otherwise</returns>
+        public async Task<MarketData?> GetMarketDataAsync(string symbol)
         {
-            // Use the existing GetRealTimeDataAsync implementation
-            return await GetRealTimeDataAsync(symbol);
+            LogMethodEntry();
+            try
+            {
+                var result = await GetRealTimeDataAsync(symbol);
+                LogMethodExit();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error getting market data for {symbol}", ex);
+                LogMethodExit();
+                return null;
+            }
         }
 
+        /// <summary>
+        /// Retrieves market data for multiple symbols with batch optimization
+        /// </summary>
+        /// <param name="symbols">List of symbols to retrieve data for</param>
+        /// <returns>List of successfully retrieved MarketData</returns>
         public async Task<List<MarketData>> GetBatchMarketDataAsync(List<string> symbols)
         {
-            // Use the existing GetMultipleQuotesAsync implementation
-            return await GetMultipleQuotesAsync(symbols);
+            LogMethodEntry();
+            try
+            {
+                var results = await GetMultipleQuotesAsync(symbols);
+                LogMethodExit();
+                return results;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error getting batch market data for {symbols?.Count ?? 0} symbols", ex);
+                LogMethodExit();
+                return new List<MarketData>();
+            }
         }
 
         // ========== LEGACY COMPATIBILITY METHODS ==========
 
-        public async Task<MarketData?> GetRealTimeDataAsync(string symbol)
+        /// <summary>
+        /// Gets real-time market data with intelligent provider fallback
+        /// </summary>
+        /// <param name="symbol">Symbol to retrieve data for</param>
+        /// <returns>MarketData if available, null otherwise</returns>
+        private async Task<MarketData?> GetRealTimeDataAsync(string symbol)
         {
-            TradingLogOrchestrator.Instance.LogInfo($"Getting real-time data for {symbol}");
-
-            var primaryData = await TryGetDataFromProvider("AlphaVantage",
-                async () => await _alphaVantageProvider.GetGlobalQuoteAsync(symbol));
-
-            if (primaryData != null)
+            LogMethodEntry();
+            try
             {
-                TradingLogOrchestrator.Instance.LogInfo($"Successfully retrieved {symbol} from AlphaVantage");
-                return primaryData;
-            }
+                LogInfo($"Getting real-time data for {symbol}");
 
-            if (_config.EnableBackupProviders)
-            {
-                TradingLogOrchestrator.Instance.LogInfo($"Falling back to Finnhub for {symbol}");
-                var fallbackData = await TryGetDataFromProvider("Finnhub",
-                    async () => await _finnhubProvider.GetQuoteAsync(symbol));
+                var primaryData = await TryGetDataFromProvider("AlphaVantage",
+                    async () => await _alphaVantageProvider.GetGlobalQuoteAsync(symbol));
 
-                if (fallbackData != null)
+                if (primaryData != null)
                 {
-                    TradingLogOrchestrator.Instance.LogInfo($"Successfully retrieved {symbol} from Finnhub fallback");
-                    return fallbackData;
+                    LogInfo($"Successfully retrieved {symbol} from AlphaVantage");
+                    LogMethodExit();
+                    return primaryData;
                 }
-            }
 
-            TradingLogOrchestrator.Instance.LogError($"Failed to retrieve data for {symbol} from all providers");
-            return null;
+                if (_config.EnableBackupProviders)
+                {
+                    LogInfo($"Falling back to Finnhub for {symbol}");
+                    var fallbackData = await TryGetDataFromProvider("Finnhub",
+                        async () => await _finnhubProvider.GetQuoteAsync(symbol));
+
+                    if (fallbackData != null)
+                    {
+                        LogInfo($"Successfully retrieved {symbol} from Finnhub fallback");
+                        Interlocked.Increment(ref _providerFailoverEvents);
+                        LogMethodExit();
+                        return fallbackData;
+                    }
+                }
+
+                LogError($"Failed to retrieve data for {symbol} from all providers");
+                LogMethodExit();
+                return null;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error in GetRealTimeDataAsync for {symbol}", ex);
+                LogMethodExit();
+                throw;
+            }
         }
 
-        public async Task<List<MarketData>> GetMultipleQuotesAsync(List<string> symbols)
+        /// <summary>
+        /// Gets market data for multiple symbols with optimized batch processing
+        /// </summary>
+        /// <param name="symbols">List of symbols to retrieve data for</param>
+        /// <returns>List of successfully retrieved MarketData</returns>
+        private async Task<List<MarketData>> GetMultipleQuotesAsync(List<string> symbols)
         {
-            TradingLogOrchestrator.Instance.LogInfo($"Getting quotes for {symbols.Count} symbols");
-            var results = new List<MarketData>();
+            LogMethodEntry();
+            try
+            {
+                LogInfo($"Getting quotes for {symbols.Count} symbols");
+                var results = new List<MarketData>();
 
             var alphaVantageSymbols = symbols.Take(GetAlphaVantageQuota()).ToList();
             if (alphaVantageSymbols.Any())
@@ -437,13 +725,13 @@ namespace TradingPlatform.DataIngestion.Providers
                     }
                     catch (Exception ex)
                     {
-                        TradingLogOrchestrator.Instance.LogError($"Error fetching AlphaVantage data for {symbol}", ex);
+                        LogError($"Error fetching AlphaVantage data for {symbol}", ex);
                     }
                 }
 
                 if (results.Any())
                 {
-                    TradingLogOrchestrator.Instance.LogInfo($"Retrieved {results.Count} quotes from AlphaVantage");
+                    LogInfo($"Retrieved {results.Count} quotes from AlphaVantage");
                 }
             }
 
@@ -456,53 +744,109 @@ namespace TradingPlatform.DataIngestion.Providers
                 if (finnhubResults?.Any() == true)
                 {
                     results.AddRange(finnhubResults);
-                    TradingLogOrchestrator.Instance.LogInfo($"Retrieved {finnhubResults.Count} quotes from Finnhub");
+                    LogInfo($"Retrieved {finnhubResults.Count} quotes from Finnhub");
                 }
             }
 
-            TradingLogOrchestrator.Instance.LogInfo($"Total retrieved: {results.Count}/{symbols.Count} quotes");
-            return results;
+                LogInfo($"Total retrieved: {results.Count}/{symbols.Count} quotes");
+                LogMethodExit();
+                return results;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error in GetMultipleQuotesAsync for {symbols.Count} symbols", ex);
+                LogMethodExit();
+                throw;
+            }
         }
 
         // ========== PRIVATE HELPER METHODS ==========
 
+        /// <summary>
+        /// Safely retrieves data from a provider with circuit breaker protection
+        /// </summary>
+        /// <typeparam name="T">Type of data to retrieve</typeparam>
+        /// <param name="providerName">Name of the provider</param>
+        /// <param name="dataRetriever">Function to retrieve data</param>
+        /// <returns>Retrieved data or null if failed</returns>
         private async Task<T?> TryGetDataFromProvider<T>(string providerName, Func<Task<T?>> dataRetriever) where T : class
         {
-            if (IsProviderInCircuitBreaker(providerName))
-            {
-                TradingLogOrchestrator.Instance.LogWarning($"Provider {providerName} is in circuit breaker state");
-                return null;
-            }
-
+            LogMethodEntry();
             try
             {
+                if (IsProviderInCircuitBreaker(providerName))
+                {
+                    LogWarning($"Provider {providerName} is in circuit breaker state");
+                    LogMethodExit();
+                    return null;
+                }
+
                 var result = await dataRetriever();
                 if (result != null)
                 {
                     await RecordProviderSuccessAsync(providerName);
                 }
+                LogMethodExit();
                 return result;
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError($"Error retrieving data from {providerName}", ex);
+                LogError($"Error retrieving data from {providerName}", ex);
                 await RecordProviderFailureAsync(providerName, ex);
+                LogMethodExit();
                 return null;
             }
         }
 
+        /// <summary>
+        /// Safely retrieves batch data from a provider with circuit breaker protection
+        /// </summary>
+        /// <typeparam name="T">Type of data to retrieve</typeparam>
+        /// <param name="providerName">Name of the provider</param>
+        /// <param name="dataRetriever">Function to retrieve batch data</param>
+        /// <returns>Retrieved data list or empty list if failed</returns>
         private async Task<List<T>> TryGetBatchDataFromProvider<T>(string providerName, Func<Task<List<T>>> dataRetriever)
         {
-            return await TryGetDataFromProvider(providerName, dataRetriever) ?? new List<T>();
+            LogMethodEntry();
+            try
+            {
+                var result = await TryGetDataFromProvider(providerName, dataRetriever) ?? new List<T>();
+                LogMethodExit();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error retrieving batch data from {providerName}", ex);
+                LogMethodExit();
+                return new List<T>();
+            }
         }
 
+        /// <summary>
+        /// Checks if a provider is currently in circuit breaker state
+        /// </summary>
+        /// <param name="providerName">Name of the provider to check</param>
+        /// <returns>True if provider is in circuit breaker state</returns>
         private bool IsProviderInCircuitBreaker(string providerName)
         {
-            if (_providerFailures.TryGetValue(providerName, out var lastFailure))
+            LogMethodEntry();
+            try
             {
-                return DateTime.UtcNow - lastFailure < _config.CircuitBreaker.OpenTimeout;
+                if (_providerFailures.TryGetValue(providerName, out var lastFailure))
+                {
+                    var isInCircuitBreaker = DateTime.UtcNow - lastFailure < _config.CircuitBreaker.OpenTimeout;
+                    LogMethodExit();
+                    return isInCircuitBreaker;
+                }
+                LogMethodExit();
+                return false;
             }
-            return false;
+            catch (Exception ex)
+            {
+                LogError($"Error checking circuit breaker state for {providerName}", ex);
+                LogMethodExit();
+                return true; // Fail safe - assume circuit breaker is open
+            }
         }
 
         private int GetAlphaVantageQuota()
@@ -510,11 +854,17 @@ namespace TradingPlatform.DataIngestion.Providers
             return Math.Max(1, _config.ApiSettings.AlphaVantage.DailyLimit / 4);
         }
 
+        /// <summary>
+        /// Maps AlphaVantage quote response to standardized MarketData
+        /// </summary>
+        /// <param name="quote">AlphaVantage quote to map</param>
+        /// <returns>Mapped MarketData or null if mapping fails</returns>
         private MarketData? MapAlphaVantageQuote(AlphaVantageQuote quote)
         {
+            LogMethodEntry();
             try
             {
-                return new MarketData(_logger)
+                var marketData = new MarketData(Logger)
                 {
                     Symbol = quote.Symbol,
                     Price = decimal.Parse(quote.Price),
@@ -527,19 +877,29 @@ namespace TradingPlatform.DataIngestion.Providers
                     ChangePercent = decimal.Parse(quote.ChangePercent.TrimEnd('%')),
                     Timestamp = DateTime.UtcNow
                 };
+                LogMethodExit();
+                return marketData;
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError($"Error mapping AlphaVantage quote for {quote?.Symbol}", ex);
+                LogError($"Error mapping AlphaVantage quote for {quote?.Symbol}", ex);
+                LogMethodExit();
                 return null;
             }
         }
 
+        /// <summary>
+        /// Maps Finnhub quote response to standardized MarketData
+        /// </summary>
+        /// <param name="symbol">Symbol for the quote</param>
+        /// <param name="quote">Finnhub quote to map</param>
+        /// <returns>Mapped MarketData or null if mapping fails</returns>
         private MarketData? MapFinnhubQuote(string symbol, FinnhubQuoteResponse quote)
         {
+            LogMethodEntry();
             try
             {
-                return new MarketData(_logger)
+                var marketData = new MarketData(Logger)
                 {
                     Symbol = symbol,
                     Price = quote.Current,
@@ -551,10 +911,13 @@ namespace TradingPlatform.DataIngestion.Providers
                     ChangePercent = quote.PercentChange,
                     Timestamp = DateTime.UtcNow
                 };
+                LogMethodExit();
+                return marketData;
             }
             catch (Exception ex)
             {
-                TradingLogOrchestrator.Instance.LogError($"Error mapping Finnhub quote for {symbol}", ex);
+                LogError($"Error mapping Finnhub quote for {symbol}", ex);
+                LogMethodExit();
                 return null;
             }
         }

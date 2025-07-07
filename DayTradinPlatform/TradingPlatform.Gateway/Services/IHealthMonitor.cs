@@ -1,3 +1,5 @@
+using TradingPlatform.Foundation.Models;
+
 namespace TradingPlatform.Gateway.Services;
 
 /// <summary>
@@ -9,22 +11,22 @@ public interface IHealthMonitor
     /// <summary>
     /// Get overall system health status
     /// </summary>
-    Task<HealthStatus> GetHealthStatusAsync();
+    Task<TradingResult<HealthStatus>> GetHealthStatusAsync();
 
     /// <summary>
     /// Get detailed health information for all services
     /// </summary>
-    Task<ServiceHealthInfo[]> GetDetailedHealthAsync();
+    Task<TradingResult<ServiceHealthInfo[]>> GetDetailedHealthAsync();
 
     /// <summary>
     /// Check if critical trading systems are operational
     /// </summary>
-    Task<bool> AreCriticalSystemsHealthyAsync();
+    Task<TradingResult<bool>> AreCriticalSystemsHealthyAsync();
 
     /// <summary>
     /// Get trading-specific health metrics
     /// </summary>
-    Task<TradingHealthMetrics> GetTradingHealthAsync();
+    Task<TradingResult<TradingHealthMetrics>> GetTradingHealthAsync();
 
     /// <summary>
     /// Register a custom health check
@@ -34,12 +36,12 @@ public interface IHealthMonitor
     /// <summary>
     /// Start continuous health monitoring
     /// </summary>
-    Task StartMonitoringAsync(CancellationToken cancellationToken);
+    Task<TradingResult<bool>> StartMonitoringAsync(CancellationToken cancellationToken);
 
     /// <summary>
     /// Get system alerts and warnings
     /// </summary>
-    Task<SystemAlert[]> GetActiveAlertsAsync();
+    Task<TradingResult<SystemAlert[]>> GetActiveAlertsAsync();
 }
 
 public record HealthStatus(

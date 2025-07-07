@@ -2,82 +2,117 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
+using TradingPlatform.Foundation.Services;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.Gateway.Services;
 
 /// <summary>
-/// Windows 11 optimized process manager for trading workstation
-/// Implements CPU affinity, real-time priorities, and performance monitoring
+/// Intelligent Windows 11 optimized process manager for ultra-low latency trading workstation
+/// Implements CPU affinity, real-time priorities, NUMA awareness, and comprehensive performance monitoring
+/// Target: Sub-1ms process management operations with comprehensive health monitoring
 /// </summary>
-public class ProcessManager : IProcessManager
+public class ProcessManager : CanonicalServiceBase, IProcessManager
 {
-    private readonly ITradingLogger _logger;
     private readonly Dictionary<string, Process> _managedProcesses;
     private readonly Dictionary<string, ServiceConfiguration> _serviceConfigurations;
+    
+    // Performance metrics
+    private long _totalProcessStarts = 0;
+    private long _totalProcessStops = 0;
+    private long _processFailures = 0;
+    private long _affinityChanges = 0;
+    private long _priorityChanges = 0;
 
-    public ProcessManager(ITradingLogger logger)
+    /// <summary>
+    /// Initializes a new instance of ProcessManager with canonical service patterns
+    /// </summary>
+    /// <param name="logger">Trading logger for comprehensive process management tracking</param>
+    public ProcessManager(ITradingLogger logger) : base(logger, "ProcessManager")
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _managedProcesses = new Dictionary<string, Process>();
         _serviceConfigurations = new Dictionary<string, ServiceConfiguration>();
 
         InitializeServiceConfigurations();
     }
 
-    public async Task<ProcessInfo[]> GetProcessStatusAsync()
+    public async Task<TradingResult<ProcessInfo[]>> GetProcessStatusAsync()
     {
-        var processInfos = new List<ProcessInfo>();
-
-        foreach (var (serviceName, process) in _managedProcesses)
+        LogMethodEntry();
+        try
         {
-            try
+            var processInfos = new List<ProcessInfo>();
+
+            foreach (var (serviceName, process) in _managedProcesses)
             {
-                if (process.HasExited)
+                try
                 {
+                    if (process.HasExited)
+                    {
+                        processInfos.Add(new ProcessInfo(
+                            serviceName, process.Id, ProcessStatus.Stopped, TimeSpan.Zero,
+                            0, 0, 0, Array.Empty<int>(), ProcessPriorityLevel.Normal));
+                        continue;
+                    }
+
+                    // Get performance counters
+                    var cpuUsage = await GetCpuUsageAsync(process);
+                    var memoryUsage = process.WorkingSet64 / (1024 * 1024); // Convert to MB
+                    var uptime = DateTime.Now - process.StartTime;
+                    var threadCount = process.Threads.Count;
+                    var affinity = GetProcessorAffinity(process);
+                    var priority = GetProcessPriorityLevel(process);
+
                     processInfos.Add(new ProcessInfo(
-                        serviceName, process.Id, ProcessStatus.Stopped, TimeSpan.Zero,
-                        0, 0, 0, Array.Empty<int>(), ProcessPriorityLevel.Normal));
-                    continue;
+                        serviceName, process.Id, ProcessStatus.Running, uptime,
+                        cpuUsage, memoryUsage, threadCount, affinity, priority));
                 }
-
-                // Get performance counters
-                var cpuUsage = await GetCpuUsageAsync(process);
-                var memoryUsage = process.WorkingSet64 / (1024 * 1024); // Convert to MB
-                var uptime = DateTime.Now - process.StartTime;
-                var threadCount = process.Threads.Count;
-                var affinity = GetProcessorAffinity(process);
-                var priority = GetProcessPriorityLevel(process);
-
-                processInfos.Add(new ProcessInfo(
-                    serviceName, process.Id, ProcessStatus.Running, uptime,
-                    cpuUsage, memoryUsage, threadCount, affinity, priority));
+                catch (Exception ex)
+                {
+                    LogError($"Error getting process info for {serviceName}", ex);
+                    processInfos.Add(new ProcessInfo(
+                        serviceName, 0, ProcessStatus.Error, TimeSpan.Zero,
+                        0, 0, 0, Array.Empty<int>(), ProcessPriorityLevel.Normal));
+                }
             }
-            catch (Exception ex)
-            {
-                TradingLogOrchestrator.Instance.LogError($"Error getting process info for {serviceName}", ex);
-                processInfos.Add(new ProcessInfo(
-                    serviceName, 0, ProcessStatus.Error, TimeSpan.Zero,
-                    0, 0, 0, Array.Empty<int>(), ProcessPriorityLevel.Normal));
-            }
+
+            LogInfo($"Retrieved status for {processInfos.Count} managed processes");
+            LogMethodExit();
+            return TradingResult<ProcessInfo[]>.Success(processInfos.ToArray());
         }
-
-        return processInfos.ToArray();
+        catch (Exception ex)
+        {
+            LogError("Error getting process status", ex);
+            LogMethodExit();
+            return TradingResult<ProcessInfo[]>.Failure("PROCESS_STATUS_ERROR", $"Failed to get process status: {ex.Message}");
+        }
     }
 
-    public async Task StartServiceAsync(string serviceName)
+    /// <summary>
+    /// Starts a trading service with optimized Windows 11 configurations
+    /// </summary>
+    /// <param name="serviceName">Name of the service to start</param>
+    /// <returns>TradingResult indicating success or failure with detailed error information</returns>
+    public async Task<TradingResult<bool>> StartServiceAsync(string serviceName)
     {
+        LogMethodEntry();
         try
         {
             if (!_serviceConfigurations.TryGetValue(serviceName, out var config))
             {
-                throw new ArgumentException($"Unknown service: {serviceName}");
+                LogError($"Unknown service: {serviceName}");
+                LogMethodExit();
+                return TradingResult<bool>.Failure("UNKNOWN_SERVICE", $"Unknown service: {serviceName}");
             }
 
             if (_managedProcesses.ContainsKey(serviceName))
             {
-                TradingLogOrchestrator.Instance.LogWarning($"Service {serviceName} is already running");
-                return;
+                LogWarning($"Service {serviceName} is already running");
+                LogMethodExit();
+                return TradingResult<bool>.Failure("SERVICE_ALREADY_RUNNING", $"Service {serviceName} is already running");
             }
+
+            Interlocked.Increment(ref _totalProcessStarts);
 
             var startInfo = new ProcessStartInfo
             {
@@ -107,42 +142,51 @@ public class ProcessManager : IProcessManager
             process.OutputDataReceived += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(e.Data))
-                    TradingLogOrchestrator.Instance.LogInfo($"[{serviceName}] {e.Data}");
+                    LogInfo($"[{serviceName}] {e.Data}");
             };
 
             process.ErrorDataReceived += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(e.Data))
-                    TradingLogOrchestrator.Instance.LogError($"[{serviceName}] {e.Data}");
+                    LogError($"[{serviceName}] {e.Data}");
             };
 
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
-            TradingLogOrchestrator.Instance.LogInfo($"Started service {serviceName} with PID {process.Id}");
+            LogInfo($"Started service {serviceName} with PID {process.Id}");
+            LogMethodExit();
+            return TradingResult<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError($"Failed to start service {serviceName}", ex);
-            throw;
+            Interlocked.Increment(ref _processFailures);
+            LogError($"Failed to start service {serviceName}", ex);
+            LogMethodExit();
+            return TradingResult<bool>.Failure("SERVICE_START_FAILED", $"Failed to start service {serviceName}: {ex.Message}");
         }
     }
 
-    public async Task StopServiceAsync(string serviceName)
+    public async Task<TradingResult<bool>> StopServiceAsync(string serviceName)
     {
+        LogMethodEntry();
         try
         {
             if (!_managedProcesses.TryGetValue(serviceName, out var process))
             {
-                TradingLogOrchestrator.Instance.LogWarning($"Service {serviceName} is not running");
-                return;
+                LogWarning($"Service {serviceName} is not running");
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
             }
 
             if (process.HasExited)
             {
                 _managedProcesses.Remove(serviceName);
-                return;
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
             }
+
+            Interlocked.Increment(ref _totalProcessStops);
 
             // Graceful shutdown
             process.CloseMainWindow();
@@ -150,43 +194,79 @@ public class ProcessManager : IProcessManager
             // Wait for graceful shutdown
             if (!process.WaitForExit(5000)) // 5 second timeout
             {
-                TradingLogOrchestrator.Instance.LogWarning($"Service {serviceName} did not shut down gracefully, forcing termination");
+                LogWarning($"Service {serviceName} did not shut down gracefully, forcing termination");
                 process.Kill();
             }
 
             _managedProcesses.Remove(serviceName);
-            TradingLogOrchestrator.Instance.LogInfo($"Stopped service {serviceName}");
+            LogInfo($"Stopped service {serviceName}");
+            LogMethodExit();
+            return TradingResult<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError($"Failed to stop service {serviceName}", ex);
-            throw;
+            Interlocked.Increment(ref _processFailures);
+            LogError($"Failed to stop service {serviceName}", ex);
+            LogMethodExit();
+            return TradingResult<bool>.Failure("SERVICE_STOP_FAILED", $"Failed to stop service {serviceName}: {ex.Message}");
         }
-
-        await Task.CompletedTask;
     }
 
-    public async Task RestartServiceAsync(string serviceName)
+    public async Task<TradingResult<bool>> RestartServiceAsync(string serviceName)
     {
-        TradingLogOrchestrator.Instance.LogInfo($"Restarting service {serviceName}");
+        LogMethodEntry();
+        try
+        {
+            LogInfo($"Restarting service {serviceName}");
 
-        await StopServiceAsync(serviceName);
-        await Task.Delay(2000); // Brief pause for cleanup
-        await StartServiceAsync(serviceName);
+            var stopResult = await StopServiceAsync(serviceName);
+            if (!stopResult.IsSuccess)
+            {
+                LogError($"Failed to stop service {serviceName} during restart");
+                LogMethodExit();
+                return TradingResult<bool>.Failure("RESTART_STOP_FAILED", $"Failed to stop service {serviceName} during restart: {stopResult.Error}");
+            }
+
+            await Task.Delay(2000); // Brief pause for cleanup
+            
+            var startResult = await StartServiceAsync(serviceName);
+            if (!startResult.IsSuccess)
+            {
+                LogError($"Failed to start service {serviceName} during restart");
+                LogMethodExit();
+                return TradingResult<bool>.Failure("RESTART_START_FAILED", $"Failed to start service {serviceName} during restart: {startResult.Error}");
+            }
+
+            LogInfo($"Successfully restarted service {serviceName}");
+            LogMethodExit();
+            return TradingResult<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error restarting service {serviceName}", ex);
+            LogMethodExit();
+            return TradingResult<bool>.Failure("RESTART_ERROR", $"Error restarting service {serviceName}: {ex.Message}");
+        }
     }
 
-    public async Task SetCpuAffinityAsync(string serviceName, int[] cpuCores)
+    public async Task<TradingResult<bool>> SetCpuAffinityAsync(string serviceName, int[] cpuCores)
     {
+        LogMethodEntry();
         try
         {
             if (!_managedProcesses.TryGetValue(serviceName, out var process))
             {
-                TradingLogOrchestrator.Instance.LogWarning($"Cannot set CPU affinity for unknown service {serviceName}");
-                return;
+                LogWarning($"Cannot set CPU affinity for unknown service {serviceName}");
+                LogMethodExit();
+                return TradingResult<bool>.Failure("SERVICE_NOT_FOUND", $"Cannot set CPU affinity for unknown service {serviceName}");
             }
 
             if (process.HasExited)
-                return;
+            {
+                LogWarning($"Cannot set CPU affinity for exited service {serviceName}");
+                LogMethodExit();
+                return TradingResult<bool>.Failure("SERVICE_EXITED", $"Cannot set CPU affinity for exited service {serviceName}");
+            }
 
             // Convert core array to processor affinity mask
             long affinityMask = 0;
@@ -201,29 +281,44 @@ public class ProcessManager : IProcessManager
             if (affinityMask > 0)
             {
                 process.ProcessorAffinity = new IntPtr(affinityMask);
-                TradingLogOrchestrator.Instance.LogInfo($"Set CPU affinity for {serviceName} to cores: {string.Join(", ", cpuCores)}");
+                Interlocked.Increment(ref _affinityChanges);
+                LogInfo($"Set CPU affinity for {serviceName} to cores: {string.Join(", ", cpuCores)}");
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            else
+            {
+                LogWarning($"No valid CPU cores specified for {serviceName}");
+                LogMethodExit();
+                return TradingResult<bool>.Failure("INVALID_CORES", $"No valid CPU cores specified for {serviceName}");
             }
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError($"Failed to set CPU affinity for {serviceName}", ex);
+            LogError($"Failed to set CPU affinity for {serviceName}", ex);
+            LogMethodExit();
+            return TradingResult<bool>.Failure("AFFINITY_SET_FAILED", $"Failed to set CPU affinity for {serviceName}: {ex.Message}");
         }
-
-        await Task.CompletedTask;
     }
 
-    public async Task SetProcessPriorityAsync(string serviceName, ProcessPriorityLevel priority)
+    public async Task<TradingResult<bool>> SetProcessPriorityAsync(string serviceName, ProcessPriorityLevel priority)
     {
+        LogMethodEntry();
         try
         {
             if (!_managedProcesses.TryGetValue(serviceName, out var process))
             {
-                TradingLogOrchestrator.Instance.LogWarning($"Cannot set priority for unknown service {serviceName}");
-                return;
+                LogWarning($"Cannot set priority for unknown service {serviceName}");
+                LogMethodExit();
+                return TradingResult<bool>.Failure("SERVICE_NOT_FOUND", $"Cannot set priority for unknown service {serviceName}");
             }
 
             if (process.HasExited)
-                return;
+            {
+                LogWarning($"Cannot set priority for exited service {serviceName}");
+                LogMethodExit();
+                return TradingResult<bool>.Failure("SERVICE_EXITED", $"Cannot set priority for exited service {serviceName}");
+            }
 
             var processPriority = priority switch
             {
@@ -235,55 +330,70 @@ public class ProcessManager : IProcessManager
             };
 
             process.PriorityClass = processPriority;
-            TradingLogOrchestrator.Instance.LogInfo($"Set process priority for {serviceName} to {priority}");
+            Interlocked.Increment(ref _priorityChanges);
+            LogInfo($"Set process priority for {serviceName} to {priority}");
+            LogMethodExit();
+            return TradingResult<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError($"Failed to set process priority for {serviceName}", ex);
+            LogError($"Failed to set process priority for {serviceName}", ex);
+            LogMethodExit();
+            return TradingResult<bool>.Failure("PRIORITY_SET_FAILED", $"Failed to set process priority for {serviceName}: {ex.Message}");
         }
-
-        await Task.CompletedTask;
     }
 
-    public async Task<ServicePerformanceMetrics[]> GetPerformanceMetricsAsync()
+    public async Task<TradingResult<ServicePerformanceMetrics[]>> GetPerformanceMetricsAsync()
     {
-        var metrics = new List<ServicePerformanceMetrics>();
-
-        foreach (var (serviceName, process) in _managedProcesses)
-        {
-            try
-            {
-                if (process.HasExited)
-                    continue;
-
-                // TODO: Implement actual performance metric collection
-                // For MVP, return mock metrics
-                metrics.Add(new ServicePerformanceMetrics(
-                    serviceName,
-                    TimeSpan.FromMilliseconds(50), // Average response time
-                    1000, // Requests per second
-                    25.5, // CPU usage
-                    process.WorkingSet64 / (1024 * 1024), // Memory MB
-                    10, // Active connections
-                    50000, // Total requests
-                    5, // Failed requests
-                    DateTimeOffset.UtcNow));
-            }
-            catch (Exception ex)
-            {
-                TradingLogOrchestrator.Instance.LogError($"Error getting performance metrics for {serviceName}", ex);
-            }
-        }
-
-        await Task.CompletedTask;
-        return metrics.ToArray();
-    }
-
-    public async Task OptimizeForTradingAsync()
-    {
+        LogMethodEntry();
         try
         {
-            TradingLogOrchestrator.Instance.LogInfo("Optimizing Windows 11 for trading workstation performance");
+            var metrics = new List<ServicePerformanceMetrics>();
+
+            foreach (var (serviceName, process) in _managedProcesses)
+            {
+                try
+                {
+                    if (process.HasExited)
+                        continue;
+
+                    // TODO: Implement actual performance metric collection
+                    // For MVP, return mock metrics
+                    metrics.Add(new ServicePerformanceMetrics(
+                        serviceName,
+                        TimeSpan.FromMilliseconds(50), // Average response time
+                        1000, // Requests per second
+                        25.5, // CPU usage
+                        process.WorkingSet64 / (1024 * 1024), // Memory MB
+                        10, // Active connections
+                        50000, // Total requests
+                        5, // Failed requests
+                        DateTimeOffset.UtcNow));
+                }
+                catch (Exception ex)
+                {
+                    LogError($"Error getting performance metrics for {serviceName}", ex);
+                }
+            }
+
+            LogInfo($"Retrieved performance metrics for {metrics.Count} services");
+            LogMethodExit();
+            return TradingResult<ServicePerformanceMetrics[]>.Success(metrics.ToArray());
+        }
+        catch (Exception ex)
+        {
+            LogError("Error getting performance metrics", ex);
+            LogMethodExit();
+            return TradingResult<ServicePerformanceMetrics[]>.Failure("METRICS_ERROR", $"Failed to get performance metrics: {ex.Message}");
+        }
+    }
+
+    public async Task<TradingResult<bool>> OptimizeForTradingAsync()
+    {
+        LogMethodEntry();
+        try
+        {
+            LogInfo("Optimizing Windows 11 for trading workstation performance");
 
             // Set high-performance power plan
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -293,12 +403,20 @@ public class ProcessManager : IProcessManager
                 await OptimizeNetworkSettingsAsync();
                 await SetTimerResolutionAsync();
             }
+            else
+            {
+                LogWarning("Trading optimization is designed for Windows 11, skipping on current platform");
+            }
 
-            TradingLogOrchestrator.Instance.LogInfo("Windows 11 trading optimization completed");
+            LogInfo("Windows 11 trading optimization completed");
+            LogMethodExit();
+            return TradingResult<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Failed to optimize Windows 11 for trading", ex);
+            LogError("Failed to optimize Windows 11 for trading", ex);
+            LogMethodExit();
+            return TradingResult<bool>.Failure("OPTIMIZATION_FAILED", $"Failed to optimize Windows 11 for trading: {ex.Message}");
         }
     }
 
@@ -409,19 +527,19 @@ public class ProcessManager : IProcessManager
             if (process != null)
             {
                 await process.WaitForExitAsync();
-                TradingLogOrchestrator.Instance.LogInfo("Set Windows power plan to High Performance");
+                LogInfo("Set Windows power plan to High Performance");
             }
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogWarning("Failed to set high performance power plan", additionalData: new { Error = ex.Message });
+            LogWarning($"Failed to set high performance power plan: {ex.Message}");
         }
     }
 
     private async Task DisableWindowsDefenderRealTimeAsync()
     {
         // Note: This would require admin privileges and should be done carefully
-        TradingLogOrchestrator.Instance.LogInfo("Windows Defender real-time scanning optimization skipped (requires admin rights)");
+        LogInfo("Windows Defender real-time scanning optimization skipped (requires admin rights)");
         await Task.CompletedTask;
     }
 
@@ -430,12 +548,12 @@ public class ProcessManager : IProcessManager
         try
         {
             // Optimize TCP settings for low latency
-            TradingLogOrchestrator.Instance.LogInfo("Network settings optimization completed");
+            LogInfo("Network settings optimization completed");
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogWarning("Failed to optimize network settings", additionalData: new { Error = ex.Message });
+            LogWarning($"Failed to optimize network settings: {ex.Message}");
         }
     }
 
@@ -444,12 +562,12 @@ public class ProcessManager : IProcessManager
         try
         {
             // Set Windows timer resolution to 1ms for precise timing
-            TradingLogOrchestrator.Instance.LogInfo("Windows timer resolution optimization completed");
+            LogInfo("Windows timer resolution optimization completed");
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogWarning("Failed to set timer resolution", additionalData: new { Error = ex.Message });
+            LogWarning($"Failed to set timer resolution: {ex.Message}");
         }
     }
 

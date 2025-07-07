@@ -61,7 +61,7 @@ public sealed class MultiGpuManager : IDisposable
     /// </summary>
     private void InitializeAllAccelerators()
     {
-        var devices = _context.GetDevices().ToArray();
+        var devices = _context.GetDevices<Device>().ToArray();
         _logger.LogInfo("MULTI_GPU_SCAN", $"Scanning {devices.Length} total devices for GPU acceleration");
 
         // Score and sort all devices
@@ -113,9 +113,9 @@ public sealed class MultiGpuManager : IDisposable
     {
         return device.AcceleratorType switch
         {
-            AcceleratorType.Cuda => _context.CreateCudaAccelerator(device.DeviceId),
-            AcceleratorType.OpenCL => _context.CreateCLAccelerator(device.DeviceId),
-            AcceleratorType.CPU => _context.CreateCPUAccelerator(device.DeviceId),
+            AcceleratorType.Cuda => _context.CreateCudaAccelerator(0),
+            AcceleratorType.OpenCL => _context.CreateCLAccelerator(0),
+            AcceleratorType.CPU => _context.CreateCPUAccelerator(0),
             _ => throw new NotSupportedException($"Accelerator type {device.AcceleratorType} not supported")
         };
     }

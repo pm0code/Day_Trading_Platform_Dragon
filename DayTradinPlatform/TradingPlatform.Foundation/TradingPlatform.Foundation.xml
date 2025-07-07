@@ -456,6 +456,11 @@
             Overall health status for the system or component.
             </summary>
         </member>
+        <member name="F:TradingPlatform.Foundation.Interfaces.HealthStatus.Unknown">
+            <summary>
+            The component status is unknown or not yet determined.
+            </summary>
+        </member>
         <member name="F:TradingPlatform.Foundation.Interfaces.HealthStatus.Healthy">
             <summary>
             The component is healthy and operating normally.

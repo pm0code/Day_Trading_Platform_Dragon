@@ -1,6 +1,8 @@
 using ILGPU;
 using ILGPU.Runtime;
 using TradingPlatform.GPU.Models;
+using TradingPlatform.GPU.Interfaces;
+using TradingPlatform.GPU.Services;
 using System.Collections.Concurrent;
 
 namespace TradingPlatform.GPU.Infrastructure;
@@ -12,7 +14,7 @@ namespace TradingPlatform.GPU.Infrastructure;
 public sealed class GpuOrchestrator : IDisposable
 {
     private readonly SimpleLogger _logger;
-    private readonly MultiGpuManager _multiGpuManager;
+    protected readonly MultiGpuManager _multiGpuManager;
     private readonly ConcurrentQueue<GpuTask> _taskQueue;
     private readonly SemaphoreSlim _executionSemaphore;
     private readonly Dictionary<string, GpuResourceProfile> _resourceProfiles;

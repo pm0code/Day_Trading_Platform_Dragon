@@ -17,7 +17,7 @@ public interface IFixEngine : IDisposable
     /// <summary>
     /// Submits new order to optimal US venue with smart routing
     /// </summary>
-    Task<string> SubmitOrderAsync(OrderRequest request);
+    Task<string> SubmitOrderAsync(Trading.OrderRequest request);
 
     /// <summary>
     /// Cancels existing order across US venues
@@ -27,7 +27,7 @@ public interface IFixEngine : IDisposable
     /// <summary>
     /// Modifies existing order (cancel/replace)
     /// </summary>
-    Task<bool> ModifyOrderAsync(string orderId, OrderRequest newRequest);
+    Task<bool> ModifyOrderAsync(string orderId, Trading.OrderRequest newRequest);
 
     /// <summary>
     /// Requests market data subscription for US symbols

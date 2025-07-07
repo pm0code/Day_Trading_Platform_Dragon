@@ -3,6 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using TradingPlatform.Core.Models;
 using TradingPlatform.FixEngine.Models;
+using TradingPlatform.FixEngine.Trading;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.FixEngine.Services
 {
@@ -15,8 +17,8 @@ namespace TradingPlatform.FixEngine.Services
         /// Sends a new order through FIX protocol.
         /// </summary>
         Task<TradingResult<FixOrder>> SendOrderAsync(
-            OrderRequest request,
-            IProgress<OrderExecutionProgress>? progress = null);
+            Trading.OrderRequest request,
+            IProgress<Models.OrderExecutionProgress>? progress = null);
         
         /// <summary>
         /// Cancels an existing order.
@@ -100,8 +102,8 @@ namespace TradingPlatform.FixEngine.Services
         /// </summary>
         Task<TradingResult<FixOrder>> CreateAndSendOrderAsync(
             FixSession session,
-            OrderRequest request,
-            IProgress<OrderExecutionProgress>? progress = null);
+            Trading.OrderRequest request,
+            IProgress<Models.OrderExecutionProgress>? progress = null);
         
         /// <summary>
         /// Cancels an existing order.
@@ -113,7 +115,7 @@ namespace TradingPlatform.FixEngine.Services
         /// </summary>
         Task<TradingResult<FixOrder>> ReplaceOrderAsync(
             string originalClOrdId,
-            OrderRequest newRequest,
+            Trading.OrderRequest newRequest,
             string? sessionId = null);
         
         /// <summary>

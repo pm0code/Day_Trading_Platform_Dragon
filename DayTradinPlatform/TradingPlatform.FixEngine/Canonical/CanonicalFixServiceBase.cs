@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using TradingPlatform.Core.Canonical;
 using TradingPlatform.Core.Interfaces;
@@ -120,13 +122,13 @@ namespace TradingPlatform.FixEngine.Canonical
         /// Performs FIX-specific health checks.
         /// </summary>
         /// <returns>Health check result indicating service status</returns>
-        public override async Task<HealthCheckResult> CheckHealthAsync()
+        public new async Task<ServiceHealthCheck> CheckHealthAsync(CancellationToken cancellationToken = default)
         {
             LogMethodEntry();
             
             try
             {
-                var baseHealth = await base.CheckHealthAsync();
+                var baseHealth = await base.CheckHealthAsync(cancellationToken);
                 if (!baseHealth.IsHealthy)
                 {
                     LogMethodExit();
@@ -134,16 +136,31 @@ namespace TradingPlatform.FixEngine.Canonical
                 }
                 
                 // Add FIX-specific health checks
-                var fixHealth = await CheckFixHealthAsync();
+                var fixHealthResult = await CheckFixHealthAsync();
+                
+                // Update the base health check with FIX-specific details
+                if (!fixHealthResult.IsHealthy)
+                {
+                    baseHealth.IsHealthy = false;
+                    baseHealth.HealthMessage = fixHealthResult.Message;
+                    baseHealth.Details = fixHealthResult.Details;
+                }
                 
                 LogMethodExit();
-                return fixHealth;
+                return baseHealth;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "FIX health check failed");
                 LogMethodExit();
-                return HealthCheckResult.Unhealthy($"FIX health check error: {ex.Message}");
+                return new ServiceHealthCheck
+                {
+                    ServiceName = ServiceName,
+                    CurrentState = ServiceState,
+                    IsHealthy = false,
+                    HealthMessage = $"FIX health check error: {ex.Message}",
+                    CheckedAt = DateTime.UtcNow
+                };
             }
         }
         
@@ -151,9 +168,9 @@ namespace TradingPlatform.FixEngine.Canonical
         /// Override this method to implement FIX-specific health checks.
         /// </summary>
         /// <returns>Health check result for FIX components</returns>
-        protected virtual Task<HealthCheckResult> CheckFixHealthAsync()
+        protected virtual Task<(bool IsHealthy, string Message, Dictionary<string, object>? Details)> CheckFixHealthAsync()
         {
-            return Task.FromResult(HealthCheckResult.Healthy("FIX service operational"));
+            return Task.FromResult((true, "FIX service operational", (Dictionary<string, object>?)null));
         }
         
         /// <summary>

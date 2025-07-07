@@ -4,10 +4,10 @@ using System.Collections.Generic;
 namespace TradingPlatform.FixEngine.Models
 {
     /// <summary>
-    /// Represents a FIX protocol message with all required fields and metadata.
+    /// Represents a basic FIX protocol message with all required fields and metadata.
     /// Uses decimal for all financial values per mandatory standards.
     /// </summary>
-    public class FixMessage
+    public class BasicFixMessage
     {
         /// <summary>
         /// Gets or sets the message type (tag 35).

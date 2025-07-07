@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.FixEngine.Canonical;
 using TradingPlatform.FixEngine.Models;
 using TradingPlatform.FixEngine.Services;
+using TradingPlatform.FixEngine.Trading;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.FixEngine.Compliance
 {
@@ -87,7 +91,7 @@ namespace TradingPlatform.FixEngine.Compliance
         /// <summary>
         /// Checks order compliance before submission.
         /// </summary>
-        public async Task<TradingResult> CheckOrderComplianceAsync(OrderRequest request)
+        public async Task<TradingResult> CheckOrderComplianceAsync(Trading.OrderRequest request)
         {
             LogMethodEntry();
             
@@ -181,7 +185,7 @@ namespace TradingPlatform.FixEngine.Compliance
         /// </summary>
         public async Task<TradingResult> CheckOrderModificationAsync(
             FixOrder originalOrder, 
-            OrderRequest newRequest)
+            Trading.OrderRequest newRequest)
         {
             LogMethodEntry();
             
@@ -322,7 +326,7 @@ namespace TradingPlatform.FixEngine.Compliance
         /// Checks pre-trade compliance rules.
         /// </summary>
         private async Task<TradingResult> CheckPreTradeRulesAsync(
-            OrderRequest request, 
+            Trading.OrderRequest request, 
             OrderAuditTrail auditTrail)
         {
             // Check order size limits
@@ -360,7 +364,7 @@ namespace TradingPlatform.FixEngine.Compliance
         /// Checks position limits.
         /// </summary>
         private async Task<TradingResult> CheckPositionLimitsAsync(
-            OrderRequest request, 
+            Trading.OrderRequest request, 
             OrderAuditTrail auditTrail)
         {
             // Implementation would check current positions against limits
@@ -371,7 +375,7 @@ namespace TradingPlatform.FixEngine.Compliance
         /// Checks market abuse rules.
         /// </summary>
         private async Task<TradingResult> CheckMarketAbuseRulesAsync(
-            OrderRequest request, 
+            Trading.OrderRequest request, 
             OrderAuditTrail auditTrail)
         {
             // Check for potential spoofing patterns
@@ -395,7 +399,7 @@ namespace TradingPlatform.FixEngine.Compliance
         /// Checks MiFID II specific requirements.
         /// </summary>
         private async Task<TradingResult> CheckMiFIDRequirementsAsync(
-            OrderRequest request, 
+            Trading.OrderRequest request, 
             OrderAuditTrail auditTrail)
         {
             // Check algorithm ID requirement
@@ -469,6 +473,78 @@ namespace TradingPlatform.FixEngine.Compliance
             // Implementation would load rules from configuration
             return TradingResult.Success();
         }
+        
+        #region Abstract Method Implementations
+        
+        /// <summary>
+        /// Initializes the compliance service.
+        /// </summary>
+        protected override async Task OnInitializeAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            
+            try
+            {
+                var result = await InitializeAsync();
+                if (!result.IsSuccess)
+                {
+                    throw new InvalidOperationException($"Failed to initialize compliance service: {result.ErrorMessage}");
+                }
+                
+                LogInfo("Compliance service initialized");
+                LogMethodExit();
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to initialize compliance service", ex);
+                LogMethodExit();
+                throw;
+            }
+        }
+        
+        /// <summary>
+        /// Starts the compliance service.
+        /// </summary>
+        protected override Task OnStartAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            
+            try
+            {
+                LogInfo("Compliance service started");
+                LogMethodExit();
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to start compliance service", ex);
+                LogMethodExit();
+                throw;
+            }
+        }
+        
+        /// <summary>
+        /// Stops the compliance service.
+        /// </summary>
+        protected override Task OnStopAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            
+            try
+            {
+                LogInfo("Compliance service stopped");
+                LogMethodExit();
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to stop compliance service", ex);
+                LogMethodExit();
+                throw;
+            }
+        }
+        
+        #endregion
     }
     
     /// <summary>
@@ -480,8 +556,8 @@ namespace TradingPlatform.FixEngine.Compliance
         public string Symbol { get; set; } = string.Empty;
         public decimal Quantity { get; set; }
         public decimal? Price { get; set; }
-        public OrderSide Side { get; set; }
-        public OrderType OrderType { get; set; }
+        public Models.OrderSide Side { get; set; }
+        public Models.OrderType OrderType { get; set; }
         public DateTime SubmissionTime { get; set; }
         public long MicrosecondTimestamp { get; set; }
         
@@ -498,7 +574,7 @@ namespace TradingPlatform.FixEngine.Compliance
             _executions.Add(execution);
         }
         
-        public void AddModification(OrderRequest newRequest, DateTime timestamp)
+        public void AddModification(Trading.OrderRequest newRequest, DateTime timestamp)
         {
             _modifications.Add(new ModificationRecord
             {
@@ -542,7 +618,7 @@ namespace TradingPlatform.FixEngine.Compliance
         public DateTime Timestamp { get; set; }
         public decimal NewQuantity { get; set; }
         public decimal? NewPrice { get; set; }
-        public OrderType NewOrderType { get; set; }
+        public Models.OrderType NewOrderType { get; set; }
     }
     
     /// <summary>
@@ -575,9 +651,9 @@ namespace TradingPlatform.FixEngine.Compliance
     {
         Task<TradingResult> InitializeAsync();
         int GetRuleCount();
-        Task<TradingResult> CheckModificationRulesAsync(FixOrder originalOrder, OrderRequest newRequest);
-        Task<TradingResult> CheckSpoofingPatternAsync(OrderRequest request);
-        Task<TradingResult> CheckWashTradingAsync(OrderRequest request);
+        Task<TradingResult> CheckModificationRulesAsync(FixOrder originalOrder, Trading.OrderRequest newRequest);
+        Task<TradingResult> CheckSpoofingPatternAsync(Trading.OrderRequest request);
+        Task<TradingResult> CheckWashTradingAsync(Trading.OrderRequest request);
     }
     
     /// <summary>
@@ -586,7 +662,7 @@ namespace TradingPlatform.FixEngine.Compliance
     public interface IAuditLogger
     {
         Task LogComplianceCheckAsync(OrderAuditTrail auditTrail, bool passed, string details);
-        Task LogOrderModificationAsync(OrderAuditTrail auditTrail, FixOrder originalOrder, OrderRequest newRequest);
+        Task LogOrderModificationAsync(OrderAuditTrail auditTrail, FixOrder originalOrder, Trading.OrderRequest newRequest);
         Task LogExecutionAsync(OrderAuditTrail auditTrail, ExecutionRecord execution);
         Task LogComplianceViolationAsync(OrderAuditTrail auditTrail, string violation);
     }

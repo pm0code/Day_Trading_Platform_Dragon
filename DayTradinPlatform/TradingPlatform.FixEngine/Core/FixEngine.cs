@@ -7,8 +7,8 @@ using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Observability;
 using Audit.Core;
 using TradingPlatform.Core.Logging;
-using TradingPlatform.Foundation.Services;
 using TradingPlatform.Foundation.Models;
+using TradingPlatform.Core.Canonical;
 
 namespace TradingPlatform.FixEngine.Core;
 
@@ -69,7 +69,7 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
     /// </summary>
     /// <param name="config">The configuration settings for FIX engine initialization</param>
     /// <returns>A TradingResult indicating successful initialization or error details</returns>
-    public async Task<TradingResult<bool>> InitializeAsync(FixEngineConfig config)
+    public async Task<bool> InitializeAsync(FixEngineConfig config)
     {
         LogMethodEntry();
         try
@@ -86,13 +86,13 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
                 var error = "FIX Engine is already initialized";
                 activity?.SetStatus(ActivityStatusCode.Error, error);
                 LogMethodExit();
-                return TradingResult<bool>.Failure("ALREADY_INITIALIZED", error);
+                throw new InvalidOperationException(error);
             }
 
             if (config == null)
             {
                 LogMethodExit();
-                return TradingResult<bool>.Failure("INVALID_CONFIG", "Configuration cannot be null");
+                throw new ArgumentNullException(nameof(config), "Configuration cannot be null");
             }
 
             _config = config;
@@ -112,7 +112,7 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
                     {
                         LogError($"Failed to initialize venue {venueName}: {venueResult.Error?.Message}");
                         LogMethodExit();
-                        return TradingResult<bool>.Failure("VENUE_INIT_FAILED", $"Failed to initialize venue {venueName}: {venueResult.Error?.Message}");
+                        throw new InvalidOperationException($"Failed to initialize venue {venueName}: {venueResult.Error?.Message}");
                     }
                     venueStopwatch.Stop();
 
@@ -132,7 +132,7 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
                 activity?.SetTag("fix.initialization.duration_ms", stopwatch.Elapsed.TotalMilliseconds.ToString("F2"));
 
                 LogMethodExit();
-                return TradingResult<bool>.Success(true);
+                return true;
             }
             catch (Exception ex)
             {
@@ -142,7 +142,7 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
                 // Record failed initialization
                 LogError($"FixEngine initialization failure: Duration={stopwatch.Elapsed.TotalMilliseconds}ms, CorrelationId={correlationId}", ex);
                 LogMethodExit();
-                return TradingResult<bool>.Failure("INITIALIZATION_ERROR", $"Failed to initialize FIX Engine: {ex.Message}", ex);
+                throw new InvalidOperationException($"Failed to initialize FIX Engine: {ex.Message}", ex);
             }
         }
         catch (Exception ex)
@@ -158,7 +158,7 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
     /// </summary>
     /// <param name="request">The order request with all necessary details</param>
     /// <returns>A TradingResult containing the client order ID or error information</returns>
-    public async Task<TradingResult<string>> SubmitOrderAsync(Trading.OrderRequest request)
+    public async Task<string> SubmitOrderAsync(Trading.OrderRequest request)
     {
         LogMethodEntry();
         try
@@ -170,19 +170,19 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
             if (!initResult.IsSuccess)
             {
                 LogMethodExit();
-                return TradingResult<string>.Failure(initResult.ErrorCode, initResult.ErrorMessage);
+                throw new InvalidOperationException($"Engine not initialized: {initResult.ErrorMessage}");
             }
 
             if (request == null)
             {
                 LogMethodExit();
-                return TradingResult<string>.Failure("INVALID_REQUEST", "Order request cannot be null");
+                throw new ArgumentNullException(nameof(request), "Order request cannot be null");
             }
 
             if (string.IsNullOrEmpty(request.Symbol))
             {
                 LogMethodExit();
-                return TradingResult<string>.Failure("INVALID_SYMBOL", "Symbol cannot be null or empty");
+                throw new ArgumentException("Symbol cannot be null or empty", nameof(request));
             }
 
             if (activity != null)
@@ -228,7 +228,7 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
 
                     LogError($"Order submission failure: OrderId={orderId}, Venue={optimalVenue}, Symbol={request.Symbol}, ErrorType=VenueUnavailable");
                     LogMethodExit();
-                    return TradingResult<string>.Failure("VENUE_UNAVAILABLE", error);
+                    throw new InvalidOperationException(error);
                 }
 
                 // Convert to FIX order request
@@ -268,7 +268,7 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
 
                 LogInfo($"Order submitted successfully: OrderId={orderId}, ClientOrderId={clOrdId}, Venue={optimalVenue}, Latency={stopwatch.Elapsed.TotalMicroseconds:F2}μs");
                 LogMethodExit();
-                return TradingResult<string>.Success(clOrdId);
+                return clOrdId;
             }
             catch (Exception ex)
             {
@@ -276,14 +276,14 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
                 activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
                 LogError($"Order submission failed: OrderId={orderId}, Symbol={request.Symbol}", ex);
                 LogMethodExit();
-                return TradingResult<string>.Failure("ORDER_SUBMISSION_ERROR", $"Failed to submit order: {ex.Message}", ex);
+                throw new InvalidOperationException($"Failed to submit order: {ex.Message}", ex);
             }
         }
         catch (Exception ex)
         {
             LogError("Error in SubmitOrderAsync", ex);
             LogMethodExit();
-            return TradingResult<string>.Failure("ORDER_SUBMISSION_ERROR", $"Order submission failed: {ex.Message}", ex);
+            throw;
         }
     }
 
@@ -293,7 +293,7 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
     /// <param name="orderId">The order ID to cancel</param>
     /// <param name="symbol">The symbol of the order to cancel</param>
     /// <returns>A TradingResult indicating successful cancellation or error details</returns>
-    public async Task<TradingResult<bool>> CancelOrderAsync(string orderId, string symbol)
+    public async Task<bool> CancelOrderAsync(string orderId, string symbol)
     {
         LogMethodEntry();
         try
@@ -302,19 +302,19 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
             if (!initResult.IsSuccess)
             {
                 LogMethodExit();
-                return TradingResult<bool>.Failure(initResult.ErrorCode, initResult.ErrorMessage);
+                throw new InvalidOperationException($"Engine not initialized: {initResult.ErrorMessage}");
             }
 
             if (string.IsNullOrEmpty(orderId))
             {
                 LogMethodExit();
-                return TradingResult<bool>.Failure("INVALID_ORDER_ID", "Order ID cannot be null or empty");
+                throw new ArgumentException("Order ID cannot be null or empty", nameof(orderId));
             }
 
             if (string.IsNullOrEmpty(symbol))
             {
                 LogMethodExit();
-                return TradingResult<bool>.Failure("INVALID_SYMBOL", "Symbol cannot be null or empty");
+                throw new ArgumentException("Symbol cannot be null or empty", nameof(symbol));
             }
 
             try
@@ -328,26 +328,26 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
                         var result = await orderManager.CancelOrderAsync(orderId);
                         LogInfo($"Order cancellation result: OrderId={orderId}, Symbol={symbol}, Success={result}");
                         LogMethodExit();
-                        return TradingResult<bool>.Success(result);
+                        return result;
                     }
                 }
 
                 LogWarning($"Order not found for cancellation: {orderId}");
                 LogMethodExit();
-                return TradingResult<bool>.Failure("ORDER_NOT_FOUND", $"Order not found for cancellation: {orderId}");
+                return false;
             }
             catch (Exception ex)
             {
                 LogError($"Failed to cancel order: {orderId}", ex);
                 LogMethodExit();
-                return TradingResult<bool>.Failure("ORDER_CANCELLATION_ERROR", $"Failed to cancel order: {ex.Message}", ex);
+                throw new InvalidOperationException($"Failed to cancel order: {ex.Message}", ex);
             }
         }
         catch (Exception ex)
         {
             LogError("Error in CancelOrderAsync", ex);
             LogMethodExit();
-            return TradingResult<bool>.Failure("ORDER_CANCELLATION_ERROR", $"Order cancellation failed: {ex.Message}", ex);
+            throw;
         }
     }
 
@@ -357,7 +357,7 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
     /// <param name="orderId">The order ID to modify</param>
     /// <param name="newRequest">The new order parameters</param>
     /// <returns>A TradingResult indicating successful modification or error details</returns>
-    public async Task<TradingResult<bool>> ModifyOrderAsync(string orderId, Trading.OrderRequest newRequest)
+    public async Task<bool> ModifyOrderAsync(string orderId, Trading.OrderRequest newRequest)
     {
         LogMethodEntry();
         try
@@ -366,19 +366,19 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
             if (!initResult.IsSuccess)
             {
                 LogMethodExit();
-                return TradingResult<bool>.Failure(initResult.ErrorCode, initResult.ErrorMessage);
+                throw new InvalidOperationException($"Engine not initialized: {initResult.ErrorMessage}");
             }
 
             if (string.IsNullOrEmpty(orderId))
             {
                 LogMethodExit();
-                return TradingResult<bool>.Failure("INVALID_ORDER_ID", "Order ID cannot be null or empty");
+                throw new ArgumentException("Order ID cannot be null or empty", nameof(orderId));
             }
 
             if (newRequest == null)
             {
                 LogMethodExit();
-                return TradingResult<bool>.Failure("INVALID_REQUEST", "New order request cannot be null");
+                throw new ArgumentNullException(nameof(newRequest), "New order request cannot be null");
             }
 
             try
@@ -401,26 +401,26 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
                         var success = !string.IsNullOrEmpty(newClOrdId);
                         LogInfo($"Order modification result: OrderId={orderId}, NewClOrdId={newClOrdId}, Success={success}");
                         LogMethodExit();
-                        return TradingResult<bool>.Success(success);
+                        return success;
                     }
                 }
 
                 LogWarning($"Order not found for modification: {orderId}");
                 LogMethodExit();
-                return TradingResult<bool>.Failure("ORDER_NOT_FOUND", $"Order not found for modification: {orderId}");
+                return false;
             }
             catch (Exception ex)
             {
                 LogError($"Failed to modify order: {orderId}", ex);
                 LogMethodExit();
-                return TradingResult<bool>.Failure("ORDER_MODIFICATION_ERROR", $"Failed to modify order: {ex.Message}", ex);
+                throw new InvalidOperationException($"Failed to modify order: {ex.Message}", ex);
             }
         }
         catch (Exception ex)
         {
             LogError("Error in ModifyOrderAsync", ex);
             LogMethodExit();
-            return TradingResult<bool>.Failure("ORDER_MODIFICATION_ERROR", $"Order modification failed: {ex.Message}", ex);
+            throw;
         }
     }
 
@@ -430,7 +430,7 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
     /// <param name="symbols">Array of symbols to subscribe to</param>
     /// <param name="dataType">Type of market data to subscribe to</param>
     /// <returns>A TradingResult indicating successful subscription or error details</returns>
-    public async Task<TradingResult<bool>> SubscribeMarketDataAsync(string[] symbols, MarketDataType dataType)
+    public async Task<bool> SubscribeMarketDataAsync(string[] symbols, MarketDataType dataType)
     {
         LogMethodEntry();
         try
@@ -439,20 +439,20 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
             if (!initResult.IsSuccess)
             {
                 LogMethodExit();
-                return TradingResult<bool>.Failure(initResult.ErrorCode, initResult.ErrorMessage);
+                throw new InvalidOperationException($"Engine not initialized: {initResult.ErrorMessage}");
             }
 
             if (symbols == null || symbols.Length == 0)
             {
                 LogMethodExit();
-                return TradingResult<bool>.Failure("INVALID_SYMBOLS", "Symbols array cannot be null or empty");
+                throw new ArgumentException("Symbols array cannot be null or empty", nameof(symbols));
             }
 
             var invalidSymbols = symbols.Where(string.IsNullOrEmpty).ToArray();
             if (invalidSymbols.Any())
             {
                 LogMethodExit();
-                return TradingResult<bool>.Failure("INVALID_SYMBOLS", $"Found {invalidSymbols.Length} invalid symbols in subscription request");
+                throw new ArgumentException($"Found {invalidSymbols.Length} invalid symbols in subscription request");
             }
 
             try
@@ -476,20 +476,20 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
                 LogInfo($"Market data subscription results: {successCount}/{totalCount} successful for {symbols.Length} symbols");
                 var overallSuccess = successCount > 0;
                 LogMethodExit();
-                return TradingResult<bool>.Success(overallSuccess);
+                return overallSuccess;
             }
             catch (Exception ex)
             {
                 LogError($"Failed to subscribe to market data for {symbols.Length} symbols", ex);
                 LogMethodExit();
-                return TradingResult<bool>.Failure("SUBSCRIPTION_ERROR", $"Market data subscription failed: {ex.Message}", ex);
+                throw new InvalidOperationException($"Market data subscription failed: {ex.Message}", ex);
             }
         }
         catch (Exception ex)
         {
             LogError("Error in SubscribeMarketDataAsync", ex);
             LogMethodExit();
-            return TradingResult<bool>.Failure("SUBSCRIPTION_ERROR", $"Market data subscription failed: {ex.Message}", ex);
+            throw;
         }
     }
 
@@ -498,7 +498,7 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
     /// </summary>
     /// <param name="symbols">Array of symbols to unsubscribe from</param>
     /// <returns>A TradingResult indicating successful unsubscription or error details</returns>
-    public async Task<TradingResult<bool>> UnsubscribeMarketDataAsync(string[] symbols)
+    public async Task<bool> UnsubscribeMarketDataAsync(string[] symbols)
     {
         LogMethodEntry();
         try
@@ -507,13 +507,13 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
             if (!initResult.IsSuccess)
             {
                 LogMethodExit();
-                return TradingResult<bool>.Failure(initResult.ErrorCode, initResult.ErrorMessage);
+                throw new InvalidOperationException($"Engine not initialized: {initResult.ErrorMessage}");
             }
 
             if (symbols == null || symbols.Length == 0)
             {
                 LogMethodExit();
-                return TradingResult<bool>.Failure("INVALID_SYMBOLS", "Symbols array cannot be null or empty");
+                throw new ArgumentException("Symbols array cannot be null or empty", nameof(symbols));
             }
 
             try
@@ -535,20 +535,20 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
                 LogInfo($"Market data unsubscription results: {successCount}/{totalCount} successful for {symbols.Length} symbols");
                 var overallSuccess = successCount > 0;
                 LogMethodExit();
-                return TradingResult<bool>.Success(overallSuccess);
+                return overallSuccess;
             }
             catch (Exception ex)
             {
                 LogError($"Failed to unsubscribe from market data for {symbols.Length} symbols", ex);
                 LogMethodExit();
-                return TradingResult<bool>.Failure("UNSUBSCRIPTION_ERROR", $"Market data unsubscription failed: {ex.Message}", ex);
+                throw new InvalidOperationException($"Market data unsubscription failed: {ex.Message}", ex);
             }
         }
         catch (Exception ex)
         {
             LogError("Error in UnsubscribeMarketDataAsync", ex);
             LogMethodExit();
-            return TradingResult<bool>.Failure("UNSUBSCRIPTION_ERROR", $"Market data unsubscription failed: {ex.Message}", ex);
+            throw;
         }
     }
 
@@ -556,7 +556,7 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
     /// Retrieves the connection status of all configured venues with comprehensive error handling
     /// </summary>
     /// <returns>A TradingResult containing venue status dictionary or error information</returns>
-    public TradingResult<Dictionary<string, bool>> GetVenueStatuses()
+    public Dictionary<string, bool> GetVenueStatuses()
     {
         LogMethodEntry();
         try
@@ -570,13 +570,13 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
 
             LogInfo($"Retrieved venue statuses for {statuses.Count} venues");
             LogMethodExit();
-            return TradingResult<Dictionary<string, bool>>.Success(statuses);
+            return statuses;
         }
         catch (Exception ex)
         {
             LogError("Error getting venue statuses", ex);
             LogMethodExit();
-            return TradingResult<Dictionary<string, bool>>.Failure("VENUE_STATUS_ERROR", $"Failed to get venue statuses: {ex.Message}", ex);
+            throw new InvalidOperationException($"Failed to get venue statuses: {ex.Message}", ex);
         }
     }
 
@@ -1037,6 +1037,81 @@ public sealed class FixEngine : CanonicalServiceBase, IFixEngine
             return TradingResult<bool>.Failure("INITIALIZATION_CHECK_ERROR", $"Failed to check initialization: {ex.Message}", ex);
         }
     }
+
+    #region Abstract Method Implementations
+    
+    /// <summary>
+    /// Initializes the FIX engine service.
+    /// </summary>
+    protected override async Task OnInitializeAsync(CancellationToken cancellationToken)
+    {
+        LogMethodEntry();
+        
+        try
+        {
+            // Initialize is already handled by InitializeAsync method
+            LogInfo("FIX engine service initialized");
+            LogMethodExit();
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            LogError("Failed to initialize FIX engine service", ex);
+            LogMethodExit();
+            throw;
+        }
+    }
+    
+    /// <summary>
+    /// Starts the FIX engine service.
+    /// </summary>
+    protected override async Task OnStartAsync(CancellationToken cancellationToken)
+    {
+        LogMethodEntry();
+        
+        try
+        {
+            // Start is already handled by venue sessions
+            LogInfo("FIX engine service started");
+            LogMethodExit();
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            LogError("Failed to start FIX engine service", ex);
+            LogMethodExit();
+            throw;
+        }
+    }
+    
+    /// <summary>
+    /// Stops the FIX engine service.
+    /// </summary>
+    protected override async Task OnStopAsync(CancellationToken cancellationToken)
+    {
+        LogMethodEntry();
+        
+        try
+        {
+            // Stop all venue sessions
+            foreach (var session in _venueSessions.Values)
+            {
+                session.Stop();
+            }
+            
+            LogInfo("FIX engine service stopped");
+            LogMethodExit();
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            LogError("Failed to stop FIX engine service", ex);
+            LogMethodExit();
+            throw;
+        }
+    }
+    
+    #endregion
 
     /// <summary>
     /// Generates a unique order ID with timestamp-based uniqueness guarantee

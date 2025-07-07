@@ -3,7 +3,7 @@ using System.Diagnostics;
 using TradingPlatform.FixEngine.Models;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
-using TradingPlatform.Foundation.Services;
+using TradingPlatform.Core.Canonical;
 using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.FixEngine.Core;

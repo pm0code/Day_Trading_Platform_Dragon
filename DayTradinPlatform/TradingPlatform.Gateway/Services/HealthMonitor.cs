@@ -2,28 +2,42 @@ using System.Diagnostics;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Messaging.Interfaces;
 using TradingPlatform.Core.Logging;
+using TradingPlatform.Foundation.Services;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.Gateway.Services;
 
 /// <summary>
-/// Comprehensive health monitoring for on-premise trading workstation
+/// Comprehensive health monitoring for on-premise trading workstation with canonical patterns
 /// Provides real-time system health, performance monitoring, and trading-specific alerts
+/// All operations use canonical error handling and comprehensive logging
 /// </summary>
-public class HealthMonitor : IHealthMonitor
+public class HealthMonitor : CanonicalServiceBase, IHealthMonitor
 {
     private readonly IMessageBus _messageBus;
     private readonly IProcessManager _processManager;
-    private readonly ITradingLogger _logger;
     private readonly Dictionary<string, Func<Task<HealthCheckResult>>> _healthChecks;
     private readonly List<SystemAlert> _activeAlerts;
     private readonly object _alertLock = new();
     private readonly Timer _monitoringTimer;
+    
+    // Performance metrics
+    private long _totalHealthChecks = 0;
+    private long _failedHealthChecks = 0;
+    private long _alertsGenerated = 0;
+    private long _alertsResolved = 0;
+    private long _criticalAlertsGenerated = 0;
 
-    public HealthMonitor(IMessageBus messageBus, IProcessManager processManager, ITradingLogger logger)
+    /// <summary>
+    /// Initializes a new instance of HealthMonitor with canonical service patterns
+    /// </summary>
+    /// <param name="messageBus">Message bus for system communication</param>
+    /// <param name="processManager">Process manager for service health monitoring</param>
+    /// <param name="logger">Trading logger for comprehensive health monitoring tracking</param>
+    public HealthMonitor(IMessageBus messageBus, IProcessManager processManager, ITradingLogger logger) : base(logger, "HealthMonitor")
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _processManager = processManager ?? throw new ArgumentNullException(nameof(processManager));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _healthChecks = new Dictionary<string, Func<Task<HealthCheckResult>>>();
         _activeAlerts = new List<SystemAlert>();
 
@@ -34,26 +48,38 @@ public class HealthMonitor : IHealthMonitor
             TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
     }
 
-    public async Task<HealthStatus> GetHealthStatusAsync()
+    public async Task<TradingResult<HealthStatus>> GetHealthStatusAsync()
     {
-        var stopwatch = Stopwatch.StartNew();
-        var serviceHealth = new Dictionary<string, bool>();
-        var overallHealthy = true;
-
+        LogMethodEntry();
         try
         {
+            Interlocked.Increment(ref _totalHealthChecks);
+            
+            var stopwatch = Stopwatch.StartNew();
+            var serviceHealth = new Dictionary<string, bool>();
+            var overallHealthy = true;
+
             // Check Redis messaging health
             var redisHealthy = await _messageBus.IsHealthyAsync();
             serviceHealth["Redis"] = redisHealthy;
             overallHealthy &= redisHealthy;
 
             // Check process health
-            var processes = await _processManager.GetProcessStatusAsync();
-            foreach (var process in processes)
+            var processResult = await _processManager.GetProcessStatusAsync();
+            if (processResult.IsSuccess)
             {
-                var isHealthy = process.Status == ProcessStatus.Running;
-                serviceHealth[process.ServiceName] = isHealthy;
-                overallHealthy &= isHealthy;
+                foreach (var process in processResult.Data)
+                {
+                    var isHealthy = process.Status == ProcessStatus.Running;
+                    serviceHealth[process.ServiceName] = isHealthy;
+                    overallHealthy &= isHealthy;
+                }
+            }
+            else
+            {
+                LogError($"Failed to get process status: {processResult.Error}");
+                serviceHealth["ProcessManager"] = false;
+                overallHealthy = false;
             }
 
             // Run custom health checks
@@ -67,116 +93,152 @@ public class HealthMonitor : IHealthMonitor
                 }
                 catch (Exception ex)
                 {
-                    TradingLogOrchestrator.Instance.LogError($"Health check failed for {name}", ex);
+                    LogError($"Health check failed for {name}", ex);
                     serviceHealth[name] = false;
                     overallHealthy = false;
+                    Interlocked.Increment(ref _failedHealthChecks);
                 }
             }
 
             stopwatch.Stop();
 
             var status = overallHealthy ? "Healthy" : "Unhealthy";
-            var alerts = await GetActiveAlertsAsync();
+            var alertsResult = await GetActiveAlertsAsync();
+            var alerts = alertsResult.IsSuccess ? alertsResult.Data : Array.Empty<SystemAlert>();
 
-            return new HealthStatus(overallHealthy, status, stopwatch.Elapsed, serviceHealth, alerts, DateTimeOffset.UtcNow);
+            var healthStatus = new HealthStatus(overallHealthy, status, stopwatch.Elapsed, serviceHealth, alerts, DateTimeOffset.UtcNow);
+            
+            LogInfo($"Health check completed - Status: {status}, Duration: {stopwatch.ElapsedMilliseconds}ms");
+            LogMethodExit();
+            return TradingResult<HealthStatus>.Success(healthStatus);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error performing health check", ex);
-            stopwatch.Stop();
-
-            return new HealthStatus(false, "Error", stopwatch.Elapsed, serviceHealth,
-                new[] { CreateAlert(AlertSeverity.Critical, "Health Check Failed", ex.Message) },
-                DateTimeOffset.UtcNow);
+            Interlocked.Increment(ref _failedHealthChecks);
+            LogError("Error performing health check", ex);
+            LogMethodExit();
+            return TradingResult<HealthStatus>.Failure("HEALTH_CHECK_ERROR", $"Failed to perform health check: {ex.Message}");
         }
     }
 
-    public async Task<ServiceHealthInfo[]> GetDetailedHealthAsync()
+    public async Task<TradingResult<ServiceHealthInfo[]>> GetDetailedHealthAsync()
     {
-        var healthInfos = new List<ServiceHealthInfo>();
-
+        LogMethodEntry();
         try
         {
+            var healthInfos = new List<ServiceHealthInfo>();
+
             // Get process information
-            var processes = await _processManager.GetProcessStatusAsync();
-            foreach (var process in processes)
+            var processResult = await _processManager.GetProcessStatusAsync();
+            if (processResult.IsSuccess)
             {
-                var issues = new List<string>();
+                foreach (var process in processResult.Data)
+                {
+                    var issues = new List<string>();
 
-                // Check for potential issues
-                if (process.CpuUsagePercent > 80)
-                    issues.Add($"High CPU usage: {process.CpuUsagePercent:F1}%");
+                    // Check for potential issues
+                    if (process.CpuUsagePercent > 80)
+                        issues.Add($"High CPU usage: {process.CpuUsagePercent:F1}%");
 
-                if (process.MemoryUsageMB > 2048) // 2GB threshold
-                    issues.Add($"High memory usage: {process.MemoryUsageMB}MB");
+                    if (process.MemoryUsageMB > 2048) // 2GB threshold
+                        issues.Add($"High memory usage: {process.MemoryUsageMB}MB");
 
-                if (process.Status != ProcessStatus.Running)
-                    issues.Add($"Process not running: {process.Status}");
+                    if (process.Status != ProcessStatus.Running)
+                        issues.Add($"Process not running: {process.Status}");
 
-                healthInfos.Add(new ServiceHealthInfo(
-                    process.ServiceName,
-                    process.Status == ProcessStatus.Running && issues.Count == 0,
-                    process.Status.ToString(),
-                    TimeSpan.FromMilliseconds(Random.Shared.Next(1, 10)), // Mock response time
-                    process.CpuUsagePercent,
-                    process.MemoryUsageMB,
-                    Random.Shared.Next(5, 25), // Mock active connections
-                    DateTimeOffset.UtcNow,
-                    issues.ToArray()));
+                    healthInfos.Add(new ServiceHealthInfo(
+                        process.ServiceName,
+                        process.Status == ProcessStatus.Running && issues.Count == 0,
+                        process.Status.ToString(),
+                        TimeSpan.FromMilliseconds(Random.Shared.Next(1, 10)), // Mock response time
+                        process.CpuUsagePercent,
+                        process.MemoryUsageMB,
+                        Random.Shared.Next(5, 25), // Mock active connections
+                        DateTimeOffset.UtcNow,
+                        issues.ToArray()));
+                }
+            }
+            else
+            {
+                LogError($"Failed to get process information: {processResult.Error}");
             }
 
             // Add Redis health info
-            var redisLatency = await _messageBus.GetLatencyAsync();
-            var redisHealthy = redisLatency.TotalMilliseconds < 100; // Consider healthy if <100ms
+            try
+            {
+                var redisLatency = await _messageBus.GetLatencyAsync();
+                var redisHealthy = redisLatency.TotalMilliseconds < 100; // Consider healthy if <100ms
 
-            healthInfos.Add(new ServiceHealthInfo(
-                "Redis",
-                redisHealthy,
-                redisHealthy ? "Connected" : "Slow Response",
-                redisLatency,
-                Random.Shared.Next(5, 15), // Mock CPU
-                Random.Shared.Next(100, 300), // Mock memory
-                Random.Shared.Next(10, 50), // Mock connections
-                DateTimeOffset.UtcNow,
-                redisHealthy ? Array.Empty<string>() : new[] { $"High latency: {redisLatency.TotalMilliseconds:F1}ms" }));
+                healthInfos.Add(new ServiceHealthInfo(
+                    "Redis",
+                    redisHealthy,
+                    redisHealthy ? "Connected" : "Slow Response",
+                    redisLatency,
+                    Random.Shared.Next(5, 15), // Mock CPU
+                    Random.Shared.Next(100, 300), // Mock memory
+                    Random.Shared.Next(10, 50), // Mock connections
+                    DateTimeOffset.UtcNow,
+                    redisHealthy ? Array.Empty<string>() : new[] { $"High latency: {redisLatency.TotalMilliseconds:F1}ms" }));
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to get Redis health information", ex);
+            }
+
+            LogInfo($"Retrieved detailed health information for {healthInfos.Count} services");
+            LogMethodExit();
+            return TradingResult<ServiceHealthInfo[]>.Success(healthInfos.ToArray());
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error getting detailed health information", ex);
+            LogError("Error getting detailed health information", ex);
+            LogMethodExit();
+            return TradingResult<ServiceHealthInfo[]>.Failure("DETAILED_HEALTH_ERROR", $"Failed to get detailed health information: {ex.Message}");
         }
-
-        return healthInfos.ToArray();
     }
 
-    public async Task<bool> AreCriticalSystemsHealthyAsync()
+    public async Task<TradingResult<bool>> AreCriticalSystemsHealthyAsync()
     {
+        LogMethodEntry();
         try
         {
             // Define critical systems for trading
             var criticalSystems = new[] { "Redis", "RiskManagement", "PaperTrading" };
 
-            var healthStatus = await GetHealthStatusAsync();
+            var healthResult = await GetHealthStatusAsync();
+            if (!healthResult.IsSuccess)
+            {
+                LogError($"Failed to get health status: {healthResult.Error}");
+                LogMethodExit();
+                return TradingResult<bool>.Failure("HEALTH_STATUS_ERROR", $"Failed to get health status: {healthResult.Error}");
+            }
 
+            var healthStatus = healthResult.Data;
             foreach (var system in criticalSystems)
             {
                 if (!healthStatus.ServiceHealth.GetValueOrDefault(system, false))
                 {
-                    TradingLogOrchestrator.Instance.LogWarning($"Critical system {system} is not healthy");
-                    return false;
+                    LogWarning($"Critical system {system} is not healthy");
+                    LogMethodExit();
+                    return TradingResult<bool>.Success(false);
                 }
             }
 
-            return true;
+            LogInfo("All critical systems are healthy");
+            LogMethodExit();
+            return TradingResult<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error checking critical systems health", ex);
-            return false;
+            LogError("Error checking critical systems health", ex);
+            LogMethodExit();
+            return TradingResult<bool>.Failure("CRITICAL_SYSTEMS_CHECK_ERROR", $"Error checking critical systems health: {ex.Message}");
         }
     }
 
-    public async Task<TradingHealthMetrics> GetTradingHealthAsync()
+    public async Task<TradingResult<TradingHealthMetrics>> GetTradingHealthAsync()
     {
+        LogMethodEntry();
         try
         {
             // TODO: Implement actual trading health metrics collection
@@ -185,7 +247,7 @@ public class HealthMonitor : IHealthMonitor
             var marketOpen = IsMarketOpen();
             var sessionStart = GetMarketSessionStart();
 
-            return new TradingHealthMetrics(
+            var metrics = new TradingHealthMetrics(
                 true, // Market data connected
                 TimeSpan.FromMicroseconds(85), // Average order latency
                 TimeSpan.FromMilliseconds(5), // Average market data latency
@@ -196,23 +258,31 @@ public class HealthMonitor : IHealthMonitor
                 0, // Failed orders
                 sessionStart,
                 marketOpen);
+                
+            LogInfo($"Trading health metrics collected - Market Open: {marketOpen}, Daily PnL: {metrics.DailyPnL}");
+            LogMethodExit();
+            return TradingResult<TradingHealthMetrics>.Success(metrics);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error getting trading health metrics", ex);
-            throw;
+            LogError("Error getting trading health metrics", ex);
+            LogMethodExit();
+            return TradingResult<TradingHealthMetrics>.Failure("TRADING_HEALTH_ERROR", $"Error getting trading health metrics: {ex.Message}");
         }
     }
 
     public void RegisterHealthCheck(string name, Func<Task<HealthCheckResult>> healthCheck)
     {
+        LogMethodEntry(new { name });
         _healthChecks[name] = healthCheck ?? throw new ArgumentNullException(nameof(healthCheck));
-        TradingLogOrchestrator.Instance.LogInfo($"Registered health check: {name}");
+        LogInfo($"Registered health check: {name}");
+        LogMethodExit();
     }
 
-    public async Task StartMonitoringAsync(CancellationToken cancellationToken)
+    public async Task<TradingResult<bool>> StartMonitoringAsync(CancellationToken cancellationToken)
     {
-        TradingLogOrchestrator.Instance.LogInfo("Starting continuous health monitoring");
+        LogMethodEntry();
+        LogInfo("Starting continuous health monitoring");
 
         try
         {
@@ -221,23 +291,46 @@ public class HealthMonitor : IHealthMonitor
                 await PerformHealthChecksAsync();
                 await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken); // Check every 30 seconds
             }
+            
+            LogInfo("Health monitoring stopped");
+            LogMethodExit();
+            return TradingResult<bool>.Success(true);
         }
         catch (OperationCanceledException)
         {
-            TradingLogOrchestrator.Instance.LogInfo("Health monitoring stopped");
+            LogInfo("Health monitoring stopped due to cancellation");
+            LogMethodExit();
+            return TradingResult<bool>.Success(false);
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error in health monitoring loop", ex);
+            LogError("Error in health monitoring loop", ex);
+            LogMethodExit();
+            return TradingResult<bool>.Failure("MONITORING_ERROR", $"Error in health monitoring loop: {ex.Message}");
         }
     }
 
-    public async Task<SystemAlert[]> GetActiveAlertsAsync()
+    public async Task<TradingResult<SystemAlert[]>> GetActiveAlertsAsync()
     {
-        lock (_alertLock)
+        LogMethodEntry();
+        try
         {
-            // Return copy of active alerts
-            return _activeAlerts.ToArray();
+            SystemAlert[] alerts;
+            lock (_alertLock)
+            {
+                // Return copy of active alerts
+                alerts = _activeAlerts.ToArray();
+            }
+            
+            LogInfo($"Retrieved {alerts.Length} active alerts");
+            LogMethodExit();
+            return TradingResult<SystemAlert[]>.Success(alerts);
+        }
+        catch (Exception ex)
+        {
+            LogError("Error getting active alerts", ex);
+            LogMethodExit();
+            return TradingResult<SystemAlert[]>.Failure("ALERTS_ERROR", $"Error getting active alerts: {ex.Message}");
         }
     }
 
@@ -297,7 +390,14 @@ public class HealthMonitor : IHealthMonitor
     {
         try
         {
-            var healthStatus = await GetHealthStatusAsync();
+            var healthResult = await GetHealthStatusAsync();
+            if (!healthResult.IsSuccess)
+            {
+                LogError($"Failed to get health status during periodic check: {healthResult.Error}");
+                return;
+            }
+            
+            var healthStatus = healthResult.Data;
 
             // Check for new issues and create alerts
             foreach (var (serviceName, isHealthy) in healthStatus.ServiceHealth)
@@ -333,13 +433,14 @@ public class HealthMonitor : IHealthMonitor
                     if (resolvedAlerts.Contains(alert))
                     {
                         _activeAlerts[i] = alert with { IsAcknowledged = true, AcknowledgedBy = "System", AcknowledgedAt = DateTimeOffset.UtcNow };
+                        Interlocked.Increment(ref _alertsResolved);
                     }
                 }
             }
         }
         catch (Exception ex)
         {
-            TradingLogOrchestrator.Instance.LogError("Error performing periodic health checks", ex);
+            LogError("Error performing periodic health checks", ex);
         }
     }
 
@@ -369,7 +470,12 @@ public class HealthMonitor : IHealthMonitor
             }
         }
 
-        TradingLogOrchestrator.Instance.LogWarning($"New system alert: {alert.Severity} - {alert.Title}: {alert.Description}");
+        Interlocked.Increment(ref _alertsGenerated);
+        if (alert.Severity == AlertSeverity.Critical)
+        {
+            Interlocked.Increment(ref _criticalAlertsGenerated);
+        }
+        LogWarning($"New system alert: {alert.Severity} - {alert.Title}: {alert.Description}");
     }
 
     private bool IsMarketOpen()

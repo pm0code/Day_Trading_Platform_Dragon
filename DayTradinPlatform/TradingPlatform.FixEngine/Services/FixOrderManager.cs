@@ -5,6 +5,7 @@ using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.FixEngine.Canonical;
 using TradingPlatform.FixEngine.Models;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.FixEngine.Services
 {
@@ -612,8 +613,8 @@ namespace TradingPlatform.FixEngine.Services
     public interface IFixComplianceService
     {
         Task<TradingResult> InitializeAsync();
-        Task<TradingResult> CheckOrderComplianceAsync(OrderRequest request);
-        Task<TradingResult> CheckOrderModificationAsync(FixOrder originalOrder, OrderRequest newRequest);
+        Task<TradingResult> CheckOrderComplianceAsync(Trading.OrderRequest request);
+        Task<TradingResult> CheckOrderModificationAsync(FixOrder originalOrder, Trading.OrderRequest newRequest);
         Task<TradingResult> RecordExecutionAsync(FixOrder order, FixExecutionReport report);
     }
 }

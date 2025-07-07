@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Threading;
+using System.Threading.Tasks;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.FixEngine.Canonical;
 
@@ -335,6 +336,79 @@ namespace TradingPlatform.FixEngine.Performance
             // Would use sched_setaffinity via P/Invoke
             // Simplified for brevity
         }
+        
+        #region Abstract Method Implementations
+        
+        /// <summary>
+        /// Initializes the performance optimizer.
+        /// </summary>
+        protected override Task OnInitializeAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            
+            try
+            {
+                // Start the optimizer thread
+                _optimizerThread.Start();
+                
+                LogInfo("Performance optimizer initialized successfully");
+                LogMethodExit();
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to initialize performance optimizer", ex);
+                LogMethodExit();
+                throw;
+            }
+        }
+        
+        /// <summary>
+        /// Starts the performance optimizer service.
+        /// </summary>
+        protected override Task OnStartAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            
+            try
+            {
+                LogInfo("Performance optimizer started");
+                LogMethodExit();
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to start performance optimizer", ex);
+                LogMethodExit();
+                throw;
+            }
+        }
+        
+        /// <summary>
+        /// Stops the performance optimizer service.
+        /// </summary>
+        protected override Task OnStopAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            
+            try
+            {
+                // Signal optimization thread to stop
+                _optimizerThread.Join(5000);
+                
+                LogInfo("Performance optimizer stopped");
+                LogMethodExit();
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to stop performance optimizer", ex);
+                LogMethodExit();
+                throw;
+            }
+        }
+        
+        #endregion
     }
     
     /// <summary>

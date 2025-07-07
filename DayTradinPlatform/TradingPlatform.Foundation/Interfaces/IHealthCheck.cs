@@ -96,6 +96,11 @@ public class HealthCheckRegistration
 public enum HealthStatus
 {
     /// <summary>
+    /// The component status is unknown or not yet determined.
+    /// </summary>
+    Unknown = -1,
+
+    /// <summary>
     /// The component is healthy and operating normally.
     /// </summary>
     Healthy = 0,

@@ -220,7 +220,7 @@ public class GpuDecimalMath : IDisposable
         for (int iter = 0; iter < 20; iter++)
         {
             var newX = (x + (value * scaleFactor) / x) / 2L;
-            if (XMath.Abs(newX - x) <= PRECISION_EPSILON) break;
+            if (Math.Abs(newX - x) <= PRECISION_EPSILON) break;
             x = newX;
         }
 

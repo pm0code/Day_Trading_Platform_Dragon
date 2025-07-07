@@ -21,6 +21,7 @@ public sealed class GpuContext : IDisposable
     public Device Device => _accelerator.Device;
     public string DeviceName => Device.Name;
     public long DeviceMemoryGB => Device.MemorySize / (1024L * 1024L * 1024L);
+    public AcceleratorType DeviceType => Device.AcceleratorType;
 
     /// <summary>
     /// Creates a new GPU context, preferring NVIDIA RTX GPUs when available
@@ -61,7 +62,7 @@ public sealed class GpuContext : IDisposable
     /// </summary>
     private Accelerator SelectBestAccelerator()
     {
-        var devices = _context.GetDevices().ToArray();
+        var devices = _context.GetDevices<Device>().ToArray();
         _logger.LogInfo("GPU_DEVICES_FOUND", $"Found {devices.Length} GPU devices");
 
         // Score each device
@@ -91,8 +92,8 @@ public sealed class GpuContext : IDisposable
             {
                 return scored.Device.AcceleratorType switch
                 {
-                    AcceleratorType.Cuda => _context.CreateCudaAccelerator(scored.Device.DeviceId),
-                    AcceleratorType.OpenCL => _context.CreateCLAccelerator(scored.Device.DeviceId),
+                    AcceleratorType.Cuda => _context.CreateCudaAccelerator(0),
+                    AcceleratorType.OpenCL => _context.CreateCLAccelerator(0),
                     AcceleratorType.CPU => _context.CreateCPUAccelerator(0),
                     _ => throw new NotSupportedException($"Accelerator type {scored.Device.AcceleratorType} not supported")
                 };
