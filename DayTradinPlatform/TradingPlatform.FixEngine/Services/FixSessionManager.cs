@@ -9,8 +9,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
+using TradingPlatform.Core.Configuration;
 using TradingPlatform.FixEngine.Canonical;
 using TradingPlatform.FixEngine.Models;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.FixEngine.Services
 {
@@ -688,6 +690,77 @@ namespace TradingPlatform.FixEngine.Services
                 
             _logger.LogWarning("Certificate validation failed: {Errors}", sslPolicyErrors);
             return false; // In production, implement proper certificate validation
+        }
+
+        protected override async Task<TradingResult<bool>> OnInitializeAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            try
+            {
+                LogInfo("Initializing FIX Session Manager");
+                LogInfo($"Ready to manage FIX sessions with TLS support");
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to initialize FIX Session Manager", ex);
+                LogMethodExit();
+                return TradingResult<bool>.Failure("INIT_FAILED", "Failed to initialize FIX Session Manager", ex);
+            }
+        }
+
+        protected override async Task<TradingResult<bool>> OnStartAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            try
+            {
+                LogInfo("Starting FIX Session Manager service");
+                
+                // Start heartbeat monitoring
+                _heartbeatCancellationSource = new CancellationTokenSource();
+                _heartbeatTask = Task.Run(() => MonitorHeartbeatsAsync(_heartbeatCancellationSource.Token));
+                
+                UpdateMetric("ServiceStarted", 1);
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to start FIX Session Manager", ex);
+                LogMethodExit();
+                return TradingResult<bool>.Failure("START_FAILED", "Failed to start FIX Session Manager", ex);
+            }
+        }
+
+        protected override async Task<TradingResult<bool>> OnStopAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            try
+            {
+                LogInfo($"Stopping FIX Session Manager - Active sessions: {_sessions.Count}");
+                
+                // Stop heartbeat monitoring
+                _heartbeatCancellationSource?.Cancel();
+                if (_heartbeatTask != null)
+                {
+                    await _heartbeatTask;
+                }
+                
+                // Disconnect all sessions
+                var disconnectTasks = _sessions.Keys.Select(sessionId => DisconnectAsync(sessionId)).ToArray();
+                await Task.WhenAll(disconnectTasks);
+                
+                UpdateMetric("ServiceStopped", 1);
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to stop FIX Session Manager", ex);
+                LogMethodExit();
+                return TradingResult<bool>.Failure("STOP_FAILED", "Failed to stop FIX Session Manager", ex);
+            }
         }
         
         /// <summary>

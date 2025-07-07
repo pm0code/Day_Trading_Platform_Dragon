@@ -6,6 +6,7 @@ using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.FixEngine.Canonical;
 using TradingPlatform.FixEngine.Models;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.FixEngine.Services
 {
@@ -538,6 +539,59 @@ namespace TradingPlatform.FixEngine.Services
                 result = result * 10 + (span[i] - '0');
             }
             return result;
+        }
+
+        protected override async Task<TradingResult<bool>> OnInitializeAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            try
+            {
+                LogInfo("Initializing FIX message parser with optimized parsing algorithms");
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to initialize FIX message parser", ex);
+                LogMethodExit();
+                return TradingResult<bool>.Failure("INIT_FAILED", "Failed to initialize FIX message parser", ex);
+            }
+        }
+
+        protected override async Task<TradingResult<bool>> OnStartAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            try
+            {
+                LogInfo("Starting FIX message parser service");
+                UpdateMetric("ServiceStarted", 1);
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to start FIX message parser", ex);
+                LogMethodExit();
+                return TradingResult<bool>.Failure("START_FAILED", "Failed to start FIX message parser", ex);
+            }
+        }
+
+        protected override async Task<TradingResult<bool>> OnStopAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            try
+            {
+                LogInfo($"Stopping FIX message parser - Messages parsed: {_messagesSuccessfullyParsed}");
+                UpdateMetric("ServiceStopped", 1);
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to stop FIX message parser", ex);
+                LogMethodExit();
+                return TradingResult<bool>.Failure("STOP_FAILED", "Failed to stop FIX message parser", ex);
+            }
         }
     }
     

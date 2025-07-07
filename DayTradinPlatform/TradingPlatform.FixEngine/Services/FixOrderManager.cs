@@ -5,6 +5,7 @@ using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.FixEngine.Canonical;
 using TradingPlatform.FixEngine.Models;
+using TradingPlatform.FixEngine.Trading;
 using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.FixEngine.Services
@@ -604,6 +605,59 @@ namespace TradingPlatform.FixEngine.Services
                 message.Fields[37] = originalOrder.OrderId; // OrderID
             
             return message;
+        }
+
+        protected override async Task<TradingResult<bool>> OnInitializeAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            try
+            {
+                LogInfo("Initializing FIX Order Manager with canonical patterns");
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to initialize FIX Order Manager", ex);
+                LogMethodExit();
+                return TradingResult<bool>.Failure("INIT_FAILED", "Failed to initialize FIX Order Manager", ex);
+            }
+        }
+
+        protected override async Task<TradingResult<bool>> OnStartAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            try
+            {
+                LogInfo("Starting FIX Order Manager service");
+                UpdateMetric("ServiceStarted", 1);
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to start FIX Order Manager", ex);
+                LogMethodExit();
+                return TradingResult<bool>.Failure("START_FAILED", "Failed to start FIX Order Manager", ex);
+            }
+        }
+
+        protected override async Task<TradingResult<bool>> OnStopAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            try
+            {
+                LogInfo($"Stopping FIX Order Manager - Orders processed: {_ordersCreated}");
+                UpdateMetric("ServiceStopped", 1);
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to stop FIX Order Manager", ex);
+                LogMethodExit();
+                return TradingResult<bool>.Failure("STOP_FAILED", "Failed to stop FIX Order Manager", ex);
+            }
         }
     }
     

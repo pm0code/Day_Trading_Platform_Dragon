@@ -1,11 +1,14 @@
 using System;
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.FixEngine.Canonical;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.FixEngine.Performance
 {
@@ -235,6 +238,62 @@ namespace TradingPlatform.FixEngine.Performance
                 _logger.LogError(ex, "Failed to defragment memory");
                 LogMethodExit();
                 throw;
+            }
+        }
+
+        protected override async Task<TradingResult<bool>> OnInitializeAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            try
+            {
+                LogInfo("Initializing MemoryOptimizer");
+                OptimizeGarbageCollector();
+                LogInfo("MemoryOptimizer initialized successfully");
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to initialize MemoryOptimizer", ex);
+                LogMethodExit();
+                return TradingResult<bool>.Failure("INIT_FAILED", "Failed to initialize MemoryOptimizer", ex);
+            }
+        }
+
+        protected override async Task<TradingResult<bool>> OnStartAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            try
+            {
+                LogInfo("Starting MemoryOptimizer service");
+                RecordMetric("ServiceStarted", 1);
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to start MemoryOptimizer", ex);
+                LogMethodExit();
+                return TradingResult<bool>.Failure("START_FAILED", "Failed to start MemoryOptimizer", ex);
+            }
+        }
+
+        protected override async Task<TradingResult<bool>> OnStopAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            try
+            {
+                LogInfo("Stopping MemoryOptimizer service");
+                ClearPools();
+                RecordMetric("ServiceStopped", 1);
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to stop MemoryOptimizer", ex);
+                LogMethodExit();
+                return TradingResult<bool>.Failure("STOP_FAILED", "Failed to stop MemoryOptimizer", ex);
             }
         }
         

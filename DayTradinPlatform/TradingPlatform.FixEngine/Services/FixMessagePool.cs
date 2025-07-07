@@ -55,7 +55,7 @@ namespace TradingPlatform.FixEngine.Services
         /// Creates a new FIX message instance for the pool.
         /// </summary>
         /// <returns>A new FIX message instance</returns>
-        protected override FixMessage CreateInstance()
+        protected override FixMessage CreateObject()
         {
             return new FixMessage
             {
@@ -67,7 +67,7 @@ namespace TradingPlatform.FixEngine.Services
         /// Resets a FIX message before returning it to the pool.
         /// </summary>
         /// <param name="instance">The FIX message to reset</param>
-        protected override void ResetInstance(FixMessage instance)
+        protected override void ResetObject(FixMessage instance)
         {
             LogMethodEntry();
             
@@ -136,7 +136,7 @@ namespace TradingPlatform.FixEngine.Services
         /// Returns a FIX message to the pool.
         /// </summary>
         /// <param name="message">The message to return</param>
-        public override void Return(FixMessage message)
+        public new void Return(FixMessage message)
         {
             LogMethodEntry();
             

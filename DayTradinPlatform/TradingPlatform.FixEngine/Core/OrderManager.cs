@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using TradingPlatform.FixEngine.Models;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
@@ -640,6 +641,66 @@ public sealed class OrderManager : CanonicalServiceBase, IDisposable
     private long GetHardwareTimestamp()
     {
         return (DateTimeOffset.UtcNow.Ticks - DateTimeOffset.UnixEpoch.Ticks) * 100L;
+    }
+
+    protected override async Task<TradingResult<bool>> OnInitializeAsync(CancellationToken cancellationToken)
+    {
+        LogMethodEntry();
+        try
+        {
+            LogInfo("Initializing OrderManager with ultra-low latency configuration");
+            LogInfo($"Hardware timestamping enabled for regulatory compliance");
+            LogMethodExit();
+            return TradingResult<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            LogError("Failed to initialize OrderManager", ex);
+            LogMethodExit();
+            return TradingResult<bool>.Failure("INIT_FAILED", "Failed to initialize OrderManager", ex);
+        }
+    }
+
+    protected override async Task<TradingResult<bool>> OnStartAsync(CancellationToken cancellationToken)
+    {
+        LogMethodEntry();
+        try
+        {
+            LogInfo("Starting OrderManager service");
+            RecordMetric("ServiceStarted", 1);
+            LogMethodExit();
+            return TradingResult<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            LogError("Failed to start OrderManager", ex);
+            LogMethodExit();
+            return TradingResult<bool>.Failure("START_FAILED", "Failed to start OrderManager", ex);
+        }
+    }
+
+    protected override async Task<TradingResult<bool>> OnStopAsync(CancellationToken cancellationToken)
+    {
+        LogMethodEntry();
+        try
+        {
+            LogInfo($"Stopping OrderManager - Active orders: {_activeOrders.Count}");
+            LogInfo($"Total orders submitted: {_totalOrdersSubmitted}, Cancelled: {_totalOrdersCancelled}");
+            
+            // Cancel all active orders
+            var cancelTasks = _activeOrders.Keys.Select(orderId => CancelOrderAsync(orderId)).ToArray();
+            await Task.WhenAll(cancelTasks);
+            
+            RecordMetric("ServiceStopped", 1);
+            LogMethodExit();
+            return TradingResult<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            LogError("Failed to stop OrderManager", ex);
+            LogMethodExit();
+            return TradingResult<bool>.Failure("STOP_FAILED", "Failed to stop OrderManager", ex);
+        }
     }
 
     public void Dispose()

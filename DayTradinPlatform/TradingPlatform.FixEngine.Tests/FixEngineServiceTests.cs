@@ -8,6 +8,7 @@ using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
 using TradingPlatform.FixEngine.Models;
 using TradingPlatform.FixEngine.Services;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.FixEngine.Tests
 {

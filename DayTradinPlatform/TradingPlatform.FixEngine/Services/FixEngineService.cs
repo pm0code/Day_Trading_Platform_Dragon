@@ -4,8 +4,11 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Models;
+using TradingPlatform.Core.Canonical;
 using TradingPlatform.FixEngine.Canonical;
 using TradingPlatform.FixEngine.Models;
+using TradingPlatform.FixEngine.Trading;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.FixEngine.Services
 {
@@ -52,30 +55,52 @@ namespace TradingPlatform.FixEngine.Services
             _performanceMonitor = performanceMonitor ?? throw new ArgumentNullException(nameof(performanceMonitor));
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         }
+
+        /// <summary>
+        /// Initializes the FIX engine service.
+        /// </summary>
+        public async Task<TradingResult> InitializeAsync()
+        {
+            var result = await OnInitializeAsync(CancellationToken.None);
+            return result.IsSuccess ? TradingResult.Success() : TradingResult.Failure(result.Error!);
+        }
+
+        /// <summary>
+        /// Starts the FIX engine service.
+        /// </summary>
+        public async Task<TradingResult> StartAsync()
+        {
+            var result = await OnStartAsync(CancellationToken.None);
+            return result.IsSuccess ? TradingResult.Success() : TradingResult.Failure(result.Error!);
+        }
+
+        /// <summary>
+        /// Stops the FIX engine service.
+        /// </summary>
+        public async Task<TradingResult> StopAsync()
+        {
+            var result = await OnStopAsync(CancellationToken.None);
+            return result.IsSuccess ? TradingResult.Success() : TradingResult.Failure(result.Error!);
+        }
         
         /// <summary>
         /// Initializes the FIX engine and all components.
         /// </summary>
-        public override async Task<TradingResult> InitializeAsync()
+        protected override async Task<TradingResult<bool>> OnInitializeAsync(CancellationToken cancellationToken)
         {
             LogMethodEntry();
             
             try
             {
-                var baseResult = await base.InitializeAsync();
-                if (!baseResult.IsSuccess)
-                {
-                    LogMethodExit();
-                    return baseResult;
-                }
+                // Base initialization is handled by CanonicalServiceBase
                 
                 // Initialize session manager
                 var sessionResult = await _sessionManager.InitializeAsync();
                 if (!sessionResult.IsSuccess)
                 {
                     LogMethodExit();
-                    return TradingResult.Failure(
-                        $"Failed to initialize session manager: {sessionResult.ErrorMessage}",
+                    return TradingResult<bool>.Failure(
+                        $"Failed to initialize session manager: {sessionResult.Error?.Message}",
                         "SESSION_INIT_FAILED");
                 }
                 
@@ -84,7 +109,7 @@ namespace TradingPlatform.FixEngine.Services
                 if (!orderResult.IsSuccess)
                 {
                     LogMethodExit();
-                    return TradingResult.Failure(
+                    return TradingResult<bool>.Failure(
                         $"Failed to initialize order manager: {orderResult.ErrorMessage}",
                         "ORDER_MANAGER_INIT_FAILED");
                 }
@@ -94,7 +119,7 @@ namespace TradingPlatform.FixEngine.Services
                 if (!marketDataResult.IsSuccess)
                 {
                     LogMethodExit();
-                    return TradingResult.Failure(
+                    return TradingResult<bool>.Failure(
                         $"Failed to initialize market data manager: {marketDataResult.ErrorMessage}",
                         "MARKET_DATA_INIT_FAILED");
                 }
@@ -102,7 +127,7 @@ namespace TradingPlatform.FixEngine.Services
                 _logger.LogInformation("FIX engine initialized successfully");
                 
                 LogMethodExit();
-                return TradingResult.Success();
+                return TradingResult<bool>.Success(true);
             }
             catch (Exception ex)
             {
@@ -117,7 +142,7 @@ namespace TradingPlatform.FixEngine.Services
         /// <summary>
         /// Starts the FIX engine and begins processing messages.
         /// </summary>
-        public override async Task<TradingResult> StartAsync()
+        protected override async Task<TradingResult<bool>> OnStartAsync(CancellationToken cancellationToken)
         {
             LogMethodEntry();
             
@@ -154,7 +179,7 @@ namespace TradingPlatform.FixEngine.Services
                 _logger.LogInformation("FIX engine started successfully");
                 
                 LogMethodExit();
-                return TradingResult.Success();
+                return TradingResult<bool>.Success(true);
             }
             catch (Exception ex)
             {
@@ -170,7 +195,7 @@ namespace TradingPlatform.FixEngine.Services
         /// <summary>
         /// Stops the FIX engine gracefully.
         /// </summary>
-        public override async Task<TradingResult> StopAsync()
+        protected override async Task<TradingResult<bool>> OnStopAsync(CancellationToken cancellationToken)
         {
             LogMethodEntry();
             
@@ -212,7 +237,7 @@ namespace TradingPlatform.FixEngine.Services
         /// <param name="progress">Optional progress reporter</param>
         /// <returns>Result containing the FIX order or error details</returns>
         public async Task<TradingResult<FixOrder>> SendOrderAsync(
-            OrderRequest request,
+            Trading.OrderRequest request,
             IProgress<OrderExecutionProgress>? progress = null)
         {
             LogMethodEntry();
@@ -305,7 +330,7 @@ namespace TradingPlatform.FixEngine.Services
                 if (string.IsNullOrWhiteSpace(clOrdId))
                 {
                     LogMethodExit();
-                    return TradingResult.Failure(
+                    return TradingResult<bool>.Failure(
                         "Client order ID is required",
                         "MISSING_CLORDID");
                 }
@@ -348,7 +373,7 @@ namespace TradingPlatform.FixEngine.Services
                 if (symbols == null || symbols.Length == 0)
                 {
                     LogMethodExit();
-                    return TradingResult.Failure(
+                    return TradingResult<bool>.Failure(
                         "At least one symbol is required",
                         "NO_SYMBOLS");
                 }
@@ -410,7 +435,7 @@ namespace TradingPlatform.FixEngine.Services
         /// <summary>
         /// Performs FIX-specific health checks.
         /// </summary>
-        protected override async Task<HealthCheckResult> CheckFixHealthAsync()
+        protected override async Task<(bool IsHealthy, string Message, Dictionary<string, object>? Details)> CheckFixHealthAsync()
         {
             LogMethodEntry();
             
@@ -421,7 +446,7 @@ namespace TradingPlatform.FixEngine.Services
                 if (!activeSessionsResult.IsSuccess)
                 {
                     LogMethodExit();
-                    return HealthCheckResult.Unhealthy(
+                    return ServiceHealthCheck.Unhealthy(
                         "Unable to check active sessions");
                 }
                 
@@ -438,30 +463,23 @@ namespace TradingPlatform.FixEngine.Services
                 if (!_isRunning)
                 {
                     LogMethodExit();
-                    return HealthCheckResult.Unhealthy(
-                        "FIX engine is not running",
-                        details);
+                    return (false, "FIX engine is not running", details);
                 }
                 
                 if (activeSessionsResult.Value == 0 && _options.RequireActiveSession)
                 {
                     LogMethodExit();
-                    return HealthCheckResult.Degraded(
-                        "No active FIX sessions",
-                        details);
+                    return (true, "No active FIX sessions", details);
                 }
                 
                 LogMethodExit();
-                return HealthCheckResult.Healthy(
-                    $"FIX engine operational with {activeSessionsResult.Value} active sessions",
-                    details);
+                return (true, $"FIX engine operational with {activeSessionsResult.Value} active sessions", details);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "FIX health check failed");
                 LogMethodExit();
-                return HealthCheckResult.Unhealthy(
-                    $"Health check error: {ex.Message}");
+                return (false, $"Health check error: {ex.Message}", null);
             }
         }
     }

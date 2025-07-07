@@ -1,7 +1,10 @@
 using System;
 using System.Threading;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.FixEngine.Canonical;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.FixEngine.Performance
 {
@@ -297,6 +300,61 @@ namespace TradingPlatform.FixEngine.Performance
                 _logger.LogError(ex, "Error getting queue stats");
                 LogMethodExit();
                 throw;
+            }
+        }
+
+        protected override async Task<TradingResult<bool>> OnInitializeAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            try
+            {
+                // Pre-allocate message wrappers for better performance
+                LogInfo($"Initializing FixMessageQueue with max depth: {_maxQueueDepth}");
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to initialize FixMessageQueue", ex);
+                LogMethodExit();
+                return TradingResult<bool>.Failure("INIT_FAILED", "Failed to initialize FixMessageQueue", ex);
+            }
+        }
+
+        protected override async Task<TradingResult<bool>> OnStartAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            try
+            {
+                LogInfo("Starting FixMessageQueue");
+                RecordMetric("QueueStarted", 1);
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to start FixMessageQueue", ex);
+                LogMethodExit();
+                return TradingResult<bool>.Failure("START_FAILED", "Failed to start FixMessageQueue", ex);
+            }
+        }
+
+        protected override async Task<TradingResult<bool>> OnStopAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            try
+            {
+                var stats = GetQueueStats();
+                LogInfo($"Stopping FixMessageQueue - Messages processed: {stats.MessagesDequeued}, Dropped: {stats.MessagesDropped}");
+                RecordMetric("QueueStopped", 1);
+                LogMethodExit();
+                return TradingResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Failed to stop FixMessageQueue", ex);
+                LogMethodExit();
+                return TradingResult<bool>.Failure("STOP_FAILED", "Failed to stop FixMessageQueue", ex);
             }
         }
         
