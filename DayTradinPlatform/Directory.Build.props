@@ -1,9 +1,98 @@
-<Project>  
-  <PropertyGroup>  
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>  
-    <WarningsAsErrors />  
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>  
-    <AnalysisLevel>latest</AnalysisLevel>  
-    <CodeAnalysisRuleSet>analyzers.ruleset</CodeAnalysisRuleSet>  
-  </PropertyGroup>  
-</Project> 
+<Project>
+  <!-- Central configuration for all projects in the solution -->
+  <!-- This file standardizes .NET versions and package references across all projects -->
+  
+  <PropertyGroup>
+    <!-- Framework and Language Configuration -->
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    
+    <!-- Platform Configuration -->
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>x64</Platforms>
+    
+    <!-- Code Analysis Configuration -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <WarningsNotAsErrors>NU1701;CS1591</WarningsNotAsErrors>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <CodeAnalysisRuleSet>analyzers.ruleset</CodeAnalysisRuleSet>
+    
+    <!-- Documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    
+    <!-- Assembly Information -->
+    <Company>Trading Platform</Company>
+    <Product>Day Trading Platform Dragon</Product>
+    <Copyright>Copyright © 2025 Trading Platform</Copyright>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+  </PropertyGroup>
+
+  <!-- Centralized Package Version Management -->
+  <!-- All projects will use these versions unless explicitly overridden -->
+  <ItemGroup>
+    <!-- Microsoft Extensions - Core dependency injection and configuration -->
+    <PackageReference Update="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+    <PackageReference Update="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Update="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
+    <PackageReference Update="Microsoft.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+    <PackageReference Update="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Update="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+    <PackageReference Update="Microsoft.Extensions.Configuration.Binder" Version="8.0.2" />
+    <PackageReference Update="Microsoft.Extensions.Options" Version="8.0.2" />
+    <PackageReference Update="Microsoft.Extensions.Caching.Memory" Version="8.0.0" />
+    <PackageReference Update="Microsoft.Extensions.Caching.Redis" Version="8.0.0" />
+    
+    <!-- ASP.NET Core -->
+    <PackageReference Update="Microsoft.AspNetCore.OpenApi" Version="8.0.6" />
+    <PackageReference Update="Swashbuckle.AspNetCore" Version="6.4.0" />
+    
+    <!-- System Libraries -->
+    <PackageReference Update="System.Threading.Channels" Version="8.0.0" />
+    <PackageReference Update="System.Collections.Immutable" Version="8.0.0" />
+    <PackageReference Update="System.IO.Pipelines" Version="8.0.0" />
+    <PackageReference Update="System.Text.Json" Version="8.0.4" />
+    <PackageReference Update="System.Memory" Version="4.5.5" />
+    <PackageReference Update="System.Buffers" Version="4.5.1" />
+    <PackageReference Update="System.Reactive" Version="6.0.1" />
+    
+    <!-- Logging -->
+    <PackageReference Update="Serilog" Version="3.1.1" />
+    <PackageReference Update="Serilog.AspNetCore" Version="8.0.0" />
+    <PackageReference Update="Serilog.Sinks.File" Version="5.0.0" />
+    <PackageReference Update="Serilog.Sinks.Console" Version="5.0.0" />
+    <PackageReference Update="Serilog.Extensions.Logging" Version="8.0.0" />
+    
+    <!-- Data Access -->
+    <PackageReference Update="StackExchange.Redis" Version="2.7.33" />
+    <PackageReference Update="Newtonsoft.Json" Version="13.0.3" />
+    
+    <!-- Validation and Resilience -->
+    <PackageReference Update="FluentValidation" Version="11.9.0" />
+    <PackageReference Update="Polly" Version="8.2.1" />
+    <PackageReference Update="Polly.Extensions" Version="8.2.1" />
+    <PackageReference Update="Polly.Contrib.WaitAndRetry" Version="1.1.1" />
+    
+    <!-- Math and Analytics -->
+    <PackageReference Update="MathNet.Numerics" Version="5.0.0" />
+    
+    <!-- OpenTelemetry -->
+    <PackageReference Update="OpenTelemetry" Version="1.7.0" />
+    <PackageReference Update="OpenTelemetry.Extensions.Hosting" Version="1.7.0" />
+    <PackageReference Update="OpenTelemetry.Instrumentation.AspNetCore" Version="1.7.1" />
+    
+    <!-- GPU Computing -->
+    <PackageReference Update="ILGPU" Version="1.5.1" />
+    <PackageReference Update="ILGPU.Algorithms" Version="1.5.1" />
+    
+    <!-- Testing -->
+    <PackageReference Update="BenchmarkDotNet" Version="0.13.12" />
+  </ItemGroup>
+</Project>

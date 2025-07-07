@@ -14,7 +14,7 @@
     <PackageReference Include="MessagePack" Version="2.5.187" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.Reactive" Version="6.0.1" />
-    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="9.0.6" />
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="8.0.0" />
     
     <!-- OpenTelemetry Infrastructure - Free & Open Source -->
     <PackageReference Include="OpenTelemetry" Version="1.9.0" />

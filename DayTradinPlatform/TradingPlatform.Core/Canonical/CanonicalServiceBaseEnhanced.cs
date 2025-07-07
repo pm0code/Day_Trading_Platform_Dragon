@@ -2,11 +2,13 @@
 // Enhanced canonical base class with automatic method logging via TradingLogOrchestratorEnhanced
 // Provides operation tracking, child logger support, and MCP-compliant event codes
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
 using TradingPlatform.Core.Models;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.Core.Canonical;
 

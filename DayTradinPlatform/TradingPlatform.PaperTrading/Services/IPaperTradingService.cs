@@ -1,14 +1,43 @@
 using TradingPlatform.PaperTrading.Models;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.PaperTrading.Services;
 
+/// <summary>
+/// Paper trading service interface for risk-free trading simulation
+/// All operations use TradingResult pattern for consistent error handling
+/// </summary>
 public interface IPaperTradingService
 {
-    Task<OrderResult> SubmitOrderAsync(OrderRequest orderRequest);
-    Task<Order?> GetOrderAsync(string orderId);
-    Task<IEnumerable<Order>> GetOrdersAsync();
-    Task<OrderResult> CancelOrderAsync(string orderId);
-    Task<OrderResult> ModifyOrderAsync(string orderId, OrderRequest modifiedOrder);
+    /// <summary>
+    /// Submits a new paper trading order
+    /// </summary>
+    Task<TradingResult<OrderResult>> SubmitOrderAsync(OrderRequest orderRequest);
+    
+    /// <summary>
+    /// Retrieves a specific order by ID
+    /// </summary>
+    Task<TradingResult<Order?>> GetOrderAsync(string orderId);
+    
+    /// <summary>
+    /// Retrieves all orders
+    /// </summary>
+    Task<TradingResult<IEnumerable<Order>>> GetOrdersAsync();
+    
+    /// <summary>
+    /// Cancels an existing order
+    /// </summary>
+    Task<TradingResult<OrderResult>> CancelOrderAsync(string orderId);
+    
+    /// <summary>
+    /// Modifies an existing order
+    /// </summary>
+    Task<TradingResult<OrderResult>> ModifyOrderAsync(string orderId, OrderRequest modifiedOrder);
+    
+    /// <summary>
+    /// Gets paper trading service metrics
+    /// </summary>
+    Task<TradingResult<PaperTradingMetrics>> GetMetricsAsync();
 }
 
 public interface IOrderExecutionEngine

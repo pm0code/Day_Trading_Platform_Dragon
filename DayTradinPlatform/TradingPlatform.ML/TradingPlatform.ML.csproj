@@ -21,7 +21,7 @@
     <PackageReference Include="Microsoft.ML.OnnxTransformer" Version="4.0.0" />
     
     <!-- Threading support -->
-    <PackageReference Include="System.Threading.Channels" Version="9.0.0" />
+    <PackageReference Include="System.Threading.Channels" Version="8.0.0" />
     
     <!-- Mathematical libraries -->
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
@@ -38,9 +38,9 @@
     <PackageReference Include="Microsoft.Data.Analysis" Version="0.21.1" />
     
     <!-- Dependency Injection -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

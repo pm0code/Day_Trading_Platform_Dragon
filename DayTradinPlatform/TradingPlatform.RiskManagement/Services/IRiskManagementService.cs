@@ -1,15 +1,16 @@
 using TradingPlatform.RiskManagement.Models;
+using TradingPlatform.Foundation.Models;
 
 namespace TradingPlatform.RiskManagement.Services;
 
 public interface IRiskManagementService
 {
-    Task<RiskStatus> GetRiskStatusAsync();
-    Task<RiskLimits> GetRiskLimitsAsync();
-    Task UpdateRiskLimitsAsync(RiskLimits limits);
-    Task<bool> ValidateOrderAsync(OrderRiskRequest request);
-    Task<decimal> CalculatePositionRiskAsync(string symbol, decimal quantity, decimal price);
-    Task<RiskMetrics> GetRiskMetricsAsync();
+    Task<TradingResult<RiskStatus>> GetRiskStatusAsync();
+    Task<TradingResult<RiskLimits>> GetRiskLimitsAsync();
+    Task<TradingResult<bool>> UpdateRiskLimitsAsync(RiskLimits limits);
+    Task<TradingResult<bool>> ValidateOrderAsync(OrderRiskRequest request);
+    Task<TradingResult<decimal>> CalculatePositionRiskAsync(string symbol, decimal quantity, decimal price);
+    Task<TradingResult<RiskMetrics>> GetRiskMetricsAsync();
 }
 
 public interface IRiskCalculator
@@ -44,9 +45,10 @@ public interface IRiskAlertService
 
 public interface IComplianceMonitor
 {
-    Task<ComplianceStatus> GetComplianceStatusAsync();
-    Task<bool> ValidatePatternDayTradingAsync(string accountId);
-    Task<bool> ValidateMarginRequirementsAsync(string accountId, decimal orderValue);
-    Task<bool> ValidateRegulatoryLimitsAsync(OrderRiskRequest request);
-    Task LogComplianceEventAsync(ComplianceEvent complianceEvent);
+    Task<TradingResult<ComplianceStatus>> GetComplianceStatusAsync();
+    Task<TradingResult<bool>> ValidatePatternDayTradingAsync(string accountId);
+    Task<TradingResult<bool>> ValidateMarginRequirementsAsync(string accountId, decimal orderValue);
+    Task<TradingResult<bool>> ValidateRegulatoryLimitsAsync(OrderRiskRequest request);
+    Task<TradingResult<bool>> LogComplianceEventAsync(ComplianceEvent complianceEvent);
+    Task<TradingResult<ComplianceMetrics>> GetMetricsAsync();
 }
