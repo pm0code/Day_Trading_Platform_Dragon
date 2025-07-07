@@ -148,14 +148,13 @@ namespace TradingPlatform.Core.Performance
         private readonly T[] _array;
         
         public readonly int Length;
-        public readonly Span<T> Span;
+        public Span<T> Span => _array.AsSpan(0, Length);
 
         internal RentedBuffer(ArrayPool<T> pool, T[] array, int length)
         {
             _pool = pool;
             _array = array;
             Length = length;
-            Span = array.AsSpan(0, length);
         }
 
         public void Dispose()

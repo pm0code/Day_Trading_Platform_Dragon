@@ -9,6 +9,7 @@ using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
 using TradingPlatform.Core.Models;
 using TradingPlatform.Foundation.Models;
+using TradingPlatform.Foundation.Enums;
 
 namespace TradingPlatform.Core.Canonical;
 
@@ -23,7 +24,7 @@ public abstract class CanonicalServiceBaseEnhanced : ICanonicalService, IDisposa
     protected readonly IChildLogger Logger;
     protected readonly string ServiceName;
     protected readonly Dictionary<string, string> ServiceMetadata;
-    private readonly ConcurrentDictionary<string, HealthStatus> _healthChecks = new();
+    private readonly ConcurrentDictionary<string, ServiceHealth> _healthChecks = new();
     private bool _isInitialized;
     private bool _isStarted;
     private bool _disposed;
@@ -204,13 +205,13 @@ public abstract class CanonicalServiceBaseEnhanced : ICanonicalService, IDisposa
             // Basic health checks
             checks["initialized"] = new HealthCheckEntry
             {
-                Status = _isInitialized ? HealthStatus.Healthy : HealthStatus.Unhealthy,
+                Status = _isInitialized ? ServiceHealth.Healthy : ServiceHealth.Unhealthy,
                 Description = _isInitialized ? "Service initialized" : "Service not initialized"
             };
             
             checks["started"] = new HealthCheckEntry
             {
-                Status = _isStarted ? HealthStatus.Healthy : HealthStatus.Degraded,
+                Status = _isStarted ? ServiceHealth.Healthy : ServiceHealth.Degraded,
                 Description = _isStarted ? "Service running" : "Service not started"
             };
             
@@ -222,18 +223,18 @@ public abstract class CanonicalServiceBaseEnhanced : ICanonicalService, IDisposa
             }
             
             // Determine overall health
-            var overallStatus = HealthStatus.Healthy;
-            if (checks.Any(c => c.Value.Status == HealthStatus.Unhealthy))
+            var overallStatus = ServiceHealth.Healthy;
+            if (checks.Any(c => c.Value.Status == ServiceHealth.Unhealthy))
             {
-                overallStatus = HealthStatus.Unhealthy;
+                overallStatus = ServiceHealth.Unhealthy;
             }
-            else if (checks.Any(c => c.Value.Status == HealthStatus.Degraded))
+            else if (checks.Any(c => c.Value.Status == ServiceHealth.Degraded))
             {
-                overallStatus = HealthStatus.Degraded;
+                overallStatus = ServiceHealth.Degraded;
             }
             
             // Log health status with appropriate event code
-            if (overallStatus == HealthStatus.Healthy)
+            if (overallStatus == ServiceHealth.Healthy)
             {
                 Logger.LogEvent(TradingLogOrchestratorEnhanced.HEALTH_CHECK_PASSED,
                     "Health check passed",
@@ -476,7 +477,7 @@ public interface ICanonicalService
 public class HealthCheckResult
 {
     public string ServiceName { get; set; } = string.Empty;
-    public HealthStatus Status { get; set; }
+    public ServiceHealth Status { get; set; }
     public Dictionary<string, HealthCheckEntry> Checks { get; set; } = new();
     public DateTime Timestamp { get; set; }
 }
@@ -486,7 +487,7 @@ public class HealthCheckResult
 /// </summary>
 public class HealthCheckEntry
 {
-    public HealthStatus Status { get; set; }
+    public ServiceHealth Status { get; set; }
     public string Description { get; set; } = string.Empty;
     public Dictionary<string, object>? Data { get; set; }
 }

@@ -17,9 +17,9 @@ namespace TradingPlatform.Core.Logging;
 /// - SCREAMING_SNAKE_CASE event codes for categorization
 /// - Operation tracking (start/complete/failed) with timing
 /// - Child logger support for component isolation
-/// - Backwards compatible with existing implementation
+/// - Composition-based design instead of inheritance
 /// </summary>
-public sealed class TradingLogOrchestratorEnhanced : TradingLogOrchestrator
+public sealed class TradingLogOrchestratorEnhanced : ITradingLogger, IDisposable
 {
     #region Event Code Constants (SCREAMING_SNAKE_CASE)
     
@@ -81,16 +81,20 @@ public sealed class TradingLogOrchestratorEnhanced : TradingLogOrchestrator
     
     #endregion
     
+    private readonly TradingLogOrchestrator _baseOrchestrator;
+    
     /// <summary>
     /// Enhanced singleton instance
     /// </summary>
     private static readonly Lazy<TradingLogOrchestratorEnhanced> _enhancedInstance = 
         new(() => new TradingLogOrchestratorEnhanced());
     
-    public static new TradingLogOrchestratorEnhanced Instance => _enhancedInstance.Value;
+    public static TradingLogOrchestratorEnhanced Instance => _enhancedInstance.Value;
     
-    private TradingLogOrchestratorEnhanced(string serviceName = "TradingPlatform") : base(serviceName)
+    private TradingLogOrchestratorEnhanced(string serviceName = "TradingPlatform")
     {
+        _baseOrchestrator = TradingLogOrchestrator.Instance;
+        
         // Log enhanced orchestrator initialization
         LogEventCode(SYSTEM_STARTUP, "Enhanced TradingLogOrchestrator initialized with MCP standards", 
             new { Features = new[] { "SCREAMING_SNAKE_CASE", "Operation Tracking", "Child Loggers" } });
@@ -119,21 +123,21 @@ public sealed class TradingLogOrchestratorEnhanced : TradingLogOrchestrator
         switch (level)
         {
             case LogLevel.Debug:
-                LogDebug(enhancedMessage, eventData, memberName, sourceFilePath, sourceLineNumber);
+                _baseOrchestrator.LogDebug(enhancedMessage, eventData, memberName, sourceFilePath, sourceLineNumber);
                 break;
             case LogLevel.Info:
-                LogInfo(enhancedMessage, eventData, memberName, sourceFilePath, sourceLineNumber);
+                _baseOrchestrator.LogInfo(enhancedMessage, eventData, memberName, sourceFilePath, sourceLineNumber);
                 break;
             case LogLevel.Warning:
-                LogWarning(enhancedMessage, additionalData: eventData, memberName: memberName, 
+                _baseOrchestrator.LogWarning(enhancedMessage, additionalData: eventData, memberName: memberName, 
                     sourceFilePath: sourceFilePath, sourceLineNumber: sourceLineNumber);
                 break;
             case LogLevel.Error:
-                LogError(enhancedMessage, additionalData: eventData, memberName: memberName, 
+                _baseOrchestrator.LogError(enhancedMessage, additionalData: eventData, memberName: memberName, 
                     sourceFilePath: sourceFilePath, sourceLineNumber: sourceLineNumber);
                 break;
             case LogLevel.Critical:
-                LogError($"[CRITICAL] {enhancedMessage}", additionalData: eventData, memberName: memberName, 
+                _baseOrchestrator.LogError($"[CRITICAL] {enhancedMessage}", additionalData: eventData, memberName: memberName, 
                     sourceFilePath: sourceFilePath, sourceLineNumber: sourceLineNumber);
                 break;
         }
@@ -160,7 +164,7 @@ public sealed class TradingLogOrchestratorEnhanced : TradingLogOrchestrator
             AdditionalData = additionalData
         };
         
-        LogTrade(symbol, action, quantity, price, orderId, strategy, executionTime, 
+        _baseOrchestrator.LogTrade(symbol, action, quantity, price, orderId, strategy, executionTime, 
             marketConditions: tradeEventData, memberName: memberName);
     }
     
@@ -231,7 +235,7 @@ public sealed class TradingLogOrchestratorEnhanced : TradingLogOrchestrator
             // Log performance if operation took significant time
             if (duration.TotalMicroseconds > 100)
             {
-                LogPerformance(context.OperationName, duration, true, 
+                _baseOrchestrator.LogPerformance(context.OperationName, duration, true, 
                     businessMetrics: new { OperationId = operationId, Result = result },
                     memberName: memberName);
             }
@@ -262,7 +266,7 @@ public sealed class TradingLogOrchestratorEnhanced : TradingLogOrchestrator
                 },
                 LogLevel.Error, memberName);
             
-            LogError($"Operation '{context.OperationName}' failed after {duration.TotalMilliseconds}ms",
+            _baseOrchestrator.LogError($"Operation '{context.OperationName}' failed after {duration.TotalMilliseconds}ms",
                 exception, errorContext, memberName: memberName);
         }
     }
@@ -381,7 +385,7 @@ public sealed class TradingLogOrchestratorEnhanced : TradingLogOrchestrator
     {
         if (_childLoggers.TryRemove(componentName, out _))
         {
-            LogDebug($"Child logger removed for component '{componentName}'");
+            _baseOrchestrator.LogDebug($"Child logger removed for component '{componentName}'");
         }
     }
     
@@ -436,7 +440,7 @@ public sealed class TradingLogOrchestratorEnhanced : TradingLogOrchestrator
             [CallerLineNumber] int sourceLineNumber = 0)
         {
             var childData = EnrichWithChildContext(data);
-            _parent.LogInfo($"[{_context.ComponentName}] {message}", childData, memberName, sourceFilePath, sourceLineNumber);
+            _parent._baseOrchestrator.LogInfo($"[{_context.ComponentName}] {message}", childData, memberName, sourceFilePath, sourceLineNumber);
         }
         
         public void LogDebug(string message, object? data = null,
@@ -445,7 +449,7 @@ public sealed class TradingLogOrchestratorEnhanced : TradingLogOrchestrator
             [CallerLineNumber] int sourceLineNumber = 0)
         {
             var childData = EnrichWithChildContext(data);
-            _parent.LogDebug($"[{_context.ComponentName}] {message}", childData, memberName, sourceFilePath, sourceLineNumber);
+            _parent._baseOrchestrator.LogDebug($"[{_context.ComponentName}] {message}", childData, memberName, sourceFilePath, sourceLineNumber);
         }
         
         public void LogWarning(string message, object? data = null,
@@ -454,7 +458,7 @@ public sealed class TradingLogOrchestratorEnhanced : TradingLogOrchestrator
             [CallerLineNumber] int sourceLineNumber = 0)
         {
             var childData = EnrichWithChildContext(data);
-            _parent.LogWarning($"[{_context.ComponentName}] {message}", additionalData: childData, 
+            _parent._baseOrchestrator.LogWarning($"[{_context.ComponentName}] {message}", additionalData: childData, 
                 memberName: memberName, sourceFilePath: sourceFilePath, sourceLineNumber: sourceLineNumber);
         }
         
@@ -464,7 +468,7 @@ public sealed class TradingLogOrchestratorEnhanced : TradingLogOrchestrator
             [CallerLineNumber] int sourceLineNumber = 0)
         {
             var childData = EnrichWithChildContext(data);
-            _parent.LogError($"[{_context.ComponentName}] {message}", exception, additionalData: childData,
+            _parent._baseOrchestrator.LogError($"[{_context.ComponentName}] {message}", exception, additionalData: childData,
                 memberName: memberName, sourceFilePath: sourceFilePath, sourceLineNumber: sourceLineNumber);
         }
         
@@ -516,6 +520,124 @@ public sealed class TradingLogOrchestratorEnhanced : TradingLogOrchestrator
         {
             _parent.RemoveChildLogger(_context.ComponentName);
         }
+    }
+    
+    #endregion
+    
+    #region ITradingLogger Implementation
+    
+    public void LogDebug(string message, object? additionalData = null, 
+        [CallerMemberName] string memberName = "",
+        [CallerFilePath] string sourceFilePath = "",
+        [CallerLineNumber] int sourceLineNumber = 0)
+    {
+        _baseOrchestrator.LogDebug(message, additionalData, memberName, sourceFilePath, sourceLineNumber);
+    }
+    
+    public void LogInfo(string message, object? additionalData = null,
+        [CallerMemberName] string memberName = "",
+        [CallerFilePath] string sourceFilePath = "",
+        [CallerLineNumber] int sourceLineNumber = 0)
+    {
+        _baseOrchestrator.LogInfo(message, additionalData, memberName, sourceFilePath, sourceLineNumber);
+    }
+    
+    public void LogWarning(string message, string? impact = null, string? recommendedAction = null, object? additionalData = null,
+        [CallerMemberName] string memberName = "",
+        [CallerFilePath] string sourceFilePath = "",
+        [CallerLineNumber] int sourceLineNumber = 0)
+    {
+        _baseOrchestrator.LogWarning(message, additionalData: additionalData, memberName: memberName, sourceFilePath: sourceFilePath, sourceLineNumber: sourceLineNumber);
+    }
+    
+    public void LogError(string message, Exception? exception = null, string? operationContext = null, string? userImpact = null, string? troubleshootingHints = null, object? additionalData = null,
+        [CallerMemberName] string memberName = "",
+        [CallerFilePath] string sourceFilePath = "",
+        [CallerLineNumber] int sourceLineNumber = 0)
+    {
+        _baseOrchestrator.LogError(message, exception, operationContext, additionalData, memberName, sourceFilePath, sourceLineNumber);
+    }
+    
+    public void LogTrade(string symbol, string action, decimal quantity, decimal price, string? orderId = null, 
+        string? strategy = null, TimeSpan? executionTime = null, object? marketConditions = null, object? riskMetrics = null,
+        [CallerMemberName] string memberName = "")
+    {
+        _baseOrchestrator.LogTrade(symbol, action, quantity, price, orderId, strategy, executionTime, marketConditions, memberName);
+    }
+    
+    public void LogPositionChange(string symbol, decimal oldPosition, decimal newPosition, string reason, decimal? pnlImpact = null, object? riskImpact = null,
+        [CallerMemberName] string memberName = "")
+    {
+        LogEventCode(TRADE_EXECUTED, $"Position change for {symbol}: {oldPosition} -> {newPosition}, reason: {reason}",
+            new { Symbol = symbol, OldPosition = oldPosition, NewPosition = newPosition, Reason = reason, PnlImpact = pnlImpact, RiskImpact = riskImpact },
+            LogLevel.Info, memberName);
+    }
+    
+    public void LogPerformance(string operation, TimeSpan duration, bool success = true, double? throughput = null, object? resourceUsage = null, object? businessMetrics = null, TimeSpan? comparisonTarget = null,
+        [CallerMemberName] string memberName = "")
+    {
+        _baseOrchestrator.LogPerformance(operation, duration, success, businessMetrics, memberName);
+    }
+    
+    public void LogHealth(string component, string status, object? metrics = null, string[]? alerts = null, string[]? recommendedActions = null,
+        [CallerMemberName] string memberName = "")
+    {
+        LogEventCode(HEALTH_CHECK_PASSED, $"Health check for {component}: {status}",
+            new { Component = component, Status = status, Metrics = metrics, Alerts = alerts, RecommendedActions = recommendedActions },
+            LogLevel.Info, memberName);
+    }
+    
+    public void LogRisk(string riskType, string severity, string description, decimal? currentExposure = null, decimal? riskLimit = null, string[]? mitigationActions = null, string? regulatoryImplications = null,
+        [CallerMemberName] string memberName = "")
+    {
+        LogEventCode(RISK_WARNING, $"Risk event - {riskType}: {description}",
+            new { RiskType = riskType, Severity = severity, Description = description, CurrentExposure = currentExposure, RiskLimit = riskLimit, MitigationActions = mitigationActions, RegulatoryImplications = regulatoryImplications },
+            LogLevel.Warning, memberName);
+    }
+    
+    public void LogDataPipeline(string pipeline, string stage, int recordsProcessed, object? dataQuality = null, object? latencyMetrics = null, string[]? errors = null,
+        [CallerMemberName] string memberName = "")
+    {
+        LogEventCode(DATA_INGESTION_COMPLETE, $"Data pipeline {pipeline} at stage {stage}: processed {recordsProcessed} records",
+            new { Pipeline = pipeline, Stage = stage, RecordsProcessed = recordsProcessed, DataQuality = dataQuality, LatencyMetrics = latencyMetrics, Errors = errors },
+            LogLevel.Info, memberName);
+    }
+    
+    public void LogMarketData(string symbol, string dataType, string source, TimeSpan? latency = null, string? quality = null, object? volume = null,
+        [CallerMemberName] string memberName = "")
+    {
+        LogEventCode(MARKET_DATA_RECEIVED, $"Market data received for {symbol}: {dataType} from {source}",
+            new { Symbol = symbol, DataType = dataType, Source = source, Latency = latency, Quality = quality, Volume = volume },
+            LogLevel.Debug, memberName);
+    }
+    
+    public void LogMethodEntry(object? parameters = null,
+        [CallerMemberName] string memberName = "",
+        [CallerFilePath] string sourceFilePath = "")
+    {
+        _baseOrchestrator.LogDebug($"→ Entering {memberName}", parameters, memberName, sourceFilePath, 0);
+    }
+    
+    public void LogMethodExit(object? result = null, TimeSpan? executionTime = null, bool success = true,
+        [CallerMemberName] string memberName = "")
+    {
+        var data = new { Result = result, ExecutionTime = executionTime, Success = success };
+        _baseOrchestrator.LogDebug($"← Exiting {memberName}", data, memberName);
+    }
+    
+    public string GenerateCorrelationId()
+    {
+        return _baseOrchestrator.GenerateCorrelationId();
+    }
+    
+    public void SetCorrelationId(string correlationId)
+    {
+        _baseOrchestrator.SetCorrelationId(correlationId);
+    }
+    
+    public void Dispose()
+    {
+        _baseOrchestrator?.Dispose();
     }
     
     #endregion
