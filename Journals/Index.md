@@ -265,9 +265,9 @@ This index provides a chronological overview of all journal entries documenting 
 - [Canonical Tests Fixed](Journal_2025-06-24_Canonical_Tests_Fixed.md)
 
 ### New Project Development
-- [MarketAnalyzer Foundation and Domain Implementation](MarketAnalyzer_Foundation_and_Domain_Implementation_2025-07-07.md)
+- [MarketAnalyzer Foundation and Domain Implementation](MarketAnalyzer/MarketAnalyzer_Foundation_and_Domain_Implementation_2025-07-07.md)
 
-22. **[MarketAnalyzer Foundation and Domain Implementation](MarketAnalyzer_Foundation_and_Domain_Implementation_2025-07-07.md)**
+22. **[MarketAnalyzer Foundation and Domain Implementation](MarketAnalyzer/MarketAnalyzer_Foundation_and_Domain_Implementation_2025-07-07.md)**
     - **NEW PROJECT**: Created MarketAnalyzer - High-Performance Day Trading Analysis & Recommendation System
     - **STRATEGIC PIVOT**: From full trading platform to analysis & recommendation system (no direct trading)
     - **FOUNDATION LAYER**: Implemented canonical patterns with TradingResult<T>, CanonicalServiceBase, TradingError
