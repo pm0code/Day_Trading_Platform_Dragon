@@ -6,6 +6,12 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using TradingPlatform.Core.Canonical;
+using TradingPlatform.Foundation.Models;
+using TradingPlatform.Core.Interfaces;
+using TradingPlatform.Foundation.Interfaces;
+using TradingPlatform.Foundation.Enums;
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace TradingPlatform.Core.Configuration
 {
@@ -13,12 +19,14 @@ namespace TradingPlatform.Core.Configuration
     /// Secure configuration management with automatic encryption
     /// Uses AES-256 with DPAPI-protected key on Windows
     /// </summary>
-    public class EncryptedConfiguration : CanonicalBase
+    public class EncryptedConfiguration : CanonicalServiceBase, IDisposable
     {
         private readonly string _configPath;
         private readonly string _keyPath;
         private Dictionary<string, string> _decryptedKeys = new();
         private readonly object _lock = new();
+        private ServiceHealth _healthStatus = ServiceHealth.Unknown;
+        private string _healthMessage = "Not initialized";
         
         // Required API keys
         private static readonly string[] RequiredKeys = new[]
@@ -35,7 +43,7 @@ namespace TradingPlatform.Core.Configuration
             "TwelveData"
         };
 
-        public EncryptedConfiguration(ILogger<EncryptedConfiguration> logger) : base(logger)
+        public EncryptedConfiguration(ITradingLogger logger) : base(logger, "EncryptedConfiguration")
         {
             var appDataPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -53,21 +61,21 @@ namespace TradingPlatform.Core.Configuration
         /// <summary>
         /// Initialize configuration, run first-time setup if needed
         /// </summary>
-        public override async Task<TradingResult> InitializeAsync()
+        public async Task<TradingResult> InitializeAsync()
         {
-            using var operation = BeginOperation(OperationContext("Initializing encrypted configuration"));
-            
             try
             {
+                LogInfo("Initializing encrypted configuration");
+                
                 // Check if this is first run
                 if (!File.Exists(_configPath) || !File.Exists(_keyPath))
                 {
-                    operation.Log("First run detected - starting configuration wizard");
+                    LogInfo("First run detected - starting configuration wizard");
                     var setupResult = await RunFirstTimeSetup();
                     
                     if (!setupResult.IsSuccess)
                     {
-                        return operation.Failed(setupResult.ErrorMessage!);
+                        return TradingResult.Failure("CONFIG_SETUP_FAILED", setupResult.Error?.Message ?? "Setup failed");
                     }
                 }
                 
@@ -76,7 +84,7 @@ namespace TradingPlatform.Core.Configuration
                 
                 if (!loadResult.IsSuccess)
                 {
-                    return operation.Failed(loadResult.ErrorMessage!);
+                    return TradingResult.Failure("CONFIG_LOAD_FAILED", loadResult.Error?.Message ?? "Load failed");
                 }
                 
                 // Validate all required keys are present
@@ -84,16 +92,16 @@ namespace TradingPlatform.Core.Configuration
                 
                 if (!validationResult.IsSuccess)
                 {
-                    return operation.Failed(validationResult.ErrorMessage!);
+                    return TradingResult.Failure("CONFIG_VALIDATION_FAILED", validationResult.Error?.Message ?? "Validation failed");
                 }
                 
-                SetHealthStatus(HealthStatus.Healthy, "Configuration loaded and validated");
-                return operation.Succeeded("Encrypted configuration initialized successfully");
+                SetHealthStatus(ServiceHealth.Healthy, "Configuration loaded and validated");
+                return TradingResult.Success();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to initialize encrypted configuration");
-                return operation.Failed($"Configuration initialization failed: {ex.Message}");
+                LogError("Failed to initialize encrypted configuration", ex, "Configuration initialization", "Configuration unavailable", "Check configuration files and permissions");
+                return TradingResult.Failure("CONFIG_INIT_FAILED", $"Configuration initialization failed: {ex.Message}", ex);
             }
         }
 
@@ -108,7 +116,7 @@ namespace TradingPlatform.Core.Configuration
             {
                 if (_decryptedKeys.TryGetValue(keyName, out var value))
                 {
-                    _logger.LogDebug("Retrieved API key for {KeyName}", keyName);
+                    LogDebug($"Retrieved API key for {keyName}");
                     return value;
                 }
                 
@@ -132,7 +140,7 @@ namespace TradingPlatform.Core.Configuration
 
         private async Task<TradingResult> RunFirstTimeSetup()
         {
-            using var operation = BeginOperation(OperationContext("Running first-time configuration setup"));
+            LogMethodEntry();
             
             try
             {
@@ -159,7 +167,7 @@ namespace TradingPlatform.Core.Configuration
                     var key = CollectApiKey(keyName, required: true);
                     if (string.IsNullOrWhiteSpace(key))
                     {
-                        return operation.Failed($"Required API key '{keyName}' was not provided");
+                        return TradingResult.Failure("MISSING_REQUIRED_KEY", $"Required API key '{keyName}' was not provided");
                     }
                     apiKeys[keyName] = key;
                 }
@@ -183,7 +191,7 @@ namespace TradingPlatform.Core.Configuration
                 
                 if (!saveResult.IsSuccess)
                 {
-                    return operation.Failed(saveResult.ErrorMessage!);
+                    return TradingResult.Failure("SAVE_FAILED", saveResult.Error?.Message ?? "Save failed");
                 }
                 
                 Console.WriteLine("\n✅ Configuration saved successfully!");
@@ -192,12 +200,12 @@ namespace TradingPlatform.Core.Configuration
                 Console.ReadKey(true);
                 Console.Clear();
                 
-                return operation.Succeeded("First-time setup completed successfully");
+                return TradingResult.Success();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "First-time setup failed");
-                return operation.Failed($"Setup failed: {ex.Message}");
+                LogError("First-time setup failed", ex);
+                return TradingResult.Failure("SETUP_FAILED", $"Setup failed: {ex.Message}", ex);
             }
         }
 
@@ -265,7 +273,7 @@ namespace TradingPlatform.Core.Configuration
 
         private async Task<TradingResult> SaveConfiguration(Dictionary<string, string> apiKeys)
         {
-            using var operation = BeginOperation(OperationContext("Saving encrypted configuration"));
+            LogMethodEntry();
             
             try
             {
@@ -289,14 +297,14 @@ namespace TradingPlatform.Core.Configuration
                 };
                 
                 await File.WriteAllTextAsync(_keyPath, JsonSerializer.Serialize(keyData));
-                operation.Log("Encryption key saved (DPAPI protected)");
+                LogDebug("Encryption key saved (DPAPI protected)");
                 
                 // Encrypt the configuration
                 var jsonData = JsonSerializer.Serialize(apiKeys);
                 var encrypted = EncryptStringToBytes(jsonData, aes.Key, aes.IV);
                 await File.WriteAllBytesAsync(_configPath, encrypted);
                 
-                operation.Log($"Configuration encrypted and saved ({encrypted.Length} bytes)");
+                LogDebug($"Configuration encrypted and saved ({encrypted.Length} bytes)");
                 
                 // Load into memory
                 lock (_lock)
@@ -304,18 +312,18 @@ namespace TradingPlatform.Core.Configuration
                     _decryptedKeys = new Dictionary<string, string>(apiKeys);
                 }
                 
-                return operation.Succeeded("Configuration saved successfully");
+                return TradingResult.Success();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to save configuration");
-                return operation.Failed($"Save failed: {ex.Message}");
+                LogError("Failed to save configuration", ex);
+                return TradingResult.Failure("SAVE_FAILED", $"Save failed: {ex.Message}", ex);
             }
         }
 
         private async Task<TradingResult> LoadConfiguration()
         {
-            using var operation = BeginOperation(OperationContext("Loading encrypted configuration"));
+            LogMethodEntry();
             
             try
             {
@@ -325,7 +333,9 @@ namespace TradingPlatform.Core.Configuration
                 
                 if (keyData == null)
                 {
-                    return operation.Failed("Invalid key file format");
+                    LogError("Invalid key file format");
+                    LogMethodExit();
+                    return TradingResult.Failure("INVALID_KEY_FORMAT", "Invalid key file format");
                 }
                 
                 // Unprotect the AES key using DPAPI
@@ -338,7 +348,7 @@ namespace TradingPlatform.Core.Configuration
                     DataProtectionScope.CurrentUser
                 );
                 
-                operation.Log("Encryption key loaded and unprotected");
+                LogInfo("Encryption key loaded and unprotected");
                 
                 // Load and decrypt configuration
                 var encrypted = await File.ReadAllBytesAsync(_configPath);
@@ -348,7 +358,9 @@ namespace TradingPlatform.Core.Configuration
                 
                 if (apiKeys == null)
                 {
-                    return operation.Failed("Invalid configuration format");
+                    LogError("Invalid configuration format");
+                    LogMethodExit();
+                    return TradingResult.Failure("INVALID_CONFIG_FORMAT", "Invalid configuration format");
                 }
                 
                 lock (_lock)
@@ -356,18 +368,21 @@ namespace TradingPlatform.Core.Configuration
                     _decryptedKeys = apiKeys;
                 }
                 
-                operation.Log($"Configuration loaded successfully ({apiKeys.Count} keys)");
-                return operation.Succeeded();
+                LogInfo($"Configuration loaded successfully ({apiKeys.Count} keys)");
+                LogMethodExit();
+                return TradingResult.Success();
             }
             catch (CryptographicException ex)
             {
-                _logger.LogError(ex, "Failed to decrypt configuration - possible corruption or different user account");
-                return operation.Failed("Failed to decrypt configuration. The file may be corrupted or was encrypted by a different user.");
+                LogError("Failed to decrypt configuration - possible corruption or different user account", ex);
+                LogMethodExit();
+                return TradingResult.Failure("DECRYPTION_FAILED", "Failed to decrypt configuration. The file may be corrupted or was encrypted by a different user.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to load configuration");
-                return operation.Failed($"Load failed: {ex.Message}");
+                LogError("Failed to load configuration", ex);
+                LogMethodExit();
+                return TradingResult.Failure("LOAD_FAILED", $"Load failed: {ex.Message}");
             }
         }
 
@@ -423,13 +438,11 @@ namespace TradingPlatform.Core.Configuration
             if (missingKeys.Count > 0)
             {
                 return TradingResult.Failure(
+                    "MISSING_API_KEYS",
                     $"Missing required API keys: {string.Join(", ", missingKeys)}");
             }
             
-            _logger.LogInformation(
-                "Configuration validated: {RequiredCount} required keys, {OptionalCount} optional keys configured",
-                RequiredKeys.Length,
-                _decryptedKeys.Count - RequiredKeys.Length);
+            LogInfo($"Configuration validated: {RequiredKeys.Length} required keys, {_decryptedKeys.Count - RequiredKeys.Length} optional keys configured");
             
             return TradingResult.Success();
         }
@@ -446,7 +459,26 @@ namespace TradingPlatform.Core.Configuration
 
         #endregion
 
-        protected override void Dispose(bool disposing)
+        /// <summary>
+        /// Helper method to set health status
+        /// </summary>
+        private void SetHealthStatus(ServiceHealth status, string message)
+        {
+            _healthStatus = status;
+            _healthMessage = message;
+        }
+
+        /// <summary>
+        /// Gets the current health status
+        /// </summary>
+        public ServiceHealth GetHealthStatus() => _healthStatus;
+
+        /// <summary>
+        /// Gets the current health message
+        /// </summary>
+        public string GetHealthMessage() => _healthMessage;
+
+        protected virtual void Dispose(bool disposing)
         {
             if (disposing)
             {
@@ -461,7 +493,70 @@ namespace TradingPlatform.Core.Configuration
                 }
             }
             
-            base.Dispose(disposing);
+            // CanonicalServiceBase doesn't have Dispose, so we don't call base.Dispose
         }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        
+        #region CanonicalServiceBase Implementation
+        
+        protected override async Task<TradingResult<bool>> OnInitializeAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            
+            try
+            {
+                var initResult = await InitializeAsync();
+                
+                if (initResult.IsSuccess)
+                {
+                    LogInfo("EncryptedConfiguration initialized successfully");
+                    return TradingResult<bool>.Success(true);
+                }
+                else
+                {
+                    LogError("Failed to initialize EncryptedConfiguration", null, initResult.Error?.Message);
+                    return TradingResult<bool>.Failure(initResult.Error!);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception during EncryptedConfiguration initialization", ex);
+                return TradingResult<bool>.Failure("INIT_EXCEPTION", $"Initialization failed: {ex.Message}", ex);
+            }
+        }
+        
+        protected override async Task<TradingResult<bool>> OnStartAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            
+            // Configuration doesn't need active startup, it's initialized and ready
+            LogInfo("EncryptedConfiguration service started");
+            return await Task.FromResult(TradingResult<bool>.Success(true));
+        }
+        
+        protected override async Task<TradingResult<bool>> OnStopAsync(CancellationToken cancellationToken)
+        {
+            LogMethodEntry();
+            
+            // Clear sensitive data from memory on stop
+            lock (_lock)
+            {
+                foreach (var key in _decryptedKeys.Keys.ToList())
+                {
+                    _decryptedKeys[key] = new string('0', _decryptedKeys[key].Length);
+                }
+                _decryptedKeys.Clear();
+            }
+            
+            LogInfo("EncryptedConfiguration service stopped and sensitive data cleared");
+            return await Task.FromResult(TradingResult<bool>.Success(true));
+        }
+        
+        #endregion
     }
 }

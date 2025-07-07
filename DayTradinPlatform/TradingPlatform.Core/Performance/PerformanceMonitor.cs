@@ -95,8 +95,8 @@ public sealed class PerformanceMonitor : IDisposable
         }
 
         // Update operation-specific tracker
-        var tracker = _latencyTrackers.GetOrAdd(operationName, _ => new LatencyTracker());
-        tracker.RecordLatency(latencyMicroseconds);
+        var tracker = _latencyTrackers.GetOrAdd(operationName, name => new LatencyTracker(name));
+        tracker.RecordLatency((long)latencyMicroseconds);
 
         // Check for latency violations
         if (latencyMicroseconds > CRITICAL_LATENCY_MICROSECONDS)
@@ -136,7 +136,17 @@ public sealed class PerformanceMonitor : IDisposable
             AverageLatencyMicroseconds = totalOps > 0 ? (double)totalLatency / totalOps : 0,
             MaxLatencyMicroseconds = _maxLatencyMicroseconds,
             OperationsPerSecond = uptime.TotalSeconds > 0 ? totalOps / uptime.TotalSeconds : 0,
-            LatencyTrackers = _latencyTrackers.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.GetMetrics()),
+            LatencyTrackers = _latencyTrackers.ToDictionary(kvp => kvp.Key, kvp => 
+            {
+                var metrics = kvp.Value.GetMetrics();
+                return new LatencyMetrics
+                {
+                    OperationCount = (long)metrics["Count"],
+                    AverageLatencyMicroseconds = (double)metrics["Mean"],
+                    MinLatencyMicroseconds = (double)metrics["Min"],
+                    MaxLatencyMicroseconds = (double)metrics["Max"]
+                };
+            }),
             ThroughputTrackers = _throughputTrackers.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.GetMetrics()),
             SystemMetrics = GetSystemMetrics(),
             Timestamp = DateTime.UtcNow
@@ -150,7 +160,14 @@ public sealed class PerformanceMonitor : IDisposable
     {
         if (_latencyTrackers.TryGetValue(operationName, out var tracker))
         {
-            return tracker.GetPercentiles();
+            var percentiles = tracker.GetPercentiles(50, 95, 99, 999);
+            return new LatencyPercentiles
+            {
+                P50 = percentiles.ContainsKey(50) ? percentiles[50] : 0,
+                P95 = percentiles.ContainsKey(95) ? percentiles[95] : 0,
+                P99 = percentiles.ContainsKey(99) ? percentiles[99] : 0,
+                P999 = percentiles.ContainsKey(999) ? percentiles[999] : 0
+            };
         }
 
         return new LatencyPercentiles();
@@ -248,7 +265,7 @@ public sealed class PerformanceMonitor : IDisposable
 
         foreach (var operation in commonOperations)
         {
-            _latencyTrackers.TryAdd(operation, new LatencyTracker());
+            _latencyTrackers.TryAdd(operation, new LatencyTracker(operation));
             _throughputTrackers.TryAdd(operation, new ThroughputTracker());
         }
     }
@@ -347,105 +364,6 @@ public readonly struct LatencyMeasurement : IDisposable
         var elapsedTicks = Stopwatch.GetTimestamp() - _startTicks;
         var latencyMicroseconds = (double)elapsedTicks / Stopwatch.Frequency * 1_000_000;
         _monitor.RecordLatency(_operationName, latencyMicroseconds);
-    }
-}
-
-/// <summary>
-/// Tracks latency statistics for a specific operation
-/// </summary>
-public sealed class LatencyTracker
-{
-    private readonly ConcurrentQueue<double> _recentLatencies = new();
-    private readonly object _lock = new();
-    private double _totalLatency;
-    private long _operationCount;
-    private double _minLatency = double.MaxValue;
-    private double _maxLatency;
-
-    public void RecordLatency(double latencyMicroseconds)
-    {
-        _recentLatencies.Enqueue(latencyMicroseconds);
-
-        // Keep only recent measurements for percentile calculations
-        while (_recentLatencies.Count > 10000)
-        {
-            _recentLatencies.TryDequeue(out _);
-        }
-
-        lock (_lock)
-        {
-            _totalLatency += latencyMicroseconds;
-            _operationCount++;
-
-            if (latencyMicroseconds < _minLatency)
-                _minLatency = latencyMicroseconds;
-
-            if (latencyMicroseconds > _maxLatency)
-                _maxLatency = latencyMicroseconds;
-        }
-    }
-
-    public LatencyMetrics GetMetrics()
-    {
-        lock (_lock)
-        {
-            return new LatencyMetrics
-            {
-                OperationCount = _operationCount,
-                AverageLatencyMicroseconds = _operationCount > 0 ? _totalLatency / _operationCount : 0,
-                MinLatencyMicroseconds = _minLatency == double.MaxValue ? 0 : _minLatency,
-                MaxLatencyMicroseconds = _maxLatency
-            };
-        }
-    }
-
-    public LatencyPercentiles GetPercentiles()
-    {
-        var latencies = _recentLatencies.ToArray();
-        if (latencies.Length == 0)
-        {
-            return new LatencyPercentiles();
-        }
-
-        Array.Sort(latencies);
-
-        return new LatencyPercentiles
-        {
-            P50 = GetPercentile(latencies, 50),
-            P95 = GetPercentile(latencies, 95),
-            P99 = GetPercentile(latencies, 99),
-            P999 = GetPercentile(latencies, 99.9)
-        };
-    }
-
-    private static double GetPercentile(double[] sortedArray, double percentile)
-    {
-        if (sortedArray.Length == 0) return 0;
-
-        var index = (percentile / 100.0) * (sortedArray.Length - 1);
-        var lower = (int)Math.Floor(index);
-        var upper = (int)Math.Ceiling(index);
-
-        if (lower == upper)
-        {
-            return sortedArray[lower];
-        }
-
-        var weight = index - lower;
-        return sortedArray[lower] * (1 - weight) + sortedArray[upper] * weight;
-    }
-
-    public void Reset()
-    {
-        while (_recentLatencies.TryDequeue(out _)) { }
-
-        lock (_lock)
-        {
-            _totalLatency = 0;
-            _operationCount = 0;
-            _minLatency = double.MaxValue;
-            _maxLatency = 0;
-        }
     }
 }
 

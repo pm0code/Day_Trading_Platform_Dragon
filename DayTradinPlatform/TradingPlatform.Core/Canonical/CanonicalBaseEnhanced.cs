@@ -215,7 +215,7 @@ namespace TradingPlatform.Core.Canonical
             }
             catch (Exception ex)
             {
-                FailOperation(operationId, ex, methodName: methodName);
+                FailOperation(operationId, ex);
                 throw;
             }
         }
@@ -286,7 +286,7 @@ namespace TradingPlatform.Core.Canonical
 
         #region IDisposable Enhancement
 
-        protected override void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (disposing)
             {
@@ -299,8 +299,6 @@ namespace TradingPlatform.Core.Canonical
                 // Dispose child logger if created
                 ChildLogger?.Dispose();
             }
-            
-            base.Dispose(disposing);
         }
 
         #endregion

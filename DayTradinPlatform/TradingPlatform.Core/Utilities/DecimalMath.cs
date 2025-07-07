@@ -169,11 +169,11 @@ namespace TradingPlatform.Core.Utilities
             if (y == 0)
                 return 1;
             
-            if (x < 0 && y != Math.Floor((double)y))
+            if (x < 0 && y != (decimal)Math.Floor((double)y))
                 throw new ArgumentException("Negative base with non-integer exponent is not supported");
 
             // For integer exponents, use repeated multiplication
-            if (y == Math.Floor((double)y))
+            if (y == (decimal)Math.Floor((double)y))
             {
                 decimal result = 1;
                 decimal absY = Math.Abs(y);

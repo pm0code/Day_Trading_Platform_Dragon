@@ -90,15 +90,6 @@ namespace TradingPlatform.Core.Models
         }
     }
 
-    public class MarketTick
-    {
-        public string Symbol { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public long Volume { get; set; }
-        public DateTime Timestamp { get; set; }
-        public string Exchange { get; set; } = string.Empty;
-    }
-
     public class HistoricalData
     {
         public string Symbol { get; set; } = string.Empty;

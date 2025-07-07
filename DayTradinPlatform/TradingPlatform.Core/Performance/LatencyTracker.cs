@@ -97,6 +97,46 @@ namespace TradingPlatform.Core.Performance
             return sortedArray[Math.Max(0, Math.Min(index, sortedArray.Length - 1))];
         }
 
+        public Dictionary<string, object> GetMetrics()
+        {
+            var stats = GetStatistics();
+            return new Dictionary<string, object>
+            {
+                ["Name"] = stats.Name,
+                ["Count"] = stats.Count,
+                ["Mean"] = stats.Mean,
+                ["Min"] = stats.Min,
+                ["Max"] = stats.Max,
+                ["P50"] = stats.P50,
+                ["P95"] = stats.P95,
+                ["P99"] = stats.P99
+            };
+        }
+
+        public Dictionary<int, long> GetPercentiles(params int[] percentiles)
+        {
+            var samples = _latencies.ToArray();
+            if (samples.Length == 0)
+            {
+                return percentiles.ToDictionary(p => p, p => 0L);
+            }
+
+            Array.Sort(samples);
+            return percentiles.ToDictionary(p => p, p => GetPercentile(samples, p));
+        }
+
+        public void Reset()
+        {
+            _latencies.Clear();
+            Interlocked.Exchange(ref _totalSamples, 0);
+            Interlocked.Exchange(ref _totalLatency, 0);
+        }
+
+        public void Clear()
+        {
+            Reset();
+        }
+
         public void Dispose()
         {
             _reportTimer?.Dispose();

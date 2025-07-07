@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using TradingPlatform.Core.Interfaces;
 using TradingPlatform.Core.Logging;
 using TradingPlatform.Foundation.Models;
+using TradingPlatform.Foundation.Enums;
 
 namespace TradingPlatform.Core.Canonical
 {
@@ -45,7 +47,7 @@ namespace TradingPlatform.Core.Canonical
         #region Constructor
 
         protected CanonicalExecutorEnhanced(string executorName)
-            : base(executorName, createChildLogger: true)
+            : base(executorName)
         {
             _executionThrottle = new SemaphoreSlim(MaxConcurrentExecutions, MaxConcurrentExecutions);
             
@@ -76,7 +78,10 @@ namespace TradingPlatform.Core.Canonical
             [CallerFilePath] string sourceFilePath = "",
             [CallerLineNumber] int sourceLineNumber = 0)
         {
-            ValidateNotNull(request, nameof(request));
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
 
             var operationName = $"{ServiceName}.Execute[{typeof(TRequest).Name}]";
             
@@ -111,7 +116,7 @@ namespace TradingPlatform.Core.Canonical
                                     { 
                                         RequestType = typeof(TRequest).Name,
                                         Reason = validationResult.Error?.Message,
-                                        ErrorCode = validationResult.Error?.Code
+                                        ErrorCode = validationResult.Error?.ErrorCode
                                     },
                                     LogLevel.Warning);
                                 
@@ -177,7 +182,7 @@ namespace TradingPlatform.Core.Canonical
                                     { 
                                         RequestType = typeof(TRequest).Name,
                                         Error = result.Error?.Message,
-                                        ErrorCode = result.Error?.Code
+                                        ErrorCode = result.Error?.ErrorCode
                                     },
                                     LogLevel.Error);
                             }
@@ -409,9 +414,27 @@ namespace TradingPlatform.Core.Canonical
 
         #region Metrics
 
-        public override IReadOnlyDictionary<string, object> GetMetrics()
+        private readonly ConcurrentDictionary<string, object> _executorMetrics = new();
+
+        /// <summary>
+        /// Updates a metric value in the executor metrics collection
+        /// </summary>
+        protected void UpdateMetric(string name, object value)
         {
-            var metrics = base.GetMetrics().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            _executorMetrics.AddOrUpdate(name, value, (k, v) => value);
+        }
+
+        /// <summary>
+        /// Increments a counter metric
+        /// </summary>
+        protected void IncrementCounter(string name)
+        {
+            _executorMetrics.AddOrUpdate(name, 1L, (k, v) => (long)v + 1);
+        }
+
+        public virtual IReadOnlyDictionary<string, object> GetMetrics()
+        {
+            var metrics = new Dictionary<string, object>();
 
             // Add executor-specific metrics
             metrics["Executor.MaxConcurrentExecutions"] = MaxConcurrentExecutions;
@@ -495,7 +518,7 @@ namespace TradingPlatform.Core.Canonical
             var throttleAvailable = _executionThrottle.CurrentCount;
             checks["execution_throttle"] = new HealthCheckEntry
             {
-                Status = throttleAvailable > 0 ? HealthStatus.Healthy : HealthStatus.Degraded,
+                Status = throttleAvailable > 0 ? ServiceHealth.Healthy : ServiceHealth.Degraded,
                 Description = $"Execution slots available: {throttleAvailable}/{MaxConcurrentExecutions}",
                 Data = new Dictionary<string, object>
                 {
@@ -510,8 +533,8 @@ namespace TradingPlatform.Core.Canonical
                 var successRate = (double)_successfulExecutions / _totalExecutions;
                 checks["success_rate"] = new HealthCheckEntry
                 {
-                    Status = successRate >= 0.95 ? HealthStatus.Healthy : 
-                             successRate >= 0.90 ? HealthStatus.Degraded : HealthStatus.Unhealthy,
+                    Status = successRate >= 0.95 ? ServiceHealth.Healthy : 
+                             successRate >= 0.90 ? ServiceHealth.Degraded : ServiceHealth.Unhealthy,
                     Description = $"Success rate: {successRate:P2}",
                     Data = new Dictionary<string, object>
                     {

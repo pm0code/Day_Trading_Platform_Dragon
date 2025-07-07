@@ -555,7 +555,7 @@ public sealed class TradingLogOrchestratorEnhanced : ITradingLogger, IDisposable
         [CallerFilePath] string sourceFilePath = "",
         [CallerLineNumber] int sourceLineNumber = 0)
     {
-        _baseOrchestrator.LogError(message, exception, operationContext, additionalData, memberName, sourceFilePath, sourceLineNumber);
+        _baseOrchestrator.LogError(message, exception, operationContext, null, null, additionalData, memberName, sourceFilePath, sourceLineNumber);
     }
     
     public void LogTrade(string symbol, string action, decimal quantity, decimal price, string? orderId = null, 
@@ -576,7 +576,7 @@ public sealed class TradingLogOrchestratorEnhanced : ITradingLogger, IDisposable
     public void LogPerformance(string operation, TimeSpan duration, bool success = true, double? throughput = null, object? resourceUsage = null, object? businessMetrics = null, TimeSpan? comparisonTarget = null,
         [CallerMemberName] string memberName = "")
     {
-        _baseOrchestrator.LogPerformance(operation, duration, success, businessMetrics, memberName);
+        _baseOrchestrator.LogPerformance(operation, duration, success, throughput, resourceUsage, businessMetrics, comparisonTarget, memberName);
     }
     
     public void LogHealth(string component, string status, object? metrics = null, string[]? alerts = null, string[]? recommendedActions = null,

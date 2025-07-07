@@ -93,7 +93,7 @@ public abstract class CanonicalServiceBaseEnhanced : ICanonicalService, IDisposa
             catch (Exception ex)
             {
                 Logger.LogError("Service initialization failed", ex);
-                return TradingResult<bool>.Failure(ex);
+                return TradingResult<bool>.Failure("SERVICE_INIT_FAILED", $"Service initialization failed: {ex.Message}", ex);
             }
         });
     }
@@ -108,7 +108,7 @@ public abstract class CanonicalServiceBaseEnhanced : ICanonicalService, IDisposa
             if (!_isInitialized)
             {
                 Logger.LogError("Cannot start service - not initialized");
-                return TradingResult<bool>.Failure(new InvalidOperationException("Service not initialized"));
+                return TradingResult<bool>.Failure("SERVICE_NOT_INITIALIZED", "Service not initialized");
             }
             
             if (_isStarted)
@@ -143,7 +143,7 @@ public abstract class CanonicalServiceBaseEnhanced : ICanonicalService, IDisposa
             catch (Exception ex)
             {
                 Logger.LogError("Service start failed", ex);
-                return TradingResult<bool>.Failure(ex);
+                return TradingResult<bool>.Failure("SERVICE_START_FAILED", $"Service start failed: {ex.Message}", ex);
             }
         });
     }
@@ -176,7 +176,7 @@ public abstract class CanonicalServiceBaseEnhanced : ICanonicalService, IDisposa
                 }
                 else
                 {
-                    Logger.LogError("Service stop failed", result.Error);
+                    Logger.LogError("Service stop failed", null, result.Error?.Message);
                 }
                 
                 return result;
@@ -184,7 +184,7 @@ public abstract class CanonicalServiceBaseEnhanced : ICanonicalService, IDisposa
             catch (Exception ex)
             {
                 Logger.LogError("Service stop failed", ex);
-                return TradingResult<bool>.Failure(ex);
+                return TradingResult<bool>.Failure("SERVICE_STOP_FAILED", $"Service stop failed: {ex.Message}", ex);
             }
         });
     }

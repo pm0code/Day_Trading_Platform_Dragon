@@ -3,6 +3,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TradingPlatform.Core.Canonical;
+using TradingPlatform.Foundation.Models;
+using TradingPlatform.Core.Interfaces;
+using System.Threading;
 
 namespace TradingPlatform.Core.Configuration
 {
@@ -15,34 +18,35 @@ namespace TradingPlatform.Core.Configuration
         private readonly IConfiguration _configuration;
         
         public ConfigurationService(
-            ILogger<ConfigurationService> logger,
+            ITradingLogger logger,
             EncryptedConfiguration encryptedConfig,
-            IConfiguration configuration) : base(logger)
+            IConfiguration configuration) : base(logger, nameof(ConfigurationService))
         {
             _encryptedConfig = encryptedConfig;
             _configuration = configuration;
         }
 
-        public override async Task<TradingResult> InitializeAsync()
+        protected override async Task OnInitializeAsync(CancellationToken cancellationToken)
         {
-            using var operation = BeginOperation(OperationContext("Initializing configuration service"));
-            
-            try
+                try
             {
+                LogInfo("Initializing configuration service");
+                
                 // Initialize encrypted configuration (will run first-time setup if needed)
                 var result = await _encryptedConfig.InitializeAsync();
                 
                 if (!result.IsSuccess)
                 {
-                    return operation.Failed(result.ErrorMessage!);
+                    LogError("Failed to initialize encrypted configuration", null, "Configuration initialization", "Configuration service unavailable", "Check encrypted configuration setup");
+                    throw new InvalidOperationException(result.Error?.Message ?? "Configuration initialization failed");
                 }
                 
-                return operation.Succeeded("Configuration service initialized");
+                LogInfo("Configuration service initialized successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to initialize configuration service");
-                return operation.Failed($"Initialization failed: {ex.Message}");
+                LogError("Failed to initialize configuration service", ex, "Configuration initialization", "Configuration service unavailable", "Check configuration setup and dependencies");
+                throw;
             }
         }
 
@@ -104,15 +108,15 @@ namespace TradingPlatform.Core.Configuration
 
         #endregion
 
-        protected override Task OnStartAsync()
+        protected override Task OnStartAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Configuration service started");
+            LogInfo("Configuration service started");
             return Task.CompletedTask;
         }
 
-        protected override Task OnStopAsync()
+        protected override Task OnStopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Configuration service stopped");
+            LogInfo("Configuration service stopped");
             return Task.CompletedTask;
         }
     }

@@ -957,6 +957,23 @@ public sealed class TradingLogOrchestrator : ITradingLogger, IDisposable
             lockSemaphore.Dispose();
         }
     }
+
+    /// <summary>
+    /// Sets the correlation ID for operation tracking
+    /// </summary>
+    public void SetCorrelationId(string correlationId)
+    {
+        // TODO: Implement correlation ID tracking
+        // For now, just validate the parameter
+        if (string.IsNullOrWhiteSpace(correlationId))
+        {
+            throw new ArgumentException("Correlation ID cannot be null or empty", nameof(correlationId));
+        }
+        
+        // Store correlation ID in thread-local storage or similar mechanism
+        // This is a placeholder implementation
+        LogDebug($"Correlation ID set: {correlationId}");
+    }
 }
 
 #region Supporting Infrastructure
