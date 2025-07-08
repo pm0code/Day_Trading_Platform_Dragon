@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Foundation/MarketAnalyzer.Foundation/MarketAnalyzer.Foundation.csproj" />
+    <ProjectReference Include="../../Domain/MarketAnalyzer.Domain/MarketAnalyzer.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ONNX Runtime for high-performance AI inference (industry standard) -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.18.1" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.18.1" />
+    
+    <!-- ML.NET for .NET-native machine learning (Microsoft standard) -->
+    <PackageReference Include="Microsoft.ML" Version="3.0.1" />
+    <PackageReference Include="Microsoft.ML.TimeSeries" Version="3.0.1" />
+    <PackageReference Include="Microsoft.ML.FastTree" Version="3.0.1" />
+    
+    <!-- TorchSharp for PyTorch models in .NET (Facebook/Meta) -->
+    <PackageReference Include="TorchSharp" Version="0.102.8" />
+    
+    <!-- NumSharp for numerical computing (Python NumPy equivalent) -->
+    <PackageReference Include="NumSharp" Version="0.30.0" />
+    
+    <!-- Math.NET for numerical computations (industry standard) -->
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+    
+    <!-- Configuration and DI -->
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.ML" Version="3.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+  </ItemGroup>
+
+</Project>

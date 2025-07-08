@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Foundation/MarketAnalyzer.Foundation/MarketAnalyzer.Foundation.csproj" />
+    <ProjectReference Include="../../Domain/MarketAnalyzer.Domain/MarketAnalyzer.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- QuanTAlib for real-time technical analysis (research-recommended) -->
+    <PackageReference Include="QuanTAlib" Version="0.7.13" />
+    
+    <!-- Configuration and DI -->
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+    
+    <!-- Channels for high-performance streaming -->
+    <PackageReference Include="System.Threading.Channels" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>
