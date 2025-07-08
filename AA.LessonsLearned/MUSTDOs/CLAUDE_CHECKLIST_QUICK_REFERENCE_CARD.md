@@ -30,10 +30,18 @@ Before starting:
 
 ### For New Features:
 ```
-"Before implementing:
-- Search for similar features
-- What pattern will you follow?
-- Check CanonicalServiceBase"
+Before implementing:
+	- Research industry trends and 2025 state-of-the-art practices for this feature
+	- Search for similar functionality in open-source projects and documentation
+	- Scan the existing codebase for related or duplicate logic
+	- Review CanonicalServiceBase for alignment, reuse, or extension
+	- Ensure plans include structured logging, diagnostics, exception handling
+	- Validate support for high availability, fault tolerance, and graceful degradation
+	- Confirm observability hooks: telemetry, metrics, tracing, and health checks
+	- Evaluate performance impact and thread-safety or concurrency considerations
+	- Consider testability: unit tests, mocks, and integration test strategy
+	- Document your research in a timestamped document properly
+	- Identify and justify the design/architectural pattern to be used (e.g., CQRS, DDD, event-driven, etc.)
 ```
 
 ### For Bug Fixes:
@@ -58,10 +66,14 @@ Before starting:
 
 ### Every 5-10 Changes:
 ```
-"Status check:
-- Any warnings?
+" Statuscheck:                                                                                  Status check:
+- all canonical implementations?
+- code organization, models, methods, classes, etc ?
+- logging, debugging, error handling, resilience, health monitorig ?
+- no circular references?
+- Any errors, warnings?
 - Pattern consistency?
-- DRY violations?"
+- DRY or any other violations?"
 ```
 
 ### When Claude Seems Rushed:
