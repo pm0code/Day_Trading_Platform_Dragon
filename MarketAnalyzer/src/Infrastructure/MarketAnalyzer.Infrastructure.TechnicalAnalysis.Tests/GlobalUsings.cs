@@ -1,9 +1,0 @@
-global using Xunit;
-global using FluentAssertions;
-global using Moq;
-global using Microsoft.Extensions.Logging;
-global using Microsoft.Extensions.Caching.Memory;
-global using MarketAnalyzer.Foundation;
-global using MarketAnalyzer.Domain.Entities;
-global using MarketAnalyzer.Infrastructure.TechnicalAnalysis.Services;
-global using MarketAnalyzer.Infrastructure.TechnicalAnalysis.Models;
