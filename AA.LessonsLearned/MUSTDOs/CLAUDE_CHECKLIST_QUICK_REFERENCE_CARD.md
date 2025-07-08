@@ -9,11 +9,17 @@ Quick prompts to trigger Claude's holistic thinking without explicitly mentionin
 
 ### Copy-Paste This Block:
 ```
-Before starting:
-1. Why does this issue exist?
-2. Check if solutions exist in base classes
-3. What established pattern should you follow?
-4. Show me your research
+Before starting:  
+1. Why does this issue or task exist? Clarify intent and context  
+2. Check if solutions already exist in base classes or shared utilities  
+3. What established architectural or design pattern applies?  
+4. Show me your research (industry standards, references, docs)  
+5. Search the codebase for related implementations or overlaps  
+6. Identify dependencies, side effects, and system-wide impact  
+7. Ensure alignment with existing logging, error handling, and telemetry patterns  
+8. Validate test coverage and testability expectations before coding  
+9. Confirm performance, resilience, and observability considerations are accounted for  
+
 ```
 
 ---
@@ -22,10 +28,12 @@ Before starting:
 
 ### For Compilation Errors:
 ```
-"For each error:
-- Explain why it exists
-- Check existing patterns first
-- Show me similar implementations"
+For each error:  
+- Explain the cause clearly and concisely  
+- Check if the fix aligns with existing code patterns  
+- Show similar working implementations or references  
+- Validate that the proposed fix won’t introduce side effects  
+
 ```
 
 ### For New Features:
@@ -36,6 +44,7 @@ Before implementing:
 	- Scan the existing codebase for related or duplicate logic
 	- Review CanonicalServiceBase for alignment, reuse, or extension
 	- Ensure plans include structured logging, diagnostics, exception handling
+	- Ensure that AI and GPU are used within applicable and logical services 
 	- Validate support for high availability, fault tolerance, and graceful degradation
 	- Confirm observability hooks: telemetry, metrics, tracing, and health checks
 	- Evaluate performance impact and thread-safety or concurrency considerations
@@ -46,19 +55,38 @@ Before implementing:
 
 ### For Bug Fixes:
 ```
-"First understand:
-- Root cause analysis
-- System-wide impact
-- Existing solutions"
+First, understand:  
+- Root cause and triggering conditions  
+- Steps to reliably reproduce the issue (if possible)  
+- Scope and system-wide impact (dependencies, shared components)  
+- Whether similar bugs or fixes already exist (codebase, changelogs, issue tracker)  
+- Available logging, telemetry, and diagnostics that confirm the issue  
+- Whether the bug indicates deeper architectural, performance, or regression risk  
+- Any missing tests or coverage gaps that allowed the bug to go undetected  
+  
+
 ```
 
 ### For Refactoring:
 ```
-"Document:
-- Current architecture
-- Ripple effects
-- Pattern compliance"
+Document:  
+- Current architecture and flow before changes  
+- Intended improvements and reasons for refactoring  
+- Potential ripple effects across modules and dependencies  
+- Compliance with established patterns and architectural principles  
+- Impact on performance, stability, and readability  
+- Existing test coverage and new tests required  
+- Logging, monitoring, and error-handling adjustments (if any)  
+
 ```
+Claude being lazy:
+
+Our policy is 0/0 meaning 0 errors and 0 warnings before any new development.
+  please respect the policy and proceed!
+
+
+
+
 
 ---
 
@@ -66,14 +94,19 @@ Before implementing:
 
 ### Every 5-10 Changes:
 ```
-" Statuscheck:                                                                                  Status check:
-- all canonical implementations?
-- code organization, models, methods, classes, etc ?
-- logging, debugging, error handling, resilience, health monitorig ?
-- no circular references?
-- Any errors, warnings?
-- Pattern consistency?
-- DRY or any other violations?"
+Status Check
+
+- All canonical implementations followed?  
+- Code organization clean (models, methods, classes, folders)?  
+- Logging, debugging, and error handling in place and consistent?  
+- Resilience and health monitoring mechanisms present?  
+- No circular references or hidden dependencies?  
+- No build errors or runtime warnings?  
+- Consistent use of architectural and design patterns?  
+- No DRY violations or code duplication?  
+- Naming conventions and formatting aligned with standards?  
+- Dependencies and libraries properly managed and justified?  
+- All changes documented and traceable?  
 ```
 
 ### When Claude Seems Rushed:
