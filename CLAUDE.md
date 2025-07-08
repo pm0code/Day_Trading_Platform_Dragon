@@ -22,6 +22,11 @@ This agent participates in the AgentHub messaging system via Redis pub/sub. For 
 
 - [**CANONICAL_TOOL_DEVELOPMENT_REQUIREMENTS.md**](/home/nader/my_projects/CS/mcp-code-analyzer/src-v2/tools/CANONICAL_TOOL_DEVELOPMENT_REQUIREMENTS.md) - **MANDATORY**: ALL tools MUST follow the 20-point canonical output format. NO EXCEPTIONS. Read this BEFORE developing or migrating ANY tool.
 
+**🔴 CRITICAL: Research Documentation**
+**MANDATORY**: You MUST READ AND FOLLOW all documents in this folder:
+- **ResearchDocs/MustReads/**: `D:\Projects\CSharp\Day_Trading_Platform_Dragon\ResearchDocs\MustReads\`
+- These documents contain critical research findings and implementation guidelines that are MANDATORY for proper development
+
 
 **CRITICAL SECTIONS TO FOLLOW**:
 - **Section 16: Observability & Distributed Tracing** - MANDATORY telemetry and metrics integration for ALL services

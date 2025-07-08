@@ -132,46 +132,96 @@
 ---
 
 ## 🤖 Phase 3: AI/ML Integration (Weeks 6-8)
-**Goal**: Implement AI-driven analysis and predictions
+**Goal**: Implement AI-driven analysis and predictions with hybrid local/cloud LLM architecture
 
 ### Infrastructure Projects
-- [ ] Create `MarketAnalyzer.Infrastructure.AI` project
-- [ ] Set up ML.NET integration
-- [ ] Configure ONNX Runtime with GPU support
+- [x] Create `MarketAnalyzer.Infrastructure.AI` project ✅ (Already exists)
+- [x] Set up ML.NET integration ✅ (MLInferenceService exists)
+- [x] Configure ONNX Runtime with GPU support ✅ (Implemented)
+- [ ] **RESEARCH**: Read AI_ML_Integration_Financial_Trading_2024_2025_Research.md
 
-### ML.NET Models
+### Phase 3.1: LLM Infrastructure (Week 6)
+- [ ] Create `ILLMProvider` interface for common LLM operations
+- [ ] Port and adapt `OllamaLLMEngine` from DayTradingPlatform
+  - [ ] Adapt to MarketAnalyzer canonical patterns
+  - [ ] Add connection pooling for better performance
+  - [ ] Implement retry logic with exponential backoff
+  - [ ] Add model caching and warm-up strategies
+- [ ] Create `GeminiProvider` for cloud inference
+  - [ ] Implement Gemini API integration
+  - [ ] Add rate limiting (follow Finnhub pattern)
+  - [ ] Implement cost tracking and budgets
+  - [ ] Add response caching with TTL
+- [ ] Create `LLMOrchestrationService`
+  - [ ] Route requests to optimal provider (local vs cloud)
+  - [ ] Implement fallback logic between providers
+  - [ ] Add request queuing with priority
+  - [ ] Monitor costs and performance metrics
+
+### Phase 3.2: Ollama Local Deployment
+- [ ] Install and configure Ollama server
+  - [ ] Set up GPU acceleration (RTX 4070 Ti)
+  - [ ] Configure for 32 concurrent requests
+  - [ ] Set up model management scripts
+- [ ] Download and configure models
+  - [ ] Llama 3 8B for general analysis
+  - [ ] Mixtral 8x7B for complex reasoning
+  - [ ] Phi-3 for quick summaries
+  - [ ] DeepSeek-Coder for code generation
+- [ ] Implement Ollama-specific features
+  - [ ] Streaming response support
+  - [ ] Model quantization (Q4, Q8)
+  - [ ] Context window management
+  - [ ] GPU memory optimization
+
+### Phase 3.3: Hybrid AI Service Integration
+- [ ] Create `HybridAIService` combining ML + LLM
+  - [ ] Use ONNX models for numerical predictions
+  - [ ] Use LLMs for narrative generation
+  - [ ] Combine insights from both approaches
+  - [ ] Implement confidence scoring
+- [ ] Enhance existing services with LLM
+  - [ ] Add LLM explanations to technical indicators
+  - [ ] Generate market narratives from predictions
+  - [ ] Create natural language risk reports
+  - [ ] Implement conversational alerts
+- [ ] Create specialized prompt templates
+  - [ ] Market analysis prompts
+  - [ ] Risk assessment prompts
+  - [ ] Trading signal explanations
+  - [ ] Technical indicator narratives
+
+### Phase 3.4: ML.NET Models (Existing plan)
 - [ ] Implement price prediction regression model
 - [ ] Create buy/sell/hold classification model
 - [ ] Add anomaly detection for unusual market behavior
 - [ ] Implement time series forecasting
 - [ ] Create volatility prediction model
 
-### ONNX Integration
-- [ ] Set up CUDA provider for GPU acceleration
-- [ ] Implement model loading and caching
-- [ ] Create tensor preparation pipelines
-- [ ] Add batch inference support
-- [ ] Implement model versioning
-
-### GPU Acceleration
-- [ ] Configure primary GPU (RTX 4070 Ti) for inference
-- [ ] Set up secondary GPU (RTX 3060 Ti) for parallel tasks
-- [ ] Implement GPU memory management
-- [ ] Add fallback to CPU for compatibility
-- [ ] Create performance monitoring
-
-### Advanced AI Features
-- [ ] Integrate pre-trained FinBERT for sentiment analysis
-- [ ] Implement pattern recognition (head & shoulders, flags, etc.)
-- [ ] Add market regime detection
-- [ ] Create ensemble model framework
-- [ ] Implement reinforcement learning for strategy optimization
+### Phase 3.5: Advanced Features
+- [ ] Real-time Analysis Pipeline
+  - [ ] Stream market data → Technical indicators → ML predictions → LLM insights
+  - [ ] Target sub-200ms end-to-end latency
+  - [ ] Implement parallel GPU processing
+- [ ] Intelligent Caching System
+  - [ ] Semantic similarity cache for LLM responses
+  - [ ] Content-based hashing for exact matches
+  - [ ] TTL based on market volatility
+  - [ ] Cache warming strategies
+- [ ] Performance Optimization
+  - [ ] Request batching for efficiency
+  - [ ] Model quantization strategies
+  - [ ] GPU memory pooling
+  - [ ] Concurrent inference pipelines
 
 ### Testing & Validation
-- [ ] Create model accuracy benchmarks
-- [ ] Implement backtesting for predictions
-- [ ] Add A/B testing framework
-- [ ] Performance profiling for inference
+- [ ] Unit tests for all LLM providers
+- [ ] Integration tests for hybrid AI service
+- [ ] Performance benchmarks (latency/throughput)
+- [ ] Cost tracking validation
+- [ ] Fallback scenario testing
+- [ ] Model accuracy benchmarks
+- [ ] A/B testing framework for models
 
 ---
 
