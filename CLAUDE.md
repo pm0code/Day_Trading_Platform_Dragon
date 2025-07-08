@@ -57,6 +57,20 @@ This is a C# .NET 8.0 day trading platform solution with a modular architecture 
 
 **Note**: This repository is edited exclusively in VS Code; all builds, tests and git operations happen through the IDE.
 
+## 🔴 IMPORTANT: MarketAnalyzer Project
+
+**MarketAnalyzer** is a separate project with its own Git repository:
+- **Repository**: https://github.com/pm0code/MarketAnalyzer
+- **Local Path**: `/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/MarketAnalyzer`
+- **Status**: Independent project, not a submodule
+- **Purpose**: Complete rewrite/pivot from DayTradingPlatform to focus on analysis and recommendations only (no trading execution)
+
+When working on MarketAnalyzer:
+1. Navigate to the MarketAnalyzer directory
+2. Commit changes directly to the MarketAnalyzer repository
+3. Push to https://github.com/pm0code/MarketAnalyzer
+4. Do NOT add MarketAnalyzer as a subdirectory to this repository
+
 ## Build Commands
 
 **Navigate to solution directory first:**
