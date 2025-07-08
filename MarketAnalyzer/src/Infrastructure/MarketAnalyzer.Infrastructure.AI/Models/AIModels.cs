@@ -1,399 +1,60 @@
 namespace MarketAnalyzer.Infrastructure.AI.Models;
 
 /// <summary>
-/// Base class for all ML model predictions.
+/// Represents AI model performance metrics.
 /// </summary>
-public abstract class PredictionBase
+public class AIModelPerformance
 {
     /// <summary>
-    /// Gets or sets the model name that generated this prediction.
+    /// Gets or sets the model accuracy (0-1).
     /// </summary>
-    public string ModelName { get; set; } = string.Empty;
+    public decimal Accuracy { get; set; }
 
     /// <summary>
-    /// Gets or sets the timestamp when the prediction was made.
+    /// Gets or sets the model precision (0-1).
     /// </summary>
-    public DateTime Timestamp { get; set; }
+    public decimal Precision { get; set; }
 
     /// <summary>
-    /// Gets or sets the inference time in milliseconds.
+    /// Gets or sets the model recall (0-1).
     /// </summary>
-    public double InferenceTimeMs { get; set; }
+    public decimal Recall { get; set; }
 
     /// <summary>
-    /// Gets or sets the confidence score (0-1).
+    /// Gets or sets the F1 score (0-1).
     /// </summary>
-    public float Confidence { get; set; }
+    public decimal F1Score { get; set; }
+
+    /// <summary>
+    /// Gets or sets the average inference time in milliseconds.
+    /// </summary>
+    public double AverageInferenceTimeMs { get; set; }
+
+    /// <summary>
+    /// Gets or sets the memory usage in bytes.
+    /// </summary>
+    public long MemoryUsageBytes { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of parameters in the model.
+    /// </summary>
+    public long ParameterCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the model size in bytes.
+    /// </summary>
+    public long ModelSizeBytes { get; set; }
 }
 
 /// <summary>
-/// Represents a generic model prediction result.
+/// Represents model metadata and information.
 /// </summary>
-public class ModelPrediction : PredictionBase
-{
-    /// <summary>
-    /// Gets or sets the raw prediction values.
-    /// </summary>
-    public float[] Predictions { get; set; } = Array.Empty<float>();
-
-    /// <summary>
-    /// Gets or sets the prediction labels if available.
-    /// </summary>
-    public string[]? Labels { get; set; }
-
-    /// <summary>
-    /// Gets or sets additional metadata.
-    /// </summary>
-    public Dictionary<string, object> Metadata { get; } = new();
-}
-
-/// <summary>
-/// Represents batch input for model inference.
-/// </summary>
-public class BatchInput
-{
-    /// <summary>
-    /// Gets or sets the batch data.
-    /// </summary>
-    public float[][] Data { get; set; } = Array.Empty<float[]>();
-
-    /// <summary>
-    /// Gets or sets the input shape for each sample.
-    /// </summary>
-    public int[] InputShape { get; set; } = Array.Empty<int>();
-
-    /// <summary>
-    /// Gets or sets the batch size.
-    /// </summary>
-    public int BatchSize => Data.Length;
-}
-
-/// <summary>
-/// Represents batch prediction results.
-/// </summary>
-public class BatchPrediction : PredictionBase
-{
-    /// <summary>
-    /// Gets or sets the predictions for each input in the batch.
-    /// </summary>
-    public float[][] Predictions { get; set; } = Array.Empty<float[]>();
-
-    /// <summary>
-    /// Gets or sets individual inference times.
-    /// </summary>
-    public double[] InferenceTimesMs { get; set; } = Array.Empty<double>();
-
-    /// <summary>
-    /// Gets or sets the total batch processing time.
-    /// </summary>
-    public double TotalBatchTimeMs { get; set; }
-}
-
-/// <summary>
-/// Represents price movement prediction.
-/// MANDATORY: All price values use decimal for financial precision.
-/// </summary>
-public class PricePrediction : PredictionBase
-{
-    /// <summary>
-    /// Gets or sets the stock symbol.
-    /// </summary>
-    public string Symbol { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Gets or sets the predicted prices. MANDATORY: decimal precision.
-    /// </summary>
-    public decimal[] PredictedPrices { get; set; } = Array.Empty<decimal>();
-
-    /// <summary>
-    /// Gets or sets the prediction intervals in minutes.
-    /// </summary>
-    public int[] TimeHorizons { get; set; } = Array.Empty<int>();
-
-    /// <summary>
-    /// Gets or sets the upper confidence bounds. MANDATORY: decimal precision.
-    /// </summary>
-    public decimal[] UpperBounds { get; set; } = Array.Empty<decimal>();
-
-    /// <summary>
-    /// Gets or sets the lower confidence bounds. MANDATORY: decimal precision.
-    /// </summary>
-    public decimal[] LowerBounds { get; set; } = Array.Empty<decimal>();
-
-    /// <summary>
-    /// Gets or sets the predicted direction (1: up, -1: down, 0: neutral).
-    /// </summary>
-    public int PredictedDirection { get; set; }
-
-    /// <summary>
-    /// Gets or sets the predicted volatility. MANDATORY: decimal precision.
-    /// </summary>
-    public decimal PredictedVolatility { get; set; }
-}
-
-/// <summary>
-/// Represents sentiment analysis results.
-/// </summary>
-public class SentimentAnalysis : PredictionBase
-{
-    /// <summary>
-    /// Gets or sets the sentiment score (-1 to 1).
-    /// </summary>
-    public float SentimentScore { get; set; }
-
-    /// <summary>
-    /// Gets or sets the sentiment label.
-    /// </summary>
-    public SentimentLabel Label { get; set; }
-
-    /// <summary>
-    /// Gets or sets individual class probabilities.
-    /// </summary>
-    public Dictionary<string, float> ClassProbabilities { get; } = new();
-
-    /// <summary>
-    /// Gets or sets detected entities.
-    /// </summary>
-    public List<string> DetectedEntities { get; } = new();
-
-    /// <summary>
-    /// Gets or sets key phrases.
-    /// </summary>
-    public List<string> KeyPhrases { get; } = new();
-}
-
-/// <summary>
-/// Sentiment labels.
-/// </summary>
-public enum SentimentLabel
-{
-    VeryNegative = -2,
-    Negative = -1,
-    Neutral = 0,
-    Positive = 1,
-    VeryPositive = 2
-}
-
-/// <summary>
-/// Represents pattern detection results.
-/// </summary>
-public class PatternDetection : PredictionBase
-{
-    /// <summary>
-    /// Gets or sets detected patterns.
-    /// </summary>
-    public List<DetectedPattern> Patterns { get; } = new();
-
-    /// <summary>
-    /// Gets or sets the overall pattern strength (0-1).
-    /// </summary>
-    public float PatternStrength { get; set; }
-}
-
-/// <summary>
-/// Represents a detected pattern.
-/// </summary>
-public class DetectedPattern
-{
-    /// <summary>
-    /// Gets or sets the pattern type.
-    /// </summary>
-    public string PatternType { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Gets or sets the pattern confidence.
-    /// </summary>
-    public float Confidence { get; set; }
-
-    /// <summary>
-    /// Gets or sets the pattern location (start index).
-    /// </summary>
-    public int StartIndex { get; set; }
-
-    /// <summary>
-    /// Gets or sets the pattern location (end index).
-    /// </summary>
-    public int EndIndex { get; set; }
-
-    /// <summary>
-    /// Gets or sets additional pattern properties.
-    /// </summary>
-    public Dictionary<string, object> Properties { get; } = new();
-}
-
-/// <summary>
-/// Represents trading signal predictions.
-/// </summary>
-public class TradingSignalPrediction : PredictionBase
-{
-    /// <summary>
-    /// Gets or sets the primary signal.
-    /// </summary>
-    public TradingSignal Signal { get; set; }
-
-    /// <summary>
-    /// Gets or sets the signal strength (0-1).
-    /// </summary>
-    public float SignalStrength { get; set; }
-
-    /// <summary>
-    /// Gets or sets the recommended position size (0-1).
-    /// </summary>
-    public float RecommendedPositionSize { get; set; }
-
-    /// <summary>
-    /// Gets or sets the stop loss level. MANDATORY: decimal precision.
-    /// </summary>
-    public decimal? StopLossLevel { get; set; }
-
-    /// <summary>
-    /// Gets or sets the take profit level. MANDATORY: decimal precision.
-    /// </summary>
-    public decimal? TakeProfitLevel { get; set; }
-
-    /// <summary>
-    /// Gets or sets the time horizon in minutes.
-    /// </summary>
-    public int TimeHorizonMinutes { get; set; }
-
-    /// <summary>
-    /// Gets or sets supporting indicators.
-    /// </summary>
-    public Dictionary<string, float> SupportingIndicators { get; } = new();
-}
-
-/// <summary>
-/// Trading signals.
-/// </summary>
-public enum TradingSignal
-{
-    StrongSell = -2,
-    Sell = -1,
-    Hold = 0,
-    Buy = 1,
-    StrongBuy = 2
-}
-
-/// <summary>
-/// Represents a trading position for risk assessment.
-/// </summary>
-public class TradingPosition
-{
-    /// <summary>
-    /// Gets or sets the symbol.
-    /// </summary>
-    public string Symbol { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Gets or sets the position size.
-    /// </summary>
-    public int Quantity { get; set; }
-
-    /// <summary>
-    /// Gets or sets the entry price. MANDATORY: decimal precision.
-    /// </summary>
-    public decimal EntryPrice { get; set; }
-
-    /// <summary>
-    /// Gets or sets the current price. MANDATORY: decimal precision.
-    /// </summary>
-    public decimal CurrentPrice { get; set; }
-
-    /// <summary>
-    /// Gets or sets whether this is a long position.
-    /// </summary>
-    public bool IsLong { get; set; }
-
-    /// <summary>
-    /// Gets or sets the position open time.
-    /// </summary>
-    public DateTime OpenTime { get; set; }
-}
-
-/// <summary>
-/// Represents current market conditions.
-/// </summary>
-public class MarketConditions
-{
-    /// <summary>
-    /// Gets or sets the market volatility (VIX).
-    /// </summary>
-    public float MarketVolatility { get; set; }
-
-    /// <summary>
-    /// Gets or sets the market trend (-1 to 1).
-    /// </summary>
-    public float MarketTrend { get; set; }
-
-    /// <summary>
-    /// Gets or sets the sector performance.
-    /// </summary>
-    public Dictionary<string, float> SectorPerformance { get; } = new();
-
-    /// <summary>
-    /// Gets or sets the market breadth indicators.
-    /// </summary>
-    public Dictionary<string, float> BreadthIndicators { get; } = new();
-}
-
-/// <summary>
-/// Represents risk assessment results.
-/// </summary>
-public class RiskAssessment : PredictionBase
-{
-    /// <summary>
-    /// Gets or sets the overall risk score (0-100).
-    /// </summary>
-    public float RiskScore { get; set; }
-
-    /// <summary>
-    /// Gets or sets the risk level.
-    /// </summary>
-    public RiskLevel Level { get; set; }
-
-    /// <summary>
-    /// Gets or sets the Value at Risk (VaR). MANDATORY: decimal precision.
-    /// </summary>
-    public decimal ValueAtRisk { get; set; }
-
-    /// <summary>
-    /// Gets or sets the Expected Shortfall (ES). MANDATORY: decimal precision.
-    /// </summary>
-    public decimal ExpectedShortfall { get; set; }
-
-    /// <summary>
-    /// Gets or sets individual risk factors.
-    /// </summary>
-    public Dictionary<string, float> RiskFactors { get; } = new();
-
-    /// <summary>
-    /// Gets or sets risk mitigation recommendations.
-    /// </summary>
-    public List<string> Recommendations { get; } = new();
-}
-
-/// <summary>
-/// Risk levels.
-/// </summary>
-public enum RiskLevel
-{
-    VeryLow = 1,
-    Low = 2,
-    Medium = 3,
-    High = 4,
-    VeryHigh = 5,
-    Critical = 6
-}
-
-/// <summary>
-/// Represents model information and statistics.
-/// </summary>
-public class ModelInfo
+public class AIModelMetadata
 {
     /// <summary>
     /// Gets or sets the model name.
     /// </summary>
-    public string ModelName { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the model version.
@@ -401,98 +62,511 @@ public class ModelInfo
     public string Version { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the model type (ONNX, ML.NET, TorchSharp).
+    /// Gets or sets the model description.
     /// </summary>
-    public string ModelType { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the model size in MB.
+    /// Gets or sets the model author.
     /// </summary>
-    public double ModelSizeMB { get; set; }
+    public string Author { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets whether the model is loaded.
+    /// Gets or sets the model creation date.
     /// </summary>
-    public bool IsLoaded { get; set; }
+    public DateTime CreatedDate { get; set; }
 
     /// <summary>
-    /// Gets or sets the load time.
+    /// Gets or sets the training dataset information.
     /// </summary>
-    public DateTime? LoadTime { get; set; }
+    public string TrainingDataset { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the total inference count.
+    /// Gets or sets the model framework (ONNX, TensorFlow, PyTorch).
     /// </summary>
-    public long TotalInferenceCount { get; set; }
+    public string Framework { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the average inference time in ms.
+    /// Gets or sets the input data format.
     /// </summary>
-    public double AverageInferenceTimeMs { get; set; }
+    public string InputFormat { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the 95th percentile inference time.
+    /// Gets or sets the output data format.
     /// </summary>
-    public double P95InferenceTimeMs { get; set; }
+    public string OutputFormat { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the 99th percentile inference time.
+    /// Gets the model-specific tags.
     /// </summary>
-    public double P99InferenceTimeMs { get; set; }
+    public List<string> Tags { get; init; } = new();
 
     /// <summary>
-    /// Gets or sets the input metadata.
+    /// Gets the custom model properties.
     /// </summary>
-    public Dictionary<string, string> InputMetadata { get; } = new();
-
-    /// <summary>
-    /// Gets or sets the output metadata.
-    /// </summary>
-    public Dictionary<string, string> OutputMetadata { get; } = new();
+    public Dictionary<string, object> Properties { get; init; } = new();
 }
 
 /// <summary>
-/// Represents ML service health status.
+/// Represents price prediction results.
 /// </summary>
-public class MLHealthStatus
+public class PricePredictionResult
 {
     /// <summary>
-    /// Gets or sets whether the service is healthy.
+    /// Gets or sets the symbol being predicted.
     /// </summary>
-    public bool IsHealthy { get; set; }
+    public string Symbol { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the loaded model count.
+    /// Gets or sets the predicted prices for future time periods.
     /// </summary>
-    public int LoadedModelCount { get; set; }
+    public decimal[] PredictedPrices { get; set; } = Array.Empty<decimal>();
 
     /// <summary>
-    /// Gets or sets the total model count.
+    /// Gets or sets the upper confidence bounds.
     /// </summary>
-    public int TotalModelCount { get; set; }
+    public decimal[] UpperBounds { get; set; } = Array.Empty<decimal>();
 
     /// <summary>
-    /// Gets or sets the memory usage in MB.
+    /// Gets or sets the lower confidence bounds.
     /// </summary>
-    public double MemoryUsageMB { get; set; }
+    public decimal[] LowerBounds { get; set; } = Array.Empty<decimal>();
 
     /// <summary>
-    /// Gets or sets the GPU memory usage if applicable.
+    /// Gets or sets the prediction confidence (0-1).
     /// </summary>
-    public double? GpuMemoryUsageMB { get; set; }
+    public decimal Confidence { get; set; }
 
     /// <summary>
-    /// Gets or sets the execution provider in use.
+    /// Gets or sets the prediction horizon (number of periods).
     /// </summary>
-    public string ExecutionProvider { get; set; } = string.Empty;
+    public int Horizon { get; set; }
 
     /// <summary>
-    /// Gets or sets individual model statuses.
+    /// Gets or sets the time frame for each prediction period.
     /// </summary>
-    public Dictionary<string, bool> ModelStatuses { get; } = new();
+    public TimeSpan TimeFrame { get; set; }
 
     /// <summary>
-    /// Gets or sets any error messages.
+    /// Gets or sets the timestamp when prediction was made.
     /// </summary>
-    public List<string> Errors { get; } = new();
+    public DateTime PredictionTimestamp { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Gets or sets the model used for prediction.
+    /// </summary>
+    public string ModelName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets the additional prediction metadata.
+    /// </summary>
+    public Dictionary<string, object> Metadata { get; init; } = new();
+}
+
+/// <summary>
+/// Represents sentiment analysis results.
+/// </summary>
+public class SentimentAnalysisResult
+{
+    /// <summary>
+    /// Gets or sets the overall sentiment score (-1 to 1).
+    /// </summary>
+    public decimal SentimentScore { get; set; }
+
+    /// <summary>
+    /// Gets or sets the sentiment classification.
+    /// </summary>
+    public SentimentClassification Classification { get; set; }
+
+    /// <summary>
+    /// Gets or sets the confidence in the sentiment analysis (0-1).
+    /// </summary>
+    public decimal Confidence { get; set; }
+
+    /// <summary>
+    /// Gets or sets the positive sentiment probability (0-1).
+    /// </summary>
+    public decimal PositiveProbability { get; set; }
+
+    /// <summary>
+    /// Gets or sets the negative sentiment probability (0-1).
+    /// </summary>
+    public decimal NegativeProbability { get; set; }
+
+    /// <summary>
+    /// Gets or sets the neutral sentiment probability (0-1).
+    /// </summary>
+    public decimal NeutralProbability { get; set; }
+
+    /// <summary>
+    /// Gets the key phrases that influenced the sentiment.
+    /// </summary>
+    public List<string> KeyPhrases { get; init; } = new();
+
+    /// <summary>
+    /// Gets or sets the source text analyzed.
+    /// </summary>
+    public string SourceText { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the analysis timestamp.
+    /// </summary>
+    public DateTime AnalysisTimestamp { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Sentiment classification types.
+/// </summary>
+public enum SentimentClassification
+{
+    /// <summary>
+    /// Strong negative sentiment.
+    /// </summary>
+    StronglyNegative = -2,
+
+    /// <summary>
+    /// Negative sentiment.
+    /// </summary>
+    Negative = -1,
+
+    /// <summary>
+    /// Neutral sentiment.
+    /// </summary>
+    Neutral = 0,
+
+    /// <summary>
+    /// Positive sentiment.
+    /// </summary>
+    Positive = 1,
+
+    /// <summary>
+    /// Strong positive sentiment.
+    /// </summary>
+    StronglyPositive = 2
+}
+
+/// <summary>
+/// Represents pattern recognition results.
+/// </summary>
+public class PatternRecognitionResult
+{
+    /// <summary>
+    /// Gets or sets the detected pattern type.
+    /// </summary>
+    public PatternType PatternType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the pattern confidence (0-1).
+    /// </summary>
+    public decimal Confidence { get; set; }
+
+    /// <summary>
+    /// Gets or sets the pattern strength (0-1).
+    /// </summary>
+    public decimal Strength { get; set; }
+
+    /// <summary>
+    /// Gets or sets the pattern start price.
+    /// </summary>
+    public decimal StartPrice { get; set; }
+
+    /// <summary>
+    /// Gets or sets the pattern end price.
+    /// </summary>
+    public decimal EndPrice { get; set; }
+
+    /// <summary>
+    /// Gets or sets the pattern start time.
+    /// </summary>
+    public DateTime StartTime { get; set; }
+
+    /// <summary>
+    /// Gets or sets the pattern end time.
+    /// </summary>
+    public DateTime EndTime { get; set; }
+
+    /// <summary>
+    /// Gets or sets the expected price target if pattern completes.
+    /// </summary>
+    public decimal? PriceTarget { get; set; }
+
+    /// <summary>
+    /// Gets or sets the stop loss level.
+    /// </summary>
+    public decimal? StopLoss { get; set; }
+
+    /// <summary>
+    /// Gets or sets the symbol where pattern was detected.
+    /// </summary>
+    public string Symbol { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the timeframe for pattern analysis.
+    /// </summary>
+    public string TimeFrame { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets the pattern-specific properties.
+    /// </summary>
+    public Dictionary<string, object> Properties { get; init; } = new();
+}
+
+/// <summary>
+/// Types of trading patterns.
+/// </summary>
+public enum PatternType
+{
+    /// <summary>
+    /// Head and shoulders pattern.
+    /// </summary>
+    HeadAndShoulders,
+
+    /// <summary>
+    /// Double top pattern.
+    /// </summary>
+    DoubleTop,
+
+    /// <summary>
+    /// Double bottom pattern.
+    /// </summary>
+    DoubleBottom,
+
+    /// <summary>
+    /// Triangle pattern.
+    /// </summary>
+    Triangle,
+
+    /// <summary>
+    /// Flag pattern.
+    /// </summary>
+    Flag,
+
+    /// <summary>
+    /// Wedge pattern.
+    /// </summary>
+    Wedge,
+
+    /// <summary>
+    /// Cup and handle pattern.
+    /// </summary>
+    CupAndHandle,
+
+    /// <summary>
+    /// Support level.
+    /// </summary>
+    Support,
+
+    /// <summary>
+    /// Resistance level.
+    /// </summary>
+    Resistance,
+
+    /// <summary>
+    /// Trend line.
+    /// </summary>
+    TrendLine,
+
+    /// <summary>
+    /// Channel pattern.
+    /// </summary>
+    Channel
+}
+
+/// <summary>
+/// Represents trading signal generation results.
+/// </summary>
+public class TradingSignalResult
+{
+    /// <summary>
+    /// Gets or sets the signal type.
+    /// </summary>
+    public SignalType SignalType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the signal strength (0-1).
+    /// </summary>
+    public decimal Strength { get; set; }
+
+    /// <summary>
+    /// Gets or sets the signal confidence (0-1).
+    /// </summary>
+    public decimal Confidence { get; set; }
+
+    /// <summary>
+    /// Gets or sets the entry price recommendation.
+    /// </summary>
+    public decimal EntryPrice { get; set; }
+
+    /// <summary>
+    /// Gets or sets the stop loss price.
+    /// </summary>
+    public decimal StopLoss { get; set; }
+
+    /// <summary>
+    /// Gets or sets the take profit price.
+    /// </summary>
+    public decimal TakeProfit { get; set; }
+
+    /// <summary>
+    /// Gets or sets the position size recommendation (0-1 of portfolio).
+    /// </summary>
+    public decimal PositionSize { get; set; }
+
+    /// <summary>
+    /// Gets or sets the signal expiry time.
+    /// </summary>
+    public DateTime ExpiryTime { get; set; }
+
+    /// <summary>
+    /// Gets or sets the symbol for the signal.
+    /// </summary>
+    public string Symbol { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the timeframe for the signal.
+    /// </summary>
+    public string TimeFrame { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the reasoning behind the signal.
+    /// </summary>
+    public string Reasoning { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets the supporting indicators for the signal.
+    /// </summary>
+    public List<string> SupportingIndicators { get; init; } = new();
+
+    /// <summary>
+    /// Gets or sets the risk-reward ratio.
+    /// </summary>
+    public decimal RiskRewardRatio { get; set; }
+}
+
+/// <summary>
+/// Types of trading signals.
+/// </summary>
+public enum SignalType
+{
+    /// <summary>
+    /// Strong buy signal.
+    /// </summary>
+    StrongBuy,
+
+    /// <summary>
+    /// Buy signal.
+    /// </summary>
+    Buy,
+
+    /// <summary>
+    /// Hold signal.
+    /// </summary>
+    Hold,
+
+    /// <summary>
+    /// Sell signal.
+    /// </summary>
+    Sell,
+
+    /// <summary>
+    /// Strong sell signal.
+    /// </summary>
+    StrongSell
+}
+
+/// <summary>
+/// Represents risk assessment results.
+/// </summary>
+public class RiskAssessmentResult
+{
+    /// <summary>
+    /// Gets or sets the overall risk score (0-100).
+    /// </summary>
+    public decimal RiskScore { get; set; }
+
+    /// <summary>
+    /// Gets or sets the risk classification.
+    /// </summary>
+    public RiskLevel RiskLevel { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Value at Risk (VaR) at 95% confidence.
+    /// </summary>
+    public decimal ValueAtRisk { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Expected Shortfall (Conditional VaR).
+    /// </summary>
+    public decimal ExpectedShortfall { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum drawdown estimate.
+    /// </summary>
+    public decimal MaxDrawdown { get; set; }
+
+    /// <summary>
+    /// Gets or sets the volatility estimate.
+    /// </summary>
+    public decimal Volatility { get; set; }
+
+    /// <summary>
+    /// Gets or sets the beta coefficient (market sensitivity).
+    /// </summary>
+    public decimal Beta { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Sharpe ratio.
+    /// </summary>
+    public decimal SharpeRatio { get; set; }
+
+    /// <summary>
+    /// Gets the individual risk factors.
+    /// </summary>
+    public Dictionary<string, decimal> RiskFactors { get; init; } = new();
+
+    /// <summary>
+    /// Gets the risk mitigation recommendations.
+    /// </summary>
+    public List<string> Recommendations { get; init; } = new();
+
+    /// <summary>
+    /// Gets or sets the assessment timestamp.
+    /// </summary>
+    public DateTime AssessmentTimestamp { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Risk level classifications.
+/// </summary>
+public enum RiskLevel
+{
+    /// <summary>
+    /// Very low risk.
+    /// </summary>
+    VeryLow,
+
+    /// <summary>
+    /// Low risk.
+    /// </summary>
+    Low,
+
+    /// <summary>
+    /// Moderate risk.
+    /// </summary>
+    Moderate,
+
+    /// <summary>
+    /// High risk.
+    /// </summary>
+    High,
+
+    /// <summary>
+    /// Very high risk.
+    /// </summary>
+    VeryHigh,
+
+    /// <summary>
+    /// Extreme risk.
+    /// </summary>
+    Extreme
 }

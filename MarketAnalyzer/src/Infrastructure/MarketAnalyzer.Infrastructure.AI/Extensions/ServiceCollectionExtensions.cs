@@ -28,13 +28,46 @@ public static class ServiceCollectionExtensions
         // Configure AIOptions using the Options pattern
         services.Configure<AIOptions>(configuration.GetSection(AIOptions.SectionName));
 
-        // Register ML inference service
-        services.AddSingleton<IMLInferenceService, MLInferenceService>();
+        // Register ML inference service (temporarily commented out)
+        // services.AddSingleton<IMLInferenceService, MLInferenceService>();
 
         // Add ML.NET services
         services.AddSingleton<MLContext>();
 
         // Add memory cache for model results
+        services.AddMemoryCache();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds LLM services to the service collection.
+    /// Configures Ollama, Gemini, and LLM orchestration services.
+    /// </summary>
+    /// <param name="services">The service collection</param>
+    /// <param name="configuration">The configuration</param>
+    /// <returns>The service collection for chaining</returns>
+    public static IServiceCollection AddLLMServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        // Configure options using the Options pattern
+        services.Configure<OllamaOptions>(configuration.GetSection("Ollama"));
+        services.Configure<GeminiOptions>(configuration.GetSection("Gemini"));
+        services.Configure<LLMOrchestrationOptions>(configuration.GetSection("LLMOrchestration"));
+
+        // Add HTTP client factory
+        services.AddHttpClient();
+
+        // Register LLM providers
+        services.AddSingleton<OllamaProvider>();
+        services.AddSingleton<GeminiProvider>();
+        services.AddSingleton<LLMOrchestrationService>();
+        
+        // Register orchestration service as the main ILLMProvider
+        services.AddSingleton<ILLMProvider>(provider => provider.GetRequiredService<LLMOrchestrationService>());
+
+        // Add memory cache for LLM responses
         services.AddMemoryCache();
 
         return services;

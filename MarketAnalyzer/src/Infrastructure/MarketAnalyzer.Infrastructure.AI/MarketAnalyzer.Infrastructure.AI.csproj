@@ -34,6 +34,16 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.ML" Version="3.0.1" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+    
+    <!-- HTTP Client Factory for LLM providers -->
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+    
+    <!-- Polly for resilience and retry policies -->
+    <PackageReference Include="Polly" Version="8.2.0" />
+    <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />
+    
+    <!-- JSON serialization for API calls -->
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
 </Project>
