@@ -8,6 +8,13 @@ This index provides a chronological list of all journal entries for the DayTradi
 ### 2025
 
 #### July - MarketAnalyzer Project
+- **[MarketAnalyzer/Canonical_PositionSizing_Framework_2025-01-09_10-45-00.md](MarketAnalyzer/Canonical_PositionSizing_Framework_2025-01-09_10-45-00.md)**
+  - **Canonical Position Sizing Framework Implementation**
+  - Comprehensive research on 2025 industry best practices
+  - Started implementation of Foundation layer canonical types
+  - Created immutable PositionSize, SizingMethod, SizingConstraints
+  - Addresses 488 duplicate type definition errors
+  - Bug report created for "going offline" perception issue
 - **[MarketAnalyzer/Critical_Architectural_Lessons_2025-07-08_10-00-00.md](MarketAnalyzer/Critical_Architectural_Lessons_2025-07-08_10-00-00.md)**
   - **CRITICAL: Architectural Failure Analysis & Quality Pledge**
   - Identified duplicate type definitions violating DDD principles
