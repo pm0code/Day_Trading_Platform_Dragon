@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 CRITICAL: CHECKPOINT PROCESS IS MANDATORY 🚨
+**[READ THIS FIRST: MANDATORY_CHECKPOINT_PROCESS.md]("D:\Projects\CSharp\Day_Trading_Platform_Dragon\AA.LessonsLearned\MANDATORY_CHECKPOINT_PROCESS.md")**
+- Run checkpoint every 25 fixes or 30 minutes
+- Use `./scripts/standards-checkpoint.sh` and `./scripts/fix-counter.sh`
+- NEVER skip checkpoints - 714 errors happened from ignoring this!
+
 ## 🔴 CRITICAL: Agent Identity and Inter-Agent Communication
 
 ### My Agent Identity
@@ -32,6 +38,8 @@ This agent participates in the AgentHub messaging system via Redis pub/sub. For 
 - **Section 16: Observability & Distributed Tracing** - MANDATORY telemetry and metrics integration for ALL services
 - **Section 4: Method Logging Requirements** - MANDATORY canonical logging patterns
 - **Section 3: Canonical Service Implementation** - MANDATORY service base classes
+
+- [**MANDATORY_CHECKPOINT_PROCESS.md**]("D:\Projects\CSharp\Day_Trading_Platform_Dragon\AA.LessonsLearned\MANDATORY_CHECKPOINT_PROCESS.md") - **CRITICAL**: All agents MUST run checkpoints every 25 fixes to prevent architectural drift. Created after discovering 714 compilation errors from skipping checkpoints.
 
 ## 🔴 CRITICAL: Financial Calculation Standards
 

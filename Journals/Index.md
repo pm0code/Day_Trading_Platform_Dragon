@@ -8,6 +8,31 @@ This index provides a chronological list of all journal entries for the DayTradi
 ### 2025
 
 #### July - MarketAnalyzer Project
+
+##### July 11, 2025
+- **[LEARNING_JOURNAL_2025-07-11_AI_CONSULTATION_DISCIPLINE.md](LEARNING_JOURNAL_2025-07-11_AI_CONSULTATION_DISCIPLINE.md)**
+  - **AI Consultation Over Guessing**
+  - Critical correction: "instead of guessing again, use the AI partners"
+  - Building AI consultation into behavior matrix
+  - Connection to THINK → ANALYZE → PLAN → EXECUTE
+  - List of all available AI partners and when to use them
+  - Commitment to validate instead of assume
+
+##### July 10, 2025
+- **[LEARNING_JOURNAL_2025-07-10_Canonical_Patterns_are_NORTH_STAR.md](LEARNING_JOURNAL_2025-07-10_Canonical_Patterns_are_NORTH_STAR.md)**
+  - **The NORTH STAR Principle**
+  - "What does YOUR architecture document say about this?"
+  - Transformation from assumptions to architectural alignment
+  - How canonical patterns guide every decision
+
+- **[LEARNING_JOURNAL_2025-07-10_THINK_ANALYZE_PLAN_EXECUTE.md](LEARNING_JOURNAL_2025-07-10_THINK_ANALYZE_PLAN_EXECUTE.md)**
+  - **Methodology Transformation**
+  - Critical correction: "You should not run the minute you hear something"
+  - From rushing to researching
+  - AI Error Resolution Design emerged from proper methodology
+  - Research discoveries and architectural insights
+
+##### Earlier Sessions
 - **[MarketAnalyzer/Canonical_PositionSizing_Framework_2025-01-09_10-45-00.md](MarketAnalyzer/Canonical_PositionSizing_Framework_2025-01-09_10-45-00.md)**
   - **Canonical Position Sizing Framework Implementation**
   - Comprehensive research on 2025 industry best practices
@@ -166,4 +191,4 @@ This index provides a chronological list of all journal entries for the DayTradi
 
 ---
 
-*Index last updated: 2025-07-08 10:00:00 UTC*
+*Index last updated: 2025-07-11 00:30:00 PST*
