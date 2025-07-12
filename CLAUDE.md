@@ -24,7 +24,7 @@ This agent participates in the AgentHub messaging system via Redis pub/sub. For 
 ## 🚨 MANDATORY: Read Development Standards First
 
 **CRITICAL**: Before ANY development work, you MUST read and follow:
-- [**MANDATORY_DEVELOPMENT_STANDARDS.md**]("D:\Projects\CSharp\Day_Trading_Platform_Dragon\AA.LessonsLearned\MANDATORY_DEVELOPMENT_STANDARDS-V3.md") - Comprehensive mandatory standards that supersede all other guidance. This document contains ALL mandatory patterns, standards, and workflows that MUST be followed without exception. Violations will result in code rejection.
+- [**MANDATORY_DEVELOPMENT_STANDARDS.md**]("D:\Projects\CSharp\Day_Trading_Platform_Dragon\AA.LessonsLearned\MANDATORY_DEVELOPMENT_STANDARDS-V4.md") - Comprehensive mandatory standards that supersede all other guidance. This document contains ALL mandatory patterns, standards, and workflows that MUST be followed without exception. Violations will result in code rejection.
 
 - [**CANONICAL_TOOL_DEVELOPMENT_REQUIREMENTS.md**](/home/nader/my_projects/CS/mcp-code-analyzer/src-v2/tools/CANONICAL_TOOL_DEVELOPMENT_REQUIREMENTS.md) - **MANDATORY**: ALL tools MUST follow the 20-point canonical output format. NO EXCEPTIONS. Read this BEFORE developing or migrating ANY tool.
 
