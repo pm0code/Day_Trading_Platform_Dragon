@@ -35,7 +35,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IOrchestratorFactory, OrchestratorFactory>();
         
         // Register Persistence Service
-        services.AddScoped<BookletPersistenceService>();
+        services.AddScoped<IBookletPersistenceService, BookletPersistenceService>();
         
         // Register pipeline behaviors (future: logging, validation, etc.)
         // services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));

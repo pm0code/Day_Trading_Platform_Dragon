@@ -17,12 +17,12 @@ namespace AIRES.Application.Services;
 public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrchestratorService
 {
     private readonly IMediator _mediator;
-    private readonly BookletPersistenceService _persistenceService;
+    private readonly IBookletPersistenceService _persistenceService;
 
     public AIResearchOrchestratorService(
         IAIRESLogger logger,
         IMediator mediator,
-        BookletPersistenceService persistenceService) 
+        IBookletPersistenceService persistenceService) 
         : base(logger, nameof(AIResearchOrchestratorService))
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));

@@ -21,7 +21,7 @@ namespace AIRES.Application.Services;
 public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrchestratorService
 {
     private readonly IMediator _mediator;
-    private readonly BookletPersistenceService _persistenceService;
+    private readonly IBookletPersistenceService _persistenceService;
     private readonly IAIRESAlertingService _alerting;
     private readonly SemaphoreSlim _ollamaSemaphore;
     private readonly List<Exception> _errorAggregator = new();
@@ -29,7 +29,7 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
     public ConcurrentAIResearchOrchestratorService(
         IAIRESLogger logger,
         IMediator mediator,
-        BookletPersistenceService persistenceService,
+        IBookletPersistenceService persistenceService,
         IAIRESAlertingService alerting) 
         : base(logger, nameof(ConcurrentAIResearchOrchestratorService))
     {

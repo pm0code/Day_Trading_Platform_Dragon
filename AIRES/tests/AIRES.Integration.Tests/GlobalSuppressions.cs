@@ -271,3 +271,8 @@ using System.Diagnostics.CodeAnalysis;
 
 // Note: Additional suppressions may be needed after enabling TreatWarningsAsErrors
 // Each suppression added here represents technical debt that MUST be addressed
+
+// Test-specific suppressions
+[assembly: SuppressMessage("Naming", "CA1707:Identifiers should not contain underscores", 
+    Justification = "Test method names should be descriptive and underscores improve readability", 
+    Scope = "module")]

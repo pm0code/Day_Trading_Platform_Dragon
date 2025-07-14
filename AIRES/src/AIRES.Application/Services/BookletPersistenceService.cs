@@ -1,3 +1,4 @@
+using AIRES.Application.Interfaces;
 using AIRES.Core.Domain.Interfaces;
 using AIRES.Core.Domain.ValueObjects;
 using AIRES.Foundation.Canonical;
@@ -11,7 +12,7 @@ namespace AIRES.Application.Services;
 /// Service responsible for persisting research booklets to storage.
 /// Separates persistence concerns from content generation as per Gemini's guidance.
 /// </summary>
-public class BookletPersistenceService : AIRESServiceBase
+public class BookletPersistenceService : AIRESServiceBase, IBookletPersistenceService
 {
     private readonly IAIRESConfigurationProvider _configProvider;
 
