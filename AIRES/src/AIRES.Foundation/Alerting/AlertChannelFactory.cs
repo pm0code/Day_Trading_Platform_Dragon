@@ -20,7 +20,7 @@ public class AlertChannelFactory : IAlertChannelFactory
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
     
-    public IAlertChannel CreateChannel(AlertChannelType channelType, IConfiguration configuration)
+    public virtual IAlertChannel CreateChannel(AlertChannelType channelType, IConfiguration configuration)
     {
         _logger.LogInfo($"Creating alert channel: {channelType}");
         
@@ -51,7 +51,10 @@ public class AlertChannelFactory : IAlertChannelFactory
         foreach (AlertChannelType channelType in Enum.GetValues<AlertChannelType>())
         {
             var channelConfig = alertingConfig.GetSection(channelType.ToString());
-            var isEnabled = bool.Parse(channelConfig["Enabled"] ?? "false");
+            var enabledValue = channelConfig["Enabled"];
+            var isEnabled = !string.IsNullOrWhiteSpace(enabledValue) && 
+                           (enabledValue.Equals("true", StringComparison.OrdinalIgnoreCase) ||
+                            enabledValue.Equals("1", StringComparison.OrdinalIgnoreCase));
             
             if (isEnabled)
             {

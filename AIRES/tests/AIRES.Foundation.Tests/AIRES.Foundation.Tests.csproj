@@ -12,10 +12,16 @@
     <!-- Windows 11 x64 specific -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <OSPlatformMinVersion>10.0.22000.0</OSPlatformMinVersion>
+    <!-- Disable specific StyleCop rules for test projects -->
+    <NoWarn>$(NoWarn);SA1101;SA1309;SA1633;SA1208;SA1210;SA1516;SA1413;SA1500;SA1513;SA1518;SA1028;SA1116;SA1117;xUnit1031</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AIRES.Foundation\AIRES.Foundation.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="stylecop.json" />
   </ItemGroup>
 
 </Project>

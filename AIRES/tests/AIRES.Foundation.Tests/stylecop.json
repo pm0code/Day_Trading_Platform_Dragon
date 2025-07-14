@@ -1,0 +1,32 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DotNetAnalyzers/StyleCopAnalyzers/master/StyleCop.Analyzers/StyleCop.Analyzers/Settings/stylecop.schema.json",
+  "settings": {
+    "documentationRules": {
+      "companyName": "AIRES Team",
+      "copyrightText": "Copyright (c) {companyName}. All rights reserved.",
+      "documentInterfaces": false,
+      "documentInternalElements": false
+    },
+    "readabilityRules": {
+      "allowBuiltInTypeAliases": true
+    },
+    "indentation": {
+      "useTabs": false,
+      "indentationSize": 4
+    },
+    "namingRules": {
+      "allowCommonHungarianPrefixes": false
+    },
+    "maintainabilityRules": {
+      "topLevelTypes": ["class", "interface", "struct", "enum", "delegate"]
+    },
+    "layoutRules": {
+      "newlineAtEndOfFile": "require"
+    },
+    "orderingRules": {
+      "usingDirectivesPlacement": "outsideNamespace",
+      "systemUsingDirectivesFirst": true,
+      "blankLinesBetweenUsingGroups": "require"
+    }
+  }
+}

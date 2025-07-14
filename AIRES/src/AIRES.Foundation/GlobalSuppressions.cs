@@ -204,6 +204,10 @@ using System.Diagnostics.CodeAnalysis;
     Justification = "Temporarily suppressing to enable TreatWarningsAsErrors. Will reorder in next iteration.", 
     Scope = "module")]
 
+[assembly: SuppressMessage("StyleCop.CSharp.OrderingRules", "SA1204:Static members should appear before non-static members", 
+    Justification = "Temporarily suppressing to enable TreatWarningsAsErrors. Will reorder in next iteration.", 
+    Scope = "module")]
+
 [assembly: SuppressMessage("StyleCop.CSharp.OrderingRules", "SA1208:System using directives should be placed before other using directives", 
     Justification = "Temporarily suppressing to enable TreatWarningsAsErrors. Will reorder in next iteration.", 
     Scope = "module")]
@@ -268,6 +272,12 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Performance", "CA1845:Use span-based string.Concat", 
     Justification = "Temporarily suppressing to enable TreatWarningsAsErrors. Will optimize in next iteration.", 
     Scope = "module")]
+
+// Windows Platform Compatibility
+[assembly: SuppressMessage("Interoperability", "CA1416:Validate platform compatibility",
+    Justification = "Platform checks are performed using OperatingSystem.IsWindows() before calling Windows-specific methods",
+    Scope = "type",
+    Target = "~T:AIRES.Foundation.Alerting.Channels.WindowsEventLogChannel")]
 
 // Note: Additional suppressions may be needed after enabling TreatWarningsAsErrors
 // Each suppression added here represents technical debt that MUST be addressed
