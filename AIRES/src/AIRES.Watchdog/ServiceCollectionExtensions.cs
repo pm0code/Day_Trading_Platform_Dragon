@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using AIRES.Watchdog.Services;
 
 namespace AIRES.Watchdog;
 
@@ -12,7 +13,9 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddAIRESWatchdog(this IServiceCollection services)
     {
-        // Register watchdog services here
+        // Register watchdog services
+        services.AddSingleton<FileWatchdogService>();
+        services.AddSingleton<IFileWatchdogService>(provider => provider.GetRequiredService<FileWatchdogService>());
         
         return services;
     }

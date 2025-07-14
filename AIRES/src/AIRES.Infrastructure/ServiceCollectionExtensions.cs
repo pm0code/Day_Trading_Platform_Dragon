@@ -23,6 +23,8 @@ public static class ServiceCollectionExtensions
         // Register configuration services
         services.AddSingleton<AIRESConfigurationService>();
         services.AddSingleton<IAIRESConfiguration>(provider => provider.GetRequiredService<AIRESConfigurationService>());
+        services.AddSingleton<AIRESConfigurationProvider>();
+        services.AddSingleton<IAIRESConfigurationProvider>(provider => provider.GetRequiredService<AIRESConfigurationProvider>());
         
         // Register Ollama HTTP client
         services.AddHttpClient<IOllamaClient, OllamaClient>()

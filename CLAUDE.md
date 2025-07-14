@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🧠 YOUR MANDATORY Execution Protocol: THINK → ANALYZE → PLAN → EXECUTE
+
+- **DO NOT rush or prioritize speed over accuracy**
+- **THINK**: What is really being asked? Clarify intent
+- **ANALYZE**: What do you need to understand before answering?
+- **AI validate your thoughts and ideas and use Ollama/Gemini**
+  - **Consult Ollama** — investigate how to query it
+  - **For complex and architectural design cases, use Gemini CLI** via the predefined prompt template
+- **PLAN**: Outline your step-by-step approach before executing
+- **EXECUTE**: Only after validating your plan and assumptions
+- **Use all available resources**: documentation, prior code, internet search
+- **Final answers must be deliberate, accurate, and well-reasoned — not rushed!**
+
 ## 🚨 CRITICAL: CHECKPOINT PROCESS IS MANDATORY 🚨
 **[READ THIS FIRST: MANDATORY_CHECKPOINT_PROCESS.md]("D:\Projects\CSharp\Day_Trading_Platform_Dragon\AA.LessonsLearned\MANDATORY_CHECKPOINT_PROCESS.md")**
 - Run checkpoint every 25 fixes or 30 minutes
@@ -168,3 +181,54 @@ cd /home/nader/my_projects/CS/mcp-code-analyzer && npm run start
 ```
 
 **FAILURE TO RUN MCP = TECHNICAL DEBT ACCUMULATION = PROJECT FAILURE**
+
+## 📓 CRITICAL: Git Commit and Journaling Routine
+
+**MANDATORY**: After completing significant work or when conversation context reaches 80%, you MUST:
+
+### 1. Git Commit Process
+1. **Check git status** with `git status` to see all changes
+2. **Review changes** using `git diff` and `git log` to understand modifications
+3. **Stage appropriate files** with `git add` (be selective about what to commit)
+4. **Create meaningful commit** following this format:
+   ```bash
+   git commit -m "$(cat <<'EOF'
+   type: Brief description of changes
+   
+   - Detailed change 1
+   - Detailed change 2
+   - Key technical decisions
+   
+   Technical debt: Any suppressions or temporary fixes
+   
+   🤖 Generated with [Claude Code](https://claude.ai/code)
+   
+   Co-Authored-By: Claude <noreply@anthropic.com>
+   EOF
+   )"
+   ```
+
+### 2. Create Journal Entry
+1. **Create a comprehensive journal entry** documenting:
+   - Session summary and key achievements
+   - Technical decisions and rationale
+   - Challenges overcome and solutions
+   - All build errors and their resolutions
+   - Lessons learned and reflections
+   - Technical debt created
+   - Next steps and pending work
+   - Session metrics (errors fixed, files created, etc.)
+   - Git commit hash reference
+2. **Save the journal** to appropriate project folder:
+   - MarketAnalyzer: `/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/Journals/MarketAnalyzer/`
+   - AIRES: `/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/Journals/AIRES/`
+   - General: `/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/Journals/`
+3. **Use naming convention**: `tradingagent_Learning_Journal_YYYY-MM-DD.md`
+4. **Include continuation instructions** for the next session
+
+### 3. Context Management
+- **Track context usage** regularly to avoid losing critical information
+- **Start journaling at 80% context** to ensure smooth handoff
+- **Include all relevant file paths** and configurations for next session
+
+**This ensures proper version control, work documentation, and smooth session continuations.**

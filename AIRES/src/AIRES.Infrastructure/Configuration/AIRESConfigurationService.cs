@@ -14,8 +14,8 @@ namespace AIRES.Infrastructure.Configuration;
 public class AIRESConfigurationService : AIRESServiceBase, IAIRESConfiguration
 {
     private readonly string _configFilePath;
-    private IConfiguration _configuration;
     private readonly object _configLock = new();
+    private IConfiguration _configuration;
     
     // Configuration properties
     public DirectoryConfiguration Directories { get; private set; }
@@ -58,7 +58,7 @@ public class AIRESConfigurationService : AIRESServiceBase, IAIRESConfiguration
         LogMethodExit();
     }
     
-    protected override async Task<AIRESResult<bool>> OnInitializeAsync()
+    protected override async Task<AIRESResult<bool>> OnInitializeAsync(CancellationToken cancellationToken)
     {
         LogMethodEntry();
         

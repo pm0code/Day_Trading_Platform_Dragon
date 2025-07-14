@@ -77,6 +77,14 @@ public class OllamaClient : AIRESServiceBase, IOllamaClient
                 return AIRESResult<OllamaResponse>.Failure("OLLAMA_NULL_REQUEST", "Request cannot be null");
             }
             
+            // Ensure model is available before proceeding
+            var ensureResult = await EnsureModelAvailableAsync(request.Model, cancellationToken);
+            if (!ensureResult.IsSuccess)
+            {
+                LogMethodExit();
+                return AIRESResult<OllamaResponse>.Failure(ensureResult.ErrorCode!, ensureResult.ErrorMessage!);
+            }
+            
             LogInfo($"Generating response with model: {request.Model}");
             LogDebug($"Prompt length: {request.Prompt.Length} characters");
             IncrementCounter("GenerateRequests");
@@ -228,6 +236,129 @@ public class OllamaClient : AIRESServiceBase, IOllamaClient
         return parts.Length > 1 ? parts[1] : "latest";
     }
     
+    /// <summary>
+    /// Ensures a model is available, pulling it if necessary.
+    /// </summary>
+    private async Task<AIRESResult<bool>> EnsureModelAvailableAsync(
+        string modelName,
+        CancellationToken cancellationToken = default)
+    {
+        LogMethodEntry();
+        
+        try
+        {
+            // Check if model is already available
+            var availabilityResult = await IsModelAvailableAsync(modelName, cancellationToken);
+            if (availabilityResult.IsSuccess && availabilityResult.Value)
+            {
+                LogDebug($"Model '{modelName}' is already available");
+                LogMethodExit();
+                return AIRESResult<bool>.Success(true);
+            }
+            
+            LogWarning($"Model '{modelName}' is not available. Attempting to pull it...");
+            
+            // Pull the model
+            var pullResult = await PullModelAsync(modelName, cancellationToken);
+            if (!pullResult.IsSuccess)
+            {
+                LogMethodExit();
+                return pullResult;
+            }
+            
+            LogInfo($"Successfully pulled model '{modelName}'");
+            LogMethodExit();
+            return AIRESResult<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error ensuring model availability for {modelName}", ex);
+            LogMethodExit();
+            return AIRESResult<bool>.Failure("OLLAMA_ENSURE_MODEL_ERROR", $"Failed to ensure model '{modelName}' is available", ex);
+        }
+    }
+    
+    /// <summary>
+    /// Pulls a model from the Ollama registry.
+    /// </summary>
+    public async Task<AIRESResult<bool>> PullModelAsync(
+        string modelName,
+        CancellationToken cancellationToken = default)
+    {
+        LogMethodEntry();
+        
+        try
+        {
+            LogInfo($"Pulling model '{modelName}' from Ollama registry...");
+            IncrementCounter("ModelPullRequests");
+            
+            var requestBody = new { name = modelName };
+            var json = JsonSerializer.Serialize(requestBody, _jsonOptions);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            
+            // Model pulling can take a long time, use extended timeout
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cts.CancelAfter(TimeSpan.FromMinutes(30)); // 30 minutes for large models
+            
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var response = await _httpClient.PostAsync("/api/pull", content, cts.Token);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cts.Token);
+                LogError($"Failed to pull model '{modelName}': {response.StatusCode} - {errorContent}");
+                LogMethodExit();
+                return AIRESResult<bool>.Failure("OLLAMA_PULL_FAILED", $"Failed to pull model '{modelName}': {response.StatusCode}");
+            }
+            
+            // Read streaming response to track progress
+            using var stream = await response.Content.ReadAsStreamAsync(cts.Token);
+            using var reader = new StreamReader(stream);
+            
+            string? line;
+            while ((line = await reader.ReadLineAsync(cts.Token)) != null)
+            {
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    try
+                    {
+                        var progress = JsonSerializer.Deserialize<OllamaPullProgress>(line, _jsonOptions);
+                        if (progress?.Status != null)
+                        {
+                            LogDebug($"Pull progress: {progress.Status}");
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore JSON parsing errors for progress updates
+                    }
+                }
+            }
+            
+            stopwatch.Stop();
+            LogInfo($"Model '{modelName}' pulled successfully in {stopwatch.Elapsed.TotalSeconds:F1} seconds");
+            UpdateMetric("ModelPullDuration", stopwatch.ElapsedMilliseconds);
+            IncrementCounter("SuccessfulModelPulls");
+            
+            LogMethodExit();
+            return AIRESResult<bool>.Success(true);
+        }
+        catch (TaskCanceledException)
+        {
+            LogError($"Model pull for '{modelName}' was cancelled or timed out");
+            IncrementCounter("ModelPullTimeouts");
+            LogMethodExit();
+            return AIRESResult<bool>.Failure("OLLAMA_PULL_TIMEOUT", $"Model pull for '{modelName}' timed out");
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error pulling model '{modelName}'", ex);
+            IncrementCounter("ModelPullErrors");
+            LogMethodExit();
+            return AIRESResult<bool>.Failure("OLLAMA_PULL_ERROR", $"Failed to pull model '{modelName}'", ex);
+        }
+    }
+    
     // Internal response DTOs
     private sealed class OllamaModelsResponse
     {
@@ -240,5 +371,13 @@ public class OllamaClient : AIRESServiceBase, IOllamaClient
         public long Size { get; set; }
         public DateTime ModifiedAt { get; set; }
         public string? Digest { get; set; }
+    }
+    
+    private sealed class OllamaPullProgress
+    {
+        public string? Status { get; set; }
+        public string? Digest { get; set; }
+        public long? Total { get; set; }
+        public long? Completed { get; set; }
     }
 }

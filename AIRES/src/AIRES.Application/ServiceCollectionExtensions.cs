@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using MediatR;
+using AIRES.Application.Interfaces;
 using AIRES.Application.Services;
 using System.Reflection;
 using FluentValidation;
@@ -22,8 +23,15 @@ public static class ServiceCollectionExtensions
         // Register FluentValidation
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         
-        // Register Orchestrator Service
+        // Register both Orchestrator Services
         services.AddScoped<AIResearchOrchestratorService>();
+        services.AddScoped<ParallelAIResearchOrchestratorService>();
+        
+        // Register default as sequential (for backward compatibility)
+        services.AddScoped<IAIResearchOrchestratorService>(provider => provider.GetRequiredService<AIResearchOrchestratorService>());
+        
+        // Register Factory
+        services.AddScoped<IOrchestratorFactory, OrchestratorFactory>();
         
         // Register Persistence Service
         services.AddScoped<BookletPersistenceService>();

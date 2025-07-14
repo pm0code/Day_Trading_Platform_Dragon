@@ -1,0 +1,12 @@
+Build Error Report - AIRES Test
+===================================
+
+/src/test.cs(45,12): error CS0246: The type or namespace name 'ITestInterface' could not be found (are you missing a using directive or an assembly reference?)
+/src/test.cs(67,8): error CS1061: 'TestClass' does not contain a definition for 'ProcessData' and no accessible extension method 'ProcessData' accepting a first argument of type 'TestClass' could be found
+/src/test.cs(89,15): error CS0103: The name 'logger' does not exist in the current context
+/src/test.cs(102,20): warning CS0168: The variable 'ex' is declared but never used
+
+    0 Warning(s)
+    3 Error(s)
+
+Time Elapsed 00:00:02.34

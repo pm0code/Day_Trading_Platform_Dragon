@@ -1,0 +1,17 @@
+Microsoft (R) Build Engine version 17.8.3+195e7f5a3 for .NET
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/MarketAnalyzer/src/Core/MarketAnalyzer.Domain/Common/ExecutedTrade.cs(23,16): error CS0246: The type or namespace name 'TradingAccount' could not be found (are you missing a using directive or an assembly reference?) [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/MarketAnalyzer/src/Core/MarketAnalyzer.Domain/MarketAnalyzer.Domain.csproj]
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/MarketAnalyzer/src/Core/MarketAnalyzer.Domain/Common/ExecutedTrade.cs(35,16): error CS0246: The type or namespace name 'OrderType' could not be found (are you missing a using directive or an assembly reference?) [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/MarketAnalyzer/src/Core/MarketAnalyzer.Domain/MarketAnalyzer.Domain.csproj]
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/MarketAnalyzer/src/Core/MarketAnalyzer.Domain/Services/TradingService.cs(45,23): error CS1061: 'List<ExecutedTrade>' does not contain a definition for 'AsQueryable' and no accessible extension method 'AsQueryable' accepting a first argument of type 'List<ExecutedTrade>' could be found (are you missing a using directive or an assembly reference?) [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/MarketAnalyzer/src/Application/MarketAnalyzer.Application/MarketAnalyzer.Application.csproj]
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/MarketAnalyzer/src/Core/MarketAnalyzer.Domain/Services/TradingService.cs(67,30): error CS0029: Cannot implicitly convert type 'MarketAnalyzer.Domain.Common.ExecutedTrade' to 'MarketAnalyzer.Application.DTOs.ExecutedTradeDto' [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/MarketAnalyzer/src/Application/MarketAnalyzer.Application/MarketAnalyzer.Application.csproj]
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/MarketAnalyzer/src/Application/MarketAnalyzer.Application/Services/OrderExecutionService.cs(89,45): error CS7036: There is no argument given that corresponds to the required formal parameter 'logger' of 'TradingServiceBase.TradingServiceBase(ITradingLogger)' [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/MarketAnalyzer/src/Application/MarketAnalyzer.Application/MarketAnalyzer.Application.csproj]
+
+Build FAILED.
+
+    0 Warning(s)
+    5 Error(s)
+
+Time Elapsed 00:00:02.67

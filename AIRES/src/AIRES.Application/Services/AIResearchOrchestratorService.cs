@@ -1,6 +1,7 @@
 using MediatR;
 using AIRES.Application.Commands;
 using AIRES.Application.Exceptions;
+using AIRES.Application.Interfaces;
 using AIRES.Foundation.Canonical;
 using AIRES.Foundation.Logging;
 using AIRES.Foundation.Results;
@@ -13,16 +14,19 @@ namespace AIRES.Application.Services;
 /// Orchestrates the 4-stage AI research pipeline for error resolution.
 /// Uses MediatR for loose coupling and maintainability as recommended by Gemini AI.
 /// </summary>
-public class AIResearchOrchestratorService : AIRESServiceBase
+public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrchestratorService
 {
     private readonly IMediator _mediator;
+    private readonly BookletPersistenceService _persistenceService;
 
     public AIResearchOrchestratorService(
         IAIRESLogger logger,
-        IMediator mediator) 
+        IMediator mediator,
+        BookletPersistenceService persistenceService) 
         : base(logger, nameof(AIResearchOrchestratorService))
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
     }
 
     /// <summary>
@@ -179,17 +183,34 @@ public class AIResearchOrchestratorService : AIRESServiceBase
             
             stepTimings["Gemma2Generation"] = gemma2Stopwatch.ElapsedMilliseconds;
             
+            // Save the booklet to disk
+            LogInfo($"Saving booklet to disk: {bookletResponse.BookletPath}");
+            var saveResult = await _persistenceService.SaveBookletAsync(
+                bookletResponse.Booklet,
+                bookletResponse.BookletPath,
+                cancellationToken);
+                
+            if (!saveResult.IsSuccess)
+            {
+                LogError($"Failed to save booklet: {saveResult.ErrorMessage}");
+                LogMethodExit();
+                return Result<BookletGenerationResponse>.Failure(
+                    $"Failed to save booklet: {saveResult.ErrorMessage}",
+                    saveResult.ErrorCode ?? "BOOKLET_SAVE_ERROR"
+                );
+            }
+            
             // Update total processing time
             stopwatch.Stop();
             var totalResponse = new BookletGenerationResponse(
                 bookletResponse.Booklet,
-                bookletResponse.BookletPath,
+                saveResult.Value!, // Use the actual saved path
                 stopwatch.ElapsedMilliseconds,
                 stepTimings.ToImmutableDictionary()
             );
 
             LogInfo($"AI Research Pipeline completed successfully in {stopwatch.ElapsedMilliseconds}ms");
-            LogInfo($"Booklet saved to: {bookletResponse.BookletPath}");
+            LogInfo($"Booklet saved to: {saveResult.Value}");
             
             LogMethodExit();
             return Result<BookletGenerationResponse>.Success(totalResponse);

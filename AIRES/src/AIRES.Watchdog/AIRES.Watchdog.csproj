@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AIRES.Foundation\AIRES.Foundation.csproj" />
     <ProjectReference Include="..\AIRES.Core\AIRES.Core.csproj" />
+    <ProjectReference Include="..\AIRES.Application\AIRES.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
