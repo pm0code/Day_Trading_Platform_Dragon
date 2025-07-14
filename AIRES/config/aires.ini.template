@@ -1,0 +1,67 @@
+# AIRES Configuration Template
+# Copy this file to aires.ini and customize for your project
+
+[Directories]
+# Input directory where AIRES monitors for error files
+InputDirectory = ./input
+
+# Output directory where AIRES saves research booklets
+OutputDirectory = ./docs/error-booklets
+
+# Temporary directory for processing
+TempDirectory = ./temp
+
+[AI_Services]
+# Ollama endpoint configuration
+OllamaBaseUrl = http://localhost:11434
+OllamaTimeout = 120
+
+# AI Model names
+MistralModel = mistral:latest
+DeepSeekModel = deepseek-coder:latest
+CodeGemmaModel = codegemma:latest
+Gemma2Model = gemma2:latest
+
+[Pipeline]
+# Maximum retries for AI service calls
+MaxRetries = 3
+
+# Delay between retries (seconds)
+RetryDelay = 2
+
+# Enable parallel processing where possible
+EnableParallelProcessing = true
+
+[Logging]
+# Log level: Trace, Debug, Info, Warning, Error
+LogLevel = Info
+
+# Enable structured logging
+StructuredLogging = true
+
+# Log file path (leave empty for console only)
+LogFilePath = ./logs/aires.log
+
+[Monitoring]
+# Enable OpenTelemetry
+EnableTelemetry = true
+
+# Metrics export interval (seconds)
+MetricsInterval = 60
+
+# Enable health checks
+EnableHealthChecks = true
+
+[Security]
+# Sanitize sensitive data in logs
+SanitizeLogs = true
+
+# Mask API keys in logs
+MaskApiKeys = true
+
+[Development]
+# Treat warnings as errors
+TreatWarningsAsErrors = true
+
+# Enable debug mode
+DebugMode = false

@@ -1,0 +1,116 @@
+# AIRES .gitignore
+# Windows 11 x64 / .NET 8 Project
+
+## Build Outputs
+bin/
+obj/
+out/
+publish/
+*.exe
+*.dll
+*.pdb
+
+## User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Visual Studio
+.vs/
+.vscode/
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+## Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+## Rider
+.idea/
+*.iml
+*.ipr
+*.iws
+
+## Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## NuGet
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## .NET
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+*.vspscc
+*.vssscc
+*.tmp
+*.tmp_proj
+
+## Test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+coverage.cobertura.xml
+
+## AIRES Specific
+logs/
+booklets/
+processed/
+failed/
+temp/
+*.booklet
+aires-*.log
+
+## Configuration (keep template only)
+config/*.ini
+!config/aires.ini
+
+## Local development
+*.local.ini
+*.dev.ini
+appsettings.Development.json
+appsettings.Local.json
+
+## OS Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+## Backup files
+*.bak
+*.backup
+*~
+.DS_Store

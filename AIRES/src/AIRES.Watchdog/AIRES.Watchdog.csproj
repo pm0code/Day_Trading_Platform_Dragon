@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>x64</Platforms>
+    <RootNamespace>AIRES.Watchdog</RootNamespace>
+    <AssemblyName>AIRES.Watchdog</AssemblyName>
+    <Description>AIRES Watchdog for autonomous file monitoring and processing</Description>
+    
+    <!-- Windows 11 x64 specific -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <OSPlatformMinVersion>10.0.22000.0</OSPlatformMinVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AIRES.Foundation\AIRES.Foundation.csproj" />
+    <ProjectReference Include="..\AIRES.Core\AIRES.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- File watching -->
+    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>

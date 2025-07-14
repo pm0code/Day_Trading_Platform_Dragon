@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>x64</Platforms>
+    <RootNamespace>AIRES.CLI</RootNamespace>
+    <AssemblyName>aires</AssemblyName>
+    <Description>AIRES Command Line Interface</Description>
+    
+    <!-- Windows 11 x64 specific -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <OSPlatformMinVersion>10.0.22000.0</OSPlatformMinVersion>
+    
+    <!-- Publishing settings -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishTrimmed>false</PublishTrimmed>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AIRES.Foundation\AIRES.Foundation.csproj" />
+    <ProjectReference Include="..\AIRES.Core\AIRES.Core.csproj" />
+    <ProjectReference Include="..\AIRES.Watchdog\AIRES.Watchdog.csproj" />
+    <ProjectReference Include="..\AIRES.Infrastructure\AIRES.Infrastructure.csproj" />
+    <ProjectReference Include="..\AIRES.Application\AIRES.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- CLI Framework -->
+    <PackageReference Include="Spectre.Console" Version="0.49.1" />
+    <PackageReference Include="Spectre.Console.Cli" Version="0.49.1" />
+    
+    <!-- Dependency Injection -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
+    
+    <!-- Serilog Integration -->
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>

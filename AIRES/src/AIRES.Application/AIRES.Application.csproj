@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>x64</Platforms>
+    <RootNamespace>AIRES.Application</RootNamespace>
+    <AssemblyName>AIRES.Application</AssemblyName>
+    <Description>AIRES Application layer - Pipeline orchestration and use cases</Description>
+    
+    <!-- Windows 11 x64 specific -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <OSPlatformMinVersion>10.0.22000.0</OSPlatformMinVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AIRES.Foundation\AIRES.Foundation.csproj" />
+    <ProjectReference Include="..\AIRES.Core\AIRES.Core.csproj" />
+    <ProjectReference Include="..\AIRES.Infrastructure\AIRES.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- MediatR for CQRS -->
+    <PackageReference Include="MediatR" Version="12.4.1" />
+    
+    <!-- FluentValidation -->
+    <PackageReference Include="FluentValidation" Version="11.10.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.10.0" />
+  </ItemGroup>
+
+</Project>

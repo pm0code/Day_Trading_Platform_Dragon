@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>x64</Platforms>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>AIRES.Core.Tests</RootNamespace>
+    <AssemblyName>AIRES.Core.Tests</AssemblyName>
+    
+    <!-- Windows 11 x64 specific -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <OSPlatformMinVersion>10.0.22000.0</OSPlatformMinVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AIRES.Core\AIRES.Core.csproj" />
+  </ItemGroup>
+
+</Project>
