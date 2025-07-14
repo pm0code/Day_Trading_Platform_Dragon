@@ -20,7 +20,7 @@ public interface IAIResearchOrchestratorService
     /// <param name="projectStandards">List of project coding standards</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result containing the generated booklet or error details</returns>
-    Task<Result<BookletGenerationResponse>> GenerateResearchBookletAsync(
+    Task<AIRESResult<BookletGenerationResponse>> GenerateResearchBookletAsync(
         string rawCompilerOutput,
         string codeContext,
         string projectStructureXml,

@@ -1,0 +1,20 @@
+Microsoft (R) Build Engine version 17.8.3+195e7f5a3 for .NET
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  AIRES.Foundation -> /mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/bin/Debug/AIRES.Foundation.dll
+  AIRES.Core -> /mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/bin/Debug/AIRES.Core.dll
+  AIRES.Infrastructure -> /mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/bin/Debug/AIRES.Infrastructure.dll
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.Application/Services/ConcurrentAIResearchOrchestratorService.cs(44,29): error CS0246: The type or namespace name 'Result<>' could not be found (are you missing a using directive or an assembly reference?) [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.Application/AIRES.Application.csproj]
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.Application/Services/ConcurrentAIResearchOrchestratorService.cs(76,20): error CS0103: The name 'Result' does not exist in the current context [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.Application/AIRES.Application.csproj]
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.Application/Services/ConcurrentAIResearchOrchestratorService.cs(182,20): error CS0103: The name 'Result' does not exist in the current context [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.Application/AIRES.Application.csproj]
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.Application/Services/ConcurrentAIResearchOrchestratorService.cs(280,13): error CS1061: 'ConcurrentAIResearchOrchestratorService' does not contain a definition for '_alerting' and no accessible extension method '_alerting' accepting a first argument of type 'ConcurrentAIResearchOrchestratorService' could be found (are you missing a using directive or an assembly reference?) [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.Application/AIRES.Application.csproj]
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.Application/Services/ConcurrentAIResearchOrchestratorService.cs(311,13): error CS1061: 'ConcurrentAIResearchOrchestratorService' does not contain a definition for '_alerting' and no accessible extension method '_alerting' accepting a first argument of type 'ConcurrentAIResearchOrchestratorService' could be found (are you missing a using directive or an assembly reference?) [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.Application/AIRES.Application.csproj]
+
+Build FAILED.
+
+    0 Warning(s)
+    5 Error(s)
+
+Time Elapsed 00:00:04.23

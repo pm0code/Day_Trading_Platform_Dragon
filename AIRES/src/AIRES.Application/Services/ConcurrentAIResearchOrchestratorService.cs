@@ -21,6 +21,8 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
 {
     private readonly IMediator _mediator;
     private readonly BookletPersistenceService _persistenceService;
+    // TODO: Implement IAIRESAlertingService and uncomment
+    // private readonly IAIRESAlertingService _alerting;
     private readonly SemaphoreSlim _ollamaSemaphore;
     private readonly List<Exception> _errorAggregator = new();
 
@@ -32,6 +34,8 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
+        // TODO: Uncomment when IAIRESAlertingService is implemented
+        // _alerting = alerting ?? throw new ArgumentNullException(nameof(alerting));
         
         // Limit concurrent Ollama requests based on testing
         // Start with 3, can be adjusted based on Ollama's capacity
@@ -41,7 +45,7 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
     /// <summary>
     /// Orchestrates the complete AI research pipeline with concurrent execution using proper dependency management.
     /// </summary>
-    public async Task<Result<BookletGenerationResponse>> GenerateResearchBookletAsync(
+    public async Task<AIRESResult<BookletGenerationResponse>> GenerateResearchBookletAsync(
         string rawCompilerOutput,
         string codeContext,
         string projectStructureXml,
@@ -73,9 +77,9 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
             {
                 LogWarning("No compiler errors found. Nothing to analyze.");
                 LogMethodExit();
-                return Result<BookletGenerationResponse>.Failure(
-                    "No compiler errors found in the provided output",
-                    "NO_ERRORS_FOUND"
+                return AIRESResult<BookletGenerationResponse>.Failure(
+                    "NO_ERRORS_FOUND",
+                    "No compiler errors found in the provided output"
                 );
             }
 
@@ -162,9 +166,9 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
                 
                 LogError($"Pipeline failed at stages: {string.Join(", ", failedStages)}");
                 LogMethodExit();
-                return Result<BookletGenerationResponse>.Failure(
-                    $"Analysis pipeline failed at: {string.Join(", ", failedStages)}",
-                    "PIPELINE_STAGE_FAILURE"
+                return AIRESResult<BookletGenerationResponse>.Failure(
+                    "PIPELINE_STAGE_FAILURE",
+                    $"Analysis pipeline failed at: {string.Join(", ", failedStages)}"
                 );
             }
 
@@ -194,10 +198,22 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
             catch (Gemma2GenerationException ex)
             {
                 LogError("Gemma2 booklet generation failed", ex);
+                // TODO: Uncomment when IAIRESAlertingService is implemented
+                // await _alerting.RaiseAlertAsync(
+                //     AlertSeverity.Critical,
+                //     ServiceName,
+                //     $"Gemma2 booklet generation failed: {ex.Message}",
+                //     new Dictionary<string, object>
+                //     {
+                //         ["stage"] = "Gemma2",
+                //         ["errorCode"] = ex.ErrorCode ?? "GEMMA2_GENERATION_ERROR",
+                //         ["errorType"] = ex.GetType().Name
+                //     });
                 LogMethodExit();
-                return Result<BookletGenerationResponse>.Failure(
+                return AIRESResult<BookletGenerationResponse>.Failure(
+                    ex.ErrorCode ?? "GEMMA2_GENERATION_ERROR",
                     $"Booklet generation failed: {ex.Message}",
-                    ex.ErrorCode ?? "GEMMA2_GENERATION_ERROR"
+                    ex
                 );
             }
             
@@ -215,9 +231,9 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
             {
                 LogError($"Failed to save booklet: {saveResult.ErrorMessage}");
                 LogMethodExit();
-                return Result<BookletGenerationResponse>.Failure(
-                    $"Failed to save booklet: {saveResult.ErrorMessage}",
-                    saveResult.ErrorCode ?? "BOOKLET_SAVE_ERROR"
+                return AIRESResult<BookletGenerationResponse>.Failure(
+                    saveResult.ErrorCode ?? "BOOKLET_SAVE_ERROR",
+                    $"Failed to save booklet: {saveResult.ErrorMessage}"
                 );
             }
 
@@ -248,15 +264,26 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
             LogInfo($"Booklet saved to: {saveResult.Value}");
             
             LogMethodExit();
-            return Result<BookletGenerationResponse>.Success(totalResponse);
+            return AIRESResult<BookletGenerationResponse>.Success(totalResponse);
         }
         catch (Exception ex)
         {
             LogError("Unexpected error in CONCURRENT AI Research Pipeline", ex);
+            // TODO: Uncomment when IAIRESAlertingService is implemented
+            // await _alerting.RaiseAlertAsync(
+            //     AlertSeverity.Critical,
+            //     ServiceName,
+            //     $"Concurrent orchestration failed unexpectedly: {ex.Message}",
+            //     new Dictionary<string, object>
+            //     {
+            //         ["stage"] = "Orchestration",
+            //         ["errorType"] = ex.GetType().Name
+            //     });
             LogMethodExit();
-            return Result<BookletGenerationResponse>.Failure(
+            return AIRESResult<BookletGenerationResponse>.Failure(
+                "CONCURRENT_ORCHESTRATOR_ERROR",
                 $"An unexpected error occurred: {ex.Message}",
-                "CONCURRENT_ORCHESTRATOR_ERROR"
+                ex
             );
         }
         finally
@@ -296,6 +323,16 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
         catch (MistralAnalysisFailedException ex)
         {
             LogError("Mistral documentation analysis failed", ex);
+            // TODO: Uncomment when IAIRESAlertingService is implemented
+            // await _alerting.RaiseAlertAsync(
+            //     AlertSeverity.Warning,
+            //     ServiceName,
+            //     $"Mistral analysis failed: {ex.Message}",
+            //     new Dictionary<string, object>
+            //     {
+            //         ["stage"] = "Mistral",
+            //         ["errorType"] = ex.GetType().Name
+            //     });
             LogMethodExit();
             throw;
         }
@@ -338,6 +375,16 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
         catch (DeepSeekContextAnalysisException ex)
         {
             LogError("DeepSeek context analysis failed", ex);
+            // TODO: Uncomment when IAIRESAlertingService is implemented
+            // await _alerting.RaiseAlertAsync(
+            //     AlertSeverity.Warning,
+            //     ServiceName,
+            //     $"DeepSeek analysis failed: {ex.Message}",
+            //     new Dictionary<string, object>
+            //     {
+            //         ["stage"] = "DeepSeek",
+            //         ["errorType"] = ex.GetType().Name
+            //     });
             LogMethodExit();
             throw;
         }
@@ -380,6 +427,16 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
         catch (CodeGemmaValidationException ex)
         {
             LogError("CodeGemma pattern validation failed", ex);
+            // TODO: Uncomment when IAIRESAlertingService is implemented
+            // await _alerting.RaiseAlertAsync(
+            //     AlertSeverity.Warning,
+            //     ServiceName,
+            //     $"CodeGemma validation failed: {ex.Message}",
+            //     new Dictionary<string, object>
+            //     {
+            //         ["stage"] = "CodeGemma",
+            //         ["errorType"] = ex.GetType().Name
+            //     });
             LogMethodExit();
             throw;
         }
@@ -478,6 +535,16 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
         catch (Exception ex)
         {
             LogError("Failed to get pipeline status", ex);
+            // TODO: Uncomment when IAIRESAlertingService is implemented
+            // await _alerting.RaiseAlertAsync(
+            //     AlertSeverity.Information,
+            //     ServiceName,
+            //     $"Pipeline status check failed: {ex.Message}",
+            //     new Dictionary<string, object>
+            //     {
+            //         ["operation"] = "GetPipelineStatus",
+            //         ["errorType"] = ex.GetType().Name
+            //     });
             LogMethodExit();
             return AIRESResult<Dictionary<string, bool>>.Failure(
                 "PIPELINE_STATUS_ERROR",
