@@ -33,7 +33,7 @@ public class ParallelAIResearchOrchestratorService : AIRESServiceBase, IAIResear
     /// <summary>
     /// Orchestrates the complete AI research pipeline with parallel execution where possible.
     /// </summary>
-    public async Task<Result<BookletGenerationResponse>> GenerateResearchBookletAsync(
+    public async Task<AIRESResult<BookletGenerationResponse>> GenerateResearchBookletAsync(
         string rawCompilerOutput,
         string codeContext,
         string projectStructureXml,
@@ -64,9 +64,9 @@ public class ParallelAIResearchOrchestratorService : AIRESServiceBase, IAIResear
             {
                 LogWarning("No compiler errors found. Nothing to analyze.");
                 LogMethodExit();
-                return Result<BookletGenerationResponse>.Failure(
-                    "No compiler errors found in the provided output",
-                    "NO_ERRORS_FOUND"
+                return AIRESResult<BookletGenerationResponse>.Failure(
+                    "NO_ERRORS_FOUND",
+                    "No compiler errors found in the provided output"
                 );
             }
 
@@ -116,9 +116,10 @@ public class ParallelAIResearchOrchestratorService : AIRESServiceBase, IAIResear
             {
                 LogError("Gemma2 booklet generation failed", ex);
                 LogMethodExit();
-                return Result<BookletGenerationResponse>.Failure(
+                return AIRESResult<BookletGenerationResponse>.Failure(
+                    ex.ErrorCode ?? "GEMMA2_GENERATION_ERROR",
                     $"Booklet generation failed: {ex.Message}",
-                    ex.ErrorCode ?? "GEMMA2_GENERATION_ERROR"
+                    ex
                 );
             }
             
@@ -135,9 +136,9 @@ public class ParallelAIResearchOrchestratorService : AIRESServiceBase, IAIResear
             {
                 LogError($"Failed to save booklet: {saveResult.ErrorMessage}");
                 LogMethodExit();
-                return Result<BookletGenerationResponse>.Failure(
-                    $"Failed to save booklet: {saveResult.ErrorMessage}",
-                    saveResult.ErrorCode ?? "BOOKLET_SAVE_ERROR"
+                return AIRESResult<BookletGenerationResponse>.Failure(
+                    saveResult.ErrorCode ?? "BOOKLET_SAVE_ERROR",
+                    $"Failed to save booklet: {saveResult.ErrorMessage}"
                 );
             }
             
@@ -155,15 +156,16 @@ public class ParallelAIResearchOrchestratorService : AIRESServiceBase, IAIResear
             LogInfo($"Booklet saved to: {saveResult.Value}");
             
             LogMethodExit();
-            return Result<BookletGenerationResponse>.Success(totalResponse);
+            return AIRESResult<BookletGenerationResponse>.Success(totalResponse);
         }
         catch (Exception ex)
         {
             LogError("Unexpected error in PARALLEL AI Research Pipeline", ex);
             LogMethodExit();
-            return Result<BookletGenerationResponse>.Failure(
+            return AIRESResult<BookletGenerationResponse>.Failure(
+                "PARALLEL_ORCHESTRATOR_ERROR",
                 $"An unexpected error occurred: {ex.Message}",
-                "PARALLEL_ORCHESTRATOR_ERROR"
+                ex
             );
         }
     }

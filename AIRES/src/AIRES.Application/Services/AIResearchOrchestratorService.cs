@@ -32,7 +32,7 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
     /// <summary>
     /// Orchestrates the complete AI research pipeline for compiler error resolution.
     /// </summary>
-    public async Task<Result<BookletGenerationResponse>> GenerateResearchBookletAsync(
+    public async Task<AIRESResult<BookletGenerationResponse>> GenerateResearchBookletAsync(
         string rawCompilerOutput,
         string codeContext,
         string projectStructureXml,
@@ -63,9 +63,9 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
             {
                 LogWarning("No compiler errors found. Nothing to analyze.");
                 LogMethodExit();
-                return Result<BookletGenerationResponse>.Failure(
-                    "No compiler errors found in the provided output",
-                    "NO_ERRORS_FOUND"
+                return AIRESResult<BookletGenerationResponse>.Failure(
+                    "NO_ERRORS_FOUND",
+                    "No compiler errors found in the provided output"
                 );
             }
 
@@ -84,9 +84,10 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
             {
                 LogError("Mistral documentation analysis failed", ex);
                 LogMethodExit();
-                return Result<BookletGenerationResponse>.Failure(
+                return AIRESResult<BookletGenerationResponse>.Failure(
+                    ex.ErrorCode ?? "MISTRAL_ANALYSIS_ERROR",
                     $"Documentation analysis failed: {ex.Message}",
-                    ex.ErrorCode ?? "MISTRAL_ANALYSIS_ERROR"
+                    ex
                 );
             }
             
@@ -112,9 +113,10 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
             {
                 LogError("DeepSeek context analysis failed", ex);
                 LogMethodExit();
-                return Result<BookletGenerationResponse>.Failure(
+                return AIRESResult<BookletGenerationResponse>.Failure(
+                    ex.ErrorCode ?? "DEEPSEEK_CONTEXT_ERROR",
                     $"Context analysis failed: {ex.Message}",
-                    ex.ErrorCode ?? "DEEPSEEK_CONTEXT_ERROR"
+                    ex
                 );
             }
             
@@ -140,9 +142,10 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
             {
                 LogError("CodeGemma pattern validation failed", ex);
                 LogMethodExit();
-                return Result<BookletGenerationResponse>.Failure(
+                return AIRESResult<BookletGenerationResponse>.Failure(
+                    ex.ErrorCode ?? "CODEGEMMA_VALIDATION_ERROR",
                     $"Pattern validation failed: {ex.Message}",
-                    ex.ErrorCode ?? "CODEGEMMA_VALIDATION_ERROR"
+                    ex
                 );
             }
             
@@ -175,9 +178,10 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
             {
                 LogError("Gemma2 booklet generation failed", ex);
                 LogMethodExit();
-                return Result<BookletGenerationResponse>.Failure(
+                return AIRESResult<BookletGenerationResponse>.Failure(
+                    ex.ErrorCode ?? "GEMMA2_GENERATION_ERROR",
                     $"Booklet generation failed: {ex.Message}",
-                    ex.ErrorCode ?? "GEMMA2_GENERATION_ERROR"
+                    ex
                 );
             }
             
@@ -194,9 +198,9 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
             {
                 LogError($"Failed to save booklet: {saveResult.ErrorMessage}");
                 LogMethodExit();
-                return Result<BookletGenerationResponse>.Failure(
-                    $"Failed to save booklet: {saveResult.ErrorMessage}",
-                    saveResult.ErrorCode ?? "BOOKLET_SAVE_ERROR"
+                return AIRESResult<BookletGenerationResponse>.Failure(
+                    saveResult.ErrorCode ?? "BOOKLET_SAVE_ERROR",
+                    $"Failed to save booklet: {saveResult.ErrorMessage}"
                 );
             }
             
@@ -213,15 +217,16 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
             LogInfo($"Booklet saved to: {saveResult.Value}");
             
             LogMethodExit();
-            return Result<BookletGenerationResponse>.Success(totalResponse);
+            return AIRESResult<BookletGenerationResponse>.Success(totalResponse);
         }
         catch (Exception ex)
         {
             LogError("Unexpected error in AI Research Pipeline", ex);
             LogMethodExit();
-            return Result<BookletGenerationResponse>.Failure(
+            return AIRESResult<BookletGenerationResponse>.Failure(
+                "ORCHESTRATOR_UNEXPECTED_ERROR",
                 $"An unexpected error occurred: {ex.Message}",
-                "ORCHESTRATOR_UNEXPECTED_ERROR"
+                ex
             );
         }
     }

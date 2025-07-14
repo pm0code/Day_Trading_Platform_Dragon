@@ -1,3 +1,4 @@
+using AIRES.Foundation.Alerting;
 using AIRES.Foundation.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -20,6 +21,9 @@ public static class ServiceCollectionExtensions
             var serilogLogger = provider.GetRequiredService<ILogger>();
             return new SerilogAIRESLogger(serilogLogger);
         });
+        
+        // Register IAIRESAlertingService
+        services.AddSingleton<IAIRESAlertingService, ConsoleAlertingService>();
         
         return services;
     }
