@@ -23,9 +23,10 @@ public static class ServiceCollectionExtensions
         // Register FluentValidation
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         
-        // Register both Orchestrator Services
+        // Register all Orchestrator Services
         services.AddScoped<AIResearchOrchestratorService>();
         services.AddScoped<ParallelAIResearchOrchestratorService>();
+        services.AddScoped<ConcurrentAIResearchOrchestratorService>();
         
         // Register default as sequential (for backward compatibility)
         services.AddScoped<IAIResearchOrchestratorService>(provider => provider.GetRequiredService<AIResearchOrchestratorService>());

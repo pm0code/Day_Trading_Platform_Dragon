@@ -19,7 +19,8 @@ public class OrchestratorFactory : IOrchestratorFactory
     {
         if (useParallel)
         {
-            return _serviceProvider.GetRequiredService<ParallelAIResearchOrchestratorService>();
+            // Use the properly designed concurrent orchestrator instead of the naive parallel one
+            return _serviceProvider.GetRequiredService<ConcurrentAIResearchOrchestratorService>();
         }
         else
         {

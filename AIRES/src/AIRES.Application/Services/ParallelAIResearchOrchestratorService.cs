@@ -8,7 +8,6 @@ using AIRES.Foundation.Logging;
 using AIRES.Foundation.Results;
 using System.Diagnostics;
 using System.Collections.Immutable;
-using AIRES.Core.Domain.Entities;
 
 namespace AIRES.Application.Services;
 
@@ -81,22 +80,19 @@ public class ParallelAIResearchOrchestratorService : AIRESServiceBase, IAIResear
             var codeGemmaTask = RunCodeGemmaValidationAsync(parseResult, projectStandards, cancellationToken);
 
             // Wait for all three to complete
-            var parallelResults = await Task.WhenAll(mistralTask, deepSeekTask, codeGemmaTask);
+            await Task.WhenAll(mistralTask, deepSeekTask, codeGemmaTask);
             
-            var docAnalysis = parallelResults[0];
-            var contextAnalysis = parallelResults[1];
-            var patternValidation = parallelResults[2];
+            var docAnalysis = await mistralTask;
+            var contextAnalysis = await deepSeekTask;
+            var patternValidation = await codeGemmaTask;
 
             var parallelTime = parallelStopwatch.ElapsedMilliseconds;
             LogInfo($"Parallel analysis completed in {parallelTime}ms");
             
             // Record individual timings (these ran in parallel, so they overlap)
-            stepTimings["MistralAnalysis"] = mistralTask.Result != null ? 
-                GetTaskTiming("MistralAnalysis") : 0;
-            stepTimings["DeepSeekAnalysis"] = deepSeekTask.Result != null ? 
-                GetTaskTiming("DeepSeekAnalysis") : 0;
-            stepTimings["CodeGemmaValidation"] = codeGemmaTask.Result != null ? 
-                GetTaskTiming("CodeGemmaValidation") : 0;
+            stepTimings["MistralAnalysis"] = GetTaskTiming("MistralAnalysis");
+            stepTimings["DeepSeekAnalysis"] = GetTaskTiming("DeepSeekAnalysis");
+            stepTimings["CodeGemmaValidation"] = GetTaskTiming("CodeGemmaValidation");
             stepTimings["ParallelExecutionTime"] = parallelTime;
 
             // Step 5: Gemma2 Booklet Generation (Sequential - depends on all previous results)
