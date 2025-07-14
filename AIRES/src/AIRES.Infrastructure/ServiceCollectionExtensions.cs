@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using AIRES.Core.Configuration;
 using AIRES.Core.Domain.Interfaces;
 using AIRES.Infrastructure.AI.Clients;
 using AIRES.Infrastructure.AI.Services;
@@ -21,8 +22,7 @@ public static class ServiceCollectionExtensions
     {
         // Register configuration services
         services.AddSingleton<AIRESConfigurationService>();
-        services.AddSingleton<AIRESConfigurationProvider>();
-        services.AddSingleton<IAIRESConfigurationProvider>(provider => provider.GetRequiredService<AIRESConfigurationProvider>());
+        services.AddSingleton<IAIRESConfiguration>(provider => provider.GetRequiredService<AIRESConfigurationService>());
         
         // Register Ollama HTTP client
         services.AddHttpClient<IOllamaClient, OllamaClient>()

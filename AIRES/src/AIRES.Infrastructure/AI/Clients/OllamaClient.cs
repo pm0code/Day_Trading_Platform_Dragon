@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using AIRES.Core.Configuration;
 using AIRES.Foundation.Canonical;
 using AIRES.Foundation.Logging;
 using AIRES.Foundation.Results;
@@ -19,14 +20,14 @@ namespace AIRES.Infrastructure.AI.Clients;
 public class OllamaClient : AIRESServiceBase, IOllamaClient
 {
     private readonly HttpClient _httpClient;
-    private readonly IConfiguration _configuration;
+    private readonly IAIRESConfiguration _configuration;
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy;
 
     public OllamaClient(
         IAIRESLogger logger,
         HttpClient httpClient,
-        IConfiguration configuration)
+        IAIRESConfiguration configuration)
         : base(logger, nameof(OllamaClient))
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
@@ -40,7 +41,7 @@ public class OllamaClient : AIRESServiceBase, IOllamaClient
         };
         
         // Configure base URL from configuration
-        var baseUrl = _configuration["AI_Services:OllamaBaseUrl"] ?? _configuration["Ollama:BaseUrl"] ?? "http://localhost:11434";
+        var baseUrl = _configuration.AIServices.OllamaBaseUrl;
         _httpClient.BaseAddress = new Uri(baseUrl);
         LogInfo($"Configured Ollama base URL: {baseUrl}");
         
@@ -52,8 +53,8 @@ public class OllamaClient : AIRESServiceBase, IOllamaClient
             .Or<TaskCanceledException>()
             .Or<TimeoutRejectedException>()
             .WaitAndRetryAsync(
-                3,
-                retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                _configuration.Pipeline.MaxRetries,
+                retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt) * _configuration.Pipeline.RetryDelay),
                 onRetry: (outcome, timespan, retryCount, context) =>
                 {
                     var message = outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString() ?? "Unknown error";
