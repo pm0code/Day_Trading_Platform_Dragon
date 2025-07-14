@@ -19,9 +19,9 @@ public class HealthEndpointChannel : AIRESServiceBase, IAlertChannel
         : base(logger, nameof(HealthEndpointChannel))
     {
         var channelConfig = configuration.GetSection("Alerting:Channels:HealthEndpoint");
-        IsEnabled = channelConfig.GetValue("Enabled", false); // Disabled by default
+        IsEnabled = bool.Parse(channelConfig["Enabled"] ?? "false"); // Disabled by default
         MinimumSeverity = Enum.Parse<AlertSeverity>(
-            channelConfig.GetValue("MinimumSeverity", "Information")!);
+            channelConfig["MinimumSeverity"] ?? "Information");
     }
     
     public Task SendAlertAsync(AlertMessage alert, CancellationToken cancellationToken = default)

@@ -22,8 +22,8 @@ public class SimpleAlertThrottler : IAlertThrottler, IDisposable
     public SimpleAlertThrottler(IConfiguration configuration)
     {
         var throttleConfig = configuration.GetSection("Alerting:Throttling");
-        _sameAlertIntervalSeconds = throttleConfig.GetValue("SameAlertIntervalSeconds", 60);
-        _maxAlertsPerMinute = throttleConfig.GetValue("MaxAlertsPerMinute", 10);
+        _sameAlertIntervalSeconds = int.Parse(throttleConfig["SameAlertIntervalSeconds"] ?? "60");
+        _maxAlertsPerMinute = int.Parse(throttleConfig["MaxAlertsPerMinute"] ?? "10");
     }
     
     public bool ShouldThrottle(string alertKey, AlertSeverity severity)

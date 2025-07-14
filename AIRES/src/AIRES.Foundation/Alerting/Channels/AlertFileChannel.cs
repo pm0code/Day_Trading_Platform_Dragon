@@ -19,9 +19,9 @@ public class AlertFileChannel : AIRESServiceBase, IAlertChannel
         : base(logger, nameof(AlertFileChannel))
     {
         var channelConfig = configuration.GetSection("Alerting:Channels:AlertFile");
-        IsEnabled = channelConfig.GetValue("Enabled", true);
+        IsEnabled = bool.Parse(channelConfig["Enabled"] ?? "true");
         MinimumSeverity = Enum.Parse<AlertSeverity>(
-            channelConfig.GetValue("MinimumSeverity", "Warning")!);
+            channelConfig["MinimumSeverity"] ?? "Warning");
     }
     
     public Task SendAlertAsync(AlertMessage alert, CancellationToken cancellationToken = default)

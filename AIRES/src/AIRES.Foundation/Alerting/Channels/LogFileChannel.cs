@@ -19,9 +19,9 @@ public class LogFileChannel : AIRESServiceBase, IAlertChannel
         : base(logger, nameof(LogFileChannel))
     {
         var channelConfig = configuration.GetSection("Alerting:Channels:LogFile");
-        IsEnabled = channelConfig.GetValue("Enabled", true);
+        IsEnabled = bool.Parse(channelConfig["Enabled"] ?? "true");
         MinimumSeverity = Enum.Parse<AlertSeverity>(
-            channelConfig.GetValue("MinimumSeverity", "Information")!);
+            channelConfig["MinimumSeverity"] ?? "Information");
     }
     
     public Task SendAlertAsync(AlertMessage alert, CancellationToken cancellationToken = default)

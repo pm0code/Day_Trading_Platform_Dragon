@@ -51,7 +51,7 @@ public class AlertChannelFactory : IAlertChannelFactory
         foreach (AlertChannelType channelType in Enum.GetValues<AlertChannelType>())
         {
             var channelConfig = alertingConfig.GetSection(channelType.ToString());
-            var isEnabled = channelConfig.GetValue("Enabled", false);
+            var isEnabled = bool.Parse(channelConfig["Enabled"] ?? "false");
             
             if (isEnabled)
             {

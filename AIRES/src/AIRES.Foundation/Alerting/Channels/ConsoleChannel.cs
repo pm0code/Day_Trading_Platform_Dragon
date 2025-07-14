@@ -11,8 +11,6 @@ namespace AIRES.Foundation.Alerting.Channels;
 /// </summary>
 public class ConsoleChannel : AIRESServiceBase, IAlertChannel
 {
-    private readonly bool _isEnabled;
-    private readonly AlertSeverity _minimumSeverity;
     // Static members first per SA1204
     private static readonly Dictionary<AlertSeverity, ConsoleColor> SeverityColors = new()
     {
@@ -22,6 +20,8 @@ public class ConsoleChannel : AIRESServiceBase, IAlertChannel
         [AlertSeverity.Critical] = ConsoleColor.DarkRed
     };
     
+    private readonly bool _isEnabled;
+    private readonly AlertSeverity _minimumSeverity;
     private readonly ConcurrentDictionary<AlertSeverity, long> _metricCounts = new();
     private readonly object _consoleLock = new();
     
@@ -34,9 +34,9 @@ public class ConsoleChannel : AIRESServiceBase, IAlertChannel
         : base(logger, nameof(ConsoleChannel))
     {
         var channelConfig = configuration.GetSection("Alerting:Channels:Console");
-        _isEnabled = channelConfig.GetValue("Enabled", true);
+        _isEnabled = bool.Parse(channelConfig["Enabled"] ?? "true");
         _minimumSeverity = Enum.Parse<AlertSeverity>(
-            channelConfig.GetValue("MinimumSeverity", "Information")!);
+            channelConfig["MinimumSeverity"] ?? "Information");
             
         LogInfo($"Console channel initialized. Enabled: {_isEnabled}, MinSeverity: {_minimumSeverity}");
     }

@@ -19,9 +19,9 @@ public class WindowsEventLogChannel : AIRESServiceBase, IAlertChannel
         : base(logger, nameof(WindowsEventLogChannel))
     {
         var channelConfig = configuration.GetSection("Alerting:Channels:WindowsEventLog");
-        IsEnabled = channelConfig.GetValue("Enabled", false); // Disabled by default
+        IsEnabled = bool.Parse(channelConfig["Enabled"] ?? "false"); // Disabled by default
         MinimumSeverity = Enum.Parse<AlertSeverity>(
-            channelConfig.GetValue("MinimumSeverity", "Error")!);
+            channelConfig["MinimumSeverity"] ?? "Error");
     }
     
     public Task SendAlertAsync(AlertMessage alert, CancellationToken cancellationToken = default)

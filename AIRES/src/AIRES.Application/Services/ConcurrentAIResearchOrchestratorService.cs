@@ -6,6 +6,7 @@ using AIRES.Core.Domain.ValueObjects;
 using AIRES.Foundation.Canonical;
 using AIRES.Foundation.Logging;
 using AIRES.Foundation.Results;
+using AIRES.Foundation.Alerting;
 using System.Diagnostics;
 using System.Collections.Immutable;
 using System.Threading.Channels;
@@ -21,21 +22,20 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
 {
     private readonly IMediator _mediator;
     private readonly BookletPersistenceService _persistenceService;
-    // TODO: Implement IAIRESAlertingService and uncomment
-    // private readonly IAIRESAlertingService _alerting;
+    private readonly IAIRESAlertingService _alerting;
     private readonly SemaphoreSlim _ollamaSemaphore;
     private readonly List<Exception> _errorAggregator = new();
 
     public ConcurrentAIResearchOrchestratorService(
         IAIRESLogger logger,
         IMediator mediator,
-        BookletPersistenceService persistenceService) 
+        BookletPersistenceService persistenceService,
+        IAIRESAlertingService alerting) 
         : base(logger, nameof(ConcurrentAIResearchOrchestratorService))
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
-        // TODO: Uncomment when IAIRESAlertingService is implemented
-        // _alerting = alerting ?? throw new ArgumentNullException(nameof(alerting));
+        _alerting = alerting ?? throw new ArgumentNullException(nameof(alerting));
         
         // Limit concurrent Ollama requests based on testing
         // Start with 3, can be adjusted based on Ollama's capacity
@@ -198,17 +198,16 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
             catch (Gemma2GenerationException ex)
             {
                 LogError("Gemma2 booklet generation failed", ex);
-                // TODO: Uncomment when IAIRESAlertingService is implemented
-                // await _alerting.RaiseAlertAsync(
-                //     AlertSeverity.Critical,
-                //     ServiceName,
-                //     $"Gemma2 booklet generation failed: {ex.Message}",
-                //     new Dictionary<string, object>
-                //     {
-                //         ["stage"] = "Gemma2",
-                //         ["errorCode"] = ex.ErrorCode ?? "GEMMA2_GENERATION_ERROR",
-                //         ["errorType"] = ex.GetType().Name
-                //     });
+                await _alerting.RaiseAlertAsync(
+                    AlertSeverity.Critical,
+                    ServiceName,
+                    $"Gemma2 booklet generation failed: {ex.Message}",
+                    new Dictionary<string, object>
+                    {
+                        ["stage"] = "Gemma2",
+                        ["errorCode"] = ex.ErrorCode ?? "GEMMA2_GENERATION_ERROR",
+                        ["errorType"] = ex.GetType().Name
+                    });
                 LogMethodExit();
                 return AIRESResult<BookletGenerationResponse>.Failure(
                     ex.ErrorCode ?? "GEMMA2_GENERATION_ERROR",
@@ -269,16 +268,15 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
         catch (Exception ex)
         {
             LogError("Unexpected error in CONCURRENT AI Research Pipeline", ex);
-            // TODO: Uncomment when IAIRESAlertingService is implemented
-            // await _alerting.RaiseAlertAsync(
-            //     AlertSeverity.Critical,
-            //     ServiceName,
-            //     $"Concurrent orchestration failed unexpectedly: {ex.Message}",
-            //     new Dictionary<string, object>
-            //     {
-            //         ["stage"] = "Orchestration",
-            //         ["errorType"] = ex.GetType().Name
-            //     });
+            await _alerting.RaiseAlertAsync(
+                AlertSeverity.Critical,
+                ServiceName,
+                $"Concurrent orchestration failed unexpectedly: {ex.Message}",
+                new Dictionary<string, object>
+                {
+                    ["stage"] = "Orchestration",
+                    ["errorType"] = ex.GetType().Name
+                });
             LogMethodExit();
             return AIRESResult<BookletGenerationResponse>.Failure(
                 "CONCURRENT_ORCHESTRATOR_ERROR",
@@ -323,16 +321,15 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
         catch (MistralAnalysisFailedException ex)
         {
             LogError("Mistral documentation analysis failed", ex);
-            // TODO: Uncomment when IAIRESAlertingService is implemented
-            // await _alerting.RaiseAlertAsync(
-            //     AlertSeverity.Warning,
-            //     ServiceName,
-            //     $"Mistral analysis failed: {ex.Message}",
-            //     new Dictionary<string, object>
-            //     {
-            //         ["stage"] = "Mistral",
-            //         ["errorType"] = ex.GetType().Name
-            //     });
+            await _alerting.RaiseAlertAsync(
+                AlertSeverity.Warning,
+                ServiceName,
+                $"Mistral analysis failed: {ex.Message}",
+                new Dictionary<string, object>
+                {
+                    ["stage"] = "Mistral",
+                    ["errorType"] = ex.GetType().Name
+                });
             LogMethodExit();
             throw;
         }
@@ -375,16 +372,15 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
         catch (DeepSeekContextAnalysisException ex)
         {
             LogError("DeepSeek context analysis failed", ex);
-            // TODO: Uncomment when IAIRESAlertingService is implemented
-            // await _alerting.RaiseAlertAsync(
-            //     AlertSeverity.Warning,
-            //     ServiceName,
-            //     $"DeepSeek analysis failed: {ex.Message}",
-            //     new Dictionary<string, object>
-            //     {
-            //         ["stage"] = "DeepSeek",
-            //         ["errorType"] = ex.GetType().Name
-            //     });
+            await _alerting.RaiseAlertAsync(
+                AlertSeverity.Warning,
+                ServiceName,
+                $"DeepSeek analysis failed: {ex.Message}",
+                new Dictionary<string, object>
+                {
+                    ["stage"] = "DeepSeek",
+                    ["errorType"] = ex.GetType().Name
+                });
             LogMethodExit();
             throw;
         }
@@ -427,16 +423,15 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
         catch (CodeGemmaValidationException ex)
         {
             LogError("CodeGemma pattern validation failed", ex);
-            // TODO: Uncomment when IAIRESAlertingService is implemented
-            // await _alerting.RaiseAlertAsync(
-            //     AlertSeverity.Warning,
-            //     ServiceName,
-            //     $"CodeGemma validation failed: {ex.Message}",
-            //     new Dictionary<string, object>
-            //     {
-            //         ["stage"] = "CodeGemma",
-            //         ["errorType"] = ex.GetType().Name
-            //     });
+            await _alerting.RaiseAlertAsync(
+                AlertSeverity.Warning,
+                ServiceName,
+                $"CodeGemma validation failed: {ex.Message}",
+                new Dictionary<string, object>
+                {
+                    ["stage"] = "CodeGemma",
+                    ["errorType"] = ex.GetType().Name
+                });
             LogMethodExit();
             throw;
         }
@@ -535,16 +530,15 @@ public class ConcurrentAIResearchOrchestratorService : AIRESServiceBase, IAIRese
         catch (Exception ex)
         {
             LogError("Failed to get pipeline status", ex);
-            // TODO: Uncomment when IAIRESAlertingService is implemented
-            // await _alerting.RaiseAlertAsync(
-            //     AlertSeverity.Information,
-            //     ServiceName,
-            //     $"Pipeline status check failed: {ex.Message}",
-            //     new Dictionary<string, object>
-            //     {
-            //         ["operation"] = "GetPipelineStatus",
-            //         ["errorType"] = ex.GetType().Name
-            //     });
+            await _alerting.RaiseAlertAsync(
+                AlertSeverity.Information,
+                ServiceName,
+                $"Pipeline status check failed: {ex.Message}",
+                new Dictionary<string, object>
+                {
+                    ["operation"] = "GetPipelineStatus",
+                    ["errorType"] = ex.GetType().Name
+                });
             LogMethodExit();
             return AIRESResult<Dictionary<string, bool>>.Failure(
                 "PIPELINE_STATUS_ERROR",

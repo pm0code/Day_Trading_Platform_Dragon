@@ -6,7 +6,7 @@ namespace AIRES.Foundation.Alerting;
 /// In-memory alert persistence for development and testing.
 /// TODO: Replace with LiteDB implementation for production.
 /// </summary>
-public class InMemoryAlertPersistence : IAlertPersistence
+public class InMemoryAlertPersistence : IAlertPersistence, IDisposable
 {
     private readonly ConcurrentDictionary<Guid, AlertRecord> _alerts = new();
     private readonly SemaphoreSlim _semaphore = new(1, 1);
@@ -110,5 +110,11 @@ public class InMemoryAlertPersistence : IAlertPersistence
         {
             _semaphore.Release();
         }
+    }
+    
+    public void Dispose()
+    {
+        _semaphore?.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
