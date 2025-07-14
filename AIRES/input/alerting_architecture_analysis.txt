@@ -1,0 +1,49 @@
+AIRES Alerting Service Architecture Analysis Request
+====================================================
+
+CONTEXT:
+We need to implement IAIRESAlertingService with proper architectural design validation.
+
+CURRENT IMPLEMENTATION:
+- Basic ConsoleAlertingService with 3 of 5 channels
+- Missing: Windows Event Log, Health Endpoint
+- No proper channel abstraction
+- No throttling mechanism
+- No alert persistence
+
+REQUIREMENTS FROM DOCUMENTATION:
+1. 5 Alert Channels: Console, Log Files, Alert Files, Windows Event Log, Health Endpoint
+2. Alert Severity Levels: Critical, Warning, Info, Debug
+3. Alert Throttling: 1 per minute same type, 10 per minute total
+4. Alert Persistence with AlertRecord entity
+5. Health Check functionality
+6. Integration with AIRESServiceBase
+7. Thread-safe for concurrent operations
+
+GEMINI ARCHITECTURAL GUIDANCE:
+- Use abstract factory and strategy pattern for channels
+- Implement proper channel abstraction (IAlertChannel)
+- Use dependency injection for all components
+- Externalize configuration to appsettings.json
+- Implement async operations for non-critical alerts
+- Use proper locking mechanisms for thread safety
+- Implement retry and circuit breaker patterns
+- Use descriptive Windows Event Log entries
+- Implement standardized health endpoint format
+
+ANALYSIS NEEDED:
+1. How to properly implement channel abstraction pattern
+2. Best approach for alert throttling mechanism
+3. Thread-safety implementation for concurrent alerts
+4. Windows Event Log integration patterns
+5. Health endpoint implementation approach
+6. Alert persistence strategy
+7. Configuration externalization approach
+8. Integration with existing AIRES patterns
+
+SPECIFIC QUESTIONS:
+1. Should we use Channel Factory pattern or Strategy pattern for multi-channel support?
+2. How to implement throttling without blocking critical alerts?
+3. What's the best way to integrate with Windows Event Log in .NET 8?
+4. Should health endpoint be part of alerting service or separate?
+5. How to ensure thread-safety with minimal performance impact?

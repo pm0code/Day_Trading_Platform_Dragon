@@ -1,0 +1,23 @@
+Build started at 1:05:52 AM...
+Determining projects to restore...
+Restored /mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.Foundation/AIRES.Foundation.csproj (in 245 ms).
+1>------ Build started: Project: AIRES.Foundation, Configuration: Debug Any CPU ------
+1>ConsoleAlertingService.cs(142,5): error CS0103: The name 'IAlertChannel' does not exist in the current context
+1>ConsoleAlertingService.cs(143,5): error CS0103: The name 'IAlertChannelFactory' does not exist in the current context
+1>ConsoleAlertingService.cs(145,20): error CS0246: The type or namespace name 'ConcurrentDictionary<,>' could not be found (are you missing a using directive or an assembly reference?)
+1>ConsoleAlertingService.cs(146,20): error CS0246: The type or namespace name 'IAlertThrottler' could not be found (are you missing a using directive or an assembly reference?)
+1>ConsoleAlertingService.cs(147,20): error CS0246: The type or namespace name 'IAlertPersistence' could not be found (are you missing a using directive or an assembly reference?)
+1>ConsoleAlertingService.cs(185,30): error CS0246: The type or namespace name 'AlertChannel' could not be found (are you missing a using directive or an assembly reference?)
+1>ConsoleAlertingService.cs(186,30): error CS0246: The type or namespace name 'LogFileAlertChannel' could not be found (are you missing a using directive or an assembly reference?)
+1>ConsoleAlertingService.cs(187,30): error CS0246: The type or namespace name 'FileAlertChannel' could not be found (are you missing a using directive or an assembly reference?)
+1>ConsoleAlertingService.cs(188,30): error CS0246: The type or namespace name 'WindowsEventLogAlertChannel' could not be found (are you missing a using directive or an assembly reference?)
+1>ConsoleAlertingService.cs(189,30): error CS0246: The type or namespace name 'HealthEndpointAlertChannel' could not be found (are you missing a using directive or an assembly reference?)
+1>ConsoleAlertingService.cs(212,5): warning CS0162: Unreachable code detected
+1>ConsoleAlertingService.cs(245,20): error CS0103: The name '_throttler' does not exist in the current context
+1>ConsoleAlertingService.cs(246,20): error CS0103: The name 'ShouldThrottle' does not exist in the current context
+1>ConsoleAlertingService.cs(265,20): error CS0103: The name '_alertPersistence' does not exist in the current context
+1>ConsoleAlertingService.cs(266,20): error CS0103: The name 'SaveAlertAsync' does not exist in the current context
+1>ConsoleAlertingService.cs(285,20): error CS0103: The name '_channels' does not exist in the current context
+1>ConsoleAlertingService.cs(286,20): error CS0103: The name 'SendAlertAsync' does not exist in the current context
+1>Done building project "AIRES.Foundation.csproj" -- FAILED.
+========== Build: 0 succeeded, 1 failed, 0 up-to-date, 0 skipped ==========

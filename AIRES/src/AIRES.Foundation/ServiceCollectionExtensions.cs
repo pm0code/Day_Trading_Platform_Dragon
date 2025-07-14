@@ -22,8 +22,11 @@ public static class ServiceCollectionExtensions
             return new SerilogAIRESLogger(serilogLogger);
         });
         
-        // Register IAIRESAlertingService
-        services.AddSingleton<IAIRESAlertingService, ConsoleAlertingService>();
+        // Register alerting components
+        services.AddSingleton<IAlertChannelFactory, AlertChannelFactory>();
+        services.AddSingleton<IAlertThrottler, SimpleAlertThrottler>();
+        services.AddSingleton<IAlertPersistence, InMemoryAlertPersistence>();
+        services.AddSingleton<IAIRESAlertingService, AIRESAlertingService>();
         
         return services;
     }
