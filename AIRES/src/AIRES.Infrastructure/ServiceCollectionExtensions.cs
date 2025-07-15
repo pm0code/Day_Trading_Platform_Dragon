@@ -1,7 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Http;
 using AIRES.Core.Configuration;
 using AIRES.Core.Domain.Interfaces;
+using AIRES.Foundation.Logging;
+using AIRES.Infrastructure.AI;
 using AIRES.Infrastructure.AI.Clients;
 using AIRES.Infrastructure.AI.Services;
 using AIRES.Infrastructure.Configuration;
@@ -30,6 +33,23 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient<IOllamaClient, OllamaClient>()
             .SetHandlerLifetime(TimeSpan.FromMinutes(5))
             .AddPolicyHandler(GetRetryPolicy());
+        
+        // Register Ollama Health Check client with custom factory
+        services.AddHttpClient("OllamaHealthCheck", (serviceProvider, client) =>
+        {
+            var config = serviceProvider.GetRequiredService<IAIRESConfiguration>();
+            client.BaseAddress = new Uri(config.AIServices.OllamaBaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(5); // Short timeout for health checks
+        });
+        
+        services.AddSingleton<OllamaHealthCheckClient>(serviceProvider =>
+        {
+            var logger = serviceProvider.GetRequiredService<IAIRESLogger>();
+            var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+            var httpClient = httpClientFactory.CreateClient("OllamaHealthCheck");
+            var config = serviceProvider.GetRequiredService<IAIRESConfiguration>();
+            return new OllamaHealthCheckClient(logger, httpClient, config.AIServices.OllamaBaseUrl);
+        });
         
         // Register AI services with their own HTTP clients where needed
         services.AddHttpClient<MistralDocumentationService>()

@@ -10,6 +10,10 @@ namespace AIRES.CLI.Commands;
 [Description("Manage AIRES configuration")]
 public class ConfigCommand : Command<ConfigCommand.Settings>
 {
+    public ConfigCommand()
+    {
+        // Default constructor required for DI
+    }
     public class Settings : CommandSettings
     {
         [CommandArgument(0, "<action>")]
