@@ -8,6 +8,7 @@ using AIRES.Core.Configuration;
 using AIRES.Foundation.Logging;
 using System.IO;
 using System.Diagnostics;
+using System.Text;
 
 namespace AIRES.CLI.Commands;
 
@@ -17,18 +18,6 @@ namespace AIRES.CLI.Commands;
 [Description("Process a specific error file")]
 public class ProcessCommand : AsyncCommand<ProcessCommand.Settings>
 {
-    private static readonly string[] PipelineStages = new[]
-    {
-        "Initializing Pipeline",
-        "Stage 1: Mistral Documentation Research",
-        "Stage 2: DeepSeek Context Analysis",
-        "Stage 3: CodeGemma Pattern Validation",
-        "Stage 4: Gemma2 Booklet Synthesis",
-        "Finalizing Results"
-    };
-    
-    private static readonly int[] ProgressSteps = new[] { 5, 25, 45, 65, 85, 100 };
-    
     private readonly IOrchestratorFactory _orchestratorFactory;
     private readonly IAIRESConfiguration _configuration;
     private readonly IAIRESLogger _logger;
@@ -51,6 +40,10 @@ public class ProcessCommand : AsyncCommand<ProcessCommand.Settings>
         [Description("Project structure XML file")]
         public string? ProjectStructureFile { get; set; }
         
+        [CommandOption("-d|--codebase-dir")]
+        [Description("Directory containing project codebase for context")]
+        public string? ProjectCodebaseDirectory { get; set; }
+        
         [CommandOption("--parallel")]
         [Description("Use parallel processing for AI models (experimental)")]
         [DefaultValue(false)]
@@ -69,12 +62,14 @@ public class ProcessCommand : AsyncCommand<ProcessCommand.Settings>
     
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
+        _logger.LogDebug("ProcessCommand.ExecuteAsync - Entry");
         try
         {
             // Validate input file
             if (!File.Exists(settings.FilePath))
             {
                 AnsiConsole.MarkupLine($"[red]Error:[/] File not found: {settings.FilePath}");
+                _logger.LogDebug("ProcessCommand.ExecuteAsync - Exit");
                 return 3; // File not found exit code
             }
             
@@ -84,6 +79,7 @@ public class ProcessCommand : AsyncCommand<ProcessCommand.Settings>
             if (fileInfo.Length > maxSizeMB * 1024 * 1024)
             {
                 AnsiConsole.MarkupLine($"[red]Error:[/] File exceeds maximum size of {maxSizeMB}MB");
+                _logger.LogDebug("ProcessCommand.ExecuteAsync - Exit");
                 return 1;
             }
             
@@ -92,6 +88,7 @@ public class ProcessCommand : AsyncCommand<ProcessCommand.Settings>
             if (!allowedExtensions.Contains(fileInfo.Extension, StringComparer.OrdinalIgnoreCase))
             {
                 AnsiConsole.MarkupLine($"[red]Error:[/] File type not allowed. Allowed types: {_configuration.Processing.AllowedExtensions}");
+                _logger.LogDebug("ProcessCommand.ExecuteAsync - Exit");
                 return 1;
             }
             
@@ -102,6 +99,7 @@ public class ProcessCommand : AsyncCommand<ProcessCommand.Settings>
             if (string.IsNullOrWhiteSpace(rawCompilerOutput))
             {
                 AnsiConsole.MarkupLine("[red]Error:[/] Error file is empty");
+                _logger.LogDebug("ProcessCommand.ExecuteAsync - Exit");
                 return 1;
             }
             
@@ -120,9 +118,11 @@ public class ProcessCommand : AsyncCommand<ProcessCommand.Settings>
                 _logger.LogInfo($"Loaded project structure from: {settings.ProjectStructureFile}");
             }
             
-            // Default values for missing parameters
-            var projectCodebase = string.Empty; // TODO: Implement codebase extraction
-            var projectStandards = ImmutableList<string>.Empty; // TODO: Load from configuration
+            // Load project standards from configuration
+            var projectStandards = LoadProjectStandards();
+            
+            // Extract project codebase if specified
+            var projectCodebase = await ExtractProjectCodebaseAsync(settings.ProjectCodebaseDirectory);
             
             AnsiConsole.MarkupLine($"[cyan]Processing:[/] {Path.GetFileName(settings.FilePath)}");
             if (settings.UseParallel)
@@ -160,44 +160,15 @@ public class ProcessCommand : AsyncCommand<ProcessCommand.Settings>
                         task.Value = report.percentage;
                     });
                     
-                    // Track progress through stages
-                    
-                    var stopwatch = Stopwatch.StartNew();
-                    
-                    // Report initialization
-                    ((IProgress<(string, double)>)progress).Report(("Initializing Pipeline", 5));
-                    
-                    // Execute the actual AI pipeline
-                    var orchestratorTask = orchestrator.GenerateResearchBookletAsync(
+                    // Execute the AI pipeline with real progress reporting
+                    var result = await orchestrator.GenerateResearchBookletAsync(
                         rawCompilerOutput,
                         codeContext,
                         projectStructureXml,
                         projectCodebase,
-                        projectStandards);
-                    
-                    // Simulate progress based on expected timings
-                    var stageIndex = 0;
-                    
-                    while (!orchestratorTask.IsCompleted && stageIndex < PipelineStages.Length)
-                    {
-                        await Task.Delay(500); // Check every 500ms
-                        
-                        // Update progress based on elapsed time (rough estimation)
-                        var elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
-                        
-                        // Assume ~10 seconds per stage
-                        if (elapsedSeconds > stageIndex * 10)
-                        {
-                            stageIndex = Math.Min(stageIndex + 1, PipelineStages.Length - 1);
-                            ((IProgress<(string, double)>)progress).Report((PipelineStages[stageIndex], ProgressSteps[stageIndex]));
-                        }
-                    }
-                    
-                    // Wait for completion
-                    var result = await orchestratorTask;
-                    
-                    // Report completion
-                    ((IProgress<(string, double)>)progress).Report(("Complete!", 100));
+                        projectStandards,
+                        progress,
+                        CancellationToken.None);
                     
                     return result;
                 });
@@ -228,6 +199,7 @@ public class ProcessCommand : AsyncCommand<ProcessCommand.Settings>
                     AnsiConsole.Write(table);
                 }
                 
+                _logger.LogDebug("ProcessCommand.ExecuteAsync - Exit");
                 return 0;
             }
             else
@@ -237,6 +209,7 @@ public class ProcessCommand : AsyncCommand<ProcessCommand.Settings>
                 {
                     AnsiConsole.MarkupLine($"[dim]Error code: {result.ErrorCode}[/]");
                 }
+                _logger.LogDebug("ProcessCommand.ExecuteAsync - Exit");
                 return 1;
             }
         }
@@ -244,7 +217,114 @@ public class ProcessCommand : AsyncCommand<ProcessCommand.Settings>
         {
             _logger.LogError("Unexpected error in ProcessCommand", ex);
             AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
+            _logger.LogDebug("ProcessCommand.ExecuteAsync - Exit");
             return -1;
+        }
+    }
+    
+    private ImmutableList<string> LoadProjectStandards()
+    {
+        _logger.LogDebug("LoadProjectStandards - Entry");
+        _logger.LogDebug("Loading project standards from configuration");
+        
+        try
+        {
+            var standards = new List<string>();
+            
+            // Load from configuration - could be a comma-separated list
+            var configuredStandards = _configuration.GetValue("Development:ProjectStandards");
+            if (!string.IsNullOrWhiteSpace(configuredStandards))
+            {
+                standards.AddRange(configuredStandards.Split(',', StringSplitOptions.TrimEntries));
+                _logger.LogInfo($"Loaded {standards.Count} project standards from configuration");
+            }
+            
+            // Add default AIRES standards if none configured
+            if (standards.Count == 0)
+            {
+                standards.Add("Use AIRES canonical patterns (AIRESServiceBase, AIRESResult<T>)");
+                standards.Add("All methods must have LogMethodEntry/LogMethodExit");
+                standards.Add("Use IAIRESLogger interface for logging");
+                standards.Add("Zero mock implementations allowed");
+                standards.Add("80% minimum test coverage required");
+                standards.Add("Follow MANDATORY_DEVELOPMENT_STANDARDS-AIRES-V5.md");
+                _logger.LogInfo("Using default AIRES project standards");
+            }
+            
+            _logger.LogDebug("LoadProjectStandards - Exit");
+            return standards.ToImmutableList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning($"Failed to load project standards: {ex.Message}");
+            _logger.LogDebug("LoadProjectStandards - Exit");
+            return ImmutableList<string>.Empty;
+        }
+    }
+    
+    private async Task<string> ExtractProjectCodebaseAsync(string? codebaseDirectory)
+    {
+        _logger.LogDebug("ExtractProjectCodebaseAsync - Entry");
+        _logger.LogDebug($"Extracting project codebase from: {codebaseDirectory ?? "not specified"}");
+        
+        if (string.IsNullOrWhiteSpace(codebaseDirectory))
+        {
+            _logger.LogDebug("No codebase directory specified");
+            _logger.LogDebug("ExtractProjectCodebaseAsync - Exit");
+            return string.Empty;
+        }
+        
+        if (!Directory.Exists(codebaseDirectory))
+        {
+            _logger.LogWarning($"Codebase directory does not exist: {codebaseDirectory}");
+            _logger.LogDebug("ExtractProjectCodebaseAsync - Exit");
+            return string.Empty;
+        }
+        
+        try
+        {
+            var codebaseBuilder = new StringBuilder();
+            codebaseBuilder.AppendLine($"Project Codebase from: {codebaseDirectory}");
+            codebaseBuilder.AppendLine(new string('=', 80));
+            
+            // Get relevant source files
+            var extensions = new[] { ".cs", ".csproj", ".json", ".xml", ".config" };
+            var files = Directory.GetFiles(codebaseDirectory, "*.*", SearchOption.AllDirectories)
+                .Where(f => extensions.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase))
+                .Take(20); // Limit to prevent huge context
+            
+            foreach (var file in files)
+            {
+                try
+                {
+                    var relativePath = Path.GetRelativePath(codebaseDirectory, file);
+                    var content = await File.ReadAllTextAsync(file);
+                    
+                    codebaseBuilder.AppendLine($"\n--- File: {relativePath} ---");
+                    codebaseBuilder.AppendLine(content);
+                    
+                    // Limit total size
+                    if (codebaseBuilder.Length > 50000)
+                    {
+                        codebaseBuilder.AppendLine("\n... (truncated for size)");
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"Failed to read file {file}: {ex.Message}");
+                }
+            }
+            
+            _logger.LogInfo($"Extracted codebase context from {files.Count()} files");
+            _logger.LogDebug("ExtractProjectCodebaseAsync - Exit");
+            return codebaseBuilder.ToString();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Failed to extract project codebase", ex);
+            _logger.LogDebug("ExtractProjectCodebaseAsync - Exit");
+            return string.Empty;
         }
     }
 }

@@ -29,6 +29,26 @@ public interface IAIResearchOrchestratorService
         CancellationToken cancellationToken = default);
     
     /// <summary>
+    /// Generates a comprehensive research booklet for compiler errors with progress reporting.
+    /// </summary>
+    /// <param name="rawCompilerOutput">The raw compiler output containing errors</param>
+    /// <param name="codeContext">Relevant code context around the errors</param>
+    /// <param name="projectStructureXml">Project structure in XML format</param>
+    /// <param name="projectCodebase">Relevant project codebase snippets</param>
+    /// <param name="projectStandards">List of project coding standards</param>
+    /// <param name="progress">Progress reporter for real-time updates</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result containing the generated booklet or error details</returns>
+    Task<AIRESResult<BookletGenerationResponse>> GenerateResearchBookletAsync(
+        string rawCompilerOutput,
+        string codeContext,
+        string projectStructureXml,
+        string projectCodebase,
+        IImmutableList<string> projectStandards,
+        IProgress<(string stage, double percentage)>? progress,
+        CancellationToken cancellationToken = default);
+    
+    /// <summary>
     /// Gets the status of the AI research pipeline.
     /// </summary>
     /// <returns>Dictionary indicating health status of each pipeline stage</returns>

@@ -3,9 +3,12 @@ using AIRES.Application.Commands;
 using AIRES.Application.Exceptions;
 using AIRES.Application.Interfaces;
 using AIRES.Core.Domain.ValueObjects;
+using AIRES.Core.Health;
 using AIRES.Foundation.Canonical;
 using AIRES.Foundation.Logging;
 using AIRES.Foundation.Results;
+using AIRES.Foundation.Alerting;
+using AIRES.Infrastructure.AI;
 using System.Diagnostics;
 using System.Collections.Immutable;
 
@@ -19,15 +22,21 @@ public class ParallelAIResearchOrchestratorService : AIRESServiceBase, IAIResear
 {
     private readonly IMediator _mediator;
     private readonly IBookletPersistenceService _persistenceService;
+    private readonly IAIRESAlertingService _alerting;
+    private readonly OllamaHealthCheckClient _healthCheckClient;
 
     public ParallelAIResearchOrchestratorService(
         IAIRESLogger logger,
         IMediator mediator,
-        IBookletPersistenceService persistenceService) 
+        IBookletPersistenceService persistenceService,
+        IAIRESAlertingService alerting,
+        OllamaHealthCheckClient healthCheckClient) 
         : base(logger, nameof(ParallelAIResearchOrchestratorService))
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
+        _alerting = alerting ?? throw new ArgumentNullException(nameof(alerting));
+        _healthCheckClient = healthCheckClient ?? throw new ArgumentNullException(nameof(healthCheckClient));
     }
 
     /// <summary>
@@ -39,6 +48,29 @@ public class ParallelAIResearchOrchestratorService : AIRESServiceBase, IAIResear
         string projectStructureXml,
         string projectCodebase,
         IImmutableList<string> projectStandards,
+        CancellationToken cancellationToken = default)
+    {
+        // Delegate to the overload with null progress
+        return await GenerateResearchBookletAsync(
+            rawCompilerOutput,
+            codeContext,
+            projectStructureXml,
+            projectCodebase,
+            projectStandards,
+            progress: null,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Orchestrates the complete AI research pipeline with parallel execution and progress reporting.
+    /// </summary>
+    public async Task<AIRESResult<BookletGenerationResponse>> GenerateResearchBookletAsync(
+        string rawCompilerOutput,
+        string codeContext,
+        string projectStructureXml,
+        string projectCodebase,
+        IImmutableList<string> projectStandards,
+        IProgress<(string stage, double percentage)>? progress,
         CancellationToken cancellationToken = default)
     {
         LogMethodEntry();
@@ -308,8 +340,12 @@ public class ParallelAIResearchOrchestratorService : AIRESServiceBase, IAIResear
         
         try
         {
+            // First check if Ollama service itself is healthy
+            var ollamaServiceHealth = await _healthCheckClient.CheckServiceHealthAsync();
+            
             var status = new Dictionary<string, bool>
             {
+                ["OllamaService"] = ollamaServiceHealth.Status == HealthStatus.Healthy,
                 ["ParseCompilerErrors"] = true, // Always available
                 ["MistralDocumentation"] = await CheckServiceHealthAsync("Mistral"),
                 ["DeepSeekContext"] = await CheckServiceHealthAsync("DeepSeek"),
@@ -317,6 +353,25 @@ public class ParallelAIResearchOrchestratorService : AIRESServiceBase, IAIResear
                 ["Gemma2Booklet"] = await CheckServiceHealthAsync("Gemma2"),
                 ["ParallelMode"] = true // Indicator that this is the parallel version
             };
+            
+            // Log Ollama service diagnostics if unhealthy
+            if (ollamaServiceHealth.Status != HealthStatus.Healthy)
+            {
+                LogWarning("Ollama service is not healthy");
+                LogWarning($"Service health details:\n{ollamaServiceHealth.GetDetailedReport()}");
+                
+                await _alerting.RaiseAlertAsync(
+                    AlertSeverity.Critical,
+                    ServiceName,
+                    "Ollama service is not healthy",
+                    new Dictionary<string, object>
+                    {
+                        ["status"] = ollamaServiceHealth.Status.ToString(),
+                        ["responseTime"] = ollamaServiceHealth.ResponseTimeMs,
+                        ["errorMessage"] = ollamaServiceHealth.ErrorMessage ?? "Unknown",
+                        ["diagnostics"] = ollamaServiceHealth.Diagnostics
+                    });
+            }
 
             LogInfo($"Pipeline status (PARALLEL): {string.Join(", ", status.Select(kvp => $"{kvp.Key}={kvp.Value}"))}");
             LogMethodExit();
@@ -336,8 +391,59 @@ public class ParallelAIResearchOrchestratorService : AIRESServiceBase, IAIResear
 
     private async Task<bool> CheckServiceHealthAsync(string serviceName)
     {
-        // TODO: Implement actual health checks for each AI service
-        await Task.Delay(10); // Placeholder
-        return true;
+        LogMethodEntry();
+        
+        try
+        {
+            // Map service name to model name
+            string modelName = serviceName switch
+            {
+                "Mistral" => "mistral:7b-instruct-q4_K_M",
+                "DeepSeek" => "deepseek-coder:6.7b",
+                "CodeGemma" => "codegemma:7b-instruct",
+                "Gemma2" => "gemma2:9b",
+                _ => throw new ArgumentException($"Unknown service name: {serviceName}")
+            };
+            
+            // Check model health with comprehensive diagnostics
+            var healthResult = await _healthCheckClient.CheckModelHealthAsync(modelName);
+            
+            // Log detailed diagnostics for root cause analysis
+            if (healthResult.Status != HealthStatus.Healthy)
+            {
+                LogWarning($"Model {modelName} health check result: {healthResult.Status}");
+                LogWarning($"Health check details:\n{healthResult.GetDetailedReport()}");
+                
+                // Alert if model is unhealthy
+                if (healthResult.Status == HealthStatus.Unhealthy)
+                {
+                    await _alerting.RaiseAlertAsync(
+                        AlertSeverity.Warning,
+                        ServiceName,
+                        $"AI Model {modelName} is unhealthy",
+                        new Dictionary<string, object>
+                        {
+                            ["model"] = modelName,
+                            ["status"] = healthResult.Status.ToString(),
+                            ["responseTime"] = healthResult.ResponseTimeMs,
+                            ["errorMessage"] = healthResult.ErrorMessage ?? "Unknown",
+                            ["diagnostics"] = healthResult.Diagnostics
+                        });
+                }
+            }
+            else
+            {
+                LogDebug($"Model {modelName} is healthy. Response time: {healthResult.ResponseTimeMs}ms");
+            }
+            
+            LogMethodExit();
+            return healthResult.Status == HealthStatus.Healthy;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Failed to check health for service {serviceName}", ex);
+            LogMethodExit();
+            return false;
+        }
     }
 }

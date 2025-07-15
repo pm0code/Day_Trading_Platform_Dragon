@@ -2,9 +2,13 @@ using MediatR;
 using AIRES.Application.Commands;
 using AIRES.Application.Exceptions;
 using AIRES.Application.Interfaces;
+using AIRES.Core.Domain.ValueObjects;
+using AIRES.Core.Health;
 using AIRES.Foundation.Canonical;
 using AIRES.Foundation.Logging;
 using AIRES.Foundation.Results;
+using AIRES.Foundation.Alerting;
+using AIRES.Infrastructure.AI;
 using System.Diagnostics;
 using System.Collections.Immutable;
 
@@ -18,15 +22,21 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
 {
     private readonly IMediator _mediator;
     private readonly IBookletPersistenceService _persistenceService;
+    private readonly IAIRESAlertingService _alerting;
+    private readonly OllamaHealthCheckClient _healthCheckClient;
 
     public AIResearchOrchestratorService(
         IAIRESLogger logger,
         IMediator mediator,
-        IBookletPersistenceService persistenceService) 
+        IBookletPersistenceService persistenceService,
+        IAIRESAlertingService alerting,
+        OllamaHealthCheckClient healthCheckClient) 
         : base(logger, nameof(AIResearchOrchestratorService))
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _persistenceService = persistenceService ?? throw new ArgumentNullException(nameof(persistenceService));
+        _alerting = alerting ?? throw new ArgumentNullException(nameof(alerting));
+        _healthCheckClient = healthCheckClient ?? throw new ArgumentNullException(nameof(healthCheckClient));
     }
 
     /// <summary>
@@ -40,6 +50,29 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
         IImmutableList<string> projectStandards,
         CancellationToken cancellationToken = default)
     {
+        // Delegate to the overload with null progress
+        return await GenerateResearchBookletAsync(
+            rawCompilerOutput,
+            codeContext,
+            projectStructureXml,
+            projectCodebase,
+            projectStandards,
+            progress: null,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Orchestrates the complete AI research pipeline for compiler error resolution with progress reporting.
+    /// </summary>
+    public async Task<AIRESResult<BookletGenerationResponse>> GenerateResearchBookletAsync(
+        string rawCompilerOutput,
+        string codeContext,
+        string projectStructureXml,
+        string projectCodebase,
+        IImmutableList<string> projectStandards,
+        IProgress<(string stage, double percentage)>? progress,
+        CancellationToken cancellationToken = default)
+    {
         LogMethodEntry();
         var stopwatch = Stopwatch.StartNew();
         var stepTimings = new Dictionary<string, long>();
@@ -47,9 +80,13 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
         try
         {
             LogInfo("Starting AI Research Pipeline");
+            
+            // Report initial progress
+            progress?.Report(("Initializing AI Pipeline", 0));
 
             // Step 1: Parse Compiler Errors
             LogInfo("Step 1/5: Parsing compiler errors");
+            progress?.Report(("Parsing Compiler Errors", 5));
             var parseStopwatch = Stopwatch.StartNew();
             
             var parseResult = await _mediator.Send(
@@ -58,6 +95,7 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
             
             stepTimings["ParseErrors"] = parseStopwatch.ElapsedMilliseconds;
             LogInfo($"Parsed {parseResult.TotalErrors} errors and {parseResult.TotalWarnings} warnings in {parseStopwatch.ElapsedMilliseconds}ms");
+            progress?.Report(("Parsing Complete", 10));
 
             if (parseResult.Errors.Count == 0)
             {
@@ -71,11 +109,13 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
 
             // Step 2: Mistral Documentation Analysis
             LogInfo("Step 2/5: Mistral analyzing documentation");
+            progress?.Report(("Starting Mistral Documentation Analysis", 15));
             var mistralStopwatch = Stopwatch.StartNew();
             
             DocumentationAnalysisResponse docAnalysis;
             try
             {
+                progress?.Report(("Mistral: Analyzing documentation", 20));
                 docAnalysis = await _mediator.Send(
                     new AnalyzeDocumentationCommand(parseResult.Errors, codeContext),
                     cancellationToken);
@@ -93,14 +133,17 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
             
             stepTimings["MistralAnalysis"] = mistralStopwatch.ElapsedMilliseconds;
             LogInfo($"Mistral analysis complete with {docAnalysis.Findings.Count} findings in {mistralStopwatch.ElapsedMilliseconds}ms");
+            progress?.Report(("Mistral Analysis Complete", 30));
 
             // Step 3: DeepSeek Context Analysis
             LogInfo("Step 3/5: DeepSeek analyzing context");
+            progress?.Report(("Starting DeepSeek Context Analysis", 35));
             var deepseekStopwatch = Stopwatch.StartNew();
             
             ContextAnalysisResponse contextAnalysis;
             try
             {
+                progress?.Report(("DeepSeek: Analyzing code context", 40));
                 contextAnalysis = await _mediator.Send(
                     new AnalyzeContextCommand(
                         parseResult.Errors,
@@ -122,14 +165,17 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
             
             stepTimings["DeepSeekAnalysis"] = deepseekStopwatch.ElapsedMilliseconds;
             LogInfo($"DeepSeek analysis complete with {contextAnalysis.IdentifiedPainPoints.Count} pain points in {deepseekStopwatch.ElapsedMilliseconds}ms");
+            progress?.Report(("DeepSeek Analysis Complete", 50));
 
             // Step 4: CodeGemma Pattern Validation
             LogInfo("Step 4/5: CodeGemma validating patterns");
+            progress?.Report(("Starting CodeGemma Pattern Validation", 55));
             var codegemmaStopwatch = Stopwatch.StartNew();
             
             PatternValidationResponse patternValidation;
             try
             {
+                progress?.Report(("CodeGemma: Validating code patterns", 60));
                 patternValidation = await _mediator.Send(
                     new ValidatePatternsCommand(
                         parseResult.Errors,
@@ -151,6 +197,7 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
             
             stepTimings["CodeGemmaValidation"] = codegemmaStopwatch.ElapsedMilliseconds;
             LogInfo($"CodeGemma validation complete. Overall compliance: {patternValidation.OverallCompliance} in {codegemmaStopwatch.ElapsedMilliseconds}ms");
+            progress?.Report(("CodeGemma Validation Complete", 70));
 
             if (!patternValidation.OverallCompliance && patternValidation.CriticalViolations.Any())
             {
@@ -159,11 +206,13 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
 
             // Step 5: Gemma2 Booklet Generation
             LogInfo("Step 5/5: Gemma2 generating research booklet");
+            progress?.Report(("Starting Gemma2 Booklet Generation", 75));
             var gemma2Stopwatch = Stopwatch.StartNew();
             
             BookletGenerationResponse bookletResponse;
             try
             {
+                progress?.Report(("Gemma2: Synthesizing research booklet", 80));
                 var errorBatchId = Guid.NewGuid();
                 bookletResponse = await _mediator.Send(
                     new GenerateBookletCommand(
@@ -186,9 +235,11 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
             }
             
             stepTimings["Gemma2Generation"] = gemma2Stopwatch.ElapsedMilliseconds;
+            progress?.Report(("Booklet Generation Complete", 90));
             
             // Save the booklet to disk
             LogInfo($"Saving booklet to disk: {bookletResponse.BookletPath}");
+            progress?.Report(("Saving booklet to disk", 95));
             var saveResult = await _persistenceService.SaveBookletAsync(
                 bookletResponse.Booklet,
                 bookletResponse.BookletPath,
@@ -216,6 +267,9 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
             LogInfo($"AI Research Pipeline completed successfully in {stopwatch.ElapsedMilliseconds}ms");
             LogInfo($"Booklet saved to: {saveResult.Value}");
             
+            // Report completion
+            progress?.Report(("Pipeline Complete", 100));
+            
             LogMethodExit();
             return AIRESResult<BookletGenerationResponse>.Success(totalResponse);
         }
@@ -240,14 +294,37 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
         
         try
         {
+            // First check if Ollama service itself is healthy
+            var ollamaServiceHealth = await _healthCheckClient.CheckServiceHealthAsync();
+            
             var status = new Dictionary<string, bool>
             {
+                ["OllamaService"] = ollamaServiceHealth.Status == HealthStatus.Healthy,
                 ["ParseCompilerErrors"] = true, // Always available
                 ["MistralDocumentation"] = await CheckServiceHealthAsync("Mistral"),
                 ["DeepSeekContext"] = await CheckServiceHealthAsync("DeepSeek"),
                 ["CodeGemmaPatterns"] = await CheckServiceHealthAsync("CodeGemma"),
                 ["Gemma2Booklet"] = await CheckServiceHealthAsync("Gemma2")
             };
+            
+            // Log Ollama service diagnostics if unhealthy
+            if (ollamaServiceHealth.Status != HealthStatus.Healthy)
+            {
+                LogWarning("Ollama service is not healthy");
+                LogWarning($"Service health details:\n{ollamaServiceHealth.GetDetailedReport()}");
+                
+                await _alerting.RaiseAlertAsync(
+                    AlertSeverity.Critical,
+                    ServiceName,
+                    "Ollama service is not healthy",
+                    new Dictionary<string, object>
+                    {
+                        ["status"] = ollamaServiceHealth.Status.ToString(),
+                        ["responseTime"] = ollamaServiceHealth.ResponseTimeMs,
+                        ["errorMessage"] = ollamaServiceHealth.ErrorMessage ?? "Unknown",
+                        ["diagnostics"] = ollamaServiceHealth.Diagnostics
+                    });
+            }
 
             LogInfo($"Pipeline status: {string.Join(", ", status.Select(kvp => $"{kvp.Key}={kvp.Value}"))}");
             LogMethodExit();
@@ -267,8 +344,59 @@ public class AIResearchOrchestratorService : AIRESServiceBase, IAIResearchOrches
 
     private async Task<bool> CheckServiceHealthAsync(string serviceName)
     {
-        // TODO: Implement actual health checks for each AI service
-        await Task.Delay(10); // Placeholder
-        return true;
+        LogMethodEntry();
+        
+        try
+        {
+            // Map service name to model name
+            string modelName = serviceName switch
+            {
+                "Mistral" => "mistral:7b-instruct-q4_K_M",
+                "DeepSeek" => "deepseek-coder:6.7b",
+                "CodeGemma" => "codegemma:7b-instruct",
+                "Gemma2" => "gemma2:9b",
+                _ => throw new ArgumentException($"Unknown service name: {serviceName}")
+            };
+            
+            // Check model health with comprehensive diagnostics
+            var healthResult = await _healthCheckClient.CheckModelHealthAsync(modelName);
+            
+            // Log detailed diagnostics for root cause analysis
+            if (healthResult.Status != HealthStatus.Healthy)
+            {
+                LogWarning($"Model {modelName} health check result: {healthResult.Status}");
+                LogWarning($"Health check details:\n{healthResult.GetDetailedReport()}");
+                
+                // Alert if model is unhealthy
+                if (healthResult.Status == HealthStatus.Unhealthy)
+                {
+                    await _alerting.RaiseAlertAsync(
+                        AlertSeverity.Warning,
+                        ServiceName,
+                        $"AI Model {modelName} is unhealthy",
+                        new Dictionary<string, object>
+                        {
+                            ["model"] = modelName,
+                            ["status"] = healthResult.Status.ToString(),
+                            ["responseTime"] = healthResult.ResponseTimeMs,
+                            ["errorMessage"] = healthResult.ErrorMessage ?? "Unknown",
+                            ["diagnostics"] = healthResult.Diagnostics
+                        });
+                }
+            }
+            else
+            {
+                LogDebug($"Model {modelName} is healthy. Response time: {healthResult.ResponseTimeMs}ms");
+            }
+            
+            LogMethodExit();
+            return healthResult.Status == HealthStatus.Healthy;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Failed to check health for service {serviceName}", ex);
+            LogMethodExit();
+            return false;
+        }
     }
 }
