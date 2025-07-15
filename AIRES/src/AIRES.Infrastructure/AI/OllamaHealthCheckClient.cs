@@ -30,6 +30,76 @@ public class OllamaHealthCheckClient : AIRESServiceBase
     }
 
     /// <summary>
+    /// Checks if Ollama is healthy at the specified URL.
+    /// Used by load balancer for checking individual instances.
+    /// </summary>
+    public async Task<bool> CheckOllamaHealthAsync(string url)
+    {
+        LogMethodEntry();
+        
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            LogError("URL is null or empty");
+            LogMethodExit();
+            return false;
+        }
+        
+        try
+        {
+            LogDebug($"Checking Ollama health at {url}");
+            
+            // Create a new HttpClient for this specific URL
+            using var client = new HttpClient
+            {
+                BaseAddress = new Uri(url),
+                Timeout = TimeSpan.FromSeconds(5)
+            };
+            
+            var response = await client.GetAsync("/");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var isHealthy = content.Contains("Ollama is running", StringComparison.OrdinalIgnoreCase);
+                
+                LogInfo($"Ollama at {url} is {(isHealthy ? "healthy" : "unhealthy")}");
+                UpdateMetric("OllamaHealthCheck.Success", 1);
+                
+                LogMethodExit();
+                return isHealthy;
+            }
+            else
+            {
+                LogWarning($"Ollama at {url} returned {response.StatusCode}");
+                UpdateMetric("OllamaHealthCheck.HttpError", 1);
+                LogMethodExit();
+                return false;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            LogError($"Failed to connect to Ollama at {url}", ex);
+            UpdateMetric("OllamaHealthCheck.ConnectionError", 1);
+            LogMethodExit();
+            return false;
+        }
+        catch (TaskCanceledException)
+        {
+            LogError($"Health check timed out for Ollama at {url}");
+            UpdateMetric("OllamaHealthCheck.Timeout", 1);
+            LogMethodExit();
+            return false;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Unexpected error checking Ollama health at {url}", ex);
+            UpdateMetric("OllamaHealthCheck.UnexpectedError", 1);
+            LogMethodExit();
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Performs comprehensive health check of Ollama service with detailed diagnostics.
     /// </summary>
     public async Task<HealthCheckResult> CheckServiceHealthAsync()

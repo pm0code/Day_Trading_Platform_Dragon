@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace AIRES.Core.Configuration;
 
 /// <summary>
@@ -76,6 +78,25 @@ public class AIServicesConfiguration
     public double ModelTemperature { get; set; } = 0.3;
     public int ModelMaxTokens { get; set; } = 2000;
     public double ModelTopP { get; set; } = 0.9;
+    
+    // GPU Load Balancing Configuration
+    public bool EnableGpuLoadBalancing { get; set; } = true;
+    public List<GpuInstanceConfiguration> GpuInstances { get; set; } = new()
+    {
+        new() { GpuId = 0, Port = 11434, Enabled = true },
+        new() { GpuId = 1, Port = 11435, Enabled = true }
+    };
+    public int HealthCheckIntervalSeconds { get; set; } = 30;
+    public double ErrorRateThreshold { get; set; } = 0.5;
+    public int MinRequestsForErrorRate { get; set; } = 10;
+}
+
+public class GpuInstanceConfiguration
+{
+    public int GpuId { get; set; }
+    public int Port { get; set; }
+    public bool Enabled { get; set; }
+    public string? CustomBaseUrl { get; set; }
 }
 
 public class PipelineConfiguration

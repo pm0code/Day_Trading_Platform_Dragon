@@ -127,3 +127,14 @@ public class OllamaModel
     public DateTime ModifiedAt { get; init; }
     public string Digest { get; init; } = string.Empty;
 }
+
+/// <summary>
+/// Response from Ollama model pull operation.
+/// </summary>
+public class OllamaPullResponse
+{
+    public string Status { get; init; } = string.Empty;
+    public string Model { get; init; } = string.Empty;
+    public long? Total { get; init; }
+    public long? Completed { get; init; }
+}

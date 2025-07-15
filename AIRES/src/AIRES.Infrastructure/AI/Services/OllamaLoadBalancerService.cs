@@ -27,7 +27,7 @@ public class OllamaLoadBalancerService : AIRESServiceBase
     private readonly SemaphoreSlim _instanceLock = new(1, 1);
     private int _currentIndex = 0;
     private Timer? _healthCheckTimer;
-    private readonly TimeSpan _healthCheckInterval = TimeSpan.FromSeconds(30);
+    private TimeSpan HealthCheckInterval => TimeSpan.FromSeconds(_configuration.AIServices.HealthCheckIntervalSeconds);
 
     public OllamaLoadBalancerService(
         IAIRESLogger logger,
@@ -41,26 +41,40 @@ public class OllamaLoadBalancerService : AIRESServiceBase
         _healthCheckClient = healthCheckClient ?? throw new ArgumentNullException(nameof(healthCheckClient));
         
         // Initialize instances based on configuration
-        _instances = new List<OllamaInstance>
-        {
-            new() { GpuId = 0, Port = 11434 },
-            new() { GpuId = 1, Port = 11435 }
-        };
+        _instances = new List<OllamaInstance>();
         
-        LogInfo($"Initialized with {_instances.Count} Ollama instances");
+        if (_configuration.AIServices.EnableGpuLoadBalancing)
+        {
+            foreach (var gpuConfig in _configuration.AIServices.GpuInstances.Where(g => g.Enabled))
+            {
+                var instance = new OllamaInstance
+                {
+                    GpuId = gpuConfig.GpuId,
+                    Port = gpuConfig.Port
+                };
+                _instances.Add(instance);
+                LogInfo($"Added {instance.Name} on port {instance.Port}");
+            }
+        }
+        else
+        {
+            // Fallback to single instance
+            _instances.Add(new OllamaInstance { GpuId = 0, Port = 11434 });
+            LogInfo("GPU load balancing disabled, using single instance");
+        }
+        
+        LogInfo($"Initialized with {_instances.Count} Ollama instance(s)");
     }
 
     /// <summary>
     /// Starts the load balancer service and begins health monitoring.
     /// </summary>
-    public override async Task StartAsync(CancellationToken cancellationToken = default)
+    public new async Task StartAsync(CancellationToken cancellationToken = default)
     {
         LogMethodEntry();
         
         try
         {
-            await base.StartAsync(cancellationToken);
-            
             // Perform initial health check
             await CheckAllInstancesHealthAsync();
             
@@ -68,8 +82,8 @@ public class OllamaLoadBalancerService : AIRESServiceBase
             _healthCheckTimer = new Timer(
                 async _ => await CheckAllInstancesHealthAsync(),
                 null,
-                _healthCheckInterval,
-                _healthCheckInterval);
+                HealthCheckInterval,
+                HealthCheckInterval);
             
             LogInfo("Load balancer started with health monitoring");
             LogMethodExit();
@@ -85,14 +99,13 @@ public class OllamaLoadBalancerService : AIRESServiceBase
     /// <summary>
     /// Stops the load balancer service and health monitoring.
     /// </summary>
-    public override async Task StopAsync(CancellationToken cancellationToken = default)
+    public new Task StopAsync(CancellationToken cancellationToken = default)
     {
         LogMethodEntry();
         
         try
         {
             _healthCheckTimer?.Dispose();
-            await base.StopAsync(cancellationToken);
             
             LogInfo("Load balancer stopped");
             LogMethodExit();
@@ -103,6 +116,8 @@ public class OllamaLoadBalancerService : AIRESServiceBase
             LogMethodExit();
             throw;
         }
+        
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -117,6 +132,7 @@ public class OllamaLoadBalancerService : AIRESServiceBase
         try
         {
             var healthyInstances = _instances.Where(i => i.IsHealthy).ToList();
+            LogDebug($"Found {healthyInstances.Count} healthy instances out of {_instances.Count} total");
             
             if (!healthyInstances.Any())
             {
@@ -124,8 +140,10 @@ public class OllamaLoadBalancerService : AIRESServiceBase
                 LogError("No healthy Ollama instances available");
                 
                 // Try to recover by checking health again
+                LogWarning("Attempting emergency health check to recover instances");
                 await CheckAllInstancesHealthAsync();
                 healthyInstances = _instances.Where(i => i.IsHealthy).ToList();
+                LogInfo($"After emergency check: {healthyInstances.Count} healthy instances");
                 
                 if (!healthyInstances.Any())
                 {
@@ -134,8 +152,10 @@ public class OllamaLoadBalancerService : AIRESServiceBase
             }
             
             // Round-robin selection among healthy instances
+            var previousIndex = _currentIndex;
             var instance = healthyInstances[_currentIndex % healthyInstances.Count];
             _currentIndex = (_currentIndex + 1) % healthyInstances.Count;
+            LogDebug($"Round-robin selection: index {previousIndex} -> {_currentIndex}, selected {instance.Name}");
             
             UpdateMetric($"LoadBalancer.GPU{instance.GpuId}.Selected", 1);
             LogDebug($"Selected {instance.Name} for next request");
@@ -156,11 +176,14 @@ public class OllamaLoadBalancerService : AIRESServiceBase
     {
         LogMethodEntry();
         
-        var client = _httpClientFactory.CreateClient($"Ollama-GPU{instance.GpuId}");
+        var clientName = $"Ollama-GPU{instance.GpuId}";
+        LogDebug($"Creating HttpClient '{clientName}' for {instance.Name} at {instance.BaseUrl}");
+        
+        var client = _httpClientFactory.CreateClient(clientName);
         client.BaseAddress = new Uri(instance.BaseUrl);
         client.Timeout = TimeSpan.FromMinutes(5); // Ollama can take time for large models
         
-        LogDebug($"Created HttpClient for {instance.Name}");
+        LogInfo($"Created HttpClient for {instance.Name} with 5-minute timeout");
         LogMethodExit();
         return client;
     }
@@ -175,13 +198,19 @@ public class OllamaLoadBalancerService : AIRESServiceBase
         await _instanceLock.WaitAsync();
         try
         {
+            var previousRequests = instance.TotalRequests;
+            var previousAverage = instance.AverageResponseTime;
+            
             instance.TotalRequests++;
             instance.ActiveRequests = Math.Max(0, instance.ActiveRequests - 1);
             
             // Update rolling average response time
             instance.AverageResponseTime = 
-                (instance.AverageResponseTime * (instance.TotalRequests - 1) + responseTimeMs) 
+                ((instance.AverageResponseTime * (instance.TotalRequests - 1)) + responseTimeMs) 
                 / instance.TotalRequests;
+            
+            LogDebug($"{instance.Name} stats updated: Requests {previousRequests}->{instance.TotalRequests}, " +
+                    $"Active: {instance.ActiveRequests}, AvgTime: {previousAverage:F2}ms->{instance.AverageResponseTime:F2}ms");
             
             UpdateMetric($"LoadBalancer.GPU{instance.GpuId}.SuccessfulRequests", 1);
             UpdateMetric($"LoadBalancer.GPU{instance.GpuId}.ResponseTime", responseTimeMs);
@@ -213,7 +242,8 @@ public class OllamaLoadBalancerService : AIRESServiceBase
             
             // Check if instance should be marked unhealthy
             var errorRate = (double)instance.TotalErrors / Math.Max(1, instance.TotalRequests);
-            if (errorRate > 0.5 && instance.TotalRequests > 10)
+            if (errorRate > _configuration.AIServices.ErrorRateThreshold && 
+                instance.TotalRequests > _configuration.AIServices.MinRequestsForErrorRate)
             {
                 instance.IsHealthy = false;
                 LogError($"{instance.Name} marked unhealthy due to high error rate: {errorRate:P}");

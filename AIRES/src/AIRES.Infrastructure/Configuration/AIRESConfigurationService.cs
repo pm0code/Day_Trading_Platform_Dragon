@@ -324,7 +324,8 @@ public class AIRESConfigurationService : AIRESServiceBase, IAIRESConfiguration
                 Gemma2Model = GetConfigValue("AI_Services:Gemma2Model", AIServices.Gemma2Model),
                 ModelTemperature = GetConfigValue("AI_Services:ModelTemperature", AIServices.ModelTemperature),
                 ModelMaxTokens = GetConfigValue("AI_Services:ModelMaxTokens", AIServices.ModelMaxTokens),
-                ModelTopP = GetConfigValue("AI_Services:ModelTopP", AIServices.ModelTopP)
+                ModelTopP = GetConfigValue("AI_Services:ModelTopP", AIServices.ModelTopP),
+                EnableGpuLoadBalancing = GetConfigValue("AI_Services:EnableGpuLoadBalancing", AIServices.EnableGpuLoadBalancing)
             };
             
             // Load Pipeline

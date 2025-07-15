@@ -60,6 +60,12 @@ public class Program
                     .WithDescription("Manage AIRES configuration")
                     .WithExample("config", "show")
                     .WithExample("config", "set", "Watchdog.InputDirectory", "/path/to/errors");
+                
+                config.AddCommand<GpuStatusCommand>("gpu-status")
+                    .WithDescription("Display GPU and Ollama instance status")
+                    .WithExample("gpu-status")
+                    .WithExample("gpu-status", "--detailed")
+                    .WithExample("gpu-status", "--refresh", "5");
             });
             
             return await app.RunAsync(args);
@@ -76,9 +82,9 @@ public class Program
         AnsiConsole.Write(
             new FigletText("AIRES")
                 .Centered()
-                .Color(Color.Cyan1));
+                .Color(Color.Green));
                 
-        AnsiConsole.MarkupLine("[bold cyan]AI Error Resolution System v1.0[/]");
+        AnsiConsole.MarkupLine("[bold green]AI Error Resolution System v1.0[/]");
         AnsiConsole.MarkupLine("[dim]Autonomous error analysis through AI pipeline[/]");
         AnsiConsole.WriteLine();
     }
@@ -172,6 +178,7 @@ public class Program
                 services.AddTransient<StatusCommand>();
                 services.AddTransient<ConfigCommand>();
                 services.AddTransient<HealthCheckCommand>();
+                services.AddTransient<GpuStatusCommand>();
             })
             .UseSerilog();
 }

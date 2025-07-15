@@ -3,10 +3,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Http;
 using AIRES.Core.Configuration;
 using AIRES.Core.Domain.Interfaces;
+using AIRES.Core.Interfaces;
 using AIRES.Foundation.Logging;
 using AIRES.Infrastructure.AI;
 using AIRES.Infrastructure.AI.Clients;
 using AIRES.Infrastructure.AI.Services;
+using AIRES.Infrastructure.AI.Models;
 using AIRES.Infrastructure.Configuration;
 using AIRES.Infrastructure.Parsers;
 using Polly;
@@ -30,10 +32,70 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AIRESConfigurationProvider>();
         services.AddSingleton<IAIRESConfigurationProvider>(provider => provider.GetRequiredService<AIRESConfigurationProvider>());
         
-        // Register Ollama HTTP client
-        services.AddHttpClient<IOllamaClient, OllamaClient>()
-            .SetHandlerLifetime(TimeSpan.FromMinutes(5))
-            .AddPolicyHandler(GetRetryPolicy());
+        // Register GPU detection and enhanced load balancing
+        services.AddSingleton<IGpuDetectionService, GpuDetectionService>();
+        services.AddSingleton<IEnhancedLoadBalancerService, EnhancedLoadBalancerService>();
+        
+        // Register Ollama Load Balancer Service
+        services.AddSingleton<OllamaLoadBalancerService>();
+        services.AddSingleton<IOllamaLoadBalancerService>(provider => provider.GetRequiredService<OllamaLoadBalancerService>());
+        
+        // Register predefined HTTP clients for GPU instances
+        services.AddHttpClient("Ollama", client =>
+        {
+            client.BaseAddress = new Uri("http://localhost:11434");
+            client.Timeout = TimeSpan.FromMinutes(5);
+        })
+        .SetHandlerLifetime(TimeSpan.FromMinutes(5))
+        .AddPolicyHandler(GetRetryPolicy());
+        
+        services.AddHttpClient("Ollama-GPU0", client =>
+        {
+            client.BaseAddress = new Uri("http://localhost:11434");
+            client.Timeout = TimeSpan.FromMinutes(5);
+        })
+        .SetHandlerLifetime(TimeSpan.FromMinutes(5))
+        .AddPolicyHandler(GetRetryPolicy());
+        
+        services.AddHttpClient("Ollama-GPU1", client =>
+        {
+            client.BaseAddress = new Uri("http://localhost:11435");
+            client.Timeout = TimeSpan.FromMinutes(5);
+        })
+        .SetHandlerLifetime(TimeSpan.FromMinutes(5))
+        .AddPolicyHandler(GetRetryPolicy());
+        
+        // Register dynamic HTTP clients for enhanced load balancer
+        services.AddHttpClient("Ollama-GPU0-Instance0", client =>
+        {
+            client.BaseAddress = new Uri("http://localhost:11434");
+            client.Timeout = TimeSpan.FromMinutes(5);
+        });
+        
+        services.AddHttpClient("Ollama-GPU1-Instance0", client =>
+        {
+            client.BaseAddress = new Uri("http://localhost:11435");
+            client.Timeout = TimeSpan.FromMinutes(5);
+        });
+        
+        // Register Load-Balanced Ollama client as IOllamaClient with conditional logic
+        services.AddSingleton<LoadBalancedOllamaClient>();
+        services.AddSingleton<EnhancedOllamaClient>();
+        services.AddSingleton<IOllamaClient>(provider =>
+        {
+            var configuration = provider.GetRequiredService<IAIRESConfiguration>();
+            
+            if (configuration.AI.EnableGpuLoadBalancing)
+            {
+                // Use enhanced client with GPU detection
+                return provider.GetRequiredService<EnhancedOllamaClient>();
+            }
+            else
+            {
+                // Use simple load balanced client
+                return provider.GetRequiredService<LoadBalancedOllamaClient>();
+            }
+        });
         
         // Register Ollama Health Check client with custom factory
         services.AddHttpClient("OllamaHealthCheck", (serviceProvider, client) =>

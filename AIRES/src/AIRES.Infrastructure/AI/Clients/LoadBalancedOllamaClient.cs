@@ -1,14 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using AIRES.Core.Configuration;
-using AIRES.Core.Domain.Interfaces;
 using AIRES.Foundation.Canonical;
 using AIRES.Foundation.Logging;
+using AIRES.Foundation.Results;
 using AIRES.Infrastructure.AI.Models;
 using AIRES.Infrastructure.AI.Services;
 
@@ -16,7 +18,7 @@ namespace AIRES.Infrastructure.AI.Clients;
 
 /// <summary>
 /// Load-balanced Ollama client that distributes requests across multiple GPU instances.
-/// Provides fault tolerance and improved performance.
+/// Implements IOllamaClient interface with full canonical compliance.
 /// </summary>
 public class LoadBalancedOllamaClient : AIRESServiceBase, IOllamaClient
 {
@@ -40,7 +42,10 @@ public class LoadBalancedOllamaClient : AIRESServiceBase, IOllamaClient
         };
     }
 
-    public async Task<string> GenerateAsync(GenerateRequest request)
+    /// <inheritdoc />
+    public async Task<AIRESResult<OllamaResponse>> GenerateAsync(
+        OllamaRequest request,
+        CancellationToken cancellationToken = default)
     {
         LogMethodEntry();
         var stopwatch = Stopwatch.StartNew();
@@ -49,15 +54,28 @@ public class LoadBalancedOllamaClient : AIRESServiceBase, IOllamaClient
         try
         {
             // Validate request
+            LogDebug("Validating generate request");
             if (request == null)
-                throw new ArgumentNullException(nameof(request));
+            {
+                LogError("Generate request is null");
+                return AIRESResult<OllamaResponse>.Failure("InvalidRequest", "Request cannot be null");
+            }
             if (string.IsNullOrWhiteSpace(request.Model))
-                throw new ArgumentException("Model name is required", nameof(request));
+            {
+                LogError("Model name is empty or null");
+                return AIRESResult<OllamaResponse>.Failure("InvalidModel", "Model name is required");
+            }
             if (string.IsNullOrWhiteSpace(request.Prompt))
-                throw new ArgumentException("Prompt is required", nameof(request));
+            {
+                LogError("Prompt is empty or null");
+                return AIRESResult<OllamaResponse>.Failure("InvalidPrompt", "Prompt is required");
+            }
+            LogDebug($"Request validated - Model: {request.Model}, Prompt length: {request.Prompt.Length}");
             
             // Get next healthy instance
+            LogDebug("Requesting next healthy Ollama instance from load balancer");
             instance = await _loadBalancer.GetNextInstanceAsync();
+            LogInfo($"Assigned to {instance.Name} (Port: {instance.Port}, Healthy: {instance.IsHealthy})");
             UpdateMetric($"LoadBalancedOllama.GPU{instance.GpuId}.Requests", 1);
             
             // Ensure model is available on this instance
@@ -70,32 +88,52 @@ public class LoadBalancedOllamaClient : AIRESServiceBase, IOllamaClient
             {
                 model = request.Model,
                 prompt = request.Prompt,
-                stream = false,
+                system = request.System,
+                stream = request.Stream,
                 options = new
                 {
-                    temperature = request.Temperature ?? 0.7,
-                    top_p = request.TopP ?? 0.9,
-                    max_tokens = request.MaxTokens ?? 2048
+                    temperature = request.Temperature,
+                    top_p = request.TopP,
+                    max_tokens = request.MaxTokens
                 }
             };
             
             var json = JsonSerializer.Serialize(requestBody, _jsonOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
+            LogDebug($"Request JSON size: {json.Length} bytes");
             
             // Create client for this instance
             using var httpClient = _loadBalancer.CreateClientForInstance(instance);
+            httpClient.Timeout = TimeSpan.FromSeconds(request.TimeoutSeconds);
             
             // Make request
-            var response = await httpClient.PostAsync("/api/generate", content);
-            response.EnsureSuccessStatusCode();
+            LogDebug($"Sending POST request to {instance.BaseUrl}/api/generate");
+            var response = await httpClient.PostAsync("/api/generate", content, cancellationToken);
+            LogDebug($"Received response: {response.StatusCode} ({(int)response.StatusCode})");
             
-            var responseJson = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<GenerateResponse>(responseJson, _jsonOptions);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                LogError($"Ollama returned error: {response.StatusCode} - {errorContent}");
+                return AIRESResult<OllamaResponse>.Failure(
+                    $"OllamaError_{response.StatusCode}",
+                    $"Ollama service returned {response.StatusCode}: {errorContent}");
+            }
+            
+            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+            LogDebug($"Response JSON size: {responseJson.Length} bytes");
+            
+            var result = JsonSerializer.Deserialize<OllamaGenerateResponse>(responseJson, _jsonOptions);
             
             if (result?.Response == null)
             {
-                throw new InvalidOperationException("Received null or invalid response from Ollama");
+                LogError($"Invalid response from Ollama: {responseJson.Substring(0, Math.Min(200, responseJson.Length))}...");
+                return AIRESResult<OllamaResponse>.Failure(
+                    "InvalidResponse",
+                    "Received null or invalid response from Ollama");
             }
+            
+            LogDebug($"Successfully parsed response, length: {result.Response.Length} characters");
             
             stopwatch.Stop();
             await _loadBalancer.ReportSuccessAsync(instance, stopwatch.ElapsedMilliseconds);
@@ -104,8 +142,19 @@ public class LoadBalancedOllamaClient : AIRESServiceBase, IOllamaClient
             UpdateMetric($"LoadBalancedOllama.GPU{instance.GpuId}.ResponseTime", stopwatch.ElapsedMilliseconds);
             LogInfo($"Generated response in {stopwatch.ElapsedMilliseconds}ms on {instance.Name}");
             
+            // Map to canonical OllamaResponse
+            var ollamaResponse = new OllamaResponse
+            {
+                Response = result.Response,
+                Model = request.Model,
+                Done = result.Done ?? true,
+                Duration = TimeSpan.FromMilliseconds(stopwatch.ElapsedMilliseconds),
+                TokensPerSecond = result.TokensPerSecond,
+                TotalTokens = result.TotalTokens
+            };
+            
             LogMethodExit();
-            return result.Response;
+            return AIRESResult<OllamaResponse>.Success(ollamaResponse);
         }
         catch (HttpRequestException ex)
         {
@@ -116,9 +165,11 @@ public class LoadBalancedOllamaClient : AIRESServiceBase, IOllamaClient
                 await _loadBalancer.ReportFailureAsync(instance, ex);
             
             LogMethodExit();
-            throw new OllamaClientException("Failed to communicate with Ollama service", ex);
+            return AIRESResult<OllamaResponse>.Failure(
+                "NetworkError",
+                $"Failed to communicate with Ollama service: {ex.Message}");
         }
-        catch (TaskCanceledException ex)
+        catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
             UpdateMetric("LoadBalancedOllama.Timeouts", 1);
             LogError($"Request timeout on {instance?.Name}", ex);
@@ -127,7 +178,19 @@ public class LoadBalancedOllamaClient : AIRESServiceBase, IOllamaClient
                 await _loadBalancer.ReportFailureAsync(instance, ex);
             
             LogMethodExit();
-            throw new OllamaClientException("Request to Ollama service timed out", ex);
+            return AIRESResult<OllamaResponse>.Failure(
+                "Timeout",
+                $"Request to Ollama service timed out after {request.TimeoutSeconds} seconds");
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            UpdateMetric("LoadBalancedOllama.Cancelled", 1);
+            LogInfo("Request was cancelled by caller");
+            
+            LogMethodExit();
+            return AIRESResult<OllamaResponse>.Failure(
+                "Cancelled",
+                "Operation was cancelled");
         }
         catch (Exception ex)
         {
@@ -138,40 +201,60 @@ public class LoadBalancedOllamaClient : AIRESServiceBase, IOllamaClient
                 await _loadBalancer.ReportFailureAsync(instance, ex);
             
             LogMethodExit();
-            throw;
+            return AIRESResult<OllamaResponse>.Failure(
+                "UnexpectedError",
+                $"An unexpected error occurred: {ex.Message}");
         }
     }
 
-    public async Task<bool> IsModelAvailableAsync(string modelName)
+    /// <inheritdoc />
+    public async Task<AIRESResult<bool>> IsModelAvailableAsync(
+        string modelName,
+        CancellationToken cancellationToken = default)
     {
         LogMethodEntry();
         
         try
         {
+            if (string.IsNullOrWhiteSpace(modelName))
+            {
+                LogError("Model name is null or empty");
+                return AIRESResult<bool>.Failure(
+                    "InvalidModelName",
+                    "Model name cannot be null or empty");
+            }
+            
             // Check if model is available on any healthy instance
             var instances = await _loadBalancer.GetInstanceStatusAsync();
+            LogDebug($"Checking model availability across {instances.Count} instances");
             
             foreach (var instance in instances.Where(i => i.IsHealthy))
             {
-                if (await CheckModelOnInstanceAsync(modelName, instance))
+                if (await CheckModelOnInstanceAsync(modelName, instance, cancellationToken))
                 {
+                    LogInfo($"Model {modelName} is available on {instance.Name}");
                     LogMethodExit();
-                    return true;
+                    return AIRESResult<bool>.Success(true);
                 }
             }
             
+            LogInfo($"Model {modelName} is not available on any healthy instance");
             LogMethodExit();
-            return false;
+            return AIRESResult<bool>.Success(false);
         }
         catch (Exception ex)
         {
             LogError($"Error checking model availability: {modelName}", ex);
             LogMethodExit();
-            throw;
+            return AIRESResult<bool>.Failure(
+                "CheckFailed",
+                $"Failed to check model availability: {ex.Message}");
         }
     }
 
-    public async Task<List<ModelInfo>> ListModelsAsync()
+    /// <inheritdoc />
+    public async Task<AIRESResult<List<OllamaModel>>> ListModelsAsync(
+        CancellationToken cancellationToken = default)
     {
         LogMethodEntry();
         
@@ -181,38 +264,64 @@ public class LoadBalancedOllamaClient : AIRESServiceBase, IOllamaClient
             var instance = await _loadBalancer.GetNextInstanceAsync();
             using var httpClient = _loadBalancer.CreateClientForInstance(instance);
             
-            var response = await httpClient.GetAsync("/api/tags");
-            response.EnsureSuccessStatusCode();
+            LogDebug($"Listing models from {instance.Name}");
+            var response = await httpClient.GetAsync("/api/tags", cancellationToken);
             
-            var json = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<ModelsResponse>(json, _jsonOptions);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                LogError($"Failed to list models: {response.StatusCode} - {errorContent}");
+                return AIRESResult<List<OllamaModel>>.Failure(
+                    $"ListModelsFailed_{response.StatusCode}",
+                    $"Failed to retrieve model list: {errorContent}");
+            }
             
-            LogInfo($"Found {result?.Models?.Count ?? 0} available models on {instance.Name}");
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
+            var result = JsonSerializer.Deserialize<OllamaTagsResponse>(json, _jsonOptions);
+            
+            var models = new List<OllamaModel>();
+            if (result?.Models != null)
+            {
+                foreach (var model in result.Models)
+                {
+                    models.Add(new OllamaModel
+                    {
+                        Name = model.Name ?? string.Empty,
+                        Tag = ExtractTag(model.Name ?? string.Empty),
+                        Size = model.Size ?? 0,
+                        ModifiedAt = model.ModifiedAt ?? DateTime.MinValue,
+                        Digest = model.Digest ?? string.Empty
+                    });
+                }
+            }
+            
+            LogInfo($"Found {models.Count} available models on {instance.Name}");
             LogMethodExit();
-            return result?.Models ?? new List<ModelInfo>();
+            return AIRESResult<List<OllamaModel>>.Success(models);
         }
         catch (Exception ex)
         {
             LogError("Failed to list models", ex);
             LogMethodExit();
-            throw new OllamaClientException("Failed to retrieve model list", ex);
+            return AIRESResult<List<OllamaModel>>.Failure(
+                "ListModelsFailed",
+                $"Failed to retrieve model list: {ex.Message}");
         }
     }
 
-    public async Task EnsureModelAvailableAsync(string modelName)
+    private static string ExtractTag(string modelName)
     {
-        await EnsureModelAvailableAsync(modelName, null);
+        var colonIndex = modelName.IndexOf(':');
+        return colonIndex > 0 ? modelName.Substring(colonIndex + 1) : "latest";
     }
 
-    private async Task EnsureModelAvailableAsync(string modelName, OllamaInstance? preferredInstance)
+    private async Task EnsureModelAvailableAsync(string modelName, OllamaInstance instance)
     {
         LogMethodEntry();
         
         try
         {
-            var instance = preferredInstance ?? await _loadBalancer.GetNextInstanceAsync();
-            
-            if (!await CheckModelOnInstanceAsync(modelName, instance))
+            if (!await CheckModelOnInstanceAsync(modelName, instance, CancellationToken.None))
             {
                 LogWarning($"Model {modelName} not available on {instance.Name}, attempting to pull");
                 UpdateMetric($"LoadBalancedOllama.ModelPulls", 1);
@@ -235,23 +344,43 @@ public class LoadBalancedOllamaClient : AIRESServiceBase, IOllamaClient
         {
             LogError($"Failed to ensure model {modelName} is available", ex);
             LogMethodExit();
-            throw new OllamaClientException($"Failed to ensure model {modelName} is available", ex);
+            throw new InvalidOperationException($"Failed to ensure model {modelName} is available: {ex.Message}", ex);
         }
     }
 
-    private async Task<bool> CheckModelOnInstanceAsync(string modelName, OllamaInstance instance)
+    private async Task<bool> CheckModelOnInstanceAsync(
+        string modelName, 
+        OllamaInstance instance,
+        CancellationToken cancellationToken)
     {
         LogMethodEntry();
         
         try
         {
             using var httpClient = _loadBalancer.CreateClientForInstance(instance);
-            var models = await ListModelsOnInstanceAsync(httpClient);
+            var response = await httpClient.GetAsync("/api/tags", cancellationToken);
             
-            var isAvailable = models.Exists(m => 
-                m.Name.Equals(modelName, StringComparison.OrdinalIgnoreCase) ||
-                m.Name.StartsWith($"{modelName}:", StringComparison.OrdinalIgnoreCase));
+            if (!response.IsSuccessStatusCode)
+            {
+                LogWarning($"Failed to get model list from {instance.Name}: {response.StatusCode}");
+                LogMethodExit();
+                return false;
+            }
             
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
+            var result = JsonSerializer.Deserialize<OllamaTagsResponse>(json, _jsonOptions);
+            
+            if (result?.Models == null)
+            {
+                LogMethodExit();
+                return false;
+            }
+            
+            var isAvailable = result.Models.Any(m => 
+                (m.Name ?? string.Empty).Equals(modelName, StringComparison.OrdinalIgnoreCase) ||
+                (m.Name ?? string.Empty).StartsWith($"{modelName}:", StringComparison.OrdinalIgnoreCase));
+            
+            LogDebug($"Model {modelName} {(isAvailable ? "is" : "is not")} available on {instance.Name}");
             LogMethodExit();
             return isAvailable;
         }
@@ -263,36 +392,25 @@ public class LoadBalancedOllamaClient : AIRESServiceBase, IOllamaClient
         }
     }
 
-    private async Task<List<ModelInfo>> ListModelsOnInstanceAsync(HttpClient httpClient)
-    {
-        LogMethodEntry();
-        
-        try
-        {
-            var response = await httpClient.GetAsync("/api/tags");
-            response.EnsureSuccessStatusCode();
-            
-            var json = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<ModelsResponse>(json, _jsonOptions);
-            
-            LogMethodExit();
-            return result?.Models ?? new List<ModelInfo>();
-        }
-        catch (Exception ex)
-        {
-            LogError("Failed to list models on instance", ex);
-            LogMethodExit();
-            throw;
-        }
-    }
-
-    private class GenerateResponse
+    // Internal DTOs for JSON deserialization
+    private class OllamaGenerateResponse
     {
         public string? Response { get; set; }
+        public bool? Done { get; set; }
+        public double? TokensPerSecond { get; set; }
+        public int? TotalTokens { get; set; }
     }
 
-    private class ModelsResponse
+    private class OllamaTagsResponse
     {
-        public List<ModelInfo>? Models { get; set; }
+        public List<OllamaModelDto>? Models { get; set; }
+    }
+
+    private class OllamaModelDto
+    {
+        public string? Name { get; set; }
+        public long? Size { get; set; }
+        public DateTime? ModifiedAt { get; set; }
+        public string? Digest { get; set; }
     }
 }
