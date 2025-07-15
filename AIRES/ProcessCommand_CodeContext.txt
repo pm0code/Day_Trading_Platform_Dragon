@@ -1,0 +1,64 @@
+// ProcessCommand.cs - ExecuteProcessAsync method (lines 170-210)
+private async Task<AIRESResult<ResearchBooklet>> ExecuteProcessAsync(
+    string file,
+    ProcessingProgress progress,
+    string outputDirectory,
+    string codeContext,
+    string projectStructureXml,
+    string projectCodebase,
+    IImmutableList<string> projectStandards,
+    CancellationToken cancellationToken)
+{
+    // Track progress through stages
+    
+    var stopwatch = Stopwatch.StartNew();
+    
+    // Report initialization
+    ((IProgress<(string, double)>)progress).Report(("Initializing Pipeline", 5));
+    
+    // Execute the actual AI pipeline
+    var orchestratorTask = orchestrator.GenerateResearchBookletAsync(
+        rawCompilerOutput,
+        codeContext,
+        projectStructureXml,
+        projectCodebase,
+        projectStandards);
+    
+    // Simulate progress based on expected timings
+    var stageIndex = 0;
+    
+    while (!orchestratorTask.IsCompleted && stageIndex < PipelineStages.Length)
+    {
+        await Task.Delay(500); // Check every 500ms
+        
+        // Update progress based on elapsed time (rough estimation)
+        var elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
+        
+        // Assume ~10 seconds per stage
+        if (elapsedSeconds > stageIndex * 10)
+        {
+            stageIndex = Math.Min(stageIndex + 1, PipelineStages.Length - 1);
+            ((IProgress<(string, double)>)progress).Report((PipelineStages[stageIndex], ProgressSteps[stageIndex]));
+        }
+    }
+    
+    // Wait for completion
+    var result = await orchestratorTask;
+    
+    // Report completion
+    ((IProgress<(string, double)>)progress).Report(("Complete!", 100));
+    
+    return result;
+}
+
+// Supporting arrays
+private static readonly string[] PipelineStages = new[]
+{
+    "Parsing Errors",
+    "Mistral: Documentation Research",
+    "DeepSeek: Context Analysis", 
+    "CodeGemma: Pattern Validation",
+    "Gemma2: Booklet Synthesis"
+};
+
+private static readonly int[] ProgressSteps = new[] { 5, 25, 45, 65, 85 };

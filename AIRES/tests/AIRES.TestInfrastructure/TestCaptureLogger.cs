@@ -64,7 +64,7 @@ public class TestCaptureLogger : IAIRESLogger
         this.logEntries.Add(new LogEntry
         {
             Level = "Debug",
-            Message = string.Format(message, args),
+            Message = string.Format(System.Globalization.CultureInfo.InvariantCulture, message, args),
             Timestamp = DateTime.UtcNow,
         });
     }
@@ -74,7 +74,7 @@ public class TestCaptureLogger : IAIRESLogger
         this.logEntries.Add(new LogEntry
         {
             Level = "Information",
-            Message = string.Format(message, args),
+            Message = string.Format(System.Globalization.CultureInfo.InvariantCulture, message, args),
             Timestamp = DateTime.UtcNow,
         });
     }
@@ -84,7 +84,7 @@ public class TestCaptureLogger : IAIRESLogger
         this.logEntries.Add(new LogEntry
         {
             Level = "Warning",
-            Message = string.Format(message, args),
+            Message = string.Format(System.Globalization.CultureInfo.InvariantCulture, message, args),
             Timestamp = DateTime.UtcNow,
         });
     }
@@ -94,7 +94,7 @@ public class TestCaptureLogger : IAIRESLogger
         this.logEntries.Add(new LogEntry
         {
             Level = "Error",
-            Message = string.Format(message, args),
+            Message = string.Format(System.Globalization.CultureInfo.InvariantCulture, message, args),
             Exception = ex,
             Timestamp = DateTime.UtcNow,
         });
@@ -105,7 +105,7 @@ public class TestCaptureLogger : IAIRESLogger
         this.logEntries.Add(new LogEntry
         {
             Level = "Critical",
-            Message = string.Format(message, args),
+            Message = string.Format(System.Globalization.CultureInfo.InvariantCulture, message, args),
             Exception = exception,
             Timestamp = DateTime.UtcNow,
         });
@@ -116,7 +116,7 @@ public class TestCaptureLogger : IAIRESLogger
         this.logEntries.Add(new LogEntry
         {
             Level = "Trace",
-            Message = string.Format(message, args),
+            Message = string.Format(System.Globalization.CultureInfo.InvariantCulture, message, args),
             Timestamp = DateTime.UtcNow,
         });
     }
@@ -126,7 +126,7 @@ public class TestCaptureLogger : IAIRESLogger
         this.logEntries.Add(new LogEntry
         {
             Level = "Critical",
-            Message = string.Format(message, args),
+            Message = string.Format(System.Globalization.CultureInfo.InvariantCulture, message, args),
             Exception = ex,
             Timestamp = DateTime.UtcNow,
         });
@@ -227,7 +227,7 @@ public class TestCaptureLogger : IAIRESLogger
         {
             Level = "Debug",
             Message = $"Correlation ID set: {correlationId}",
-            CorrelationId = correlationId,
+            CorrelationId = this.correlationId,
             Timestamp = DateTime.UtcNow,
         });
     }

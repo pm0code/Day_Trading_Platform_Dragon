@@ -2,14 +2,14 @@
 // Copyright (c) AIRES Team. All rights reserved.
 // </copyright>
 
-namespace AIRES.TestInfrastructure;
-
 using System;
+
+namespace AIRES.TestInfrastructure;
 
 /// <summary>
 /// Simple scope implementation for testing.
 /// </summary>
-internal class TestScope : IDisposable
+internal sealed class TestScope : IDisposable
 {
     private readonly Action onDispose;
 

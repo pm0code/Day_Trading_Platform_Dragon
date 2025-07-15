@@ -30,6 +30,9 @@ public static class TestCompositionRoot
     /// <summary>
     /// Configure services for testing with real implementations.
     /// </summary>
+    /// <param name="testConfig">Optional test configuration settings.</param>
+    /// <param name="additionalConfiguration">Optional additional service configuration.</param>
+    /// <returns>Configured service provider for testing.</returns>
     public static IServiceProvider ConfigureTestServices(
         TestConfiguration? testConfig = null,
         Action<IServiceCollection>? additionalConfiguration = null)
@@ -49,6 +52,39 @@ public static class TestCompositionRoot
         additionalConfiguration?.Invoke(services);
 
         return services.BuildServiceProvider();
+    }
+
+    /// <summary>
+    /// Create a pre-configured service provider for common test scenarios.
+    /// </summary>
+    /// <returns>A service provider configured with default test settings.</returns>
+    public static IServiceProvider CreateDefaultTestServiceProvider()
+    {
+        var config = new TestConfiguration
+        {
+            UseConsoleAlerting = true,
+            OllamaBaseUrl = "http://test.ollama.localhost:11434",
+            ConfigurationValues = new Dictionary<string, string?>
+            {
+                ["Alerting:Console:Enabled"] = "true",
+                ["Alerting:Console:MinimumSeverity"] = "Information",
+                ["Processing:MaxFileSizeMB"] = "10",
+                ["Processing:AllowedExtensions"] = ".txt,.log,.cs",
+                ["Development:ProjectStandards"] = "Use AIRES canonical patterns,All methods must have LogMethodEntry/LogMethodExit"
+            },
+        };
+
+        // Configure default test HTTP responses
+        var httpHandler = new TestHttpMessageHandler()
+            .When(HttpMethod.Get, "http://test.ollama.localhost:11434/")
+            .RespondWith(HttpStatusCode.OK, "Ollama is running")
+            .When(HttpMethod.Get, "http://test.ollama.localhost:11434/api/list")
+            .RespondWithJson(HttpStatusCode.OK, new { models = new[] { new { name = "mistral:latest" } } })
+            .DefaultResponse(HttpStatusCode.NotFound);
+
+        config.HttpMessageHandler = httpHandler;
+
+        return ConfigureTestServices(config);
     }
 
     private static void ConfigureLogging(IServiceCollection services, TestConfiguration config)
@@ -87,7 +123,7 @@ public static class TestCompositionRoot
             var logger = provider.GetRequiredService<IAIRESLogger>();
             var httpClient = new HttpClient(config.HttpMessageHandler ?? new TestHttpMessageHandler())
             {
-                BaseAddress = new Uri(config.OllamaBaseUrl)
+                BaseAddress = new Uri(config.OllamaBaseUrl),
             };
 
             return new OllamaHealthCheckClient(logger, httpClient, config.OllamaBaseUrl);
@@ -99,7 +135,7 @@ public static class TestCompositionRoot
         // Add MediatR with handlers from specified assemblies
         var assemblies = config.MediatorAssemblies ?? new[]
         {
-            Assembly.GetAssembly(typeof(AIRES.Application.Commands.ParseCompilerErrorsCommand))!
+            Assembly.GetAssembly(typeof(AIRES.Application.Commands.ParseCompilerErrorsCommand))!,
         };
 
         services.AddMediatR(cfg =>
@@ -132,36 +168,4 @@ public static class TestCompositionRoot
         });
     }
 
-    /// <summary>
-    /// Create a pre-configured service provider for common test scenarios.
-    /// </summary>
-    public static IServiceProvider CreateDefaultTestServiceProvider()
-    {
-        var config = new TestConfiguration
-        {
-            UseConsoleAlerting = true,
-            OllamaBaseUrl = "http://test.ollama.localhost:11434",
-            ConfigurationValues = new Dictionary<string, string?>
-            {
-                ["Alerting:Console:Enabled"] = "true",
-                ["Alerting:Console:MinimumSeverity"] = "Information",
-                ["Processing:MaxFileSizeMB"] = "10",
-                ["Processing:AllowedExtensions"] = ".txt,.log,.cs",
-                ["Development:ProjectStandards"] = "Use AIRES canonical patterns,All methods must have LogMethodEntry/LogMethodExit"
-            }
-        };
-
-        // Configure default test HTTP responses
-        var httpHandler = new TestHttpMessageHandler()
-            .When(HttpMethod.Get, "http://test.ollama.localhost:11434/")
-            .RespondWith(HttpStatusCode.OK, "Ollama is running")
-            .When(HttpMethod.Get, "http://test.ollama.localhost:11434/api/list")
-            .RespondWithJson(HttpStatusCode.OK, new { models = new[] { new { name = "mistral:latest" } } })
-            .DefaultResponse(HttpStatusCode.NotFound);
-
-        config.HttpMessageHandler = httpHandler;
-
-        return ConfigureTestServices(config);
-    }
 }
-

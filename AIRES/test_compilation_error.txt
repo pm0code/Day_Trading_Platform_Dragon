@@ -1,0 +1,10 @@
+Build failed with errors:
+
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/tests/AIRES.Application.Tests/Services/AIResearchOrchestratorServiceTests.cs(146,46): error CS1061: 'IReadOnlyList<string>' does not contain a definition for 'FindIndex' and no accessible extension method 'FindIndex' accepting a first argument of type 'IReadOnlyList<string>' could be found (are you missing a using directive or an assembly reference?) [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/tests/AIRES.Application.Tests/AIRES.Application.Tests.csproj]
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/tests/AIRES.Application.Tests/Services/AIResearchOrchestratorServiceTests.cs(160,73): error CS1061: 'ResearchBooklet' does not contain a definition for 'Id' and no accessible extension method 'Id' accepting a first argument of type 'ResearchBooklet' could be found (are you missing a using directive or an assembly reference?) [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/tests/AIRES.Application.Tests/AIRES.Application.Tests.csproj]
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/tests/AIRES.Application.Tests/Services/AIResearchOrchestratorServiceTests.cs(370,21): error CS0103: The name 'PatternSeverity' does not exist in the current context [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/tests/AIRES.Application.Tests/AIRES.Application.Tests.csproj]
+
+    3 Warning(s)
+    3 Error(s)
+
+Time Elapsed 00:00:03.64

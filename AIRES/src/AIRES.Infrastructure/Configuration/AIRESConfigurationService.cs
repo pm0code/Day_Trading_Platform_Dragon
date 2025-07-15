@@ -1,5 +1,8 @@
+using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Globalization;
 using AIRES.Core.Configuration;
+using AIRES.Core.Health;
 using AIRES.Foundation.Canonical;
 using AIRES.Foundation.Logging;
 using AIRES.Foundation.Results;
@@ -138,11 +141,112 @@ public class AIRESConfigurationService : AIRESServiceBase, IAIRESConfiguration
         
         try
         {
-            // This would require INI file writing logic
-            // For now, we'll throw NotImplementedException
-            LogWarning("SetValueAsync not yet implemented");
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException("Configuration key cannot be null or empty", nameof(key));
+            }
+
+            // Ensure directory exists
+            var directory = Path.GetDirectoryName(_configFilePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+                LogInfo($"Created configuration directory: {directory}");
+            }
+
+            // Lock for thread safety during file operations
+            lock (_configLock)
+            {
+                LogDebug($"Setting configuration value: {key} = {value}");
+                
+                // Read existing configuration preserving comments and structure
+                var lines = File.Exists(_configFilePath) 
+                    ? File.ReadAllLines(_configFilePath).ToList()
+                    : new List<string>();
+
+                // Parse the key to get section and property
+                var keyParts = key.Split(':');
+                if (keyParts.Length != 2)
+                {
+                    throw new ArgumentException($"Invalid configuration key format: {key}. Expected format: Section:Property", nameof(key));
+                }
+
+                var section = keyParts[0];
+                var property = keyParts[1];
+                
+                // Find or create section
+                var sectionIndex = FindSectionIndex(lines, section);
+                if (sectionIndex == -1)
+                {
+                    // Section doesn't exist, add it at the end
+                    if (lines.Count > 0 && !string.IsNullOrWhiteSpace(lines[lines.Count - 1]))
+                    {
+                        lines.Add(string.Empty); // Add blank line before new section
+                    }
+                    lines.Add($"[{section}]");
+                    lines.Add($"{property} = {value}");
+                    LogInfo($"Created new configuration section: [{section}]");
+                }
+                else
+                {
+                    // Section exists, find or add property
+                    var propertyUpdated = false;
+                    var insertIndex = sectionIndex + 1;
+                    
+                    // Look for the property in this section
+                    for (int i = sectionIndex + 1; i < lines.Count; i++)
+                    {
+                        var line = lines[i].Trim();
+                        
+                        // Stop if we hit another section
+                        if (line.StartsWith('[') && line.EndsWith(']'))
+                        {
+                            break;
+                        }
+                        
+                        // Skip empty lines and comments
+                        if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#') || line.StartsWith(';'))
+                        {
+                            insertIndex = i + 1;
+                            continue;
+                        }
+                        
+                        // Check if this is our property
+                        var equalIndex = line.IndexOf('=');
+                        if (equalIndex > 0)
+                        {
+                            var currentProperty = line.Substring(0, equalIndex).Trim();
+                            if (currentProperty.Equals(property, StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Update existing property
+                                lines[i] = $"{property} = {value}";
+                                propertyUpdated = true;
+                                LogDebug($"Updated existing property: {property}");
+                                break;
+                            }
+                            insertIndex = i + 1;
+                        }
+                    }
+                    
+                    if (!propertyUpdated)
+                    {
+                        // Property doesn't exist in section, add it
+                        lines.Insert(insertIndex, $"{property} = {value}");
+                        LogInfo($"Added new property to section [{section}]: {property}");
+                    }
+                }
+
+                // Write the updated configuration back to file
+                File.WriteAllLines(_configFilePath, lines);
+                LogInfo($"Configuration saved to: {_configFilePath}");
+                
+                // Reload configuration to reflect changes
+                _configuration = BuildConfiguration();
+                LoadConfiguration();
+            }
+            
             await Task.CompletedTask;
-            throw new NotImplementedException("Configuration writing not yet implemented");
+            LogMethodExit();
         }
         catch (Exception ex)
         {
@@ -150,6 +254,19 @@ public class AIRESConfigurationService : AIRESServiceBase, IAIRESConfiguration
             LogMethodExit();
             throw;
         }
+    }
+    
+    private int FindSectionIndex(List<string> lines, string sectionName)
+    {
+        for (int i = 0; i < lines.Count; i++)
+        {
+            var line = lines[i].Trim();
+            if (line.Equals($"[{sectionName}]", StringComparison.OrdinalIgnoreCase))
+            {
+                return i;
+            }
+        }
+        return -1;
     }
     
     private IConfiguration BuildConfiguration()
@@ -385,5 +502,226 @@ public class AIRESConfigurationService : AIRESServiceBase, IAIRESConfiguration
         
         LogWarning($"Invalid boolean value for {key}: {stringValue}. Using default: {defaultValue}");
         return defaultValue;
+    }
+    
+    /// <summary>
+    /// Performs comprehensive health check of the configuration service.
+    /// </summary>
+    public Task<HealthCheckResult> CheckHealthAsync()
+    {
+        LogMethodEntry();
+        var stopwatch = Stopwatch.StartNew();
+        
+        try
+        {
+            var diagnostics = new Dictionary<string, object>();
+            var failureReasons = new List<string>();
+            
+            // 1. Check configuration file existence and accessibility
+            diagnostics["ConfigFilePath"] = _configFilePath;
+            diagnostics["ConfigFileExists"] = File.Exists(_configFilePath);
+            
+            if (!File.Exists(_configFilePath))
+            {
+                failureReasons.Add($"Configuration file not found: {_configFilePath}");
+                LogError($"Configuration file not found at {_configFilePath}");
+                
+                stopwatch.Stop();
+                LogMethodExit();
+                return Task.FromResult(HealthCheckResult.Unhealthy(
+                    nameof(AIRESConfigurationService),
+                    "Configuration Service",
+                    stopwatch.ElapsedMilliseconds,
+                    "Configuration file not found",
+                    null,
+                    failureReasons.ToImmutableList(),
+                    diagnostics.ToImmutableDictionary()
+                ));
+            }
+            
+            // Test file accessibility
+            try
+            {
+                using (var stream = File.OpenRead(_configFilePath))
+                {
+                    diagnostics["ConfigFileReadable"] = true;
+                    diagnostics["ConfigFileSize"] = stream.Length;
+                }
+            }
+            catch (Exception ex)
+            {
+                diagnostics["ConfigFileReadable"] = false;
+                failureReasons.Add($"Cannot read configuration file: {ex.Message}");
+                
+                stopwatch.Stop();
+                LogMethodExit();
+                return Task.FromResult(HealthCheckResult.Unhealthy(
+                    nameof(AIRESConfigurationService),
+                    "Configuration Service",
+                    stopwatch.ElapsedMilliseconds,
+                    "Cannot access configuration file",
+                    ex,
+                    failureReasons.ToImmutableList(),
+                    diagnostics.ToImmutableDictionary()
+                ));
+            }
+            
+            // 2. Validate critical configuration values
+            var validationIssues = new List<string>();
+            
+            // Check directories
+            if (string.IsNullOrWhiteSpace(Directories.InputDirectory))
+                validationIssues.Add("InputDirectory is not configured");
+            if (string.IsNullOrWhiteSpace(Directories.OutputDirectory))
+                validationIssues.Add("OutputDirectory is not configured");
+                
+            diagnostics["InputDirectory"] = Directories.InputDirectory ?? "(not set)";
+            diagnostics["OutputDirectory"] = Directories.OutputDirectory ?? "(not set)";
+            
+            // Check AI services configuration
+            if (string.IsNullOrWhiteSpace(AIServices.OllamaBaseUrl))
+                validationIssues.Add("OllamaBaseUrl is not configured");
+            if (AIServices.OllamaTimeout <= 0)
+                validationIssues.Add($"Invalid OllamaTimeout: {AIServices.OllamaTimeout}");
+                
+            diagnostics["OllamaBaseUrl"] = AIServices.OllamaBaseUrl ?? "(not set)";
+            diagnostics["OllamaTimeout"] = AIServices.OllamaTimeout;
+            
+            // Check AI models
+            var missingModels = new List<string>();
+            if (string.IsNullOrWhiteSpace(AIServices.MistralModel))
+                missingModels.Add("MistralModel");
+            if (string.IsNullOrWhiteSpace(AIServices.DeepSeekModel))
+                missingModels.Add("DeepSeekModel");
+            if (string.IsNullOrWhiteSpace(AIServices.CodeGemmaModel))
+                missingModels.Add("CodeGemmaModel");
+            if (string.IsNullOrWhiteSpace(AIServices.Gemma2Model))
+                missingModels.Add("Gemma2Model");
+                
+            if (missingModels.Any())
+                validationIssues.Add($"Missing AI models: {string.Join(", ", missingModels)}");
+                
+            diagnostics["ConfiguredAIModels"] = 4 - missingModels.Count;
+            
+            // Check pipeline configuration
+            if (Pipeline.MaxRetries < 0)
+                validationIssues.Add($"Invalid MaxRetries: {Pipeline.MaxRetries}");
+            if (Pipeline.BatchSize <= 0)
+                validationIssues.Add($"Invalid BatchSize: {Pipeline.BatchSize}");
+            if (Pipeline.MaxConcurrentFiles <= 0)
+                validationIssues.Add($"Invalid MaxConcurrentFiles: {Pipeline.MaxConcurrentFiles}");
+                
+            diagnostics["PipelineMaxRetries"] = Pipeline.MaxRetries;
+            diagnostics["PipelineBatchSize"] = Pipeline.BatchSize;
+            diagnostics["PipelineMaxConcurrentFiles"] = Pipeline.MaxConcurrentFiles;
+            
+            // Check watchdog configuration
+            if (Watchdog.Enabled)
+            {
+                if (Watchdog.PollingIntervalSeconds <= 0)
+                    validationIssues.Add($"Invalid PollingIntervalSeconds: {Watchdog.PollingIntervalSeconds}");
+                if (Watchdog.ProcessingThreads <= 0)
+                    validationIssues.Add($"Invalid ProcessingThreads: {Watchdog.ProcessingThreads}");
+                    
+                diagnostics["WatchdogEnabled"] = true;
+                diagnostics["WatchdogPollingInterval"] = Watchdog.PollingIntervalSeconds;
+                diagnostics["WatchdogProcessingThreads"] = Watchdog.ProcessingThreads;
+            }
+            else
+            {
+                diagnostics["WatchdogEnabled"] = false;
+            }
+            
+            // Check processing configuration
+            if (Processing.MaxFileSizeMB <= 0)
+                validationIssues.Add($"Invalid MaxFileSizeMB: {Processing.MaxFileSizeMB}");
+            if (string.IsNullOrWhiteSpace(Processing.AllowedExtensions))
+                validationIssues.Add("AllowedExtensions is not configured");
+                
+            diagnostics["ProcessingMaxFileSizeMB"] = Processing.MaxFileSizeMB;
+            diagnostics["ProcessingAllowedExtensions"] = Processing.AllowedExtensions ?? "(not set)";
+            
+            // Add configuration load time metrics
+            diagnostics["ConfigLoadTime"] = GetMetricValue("ConfigurationLoadTime");
+            diagnostics["ConfigReloadCount"] = GetMetricValue("ConfigurationReloads");
+            
+            stopwatch.Stop();
+            
+            // Determine health status based on validation issues
+            if (validationIssues.Any())
+            {
+                // Check if these are critical issues
+                var criticalIssues = validationIssues.Where(issue => 
+                    issue.Contains("InputDirectory") || 
+                    issue.Contains("OutputDirectory") || 
+                    issue.Contains("OllamaBaseUrl") ||
+                    issue.Contains("AllowedExtensions")).ToList();
+                
+                if (criticalIssues.Any())
+                {
+                    failureReasons.AddRange(criticalIssues);
+                    LogError($"Critical configuration issues: {string.Join("; ", criticalIssues)}");
+                    LogMethodExit();
+                    
+                    return Task.FromResult(HealthCheckResult.Unhealthy(
+                        nameof(AIRESConfigurationService),
+                        "Configuration Service",
+                        stopwatch.ElapsedMilliseconds,
+                        "Critical configuration values missing or invalid",
+                        null,
+                        failureReasons.ToImmutableList(),
+                        diagnostics.ToImmutableDictionary()
+                    ));
+                }
+                else
+                {
+                    // Non-critical issues - degraded
+                    failureReasons.AddRange(validationIssues);
+                    LogWarning($"Configuration validation issues: {string.Join("; ", validationIssues)}");
+                    LogMethodExit();
+                    
+                    return Task.FromResult(HealthCheckResult.Degraded(
+                        nameof(AIRESConfigurationService),
+                        "Configuration Service",
+                        stopwatch.ElapsedMilliseconds,
+                        failureReasons.ToImmutableList(),
+                        diagnostics.ToImmutableDictionary()
+                    ));
+                }
+            }
+            
+            // All checks passed
+            LogInfo($"Configuration health check completed successfully in {stopwatch.ElapsedMilliseconds}ms");
+            LogMethodExit();
+            
+            return Task.FromResult(HealthCheckResult.Healthy(
+                nameof(AIRESConfigurationService),
+                "Configuration Service",
+                stopwatch.ElapsedMilliseconds,
+                diagnostics.ToImmutableDictionary()
+            ));
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            LogError("Error during configuration health check", ex);
+            LogMethodExit();
+            
+            return Task.FromResult(HealthCheckResult.Unhealthy(
+                nameof(AIRESConfigurationService),
+                "Configuration Service",
+                stopwatch.ElapsedMilliseconds,
+                $"Health check failed: {ex.Message}",
+                ex,
+                ImmutableList.Create($"Exception during health check: {ex.GetType().Name}")
+            ));
+        }
+    }
+    
+    private double GetMetricValue(string metricName)
+    {
+        var metrics = GetMetrics();
+        var value = metrics.GetValueOrDefault(metricName);
+        return value != null ? Convert.ToDouble(value) : 0;
     }
 }

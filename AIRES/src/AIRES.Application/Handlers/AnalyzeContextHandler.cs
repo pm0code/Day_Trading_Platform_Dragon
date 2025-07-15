@@ -1,3 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
 using AIRES.Application.Commands;
 using AIRES.Application.Exceptions;
@@ -6,7 +12,6 @@ using AIRES.Core.Domain.ValueObjects;
 using AIRES.Foundation.Canonical;
 using AIRES.Foundation.Logging;
 using System.Collections.Immutable;
-using System.Linq;
 
 namespace AIRES.Application.Handlers;
 
@@ -31,11 +36,40 @@ public class AnalyzeContextHandler : AIRESServiceBase, IRequestHandler<AnalyzeCo
         CancellationToken cancellationToken)
     {
         LogMethodEntry();
+        var stopwatch = Stopwatch.StartNew();
         
         try
         {
+            // Validate input
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+            if (request.Errors == null)
+            {
+                throw new ArgumentNullException(nameof(request), "Request.Errors cannot be null");
+            }
+            // Make SurroundingCode optional with a default
+            if (string.IsNullOrWhiteSpace(request.SurroundingCode))
+            {
+                LogWarning("No surrounding code provided, using placeholder");
+                request = request with { SurroundingCode = "// No code context provided" };
+            }
+            // Make ProjectStructureXml optional with a default
+            if (string.IsNullOrWhiteSpace(request.ProjectStructureXml))
+            {
+                LogWarning("No project structure provided, using default");
+                request = request with { ProjectStructureXml = "<Project><Name>Unknown</Name><Structure>Not provided</Structure></Project>" };
+            }
+            if (request.DocAnalysis == null)
+            {
+                throw new ArgumentNullException(nameof(request), "Request.DocAnalysis cannot be null");
+            }
+            
+            UpdateMetric("AnalyzeContext.Requests", 1);
             if (!request.Errors.Any())
             {
+                UpdateMetric("AnalyzeContext.EmptyInputs", 1);
                 LogWarning("No errors provided for context analysis");
                 LogMethodExit();
                 return new ContextAnalysisResponse(
@@ -85,6 +119,7 @@ public class AnalyzeContextHandler : AIRESServiceBase, IRequestHandler<AnalyzeCo
 
             if (findings.Count == 0)
             {
+                UpdateMetric("AnalyzeContext.NoFindings", 1);
                 LogError("DeepSeek failed to analyze any contexts");
                 LogMethodExit();
                 throw new DeepSeekContextAnalysisException(
@@ -95,7 +130,14 @@ public class AnalyzeContextHandler : AIRESServiceBase, IRequestHandler<AnalyzeCo
 
             var deepUnderstanding = GenerateDeepUnderstanding(findings, request.DocAnalysis);
             
-            LogInfo($"Context analysis complete with {findings.Count} findings and {painPoints.Count} pain points");
+            stopwatch.Stop();
+            UpdateMetric("AnalyzeContext.ResponseTime", stopwatch.ElapsedMilliseconds);
+            UpdateMetric("AnalyzeContext.Successes", 1);
+            UpdateMetric("AnalyzeContext.FindingsCount", findings.Count);
+            UpdateMetric("AnalyzeContext.PainPointsCount", painPoints.Count);
+            UpdateMetric("AnalyzeContext.FilesAnalyzed", errorGroups.Count());
+            
+            LogInfo($"Context analysis complete with {findings.Count} findings and {painPoints.Count} pain points in {stopwatch.ElapsedMilliseconds}ms");
             LogMethodExit();
             
             return new ContextAnalysisResponse(
@@ -105,12 +147,28 @@ public class AnalyzeContextHandler : AIRESServiceBase, IRequestHandler<AnalyzeCo
                 contextualSolutions.ToImmutableDictionary()
             );
         }
+        catch (ArgumentNullException ex)
+        {
+            UpdateMetric("AnalyzeContext.ValidationErrors", 1);
+            LogError("Invalid input parameters", ex);
+            LogMethodExit();
+            throw;
+        }
+        catch (ArgumentException ex)
+        {
+            UpdateMetric("AnalyzeContext.ValidationErrors", 1);
+            LogError("Invalid input parameters", ex);
+            LogMethodExit();
+            throw;
+        }
         catch (DeepSeekContextAnalysisException)
         {
+            UpdateMetric("AnalyzeContext.Failures", 1);
             throw; // Re-throw specific exceptions
         }
         catch (Exception ex)
         {
+            UpdateMetric("AnalyzeContext.UnexpectedErrors", 1);
             LogError("Unexpected error during context analysis", ex);
             LogMethodExit();
             throw new DeepSeekContextAnalysisException(

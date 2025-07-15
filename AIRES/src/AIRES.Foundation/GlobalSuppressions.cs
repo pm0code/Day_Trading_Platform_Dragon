@@ -23,12 +23,6 @@ using System.Diagnostics.CodeAnalysis;
     Justification = "Temporarily suppressing to enable TreatWarningsAsErrors. Will add comprehensive documentation in next iteration.", 
     Scope = "module")]
 
-// Temporarily suppress NuGet version conflict for MediatR
-// TODO: Update MediatR.Extensions.Microsoft.DependencyInjection to compatible version
-[assembly: SuppressMessage("NuGet", "NU1608:Detected package version outside of dependency constraint", 
-    Justification = "MediatR version conflict. Will update MediatR.Extensions.Microsoft.DependencyInjection to version 12.x in next iteration.", 
-    Scope = "module")]
-
 // StyleCop Rules - temporarily suppressed to enable build
 // TODO: Fix code to comply with StyleCop rules
 [assembly: SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1101:PrefixLocalCallsWithThis", 

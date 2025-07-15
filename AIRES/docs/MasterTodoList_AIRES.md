@@ -1,9 +1,9 @@
 # AIRES Master Todo List
 
-**Version**: 2.0  
+**Version**: 2.1  
 **Date**: 2025-07-15  
 **Last Audit**: 2025-07-15  
-**Status**: Active Development - CRITICAL VIOLATIONS REMAIN  
+**Status**: Active Development - NEW ENHANCEMENTS REQUIRED  
 **Product**: AI Error Resolution System (AIRES)
 
 ## 📊 Fix Counter: [1/10]
@@ -16,6 +16,30 @@
 - [ ] **Create Status Checkpoint Review template**
 - [ ] **Document Ollama query process for AI validation**
 - [x] **Set up Gemini CLI template for architectural decisions** (Used for ProcessCommand fix)
+
+## 🆕 PRIORITY 0.5: NEW CRITICAL ENHANCEMENTS (Research Complete)
+
+### Error Parser Enhancement - Currently Only Parses CS Errors
+- [ ] **Create IErrorParser interface in Core.Domain.Interfaces**
+- [ ] **Implement CSharpErrorParser for CS errors**
+- [ ] **Implement MSBuildErrorParser for MSB errors (1xxx-6xxx ranges)**
+- [ ] **Implement NetSdkErrorParser for NETSDK errors**
+- [ ] **Implement GeneralErrorParser for fallback**
+- [ ] **Create ErrorParserFactory for parser selection**
+- [ ] **Update ParseCompilerErrorsHandler to use all parsers**
+- [ ] **Add comprehensive unit tests for each parser**
+- [ ] **Test with real-world error samples**
+
+### GPU Load Balancing - Currently Only Uses GPU1
+- [ ] **Create OllamaLoadBalancerService (canonical)**
+- [ ] **Implement OllamaInstance management class**
+- [ ] **Add health checking for each GPU instance**
+- [ ] **Implement round-robin request distribution**
+- [ ] **Create systemd service files for GPU0/GPU1**
+- [ ] **Update all AI services to use load balancer**
+- [ ] **Add configuration for GPU instances**
+- [ ] **Implement failover handling**
+- [ ] **Add GPU utilization monitoring**
 
 ## 🔴 PRIORITY 1: CRITICAL VIOLATIONS (FIX IMMEDIATELY)
 
@@ -174,6 +198,11 @@
 | Missing logging | MEDIUM | Active | Priority 2.1 fix |
 
 ## 📝 Implementation Notes
+
+### New Research Documentation:
+- **Error Types**: `/docs/research/DotNet_Build_Error_Types_Research.md`
+- **GPU Load Balancing**: `/docs/research/Ollama_GPU_LoadBalancing_Research.md`
+- **Architecture Plan**: `/docs/architecture/Error_Parser_GPU_LoadBalancing_Plan.md`
 
 ### Before Starting ANY Work:
 1. **MANDATORY**: Generate AIRES booklet for the issue

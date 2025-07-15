@@ -2,14 +2,14 @@
 // Copyright (c) AIRES Team. All rights reserved.
 // </copyright>
 
-namespace AIRES.TestInfrastructure;
-
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Reflection;
+
 using Microsoft.Extensions.DependencyInjection;
 
+namespace AIRES.TestInfrastructure;
 /// <summary>
 /// Configuration options for test services.
 /// </summary>

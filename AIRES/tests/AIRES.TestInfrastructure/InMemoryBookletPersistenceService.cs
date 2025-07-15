@@ -37,21 +37,21 @@ public class InMemoryBookletPersistenceService : AIRESServiceBase, IBookletPersi
         string suggestedPath,
         CancellationToken cancellationToken = default)
     {
-        LogMethodEntry();
+        this.LogMethodEntry();
 
         try
         {
             if (booklet == null)
             {
-                LogError("Booklet is null");
-                LogMethodExit();
+                this.LogError("Booklet is null");
+                this.LogMethodExit();
                 return AIRESResult<string>.Failure("INVALID_INPUT", "Booklet cannot be null");
             }
 
             if (string.IsNullOrWhiteSpace(suggestedPath))
             {
-                LogError("Suggested path is null or empty");
-                LogMethodExit();
+                this.LogError("Suggested path is null or empty");
+                this.LogMethodExit();
                 return AIRESResult<string>.Failure("INVALID_INPUT", "Suggested path cannot be null or empty");
             }
 
@@ -67,21 +67,21 @@ public class InMemoryBookletPersistenceService : AIRESServiceBase, IBookletPersi
                 Booklet = booklet,
                 Path = fullPath,
                 SavedAt = DateTime.UtcNow,
-                OutputDirectory = suggestedPath
+                OutputDirectory = suggestedPath,
             };
 
             this.booklets[booklet.ErrorBatchId] = storedBooklet;
             this.pathToId[fullPath] = booklet.ErrorBatchId;
             Interlocked.Increment(ref this.saveCount);
 
-            LogInfo($"Booklet saved: {booklet.ErrorBatchId} to {fullPath}");
-            LogMethodExit();
+            this.LogInfo($"Booklet saved: {booklet.ErrorBatchId} to {fullPath}");
+            this.LogMethodExit();
             return AIRESResult<string>.Success(fullPath);
         }
         catch (Exception ex)
         {
-            LogError("Failed to save booklet", ex);
-            LogMethodExit();
+            this.LogError("Failed to save booklet", ex);
+            this.LogMethodExit();
             return AIRESResult<string>.Failure("SAVE_ERROR", $"Failed to save booklet: {ex.Message}", ex);
         }
     }
@@ -90,14 +90,14 @@ public class InMemoryBookletPersistenceService : AIRESServiceBase, IBookletPersi
         string bookletPath,
         CancellationToken cancellationToken = default)
     {
-        LogMethodEntry();
+        this.LogMethodEntry();
 
         try
         {
             if (string.IsNullOrWhiteSpace(bookletPath))
             {
-                LogError("Booklet path is null or empty");
-                LogMethodExit();
+                this.LogError("Booklet path is null or empty");
+                this.LogMethodExit();
                 return AIRESResult<ResearchBooklet>.Failure("INVALID_INPUT", "Booklet path cannot be null or empty");
             }
 
@@ -107,19 +107,19 @@ public class InMemoryBookletPersistenceService : AIRESServiceBase, IBookletPersi
             if (this.pathToId.TryGetValue(bookletPath, out var bookletId) &&
                 this.booklets.TryGetValue(bookletId, out var storedBooklet))
             {
-                LogInfo($"Booklet loaded: {bookletId} from {bookletPath}");
-                LogMethodExit();
+                this.LogInfo($"Booklet loaded: {bookletId} from {bookletPath}");
+                this.LogMethodExit();
                 return AIRESResult<ResearchBooklet>.Success(storedBooklet.Booklet);
             }
 
-            LogWarning($"Booklet not found at path: {bookletPath}");
-            LogMethodExit();
+            this.LogWarning($"Booklet not found at path: {bookletPath}");
+            this.LogMethodExit();
             return AIRESResult<ResearchBooklet>.Failure("NOT_FOUND", $"Booklet not found at path: {bookletPath}");
         }
         catch (Exception ex)
         {
-            LogError("Failed to load booklet", ex);
-            LogMethodExit();
+            this.LogError("Failed to load booklet", ex);
+            this.LogMethodExit();
             return AIRESResult<ResearchBooklet>.Failure("LOAD_ERROR", $"Failed to load booklet: {ex.Message}", ex);
         }
     }
@@ -128,7 +128,7 @@ public class InMemoryBookletPersistenceService : AIRESServiceBase, IBookletPersi
         string directory,
         CancellationToken cancellationToken = default)
     {
-        LogMethodEntry();
+        this.LogMethodEntry();
 
         try
         {
@@ -141,14 +141,14 @@ public class InMemoryBookletPersistenceService : AIRESServiceBase, IBookletPersi
                 .OrderBy(p => p)
                 .ToList();
 
-            LogInfo($"Listed {bookletPaths.Count} booklets in directory: {directory}");
-            LogMethodExit();
+            this.LogInfo($"Listed {bookletPaths.Count} booklets in directory: {directory}");
+            this.LogMethodExit();
             return AIRESResult<List<string>>.Success(bookletPaths);
         }
         catch (Exception ex)
         {
-            LogError("Failed to list booklets", ex);
-            LogMethodExit();
+            this.LogError("Failed to list booklets", ex);
+            this.LogMethodExit();
             return AIRESResult<List<string>>.Failure("LIST_ERROR", $"Failed to list booklets: {ex.Message}", ex);
         }
     }
@@ -157,14 +157,14 @@ public class InMemoryBookletPersistenceService : AIRESServiceBase, IBookletPersi
         string bookletPath,
         CancellationToken cancellationToken = default)
     {
-        LogMethodEntry();
+        this.LogMethodEntry();
 
         try
         {
             if (string.IsNullOrWhiteSpace(bookletPath))
             {
-                LogError("Booklet path is null or empty");
-                LogMethodExit();
+                this.LogError("Booklet path is null or empty");
+                this.LogMethodExit();
                 return AIRESResult<bool>.Failure("INVALID_INPUT", "Booklet path cannot be null or empty");
             }
 
@@ -174,19 +174,19 @@ public class InMemoryBookletPersistenceService : AIRESServiceBase, IBookletPersi
             if (this.pathToId.TryRemove(bookletPath, out var bookletId) &&
                 this.booklets.TryRemove(bookletId, out _))
             {
-                LogInfo($"Booklet deleted: {bookletId} at {bookletPath}");
-                LogMethodExit();
+                this.LogInfo($"Booklet deleted: {bookletId} at {bookletPath}");
+                this.LogMethodExit();
                 return AIRESResult<bool>.Success(true);
             }
 
-            LogWarning($"Booklet not found for deletion: {bookletPath}");
-            LogMethodExit();
+            this.LogWarning($"Booklet not found for deletion: {bookletPath}");
+            this.LogMethodExit();
             return AIRESResult<bool>.Failure("NOT_FOUND", $"Booklet not found at path: {bookletPath}");
         }
         catch (Exception ex)
         {
-            LogError("Failed to delete booklet", ex);
-            LogMethodExit();
+            this.LogError("Failed to delete booklet", ex);
+            this.LogMethodExit();
             return AIRESResult<bool>.Failure("DELETE_ERROR", $"Failed to delete booklet: {ex.Message}", ex);
         }
     }
@@ -194,11 +194,13 @@ public class InMemoryBookletPersistenceService : AIRESServiceBase, IBookletPersi
     /// <summary>
     /// Test helper: Get total number of saves performed.
     /// </summary>
+    /// <returns>The total count of save operations performed.</returns>
     public int GetSaveCount() => this.saveCount;
 
     /// <summary>
     /// Test helper: Get all stored booklets.
     /// </summary>
+    /// <returns>A read-only list of all stored booklets.</returns>
     public IReadOnlyList<StoredBooklet> GetAllBooklets() => this.booklets.Values.ToList();
 
     /// <summary>
@@ -206,27 +208,29 @@ public class InMemoryBookletPersistenceService : AIRESServiceBase, IBookletPersi
     /// </summary>
     public void Clear()
     {
-        LogMethodEntry();
+        this.LogMethodEntry();
         this.booklets.Clear();
         this.pathToId.Clear();
         this.saveCount = 0;
-        LogInfo("All booklets cleared");
-        LogMethodExit();
+        this.LogInfo("All booklets cleared");
+        this.LogMethodExit();
     }
 
     /// <summary>
     /// Test helper: Check if a booklet exists by ErrorBatchId.
     /// </summary>
+    /// <param name="errorBatchId">The error batch ID to check.</param>
+    /// <returns>True if booklet exists, false otherwise.</returns>
     public bool HasBooklet(Guid errorBatchId) => this.booklets.ContainsKey(errorBatchId);
 
     /// <summary>
     /// Test helper: Get a booklet by ID.
     /// </summary>
+    /// <param name="bookletId">The booklet ID to retrieve.</param>
+    /// <returns>The stored booklet if found, null otherwise.</returns>
     public StoredBooklet? GetBookletById(Guid bookletId)
     {
         this.booklets.TryGetValue(bookletId, out var booklet);
         return booklet;
     }
 }
-
-

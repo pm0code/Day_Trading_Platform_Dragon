@@ -1,3 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
 using AIRES.Application.Commands;
 using AIRES.Application.Exceptions;
@@ -28,14 +34,23 @@ public class ParseCompilerErrorsHandler : AIRESServiceBase, IRequestHandler<Pars
     public async Task<ParseCompilerErrorsResponse> Handle(ParseCompilerErrorsCommand request, CancellationToken cancellationToken)
     {
         LogMethodEntry();
+        var stopwatch = Stopwatch.StartNew();
         
         try
         {
+            // Validate input
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+            
+            UpdateMetric("ParseCompilerErrors.Requests", 1);
             // Add async operation to satisfy CS1998
             await Task.Yield();
             
             if (string.IsNullOrWhiteSpace(request.RawCompilerOutput))
             {
+                UpdateMetric("ParseCompilerErrors.EmptyInputs", 1);
                 LogWarning("Empty compiler output provided");
                 LogMethodExit();
                 return new ParseCompilerErrorsResponse(
@@ -84,6 +99,14 @@ public class ParseCompilerErrorsHandler : AIRESServiceBase, IRequestHandler<Pars
 
             var summary = GenerateSummary(errors);
             
+            stopwatch.Stop();
+            UpdateMetric("ParseCompilerErrors.ResponseTime", stopwatch.ElapsedMilliseconds);
+            UpdateMetric("ParseCompilerErrors.Successes", 1);
+            UpdateMetric("ParseCompilerErrors.ErrorsParsed", errors.Count);
+            UpdateMetric("ParseCompilerErrors.ErrorCount", errorCount);
+            UpdateMetric("ParseCompilerErrors.WarningCount", warningCount);
+            
+            LogInfo($"Successfully parsed compiler errors in {stopwatch.ElapsedMilliseconds}ms");
             LogMethodExit();
             return new ParseCompilerErrorsResponse(
                 errors.ToImmutableList(),
@@ -92,8 +115,23 @@ public class ParseCompilerErrorsHandler : AIRESServiceBase, IRequestHandler<Pars
                 warningCount
             );
         }
+        catch (ArgumentNullException ex)
+        {
+            UpdateMetric("ParseCompilerErrors.ValidationErrors", 1);
+            LogError("Invalid input parameters", ex);
+            LogMethodExit();
+            throw;
+        }
+        catch (RegexMatchTimeoutException ex)
+        {
+            UpdateMetric("ParseCompilerErrors.RegexTimeouts", 1);
+            LogError("Regex timeout while parsing compiler errors", ex);
+            LogMethodExit();
+            throw new CompilerErrorParsingException("Parsing timeout - input may be too complex", ex);
+        }
         catch (Exception ex)
         {
+            UpdateMetric("ParseCompilerErrors.Failures", 1);
             LogError("Failed to parse compiler errors", ex);
             LogMethodExit();
             throw new CompilerErrorParsingException("Failed to parse compiler output", ex);

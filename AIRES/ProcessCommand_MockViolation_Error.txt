@@ -1,0 +1,8 @@
+Build failed with errors:
+
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.CLI/Commands/ProcessCommand.cs(185,17): error CS0001: ProcessCommand contains mock implementation violating zero mock policy - fake progress simulation based on elapsed time instead of real AI pipeline progress [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.CLI/AIRES.CLI.csproj]
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.CLI/Commands/ProcessCommand.cs(190,21): error CS0002: Time-based progress simulation violates MANDATORY standards - elapsed.TotalSeconds switch statement creates fake progress stages [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.CLI/AIRES.CLI.csproj]
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.CLI/Commands/ProcessCommand.cs(198,21): error CS0003: Fake percentage calculation based on time violates real implementation requirement - Math.Min((int)(elapsed.TotalSeconds / 40 * 100), 99) [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.CLI/AIRES.CLI.csproj]
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.CLI/Commands/ProcessCommand.cs(201,21): error CS0004: Task.Delay(1000) creates artificial delay violating no mock implementation policy [/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.CLI/AIRES.CLI.csproj]
+
+Context: The ProcessCommand.ExecuteProcessAsync method contains a while loop (lines 185-201) that simulates progress instead of connecting to real AIResearchOrchestratorService progress events. This violates Section 1.2 of MANDATORY_DEVELOPMENT_STANDARDS-AIRES-V5.md which states "NEVER create mock implementations that pretend to work" and "NEVER use hardcoded delays to simulate work".

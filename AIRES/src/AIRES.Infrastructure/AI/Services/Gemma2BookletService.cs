@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using AIRES.Core.Domain.Interfaces;
 using AIRES.Core.Domain.ValueObjects;
+using AIRES.Core.Health;
 using AIRES.Foundation.Canonical;
 using AIRES.Foundation.Logging;
 using AIRES.Infrastructure.AI.Clients;
@@ -17,14 +19,20 @@ namespace AIRES.Infrastructure.AI.Services;
 public class Gemma2BookletService : AIRESServiceBase, IBookletGeneratorAIModel
 {
     private readonly IOllamaClient _ollamaClient;
+    private readonly OllamaHealthCheckClient _healthCheckClient;
+    private readonly TimeSpan _healthCheckCacheDuration = TimeSpan.FromMinutes(5);
     private const string MODEL_NAME = "gemma2:9b";
+    private DateTime _lastHealthCheck = DateTime.MinValue;
+    private HealthCheckResult? _cachedHealthResult;
 
     public Gemma2BookletService(
         IAIRESLogger logger,
-        IOllamaClient ollamaClient)
+        IOllamaClient ollamaClient,
+        OllamaHealthCheckClient healthCheckClient)
         : base(logger, nameof(Gemma2BookletService))
     {
         _ollamaClient = ollamaClient ?? throw new ArgumentNullException(nameof(ollamaClient));
+        _healthCheckClient = healthCheckClient ?? throw new ArgumentNullException(nameof(healthCheckClient));
     }
 
     public async Task<IBookletGeneratorAIModel.BookletContentDraft> GenerateBookletContentAsync(
@@ -34,9 +42,41 @@ public class Gemma2BookletService : AIRESServiceBase, IBookletGeneratorAIModel
         PatternValidationFinding? consolidatedPatternFindings)
     {
         LogMethodEntry();
+        var stopwatch = Stopwatch.StartNew();
         
         try
         {
+            // Validate input parameters
+            if (errorBatchId == Guid.Empty)
+            {
+                throw new ArgumentException("Error batch ID cannot be empty", nameof(errorBatchId));
+            }
+            if (originalErrors == null || originalErrors.Count == 0)
+            {
+                throw new ArgumentException("Original errors cannot be null or empty", nameof(originalErrors));
+            }
+            if (allDetailedFindings == null || allDetailedFindings.Count == 0)
+            {
+                throw new ArgumentException("Detailed findings cannot be null or empty", nameof(allDetailedFindings));
+            }
+            
+            // Perform health check before operation
+            var healthCheck = await GetCachedHealthCheckAsync();
+            if (healthCheck.Status != HealthStatus.Healthy)
+            {
+                LogWarning($"Gemma2 service health check failed: {healthCheck.Status}");
+                LogWarning($"Health details: {healthCheck.GetDetailedReport()}");
+                
+                // Return degraded response with health information
+                LogMethodExit();
+                return CreateFailureBooklet(
+                    errorBatchId, 
+                    originalErrors, 
+                    $"Service unhealthy ({healthCheck.Status}): {healthCheck.ErrorMessage ?? "Unknown error"}. Please check Ollama service and Gemma2 model availability."
+                );
+            }
+            
+            UpdateMetric("Gemma2.Requests", 1);
             var prompt = BuildPrompt(errorBatchId, originalErrors, allDetailedFindings, consolidatedPatternFindings);
 
             var request = new OllamaRequest
@@ -53,6 +93,7 @@ public class Gemma2BookletService : AIRESServiceBase, IBookletGeneratorAIModel
 
             if (!result.IsSuccess)
             {
+                UpdateMetric("Gemma2.Failures", 1);
                 LogError($"Failed to generate booklet content: {result.ErrorMessage}");
                 LogMethodExit();
                 return CreateFailureBooklet(errorBatchId, originalErrors, result.ErrorMessage!);
@@ -61,13 +102,35 @@ public class Gemma2BookletService : AIRESServiceBase, IBookletGeneratorAIModel
             var response = result.Value!.Response;
             var bookletDraft = ParseBookletContent(response, errorBatchId, originalErrors);
             
-            LogInfo($"Successfully generated booklet with {bookletDraft.ImplementationRecommendations.Count} recommendations");
+            stopwatch.Stop();
+            UpdateMetric("Gemma2.ResponseTime", stopwatch.ElapsedMilliseconds);
+            UpdateMetric("Gemma2.Successes", 1);
+            UpdateMetric("Gemma2.BookletsGenerated", 1);
+            UpdateMetric("Gemma2.RecommendationsCreated", bookletDraft.ImplementationRecommendations.Count);
+            
+            LogInfo($"Successfully generated booklet with {bookletDraft.ImplementationRecommendations.Count} recommendations in {stopwatch.ElapsedMilliseconds}ms");
             LogMethodExit();
             
             return bookletDraft;
         }
+        catch (ArgumentException ex)
+        {
+            UpdateMetric("Gemma2.ValidationErrors", 1);
+            LogError("Invalid input parameters", ex);
+            LogMethodExit();
+            throw;
+        }
+        catch (TaskCanceledException ex)
+        {
+            UpdateMetric("Gemma2.Timeouts", 1);
+            LogError("Timeout during booklet generation", ex);
+            LogMethodExit();
+            
+            return CreateFailureBooklet(errorBatchId, originalErrors, "Booklet generation timed out. The operation took too long to complete.");
+        }
         catch (Exception ex)
         {
+            UpdateMetric("Gemma2.UnexpectedErrors", 1);
             LogError("Unexpected error during booklet generation", ex);
             LogMethodExit();
             
@@ -228,6 +291,7 @@ Make the content actionable, clear, and focused on helping developers resolve th
         }
         catch (Exception ex)
         {
+            UpdateMetric("Gemma2.ParseErrors", 1);
             LogError("Error parsing booklet content", ex);
             LogMethodExit();
             
@@ -259,5 +323,115 @@ Make the content actionable, clear, and focused on helping developers resolve th
                 )
             )
         );
+    }
+    
+    /// <summary>
+    /// Performs a comprehensive health check of the Gemma2 booklet service.
+    /// </summary>
+    public async Task<HealthCheckResult> CheckHealthAsync()
+    {
+        LogMethodEntry();
+        var stopwatch = Stopwatch.StartNew();
+        
+        try
+        {
+            // Check Ollama service health
+            var serviceHealth = await _healthCheckClient.CheckServiceHealthAsync();
+            if (serviceHealth.Status != HealthStatus.Healthy)
+            {
+                LogWarning("Ollama service is not healthy");
+                LogMethodExit();
+                return serviceHealth;
+            }
+            
+            // Check Gemma2 model availability
+            var modelHealth = await _healthCheckClient.CheckModelHealthAsync(MODEL_NAME);
+            if (modelHealth.Status != HealthStatus.Healthy)
+            {
+                LogWarning($"Gemma2 model {MODEL_NAME} is not healthy");
+                LogMethodExit();
+                return modelHealth;
+            }
+            
+            stopwatch.Stop();
+            var diagnostics = new Dictionary<string, object>
+            {
+                ["ServiceName"] = nameof(Gemma2BookletService),
+                ["ModelName"] = MODEL_NAME,
+                ["OllamaServiceStatus"] = serviceHealth.Status.ToString(),
+                ["ModelStatus"] = modelHealth.Status.ToString(),
+                ["TotalRequests"] = GetMetricValue("Gemma2.Requests"),
+                ["SuccessfulRequests"] = GetMetricValue("Gemma2.Successes"),
+                ["FailedRequests"] = GetMetricValue("Gemma2.Failures"),
+                ["AverageResponseTime"] = GetAverageResponseTime(),
+                ["TimeoutCount"] = GetMetricValue("Gemma2.Timeouts"),
+                ["ValidationErrors"] = GetMetricValue("Gemma2.ValidationErrors"),
+                ["ParseErrors"] = GetMetricValue("Gemma2.ParseErrors"),
+                ["BookletsGenerated"] = GetMetricValue("Gemma2.BookletsGenerated"),
+                ["TotalRecommendations"] = GetMetricValue("Gemma2.RecommendationsCreated"),
+                ["LastCheckTime"] = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff")
+            };
+            
+            LogInfo($"Gemma2 booklet service health check passed in {stopwatch.ElapsedMilliseconds}ms");
+            LogMethodExit();
+            
+            return HealthCheckResult.Healthy(
+                nameof(Gemma2BookletService),
+                "AI Booklet Generation Service",
+                stopwatch.ElapsedMilliseconds,
+                diagnostics.ToImmutableDictionary()
+            );
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            LogError("Error during health check", ex);
+            LogMethodExit();
+            
+            return HealthCheckResult.Unhealthy(
+                nameof(Gemma2BookletService),
+                "AI Booklet Generation Service",
+                stopwatch.ElapsedMilliseconds,
+                $"Health check failed: {ex.Message}",
+                ex,
+                ImmutableList.Create($"Exception during health check: {ex.GetType().Name}")
+            );
+        }
+    }
+    
+    private async Task<HealthCheckResult> GetCachedHealthCheckAsync()
+    {
+        LogMethodEntry();
+        
+        // Check if cached result is still valid
+        if (_cachedHealthResult != null && 
+            DateTime.UtcNow - _lastHealthCheck < _healthCheckCacheDuration)
+        {
+            LogDebug("Using cached health check result");
+            LogMethodExit();
+            return _cachedHealthResult;
+        }
+        
+        // Perform new health check
+        _cachedHealthResult = await CheckHealthAsync();
+        _lastHealthCheck = DateTime.UtcNow;
+        
+        LogMethodExit();
+        return _cachedHealthResult;
+    }
+    
+    private double GetAverageResponseTime()
+    {
+        var totalTime = GetMetricValue("Gemma2.ResponseTime");
+        var successCount = GetMetricValue("Gemma2.Successes");
+        
+        return successCount > 0 ? totalTime / successCount : 0;
+    }
+    
+    private double GetMetricValue(string metricName)
+    {
+        var metrics = GetMetrics();
+        var value = metrics.GetValueOrDefault(metricName);
+        return value != null ? Convert.ToDouble(value) : 0;
     }
 }

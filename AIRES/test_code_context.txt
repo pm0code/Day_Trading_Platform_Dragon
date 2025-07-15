@@ -1,0 +1,51 @@
+// AIResearchOrchestratorServiceTests.cs - lines 140-170
+[Fact]
+public async Task GenerateBooklet_ShouldRunStagesInCorrectOrder()
+{
+    // Arrange
+    var errors = new List<CompilerError> { TestData.CreateCompilerError() };
+    var callOrder = new List<string>();
+    
+    _mockMediator.Setup(m => m.Send(It.IsAny<ParseCompilerErrorsCommand>(), It.IsAny<CancellationToken>()))
+        .Callback(() => callOrder.Add("Parse"))
+        .ReturnsAsync(new ParseResult(errors.ToImmutableList(), ImmutableList<CompilerWarning>.Empty));
+        
+    // ... setup other mocks ...
+    
+    // Act
+    await _service.GenerateResearchBookletAsync("", "", "", "", ImmutableList<string>.Empty);
+    
+    // Assert
+    var parseIndex = callOrder.FindIndex(x => x == "Parse");
+    var mistralIndex = callOrder.FindIndex(x => x == "Mistral");
+    var deepSeekIndex = callOrder.FindIndex(x => x == "DeepSeek");
+    var codeGemmaIndex = callOrder.FindIndex(x => x == "CodeGemma");
+    var gemma2Index = callOrder.FindIndex(x => x == "Gemma2");
+    
+    parseIndex.Should().BeLessThan(mistralIndex);
+    mistralIndex.Should().BeLessThan(deepSeekIndex);
+    deepSeekIndex.Should().BeLessThan(codeGemmaIndex);
+    codeGemmaIndex.Should().BeLessThan(gemma2Index);
+}
+
+// ResearchBooklet.cs
+public record ResearchBooklet(
+    Guid BatchId,
+    DateTime GeneratedAt,
+    IReadOnlyList<CompilerError> Errors,
+    DocumentationAnalysisResponse Documentation,
+    ContextAnalysisResponse Context,
+    PatternValidationResponse Patterns,
+    IReadOnlyList<string> RecommendedActions,
+    string Summary,
+    Dictionary<string, object> Metadata
+);
+
+// PatternValidation.cs
+public enum PatternSeverity
+{
+    Low,
+    Medium,
+    High,
+    Critical
+}

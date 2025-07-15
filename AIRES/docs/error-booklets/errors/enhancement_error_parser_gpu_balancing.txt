@@ -1,0 +1,13 @@
+AIRES Enhancement Errors:
+
+1. Error Parser Limitation:
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.Application/Handlers/ParseCompilerErrorsHandler.cs(26,27): error AIRES001: ParseCompilerErrorsHandler only supports CS error format, cannot parse MSB, NETSDK, or general build errors
+
+2. GPU Utilization Error:
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.Infrastructure/AI/Services/OllamaClient.cs(1,1): error AIRES002: OllamaClient only uses GPU1, GPU0 remains idle, no load balancing implemented
+
+3. Parser Extensibility Error:
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.Application/Handlers/ParseCompilerErrorsHandler.cs(69,70): error AIRES003: No parser abstraction or factory pattern, cannot extend to support new error formats
+
+4. Service Redundancy Error:
+/mnt/d/Projects/CSharp/Day_Trading_Platform_Dragon/AIRES/src/AIRES.Infrastructure/AI/Services/OllamaClient.cs(50,1): error AIRES004: Single point of failure - if GPU1 or Ollama instance fails, entire AI pipeline stops

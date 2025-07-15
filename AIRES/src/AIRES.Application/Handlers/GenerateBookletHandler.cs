@@ -1,3 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
 using AIRES.Application.Commands;
 using AIRES.Application.Exceptions;
@@ -6,7 +12,6 @@ using AIRES.Core.Domain.ValueObjects;
 using AIRES.Foundation.Canonical;
 using AIRES.Foundation.Logging;
 using System.Collections.Immutable;
-using System.Linq;
 
 namespace AIRES.Application.Handlers;
 
@@ -31,9 +36,37 @@ public class GenerateBookletHandler : AIRESServiceBase, IRequestHandler<Generate
         CancellationToken cancellationToken)
     {
         LogMethodEntry();
+        var stopwatch = Stopwatch.StartNew();
         
         try
         {
+            // Validate input
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+            if (request.ErrorBatchId == Guid.Empty)
+            {
+                throw new ArgumentException("Request.ErrorBatchId cannot be empty", nameof(request));
+            }
+            if (request.OriginalErrors == null)
+            {
+                throw new ArgumentNullException(nameof(request), "Request.OriginalErrors cannot be null");
+            }
+            if (request.DocAnalysis == null)
+            {
+                throw new ArgumentNullException(nameof(request), "Request.DocAnalysis cannot be null");
+            }
+            if (request.ContextAnalysis == null)
+            {
+                throw new ArgumentNullException(nameof(request), "Request.ContextAnalysis cannot be null");
+            }
+            if (request.PatternValidation == null)
+            {
+                throw new ArgumentNullException(nameof(request), "Request.PatternValidation cannot be null");
+            }
+            
+            UpdateMetric("GenerateBooklet.Requests", 1);
             if (!request.OriginalErrors.Any())
             {
                 LogWarning("No errors provided for booklet generation");
@@ -82,24 +115,47 @@ public class GenerateBookletHandler : AIRESServiceBase, IRequestHandler<Generate
             var bookletPath = GenerateBookletPath(request.ErrorBatchId);
 
             // Create response with timing information
+            stopwatch.Stop();
             var response = new BookletGenerationResponse(
                 booklet,
                 bookletPath,
-                0, // Timing will be set by orchestrator
+                stopwatch.ElapsedMilliseconds,
                 ImmutableDictionary<string, long>.Empty // Will be populated by orchestrator
             );
 
-            LogInfo($"Booklet generation complete. Title: {booklet.Title}");
+            UpdateMetric("GenerateBooklet.ResponseTime", stopwatch.ElapsedMilliseconds);
+            UpdateMetric("GenerateBooklet.Successes", 1);
+            UpdateMetric("GenerateBooklet.BookletsGenerated", 1);
+            UpdateMetric("GenerateBooklet.SectionsCreated", booklet.Sections.Count);
+            UpdateMetric("GenerateBooklet.FindingsIncluded", allFindings.Count);
+            
+            LogInfo($"Booklet generation complete. Title: {booklet.Title} in {stopwatch.ElapsedMilliseconds}ms");
             LogMethodExit();
             
             return response;
         }
+        catch (ArgumentNullException ex)
+        {
+            UpdateMetric("GenerateBooklet.ValidationErrors", 1);
+            LogError("Invalid input parameters", ex);
+            LogMethodExit();
+            throw;
+        }
+        catch (ArgumentException ex)
+        {
+            UpdateMetric("GenerateBooklet.ValidationErrors", 1);
+            LogError("Invalid input parameters", ex);
+            LogMethodExit();
+            throw;
+        }
         catch (Gemma2GenerationException)
         {
+            UpdateMetric("GenerateBooklet.Failures", 1);
             throw; // Re-throw specific exceptions
         }
         catch (Exception ex)
         {
+            UpdateMetric("GenerateBooklet.UnexpectedErrors", 1);
             LogError("Unexpected error during booklet generation", ex);
             LogMethodExit();
             throw new Gemma2GenerationException(

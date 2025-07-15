@@ -12,6 +12,8 @@
     <ProjectReference Include="..\..\src\AIRES.Application\AIRES.Application.csproj" />
     <ProjectReference Include="..\..\src\AIRES.Foundation\AIRES.Foundation.csproj" />
     <ProjectReference Include="..\..\src\AIRES.Core\AIRES.Core.csproj" />
+    <ProjectReference Include="..\..\src\AIRES.Infrastructure\AIRES.Infrastructure.csproj" />
+    <ProjectReference Include="..\AIRES.TestInfrastructure\AIRES.TestInfrastructure.csproj" />
   </ItemGroup>
 
 </Project>

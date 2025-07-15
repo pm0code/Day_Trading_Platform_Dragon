@@ -8,6 +8,8 @@ using AIRES.Application.Interfaces;
 using AIRES.Foundation.Logging;
 using AIRES.Foundation.Results;
 using AIRES.Foundation.Alerting;
+using AIRES.Infrastructure.AI;
+using AIRES.Core.Health;
 using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +17,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using Moq.Protected;
 using AIRES.Core.Domain.ValueObjects;
 
 namespace AIRES.Application.Tests.Services;
@@ -25,6 +30,7 @@ public class ConcurrentAIResearchOrchestratorServiceTests : IDisposable
     private readonly Mock<IMediator> _mockMediator;
     private readonly Mock<IBookletPersistenceService> _mockPersistenceService;
     private readonly Mock<IAIRESAlertingService> _mockAlertingService;
+    private readonly OllamaHealthCheckClient _healthCheckClient;
     private readonly ConcurrentAIResearchOrchestratorService _service;
 
     public ConcurrentAIResearchOrchestratorServiceTests()
@@ -34,16 +40,42 @@ public class ConcurrentAIResearchOrchestratorServiceTests : IDisposable
         this._mockPersistenceService = new Mock<IBookletPersistenceService>();
         this._mockAlertingService = new Mock<IAIRESAlertingService>();
 
+        // Create a mocked HttpClient for OllamaHealthCheckClient
+        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+        mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("{\"models\":[{\"name\":\"mistral:latest\"}]}")
+            });
+        
+        var httpClient = new HttpClient(mockHttpMessageHandler.Object)
+        {
+            BaseAddress = new Uri("http://localhost:11434")
+        };
+        
+        this._healthCheckClient = new OllamaHealthCheckClient(
+            this._mockLogger.Object,
+            httpClient,
+            "http://localhost:11434");
+
         this._service = new ConcurrentAIResearchOrchestratorService(
             this._mockLogger.Object,
             this._mockMediator.Object,
             this._mockPersistenceService.Object,
-            this._mockAlertingService.Object);
+            this._mockAlertingService.Object,
+            this._healthCheckClient);
     }
 
     public void Dispose()
     {
         this._service?.Dispose();
+        this._healthCheckClient?.Dispose();
         GC.SuppressFinalize(this);
     }
 

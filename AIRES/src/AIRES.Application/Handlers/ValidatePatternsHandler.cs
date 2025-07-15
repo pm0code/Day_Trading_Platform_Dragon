@@ -1,3 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
 using AIRES.Application.Commands;
 using AIRES.Application.Exceptions;
@@ -6,7 +12,6 @@ using AIRES.Core.Domain.ValueObjects;
 using AIRES.Foundation.Canonical;
 using AIRES.Foundation.Logging;
 using System.Collections.Immutable;
-using System.Linq;
 
 namespace AIRES.Application.Handlers;
 
@@ -31,11 +36,40 @@ public class ValidatePatternsHandler : AIRESServiceBase, IRequestHandler<Validat
         CancellationToken cancellationToken)
     {
         LogMethodEntry();
+        var stopwatch = Stopwatch.StartNew();
         
         try
         {
+            // Validate input
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+            if (request.Errors == null)
+            {
+                throw new ArgumentNullException(nameof(request), "Request.Errors cannot be null");
+            }
+            // Make ProjectCodebase optional with a default
+            if (string.IsNullOrWhiteSpace(request.ProjectCodebase))
+            {
+                LogWarning("No project codebase provided, using placeholder");
+                request = request with { ProjectCodebase = "// No project codebase provided" };
+            }
+            // Make ProjectStandards optional with defaults
+            if (request.ProjectStandards == null || request.ProjectStandards.Count == 0)
+            {
+                LogWarning("No project standards provided, using defaults");
+                request = request with { ProjectStandards = ImmutableList.Create("Follow best practices", "Ensure code quality") };
+            }
+            if (request.ContextAnalysis == null)
+            {
+                throw new ArgumentNullException(nameof(request), "Request.ContextAnalysis cannot be null");
+            }
+            
+            UpdateMetric("ValidatePatterns.Requests", 1);
             if (!request.Errors.Any())
             {
+                UpdateMetric("ValidatePatterns.EmptyInputs", 1);
                 LogWarning("No errors provided for pattern validation");
                 LogMethodExit();
                 return new PatternValidationResponse(
@@ -80,7 +114,15 @@ public class ValidatePatternsHandler : AIRESServiceBase, IRequestHandler<Validat
                 request.ContextAnalysis
             );
 
-            LogInfo($"Pattern validation complete. Compliance: {overallCompliance}, Critical violations: {criticalViolations.Count}");
+            stopwatch.Stop();
+            UpdateMetric("ValidatePatterns.ResponseTime", stopwatch.ElapsedMilliseconds);
+            UpdateMetric("ValidatePatterns.Successes", 1);
+            UpdateMetric("ValidatePatterns.IssuesFound", validationFinding.IssuesIdentified.Count);
+            UpdateMetric("ValidatePatterns.CompliantPatterns", validationFinding.CompliantPatterns.Count);
+            UpdateMetric("ValidatePatterns.CriticalViolations", criticalViolations.Count);
+            UpdateMetric("ValidatePatterns.ComplianceRate", overallCompliance ? 1 : 0);
+            
+            LogInfo($"Pattern validation complete. Compliance: {overallCompliance}, Critical violations: {criticalViolations.Count} in {stopwatch.ElapsedMilliseconds}ms");
             LogMethodExit();
             
             return new PatternValidationResponse(
@@ -90,12 +132,28 @@ public class ValidatePatternsHandler : AIRESServiceBase, IRequestHandler<Validat
                 recommendations
             );
         }
+        catch (ArgumentNullException ex)
+        {
+            UpdateMetric("ValidatePatterns.ValidationErrors", 1);
+            LogError("Invalid input parameters", ex);
+            LogMethodExit();
+            throw;
+        }
+        catch (ArgumentException ex)
+        {
+            UpdateMetric("ValidatePatterns.ValidationErrors", 1);
+            LogError("Invalid input parameters", ex);
+            LogMethodExit();
+            throw;
+        }
         catch (CodeGemmaValidationException)
         {
+            UpdateMetric("ValidatePatterns.Failures", 1);
             throw; // Re-throw specific exceptions
         }
         catch (Exception ex)
         {
+            UpdateMetric("ValidatePatterns.UnexpectedErrors", 1);
             LogError("Unexpected error during pattern validation", ex);
             LogMethodExit();
             throw new CodeGemmaValidationException(
