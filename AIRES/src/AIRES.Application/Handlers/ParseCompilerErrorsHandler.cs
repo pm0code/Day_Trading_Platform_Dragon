@@ -11,24 +11,24 @@ using AIRES.Core.Domain.ValueObjects;
 using AIRES.Foundation.Canonical;
 using AIRES.Foundation.Logging;
 using System.Collections.Immutable;
-using System.Text.RegularExpressions;
+using AIRES.Infrastructure.Parsers;
 
 namespace AIRES.Application.Handlers;
 
 /// <summary>
 /// Handler for parsing compiler errors from raw build output.
+/// Uses ErrorParserFactory to support multiple error formats.
 /// </summary>
 public class ParseCompilerErrorsHandler : AIRESServiceBase, IRequestHandler<ParseCompilerErrorsCommand, ParseCompilerErrorsResponse>
 {
-    // Regex pattern for parsing compiler errors
-    // Format: FilePath(line,col): error|warning CODE: Message
-    private static readonly Regex ErrorPattern = new Regex(
-        @"^(?<file>[^(]+)\((?<line>\d+),(?<col>\d+)\):\s*(?<severity>error|warning)\s+(?<code>\w+):\s*(?<message>.+)$",
-        RegexOptions.Compiled | RegexOptions.Multiline);
+    private readonly ErrorParserFactory _parserFactory;
 
-    public ParseCompilerErrorsHandler(IAIRESLogger logger) 
+    public ParseCompilerErrorsHandler(
+        IAIRESLogger logger,
+        ErrorParserFactory parserFactory) 
         : base(logger, nameof(ParseCompilerErrorsHandler))
     {
+        _parserFactory = parserFactory ?? throw new ArgumentNullException(nameof(parserFactory));
     }
 
     public async Task<ParseCompilerErrorsResponse> Handle(ParseCompilerErrorsCommand request, CancellationToken cancellationToken)
@@ -61,55 +61,63 @@ public class ParseCompilerErrorsHandler : AIRESServiceBase, IRequestHandler<Pars
                 );
             }
 
-            var errors = new List<CompilerError>();
+            var allErrors = new List<CompilerError>();
             var lines = request.RawCompilerOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             int errorCount = 0;
             int warningCount = 0;
+            
+            // Group lines to potentially handle multi-line errors
+            var processedLines = new HashSet<string>();
 
             foreach (var line in lines)
             {
-                var match = ErrorPattern.Match(line.Trim());
-                if (match.Success)
+                if (string.IsNullOrWhiteSpace(line) || processedLines.Contains(line))
+                    continue;
+
+                var trimmedLine = line.Trim();
+                var parser = _parserFactory.GetParser(trimmedLine);
+                
+                if (parser != null)
                 {
-                    var severity = match.Groups["severity"].Value;
-                    var location = new ErrorLocation(
-                        match.Groups["file"].Value,
-                        int.Parse(match.Groups["line"].Value),
-                        int.Parse(match.Groups["col"].Value)
-                    );
-
-                    var error = new CompilerError(
-                        match.Groups["code"].Value,
-                        match.Groups["message"].Value,
-                        severity,
-                        location,
-                        line.Trim()
-                    );
-
-                    errors.Add(error);
+                    // Parse this line with the selected parser
+                    var errors = parser.ParseErrors(new[] { trimmedLine });
                     
-                    if (severity.Equals("error", StringComparison.OrdinalIgnoreCase))
-                        errorCount++;
-                    else if (severity.Equals("warning", StringComparison.OrdinalIgnoreCase))
-                        warningCount++;
+                    foreach (var error in errors)
+                    {
+                        allErrors.Add(error);
+                        processedLines.Add(trimmedLine);
+                        
+                        if (error.Severity.Equals("error", StringComparison.OrdinalIgnoreCase))
+                            errorCount++;
+                        else if (error.Severity.Equals("warning", StringComparison.OrdinalIgnoreCase))
+                            warningCount++;
+                            
+                        UpdateMetric($"ParseCompilerErrors.{parser.ErrorType}Parsed", 1);
+                    }
+                }
+                else
+                {
+                    // No parser found for this line
+                    LogDebug($"No parser found for line: {trimmedLine.Substring(0, Math.Min(80, trimmedLine.Length))}...");
+                    UpdateMetric("ParseCompilerErrors.UnparsedLines", 1);
                 }
             }
 
-            LogInfo($"Parsed {errors.Count} compiler diagnostics: {errorCount} errors, {warningCount} warnings");
+            LogInfo($"Parsed {allErrors.Count} compiler diagnostics: {errorCount} errors, {warningCount} warnings");
 
-            var summary = GenerateSummary(errors);
+            var summary = GenerateSummary(allErrors);
             
             stopwatch.Stop();
             UpdateMetric("ParseCompilerErrors.ResponseTime", stopwatch.ElapsedMilliseconds);
             UpdateMetric("ParseCompilerErrors.Successes", 1);
-            UpdateMetric("ParseCompilerErrors.ErrorsParsed", errors.Count);
+            UpdateMetric("ParseCompilerErrors.ErrorsParsed", allErrors.Count);
             UpdateMetric("ParseCompilerErrors.ErrorCount", errorCount);
             UpdateMetric("ParseCompilerErrors.WarningCount", warningCount);
             
             LogInfo($"Successfully parsed compiler errors in {stopwatch.ElapsedMilliseconds}ms");
             LogMethodExit();
             return new ParseCompilerErrorsResponse(
-                errors.ToImmutableList(),
+                allErrors.ToImmutableList(),
                 summary,
                 errorCount,
                 warningCount
@@ -121,13 +129,6 @@ public class ParseCompilerErrorsHandler : AIRESServiceBase, IRequestHandler<Pars
             LogError("Invalid input parameters", ex);
             LogMethodExit();
             throw;
-        }
-        catch (RegexMatchTimeoutException ex)
-        {
-            UpdateMetric("ParseCompilerErrors.RegexTimeouts", 1);
-            LogError("Regex timeout while parsing compiler errors", ex);
-            LogMethodExit();
-            throw new CompilerErrorParsingException("Parsing timeout - input may be too complex", ex);
         }
         catch (Exception ex)
         {

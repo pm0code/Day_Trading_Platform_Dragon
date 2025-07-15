@@ -8,6 +8,7 @@ using AIRES.Infrastructure.AI;
 using AIRES.Infrastructure.AI.Clients;
 using AIRES.Infrastructure.AI.Services;
 using AIRES.Infrastructure.Configuration;
+using AIRES.Infrastructure.Parsers;
 using Polly;
 using Polly.Extensions.Http;
 
@@ -61,6 +62,15 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IContextAnalyzerAIModel, DeepSeekContextService>();
         services.AddScoped<IPatternValidatorAIModel, CodeGemmaPatternService>();
         services.AddScoped<IBookletGeneratorAIModel, Gemma2BookletService>();
+        
+        // Register error parsers (stateless, so singleton)
+        services.AddSingleton<CSharpErrorParser>();
+        services.AddSingleton<MSBuildErrorParser>();
+        services.AddSingleton<NetSdkErrorParser>();
+        services.AddSingleton<GeneralErrorParser>();
+        
+        // Register error parser factory
+        services.AddSingleton<ErrorParserFactory>();
         
         return services;
     }
